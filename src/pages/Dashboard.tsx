@@ -170,7 +170,10 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="cursor-pointer hover:shadow-medium transition-shadow group">
+          <Card 
+            className="cursor-pointer hover:shadow-medium transition-shadow group"
+            onClick={() => navigate('/fichas/nova')}
+          >
             <CardHeader>
               <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Plus className="h-6 w-6 text-primary-foreground" />
