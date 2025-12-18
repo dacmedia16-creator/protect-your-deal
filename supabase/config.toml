@@ -1,1 +1,10 @@
 project_id = "tpgewmfslapicruzgula"
+
+[functions.send-otp]
+verify_jwt = true
+
+[functions.verify-otp]
+verify_jwt = false
+
+[functions.get-otp-info]
+verify_jwt = false

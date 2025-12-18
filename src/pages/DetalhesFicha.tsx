@@ -1,23 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   ArrowLeft, 
   Building2, 
   User, 
   Users, 
   Calendar, 
-  FileText,
   CheckCircle,
   Clock,
   Copy,
   Loader2,
-  Share2
+  Send,
+  MessageCircle,
+  AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -36,6 +38,15 @@ export default function DetalhesFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [sendingOtp, setSendingOtp] = useState<'proprietario' | 'comprador' | null>(null);
+  const [lastOtpResult, setLastOtpResult] = useState<{
+    tipo: string;
+    simulation: boolean;
+    codigo?: string;
+    verification_url?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -43,7 +54,7 @@ export default function DetalhesFicha() {
     }
   }, [user, authLoading, navigate]);
 
-  const { data: ficha, isLoading } = useQuery({
+  const { data: ficha, isLoading, refetch } = useQuery({
     queryKey: ['ficha', id],
     queryFn: async () => {
       if (!id) return null;
@@ -86,6 +97,75 @@ export default function DetalhesFicha() {
     }
   };
 
+  const sendOtp = async (tipo: 'proprietario' | 'comprador') => {
+    if (!ficha) return;
+    
+    setSendingOtp(tipo);
+    setLastOtpResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { ficha_id: ficha.id, tipo },
+      });
+
+      if (error || data.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao enviar OTP',
+          description: data?.error || error?.message || 'Erro desconhecido',
+        });
+        return;
+      }
+
+      setLastOtpResult({
+        tipo,
+        simulation: data.simulation,
+        codigo: data.codigo,
+        verification_url: data.verification_url,
+      });
+
+      if (data.simulation) {
+        toast({
+          title: 'OTP gerado (modo simulação)',
+          description: `Código: ${data.codigo}. Configure a API do WhatsApp para envio real.`,
+        });
+      } else {
+        toast({
+          title: 'OTP enviado!',
+          description: `Código enviado para ${tipo === 'proprietario' ? 'o proprietário' : 'o comprador'} via WhatsApp.`,
+        });
+      }
+
+      // Refresh ficha data
+      refetch();
+      
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao enviar OTP',
+      });
+    } finally {
+      setSendingOtp(null);
+    }
+  };
+
+  const openWhatsApp = (phone: string, message: string) => {
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/55${phone}?text=${encodedMessage}`, '_blank');
+  };
+
+  const sendManualWhatsApp = (tipo: 'proprietario' | 'comprador') => {
+    if (!ficha || !lastOtpResult || lastOtpResult.tipo !== tipo) return;
+    
+    const phone = tipo === 'proprietario' ? ficha.proprietario_telefone : ficha.comprador_telefone;
+    const nome = tipo === 'proprietario' ? ficha.proprietario_nome : ficha.comprador_nome;
+    
+    const message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está confirmando uma visita ao imóvel:\n📍 ${ficha.imovel_endereco}\n\nSeu código de confirmação é:\n\n🔐 *${lastOtpResult.codigo}*\n\nOu acesse o link:\n${lastOtpResult.verification_url}\n\n⏰ Este código expira em 30 minutos.`;
+    
+    openWhatsApp(phone, message);
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -113,7 +193,7 @@ export default function DetalhesFicha() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+              <Button variant="ghost" size="icon" onClick={() => navigate('/fichas')}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
@@ -172,24 +252,72 @@ export default function DetalhesFicha() {
             </CardContent>
           </Card>
 
+          {/* Simulation Alert */}
+          {lastOtpResult?.simulation && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Modo Simulação</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>
+                  A API do WhatsApp não está configurada. O código foi gerado mas não enviado automaticamente.
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <code className="bg-muted px-2 py-1 rounded font-mono text-lg">
+                    {lastOtpResult.codigo}
+                  </code>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => sendManualWhatsApp(lastOtpResult.tipo as 'proprietario' | 'comprador')}
+                    className="gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Enviar via WhatsApp
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Ações */}
           {ficha.status !== 'completo' && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Enviar para Confirmação</CardTitle>
                 <CardDescription>
-                  Envie o link de confirmação via WhatsApp
+                  Envie o código OTP via WhatsApp para confirmar a visita
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex gap-3">
-                <Button className="gap-2 flex-1">
-                  <Share2 className="h-4 w-4" />
-                  Enviar para Proprietário
-                </Button>
-                <Button variant="outline" className="gap-2 flex-1">
-                  <Share2 className="h-4 w-4" />
-                  Enviar para Comprador
-                </Button>
+              <CardContent className="flex flex-col sm:flex-row gap-3">
+                {!ficha.proprietario_confirmado_em && (
+                  <Button 
+                    className="gap-2 flex-1"
+                    onClick={() => sendOtp('proprietario')}
+                    disabled={sendingOtp !== null}
+                  >
+                    {sendingOtp === 'proprietario' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Enviar para Proprietário
+                  </Button>
+                )}
+                {!ficha.comprador_confirmado_em && (
+                  <Button 
+                    variant={ficha.proprietario_confirmado_em ? 'default' : 'outline'}
+                    className="gap-2 flex-1"
+                    onClick={() => sendOtp('comprador')}
+                    disabled={sendingOtp !== null}
+                  >
+                    {sendingOtp === 'comprador' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Enviar para Comprador
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
