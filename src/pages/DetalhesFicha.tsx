@@ -19,7 +19,8 @@ import {
   Loader2,
   Send,
   MessageCircle,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -41,6 +42,7 @@ export default function DetalhesFicha() {
   const queryClient = useQueryClient();
   
   const [sendingOtp, setSendingOtp] = useState<'proprietario' | 'comprador' | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [lastOtpResult, setLastOtpResult] = useState<{
     tipo: string;
     simulation: boolean;
@@ -166,6 +168,50 @@ export default function DetalhesFicha() {
     openWhatsApp(phone, message);
   };
 
+  const downloadPdf = async () => {
+    if (!ficha) return;
+    
+    setDownloadingPdf(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pdf', {
+        body: { ficha_id: ficha.id },
+      });
+
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao gerar PDF',
+          description: error.message,
+        });
+        return;
+      }
+
+      // Create blob and download
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `comprovante-${ficha.protocolo}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'PDF gerado com sucesso!',
+        description: 'O comprovante foi baixado.',
+      });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao gerar PDF',
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -252,7 +298,34 @@ export default function DetalhesFicha() {
             </CardContent>
           </Card>
 
-          {/* Simulation Alert */}
+          {/* Download PDF - only when complete */}
+          {ficha.status === 'completo' && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-foreground">Comprovante Disponível</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Ambas as partes confirmaram. Baixe o comprovante com QR code de verificação.
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={downloadPdf}
+                    disabled={downloadingPdf}
+                    className="gap-2 min-w-[180px]"
+                  >
+                    {downloadingPdf ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileDown className="h-4 w-4" />
+                    )}
+                    Baixar Comprovante PDF
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {lastOtpResult?.simulation && (
             <Alert>
               <AlertCircle className="h-4 w-4" />

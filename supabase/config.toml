@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.get-otp-info]
 verify_jwt = false
+
+[functions.generate-pdf]
+verify_jwt = true
