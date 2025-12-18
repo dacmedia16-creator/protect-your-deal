@@ -185,7 +185,10 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-medium transition-shadow group">
+          <Card 
+            className="cursor-pointer hover:shadow-medium transition-shadow group"
+            onClick={() => navigate('/clientes')}
+          >
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Users className="h-6 w-6 text-secondary-foreground" />
