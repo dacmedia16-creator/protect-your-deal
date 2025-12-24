@@ -244,9 +244,37 @@ serve(async (req) => {
       minute: '2-digit'
     });
 
-    // Build message
-    const tipoLabel = tipo === 'proprietario' ? 'proprietário' : 'visitante';
-    const message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n📅 ${dataFormatada}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+    // Try to get custom template for this user
+    const templateTipo = tipo === 'proprietario' ? 'criacao_proprietario' : 'criacao_comprador';
+    const { data: customTemplate } = await supabase
+      .from('templates_mensagem')
+      .select('conteudo')
+      .eq('user_id', ficha.user_id)
+      .eq('tipo', templateTipo)
+      .eq('ativo', true)
+      .maybeSingle();
+
+    let message: string;
+
+    if (customTemplate?.conteudo) {
+      // Use custom template with variable replacement
+      message = customTemplate.conteudo
+        .replace(/{nome}/g, nome)
+        .replace(/{endereco}/g, ficha.imovel_endereco)
+        .replace(/{tipo_imovel}/g, ficha.imovel_tipo)
+        .replace(/{data_visita}/g, dataFormatada)
+        .replace(/{protocolo}/g, ficha.protocolo)
+        .replace(/{codigo}/g, codigo)
+        .replace(/{link}/g, verificationUrl);
+      
+      console.log('Using custom template for user:', ficha.user_id);
+    } else {
+      // Use default message
+      const tipoLabel = tipo === 'proprietario' ? 'proprietário' : 'visitante';
+      message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+      
+      console.log('Using default template');
+    }
 
     // Try to send via ZionTalk first (primary)
     let sent = await sendViaZionTalk(telefone, message);
