@@ -7,8 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ZIONTALK_API_URL = 'https://api.ziontalk.com.br/v1';
-
 // Generate 6-digit OTP
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -19,7 +17,7 @@ function generateToken(): string {
   return crypto.randomUUID();
 }
 
-// Format phone number for WhatsApp
+// Format phone number for WhatsApp (E.164 format without +)
 function formatPhoneNumber(phone: string): string {
   let cleaned = phone.replace(/\D/g, '');
   if (!cleaned.startsWith('55')) {
@@ -28,7 +26,7 @@ function formatPhoneNumber(phone: string): string {
   return cleaned;
 }
 
-// Send WhatsApp message via ZionTalk
+// Send WhatsApp message via ZionTalk (using correct API format)
 async function sendViaZionTalk(phone: string, message: string): Promise<boolean> {
   const apiKey = Deno.env.get('ZIONTALK_API_KEY');
 
@@ -38,24 +36,22 @@ async function sendViaZionTalk(phone: string, message: string): Promise<boolean>
   }
 
   try {
-    const formattedPhone = formatPhoneNumber(phone);
+    const formattedPhone = `+${formatPhoneNumber(phone)}`;
     const authHeader = btoa(`${apiKey}:`);
     
     console.log(`Sending WhatsApp to ${formattedPhone} via ZionTalk`);
 
-    const response = await fetch(`${ZIONTALK_API_URL}/messages`, {
+    // Use FormData as per ZionTalk API documentation
+    const formData = new FormData();
+    formData.append('receiver', formattedPhone);
+    formData.append('message', message);
+
+    const response = await fetch('https://app.ziontalk.com/api/send_message/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Basic ${authHeader}`,
       },
-      body: JSON.stringify({
-        to: formattedPhone,
-        type: 'text',
-        text: {
-          body: message
-        }
-      }),
+      body: formData,
     });
 
     const responseText = await response.text();
