@@ -120,7 +120,10 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card className="animate-fade-in">
+          <Card 
+            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all"
+            onClick={() => navigate('/fichas')}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total de Fichas
@@ -132,7 +135,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <Card 
+            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all" 
+            style={{ animationDelay: '0.1s' }}
+            onClick={() => navigate('/fichas?status=completo')}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Confirmadas
@@ -144,7 +151,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <Card 
+            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all" 
+            style={{ animationDelay: '0.2s' }}
+            onClick={() => navigate('/fichas?status=pendente')}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Pendentes
@@ -156,7 +167,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <Card 
+            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all" 
+            style={{ animationDelay: '0.3s' }}
+            onClick={() => navigate('/clientes')}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Clientes
