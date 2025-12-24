@@ -43,8 +43,8 @@ async function sendViaZionTalk(phone: string, message: string): Promise<boolean>
 
     // Use FormData as per ZionTalk API documentation
     const formData = new FormData();
-    formData.append('receiver', formattedPhone);
-    formData.append('message', message);
+    formData.append('mobile_phone', formattedPhone);
+    formData.append('msg', message);
 
     const response = await fetch('https://app.ziontalk.com/api/send_message/', {
       method: 'POST',
