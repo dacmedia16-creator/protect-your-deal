@@ -91,9 +91,10 @@ async function makeImoviewRequest(
   const url = `${IMOVIEW_BASE_URL}${endpoint}`;
   console.log(`Imoview request: ${method} ${url}`);
 
+  // A API Imoview usa 'chave' como header de autenticação
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'chlogin': apiKey,
+    'chave': apiKey,
   };
 
   const options: RequestInit = {
@@ -109,19 +110,20 @@ async function makeImoviewRequest(
   const text = await response.text();
   
   console.log(`Imoview response status: ${response.status}`);
+  console.log(`Imoview response preview:`, text.substring(0, 200));
   
   try {
     return JSON.parse(text);
   } catch {
-    console.log('Response text:', text);
+    console.log('Response text (not JSON):', text);
     return { raw: text, status: response.status };
   }
 }
 
 async function testConnection(apiKey: string) {
   try {
-    // Tenta listar usuários para verificar a conexão
-    const result = await makeImoviewRequest(apiKey, '/Usuario/Listar');
+    // Usa endpoint RetornarTipo3 que retorna lista de tipos de cliente
+    const result = await makeImoviewRequest(apiKey, '/Usuario/RetornarTipo3');
     
     if (result.erro || result.error) {
       return { 
@@ -157,9 +159,10 @@ async function listarImoveis(apiKey: string, filters?: Record<string, unknown>) 
   if (filters?.bairro) params.append('bairro', String(filters.bairro));
   
   const queryString = params.toString();
-  const endpoint = `/Imovel/Listar${queryString ? `?${queryString}` : ''}`;
+  // Usa endpoint correto para listar imóveis disponíveis
+  const endpoint = `/Imovel/RetornarImoveisDisponiveis`;
   
-  const result = await makeImoviewRequest(apiKey, endpoint);
+  const result = await makeImoviewRequest(apiKey, endpoint, 'POST', filters || {});
   
   return {
     success: !result.erro,
@@ -174,7 +177,7 @@ async function buscarImovel(apiKey: string, codigo: string) {
     throw new Error('Código do imóvel é obrigatório');
   }
 
-  const result = await makeImoviewRequest(apiKey, `/Imovel/Buscar?codigo=${codigo}`);
+  const result = await makeImoviewRequest(apiKey, `/Imovel/RetornarDetalhesImovelDisponivel?codigoImovel=${codigo}`);
   
   return {
     success: !result.erro,
@@ -191,7 +194,8 @@ async function listarClientes(apiKey: string, filters?: Record<string, unknown>)
   if (filters?.tipo) params.append('tipo', String(filters.tipo));
   
   const queryString = params.toString();
-  const endpoint = `/Cliente/Listar${queryString ? `?${queryString}` : ''}`;
+  // Usa endpoint correto para pesquisar clientes
+  const endpoint = `/Cliente/App_PesquisarCliente${queryString ? `?${queryString}` : ''}`;
   
   const result = await makeImoviewRequest(apiKey, endpoint);
   
@@ -207,7 +211,7 @@ async function buscarCliente(apiKey: string, codigo: string) {
     throw new Error('Código do cliente é obrigatório');
   }
 
-  const result = await makeImoviewRequest(apiKey, `/Cliente/Buscar?codigo=${codigo}`);
+  const result = await makeImoviewRequest(apiKey, `/Cliente/RetornarDadosCliente?codigo=${codigo}`);
   
   return {
     success: !result.erro,
@@ -220,7 +224,7 @@ async function incluirLead(apiKey: string, data?: Record<string, unknown>) {
     throw new Error('Dados do lead são obrigatórios');
   }
 
-  const result = await makeImoviewRequest(apiKey, '/Lead/Incluir', 'POST', data);
+  const result = await makeImoviewRequest(apiKey, '/Lead/IncluirLead', 'POST', data);
   
   return {
     success: !result.erro,
