@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.imoview-sync]
 verify_jwt = true
+
+[functions.send-whatsapp]
+verify_jwt = true
