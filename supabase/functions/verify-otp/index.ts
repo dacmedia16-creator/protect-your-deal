@@ -17,11 +17,50 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { token, codigo } = await req.json();
+    const { 
+      token, 
+      codigo,
+      aceite_legal,
+      aceite_nome,
+      aceite_cpf,
+      aceite_latitude,
+      aceite_longitude,
+      aceite_user_agent
+    } = await req.json();
+
+    // Get client IP from headers
+    const clientIP = req.headers.get('x-forwarded-for') 
+      || req.headers.get('cf-connecting-ip') 
+      || req.headers.get('x-real-ip')
+      || 'unknown';
+
+    console.log('Verify OTP request:', { token, codigo, aceite_legal, aceite_nome, aceite_cpf: aceite_cpf ? '***' : null, clientIP });
 
     if (!token || !codigo) {
       return new Response(
         JSON.stringify({ error: 'Token e código são obrigatórios' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate legal acceptance fields
+    if (!aceite_legal) {
+      return new Response(
+        JSON.stringify({ error: 'O aceite da declaração é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!aceite_nome || aceite_nome.trim().length < 3) {
+      return new Response(
+        JSON.stringify({ error: 'Nome completo é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!aceite_cpf || aceite_cpf.replace(/\D/g, '').length !== 11) {
+      return new Response(
+        JSON.stringify({ error: 'CPF válido é obrigatório' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -34,6 +73,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (otpError || !otp) {
+      console.error('OTP not found:', otpError);
       return new Response(
         JSON.stringify({ error: 'Código inválido ou expirado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -81,11 +121,39 @@ serve(async (req) => {
       );
     }
 
-    // Mark OTP as confirmed
-    await supabase
+    // Mark OTP as confirmed with legal acceptance data
+    const { error: updateOtpError } = await supabase
       .from('confirmacoes_otp')
-      .update({ confirmado: true })
+      .update({ 
+        confirmado: true,
+        aceite_legal: true,
+        aceite_nome: aceite_nome.trim(),
+        aceite_cpf: aceite_cpf.replace(/\D/g, ''),
+        aceite_ip: clientIP,
+        aceite_latitude: aceite_latitude || null,
+        aceite_longitude: aceite_longitude || null,
+        aceite_user_agent: aceite_user_agent || null,
+        aceite_em: new Date().toISOString()
+      })
       .eq('id', otp.id);
+
+    if (updateOtpError) {
+      console.error('Error updating OTP:', updateOtpError);
+      return new Response(
+        JSON.stringify({ error: 'Erro ao registrar confirmação' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('OTP confirmed with legal data:', {
+      otpId: otp.id,
+      aceite_nome: aceite_nome.trim(),
+      aceite_cpf: '***',
+      aceite_ip: clientIP,
+      aceite_latitude,
+      aceite_longitude,
+      aceite_em: new Date().toISOString()
+    });
 
     // Update ficha with confirmation timestamp
     const updateField = otp.tipo === 'proprietario' 
