@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, User, Users, Calendar, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, User, Users, Calendar, FileText, Loader2, MessageCircle } from 'lucide-react';
 import { z } from 'zod';
 
 const fichaSchema = z.object({
@@ -46,6 +47,7 @@ export default function NovaFicha() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [enviarWhatsApp, setEnviarWhatsApp] = useState(true);
   
   const [formData, setFormData] = useState<FichaFormData>({
     imovel_endereco: '',
@@ -151,10 +153,67 @@ export default function NovaFicha() {
 
       if (error) throw error;
 
-      toast({
-        title: 'Ficha criada com sucesso!',
-        description: `Protocolo: ${protocolo}`,
-      });
+      // Send WhatsApp OTP to both parties if enabled
+      if (enviarWhatsApp) {
+        const sendOtpPromises = [];
+        
+        // Send to owner
+        sendOtpPromises.push(
+          supabase.functions.invoke('send-otp', {
+            body: { ficha_id: data.id, tipo: 'proprietario' }
+          }).then(({ data: otpData, error: otpError }) => {
+            if (otpError) {
+              console.error('Error sending OTP to owner:', otpError);
+              return { tipo: 'proprietario', success: false, error: otpError };
+            }
+            return { tipo: 'proprietario', success: true, ...otpData };
+          })
+        );
+        
+        // Send to buyer
+        sendOtpPromises.push(
+          supabase.functions.invoke('send-otp', {
+            body: { ficha_id: data.id, tipo: 'comprador' }
+          }).then(({ data: otpData, error: otpError }) => {
+            if (otpError) {
+              console.error('Error sending OTP to buyer:', otpError);
+              return { tipo: 'comprador', success: false, error: otpError };
+            }
+            return { tipo: 'comprador', success: true, ...otpData };
+          })
+        );
+
+        const otpResults = await Promise.all(sendOtpPromises);
+        
+        const successCount = otpResults.filter(r => r.success).length;
+        const simulationMode = otpResults.some(r => r.simulation);
+
+        if (successCount === 2) {
+          toast({
+            title: 'Ficha criada com sucesso!',
+            description: simulationMode 
+              ? `Protocolo: ${protocolo}. OTPs gerados em modo simulação.`
+              : `Protocolo: ${protocolo}. WhatsApp enviado ao proprietário e comprador.`,
+          });
+        } else if (successCount === 1) {
+          toast({
+            title: 'Ficha criada com aviso',
+            description: `Protocolo: ${protocolo}. Apenas um WhatsApp foi enviado.`,
+            variant: 'default',
+          });
+        } else {
+          toast({
+            title: 'Ficha criada',
+            description: `Protocolo: ${protocolo}. Envio de WhatsApp falhou, envie manualmente.`,
+            variant: 'default',
+          });
+        }
+      } else {
+        toast({
+          title: 'Ficha criada com sucesso!',
+          description: `Protocolo: ${protocolo}`,
+        });
+      }
 
       navigate(`/fichas/${data.id}`);
     } catch (error: any) {
@@ -377,6 +436,31 @@ export default function NovaFicha() {
             </CardContent>
           </Card>
 
+          {/* WhatsApp Option */}
+          <Card className="border-green-500/30 bg-green-500/5">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <Checkbox 
+                  id="enviarWhatsApp" 
+                  checked={enviarWhatsApp}
+                  onCheckedChange={(checked) => setEnviarWhatsApp(checked === true)}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <label
+                    htmlFor="enviarWhatsApp"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4 text-green-500" />
+                    Enviar WhatsApp automaticamente
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Ao criar a ficha, enviar código de confirmação via WhatsApp para o proprietário e o comprador.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Botões */}
           <div className="flex gap-4 justify-end">
             <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
@@ -386,7 +470,7 @@ export default function NovaFicha() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Criando...
+                  {enviarWhatsApp ? 'Criando e enviando...' : 'Criando...'}
                 </>
               ) : (
                 <>

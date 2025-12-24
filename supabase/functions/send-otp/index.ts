@@ -7,6 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ZIONTALK_API_URL = 'https://api.ziontalk.com.br/v1';
+
 // Generate 6-digit OTP
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -17,14 +19,69 @@ function generateToken(): string {
   return crypto.randomUUID();
 }
 
-// Send WhatsApp message via Evolution API
+// Format phone number for WhatsApp
+function formatPhoneNumber(phone: string): string {
+  let cleaned = phone.replace(/\D/g, '');
+  if (!cleaned.startsWith('55')) {
+    cleaned = '55' + cleaned;
+  }
+  return cleaned;
+}
+
+// Send WhatsApp message via ZionTalk
+async function sendViaZionTalk(phone: string, message: string): Promise<boolean> {
+  const apiKey = Deno.env.get('ZIONTALK_API_KEY');
+
+  if (!apiKey) {
+    console.log('ZionTalk API not configured, using simulation mode');
+    return false;
+  }
+
+  try {
+    const formattedPhone = formatPhoneNumber(phone);
+    const authHeader = btoa(`${apiKey}:`);
+    
+    console.log(`Sending WhatsApp to ${formattedPhone} via ZionTalk`);
+
+    const response = await fetch(`${ZIONTALK_API_URL}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${authHeader}`,
+      },
+      body: JSON.stringify({
+        to: formattedPhone,
+        type: 'text',
+        text: {
+          body: message
+        }
+      }),
+    });
+
+    const responseText = await response.text();
+    console.log(`ZionTalk response status: ${response.status}`);
+    console.log(`ZionTalk response: ${responseText.substring(0, 300)}`);
+
+    if (!response.ok) {
+      console.error('ZionTalk error:', responseText);
+      return false;
+    }
+
+    console.log('Message sent via ZionTalk');
+    return true;
+  } catch (error) {
+    console.error('ZionTalk error:', error);
+    return false;
+  }
+}
+
+// Legacy: Send WhatsApp message via Evolution API
 async function sendViaEvolutionAPI(phone: string, message: string): Promise<boolean> {
   const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL');
   const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY');
   const evolutionInstance = Deno.env.get('EVOLUTION_INSTANCE');
 
   if (!evolutionApiUrl || !evolutionApiKey || !evolutionInstance) {
-    console.log('Evolution API not configured, using simulation mode');
     return false;
   }
 
@@ -36,7 +93,7 @@ async function sendViaEvolutionAPI(phone: string, message: string): Promise<bool
         'apikey': evolutionApiKey,
       },
       body: JSON.stringify({
-        number: `55${phone}`,
+        number: `55${phone.replace(/\D/g, '')}`,
         text: message,
       }),
     });
@@ -55,14 +112,13 @@ async function sendViaEvolutionAPI(phone: string, message: string): Promise<bool
   }
 }
 
-// Send WhatsApp message via Z-API
+// Legacy: Send WhatsApp message via Z-API
 async function sendViaZAPI(phone: string, message: string): Promise<boolean> {
   const zapiInstanceId = Deno.env.get('ZAPI_INSTANCE_ID');
   const zapiToken = Deno.env.get('ZAPI_TOKEN');
   const zapiClientToken = Deno.env.get('ZAPI_CLIENT_TOKEN');
 
   if (!zapiInstanceId || !zapiToken) {
-    console.log('Z-API not configured, using simulation mode');
     return false;
   }
 
@@ -74,7 +130,7 @@ async function sendViaZAPI(phone: string, message: string): Promise<boolean> {
         'Client-Token': zapiClientToken || '',
       },
       body: JSON.stringify({
-        phone: `55${phone}`,
+        phone: `55${phone.replace(/\D/g, '')}`,
         message: message,
       }),
     });
@@ -178,20 +234,37 @@ serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') || 'https://preview--visitasegura.lovable.app';
     const verificationUrl = `${appUrl}/confirmar/${token}`;
 
-    // Build message
-    const message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está confirmando uma visita ao imóvel:\n📍 ${ficha.imovel_endereco}\n\nSeu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu acesse o link:\n${verificationUrl}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+    // Format visit date
+    const dataVisita = new Date(ficha.data_visita);
+    const dataFormatada = dataVisita.toLocaleDateString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-    // Try to send via configured API
-    let sent = await sendViaEvolutionAPI(telefone, message);
+    // Build message
+    const tipoLabel = tipo === 'proprietario' ? 'proprietário' : 'visitante';
+    const message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n📅 ${dataFormatada}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+
+    // Try to send via ZionTalk first (primary)
+    let sent = await sendViaZionTalk(telefone, message);
     
+    // Fallback to Evolution API
+    if (!sent) {
+      sent = await sendViaEvolutionAPI(telefone, message);
+    }
+    
+    // Fallback to Z-API
     if (!sent) {
       sent = await sendViaZAPI(telefone, message);
     }
 
     // Update ficha status
     const newStatus = tipo === 'proprietario' 
-      ? (ficha.comprador_confirmado_em ? 'aguardando_proprietario' : 'aguardando_proprietario')
-      : (ficha.proprietario_confirmado_em ? 'aguardando_comprador' : 'aguardando_comprador');
+      ? 'aguardando_proprietario'
+      : 'aguardando_comprador';
 
     await supabase
       .from('fichas_visita')
