@@ -107,7 +107,7 @@ export default function DetalhesFicha() {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { ficha_id: ficha.id, tipo },
+        body: { ficha_id: ficha.id, tipo, app_url: window.location.origin },
       });
 
       if (error || data.error) {

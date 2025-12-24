@@ -157,10 +157,13 @@ export default function NovaFicha() {
       if (enviarWhatsApp) {
         const sendOtpPromises = [];
         
+        // Get current app URL for the verification link
+        const currentAppUrl = window.location.origin;
+
         // Send to owner
         sendOtpPromises.push(
           supabase.functions.invoke('send-otp', {
-            body: { ficha_id: data.id, tipo: 'proprietario' }
+            body: { ficha_id: data.id, tipo: 'proprietario', app_url: currentAppUrl }
           }).then(({ data: otpData, error: otpError }) => {
             if (otpError) {
               console.error('Error sending OTP to owner:', otpError);
@@ -173,7 +176,7 @@ export default function NovaFicha() {
         // Send to buyer
         sendOtpPromises.push(
           supabase.functions.invoke('send-otp', {
-            body: { ficha_id: data.id, tipo: 'comprador' }
+            body: { ficha_id: data.id, tipo: 'comprador', app_url: currentAppUrl }
           }).then(({ data: otpData, error: otpError }) => {
             if (otpError) {
               console.error('Error sending OTP to buyer:', otpError);

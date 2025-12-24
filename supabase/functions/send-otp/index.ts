@@ -156,7 +156,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { ficha_id, tipo } = await req.json();
+    const { ficha_id, tipo, app_url } = await req.json();
 
     if (!ficha_id || !tipo || !['proprietario', 'comprador'].includes(tipo)) {
       return new Response(
@@ -226,9 +226,9 @@ serve(async (req) => {
       );
     }
 
-    // Build verification URL
-    const appUrl = Deno.env.get('APP_URL') || 'https://preview--visitasegura.lovable.app';
-    const verificationUrl = `${appUrl}/confirmar/${token}`;
+    // Build verification URL - use app_url from request or fallback to env/default
+    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://preview--visitasegura.lovable.app';
+    const verificationUrl = `${baseUrl}/confirmar/${token}`;
 
     // Format visit date
     const dataVisita = new Date(ficha.data_visita);
