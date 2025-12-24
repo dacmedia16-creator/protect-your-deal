@@ -174,7 +174,7 @@ export default function DetalhesFicha() {
     setDownloadingPdf(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-pdf', {
-        body: { ficha_id: ficha.id },
+        body: { ficha_id: ficha.id, app_url: window.location.origin },
       });
 
       if (error) {
