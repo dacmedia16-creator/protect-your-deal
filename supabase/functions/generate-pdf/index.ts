@@ -50,6 +50,16 @@ serve(async (req) => {
       );
     }
 
+    // Get legal acceptance data from OTP confirmations
+    const { data: confirmacoes } = await supabase
+      .from('confirmacoes_otp')
+      .select('*')
+      .eq('ficha_id', ficha_id)
+      .eq('confirmado', true);
+
+    const confirmacaoProprietario = confirmacoes?.find(c => c.tipo === 'proprietario');
+    const confirmacaoComprador = confirmacoes?.find(c => c.tipo === 'comprador');
+
     // Get broker profile
     const { data: profile } = await supabase
       .from('profiles')
@@ -206,27 +216,67 @@ serve(async (req) => {
       return cpf;
     };
 
+    // Helper to format coordinates
+    const formatCoords = (lat: number | null, lng: number | null): string => {
+      if (lat === null || lng === null) return 'Não capturada';
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    };
+
     // Property Section
     yPosition -= 40;
     yPosition = drawSection('DADOS DO IMÓVEL', yPosition);
     yPosition = drawField('Tipo', ficha.imovel_tipo, yPosition);
     yPosition = drawField('Endereço', ficha.imovel_endereco, yPosition);
 
-    // Owner Section
+    // Owner Section with Legal Data
     yPosition -= 15;
-    yPosition = drawSection('PROPRIETÁRIO', yPosition);
-    yPosition = drawField('Nome', ficha.proprietario_nome, yPosition);
-    yPosition = drawField('CPF', formatCPF(ficha.proprietario_cpf), yPosition);
+    yPosition = drawSection('PROPRIETÁRIO - DADOS E ACEITE JURÍDICO', yPosition);
+    yPosition = drawField('Nome', ficha.proprietario_nome || confirmacaoProprietario?.aceite_nome || '-', yPosition);
+    yPosition = drawField('CPF', formatCPF(ficha.proprietario_cpf || confirmacaoProprietario?.aceite_cpf), yPosition);
     yPosition = drawField('Telefone', formatPhone(ficha.proprietario_telefone), yPosition);
     yPosition = drawField('Confirmado em', formatDate(ficha.proprietario_confirmado_em), yPosition);
+    
+    if (confirmacaoProprietario) {
+      yPosition -= 5;
+      page.drawText('Dados da Assinatura Digital:', {
+        x: 50,
+        y: yPosition,
+        size: 9,
+        font: helveticaBold,
+        color: lightGray,
+      });
+      yPosition -= 15;
+      yPosition = drawField('Assinatura', confirmacaoProprietario.aceite_nome || '-', yPosition);
+      yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoProprietario.aceite_cpf), yPosition);
+      yPosition = drawField('IP', confirmacaoProprietario.aceite_ip || 'Não capturado', yPosition);
+      yPosition = drawField('Geolocalização', formatCoords(confirmacaoProprietario.aceite_latitude, confirmacaoProprietario.aceite_longitude), yPosition);
+      yPosition = drawField('Aceite em', confirmacaoProprietario.aceite_em ? formatDate(confirmacaoProprietario.aceite_em) : '-', yPosition);
+    }
 
-    // Buyer Section
+    // Buyer Section with Legal Data
     yPosition -= 15;
-    yPosition = drawSection('COMPRADOR/INTERESSADO', yPosition);
-    yPosition = drawField('Nome', ficha.comprador_nome, yPosition);
-    yPosition = drawField('CPF', formatCPF(ficha.comprador_cpf), yPosition);
+    yPosition = drawSection('COMPRADOR/INTERESSADO - DADOS E ACEITE JURÍDICO', yPosition);
+    yPosition = drawField('Nome', ficha.comprador_nome || confirmacaoComprador?.aceite_nome || '-', yPosition);
+    yPosition = drawField('CPF', formatCPF(ficha.comprador_cpf || confirmacaoComprador?.aceite_cpf), yPosition);
     yPosition = drawField('Telefone', formatPhone(ficha.comprador_telefone), yPosition);
     yPosition = drawField('Confirmado em', formatDate(ficha.comprador_confirmado_em), yPosition);
+    
+    if (confirmacaoComprador) {
+      yPosition -= 5;
+      page.drawText('Dados da Assinatura Digital:', {
+        x: 50,
+        y: yPosition,
+        size: 9,
+        font: helveticaBold,
+        color: lightGray,
+      });
+      yPosition -= 15;
+      yPosition = drawField('Assinatura', confirmacaoComprador.aceite_nome || '-', yPosition);
+      yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoComprador.aceite_cpf), yPosition);
+      yPosition = drawField('IP', confirmacaoComprador.aceite_ip || 'Não capturado', yPosition);
+      yPosition = drawField('Geolocalização', formatCoords(confirmacaoComprador.aceite_latitude, confirmacaoComprador.aceite_longitude), yPosition);
+      yPosition = drawField('Aceite em', confirmacaoComprador.aceite_em ? formatDate(confirmacaoComprador.aceite_em) : '-', yPosition);
+    }
 
     // Visit Section
     yPosition -= 15;
@@ -281,59 +331,165 @@ serve(async (req) => {
       }
     }
 
-    // Broker Section
-    if (profile) {
-      yPosition -= 15;
-      yPosition = drawSection('CORRETOR RESPONSÁVEL', yPosition);
-      yPosition = drawField('Nome', profile.nome, yPosition);
-      if (profile.creci) {
-        yPosition = drawField('CRECI', profile.creci, yPosition);
+    // Check if we need a second page for broker info
+    if (yPosition < 180) {
+      // Add second page
+      const page2 = pdfDoc.addPage([595, 842]);
+      yPosition = height - 50;
+      
+      // Broker Section on page 2
+      if (profile) {
+        yPosition = drawSectionOnPage(page2, 'CORRETOR RESPONSÁVEL', yPosition, helveticaBold, primaryColor);
+        yPosition = drawFieldOnPage(page2, 'Nome', profile.nome, yPosition, helveticaBold, helvetica, textColor);
+        if (profile.creci) {
+          yPosition = drawFieldOnPage(page2, 'CRECI', profile.creci, yPosition, helveticaBold, helvetica, textColor);
+        }
+        if (profile.imobiliaria) {
+          yPosition = drawFieldOnPage(page2, 'Imobiliária', profile.imobiliaria, yPosition, helveticaBold, helvetica, textColor);
+        }
+        if (profile.telefone) {
+          yPosition = drawFieldOnPage(page2, 'Telefone', formatPhone(profile.telefone), yPosition, helveticaBold, helvetica, textColor);
+        }
       }
-      if (profile.imobiliaria) {
-        yPosition = drawField('Imobiliária', profile.imobiliaria, yPosition);
+
+      // Footer on page 2
+      page2.drawLine({
+        start: { x: 50, y: 80 },
+        end: { x: width - 50, y: 80 },
+        thickness: 1,
+        color: lightGray,
+      });
+
+      page2.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
+        x: 50,
+        y: 60,
+        size: 9,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      page2.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
+        x: 50,
+        y: 48,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      page2.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, {
+        x: 50,
+        y: 35,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      page2.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
+        x: 50,
+        y: 22,
+        size: 8,
+        font: helveticaBold,
+        color: primaryColor,
+      });
+    } else {
+      // Broker Section on same page
+      if (profile) {
+        yPosition -= 15;
+        yPosition = drawSection('CORRETOR RESPONSÁVEL', yPosition);
+        yPosition = drawField('Nome', profile.nome, yPosition);
+        if (profile.creci) {
+          yPosition = drawField('CRECI', profile.creci, yPosition);
+        }
+        if (profile.imobiliaria) {
+          yPosition = drawField('Imobiliária', profile.imobiliaria, yPosition);
+        }
+        if (profile.telefone) {
+          yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
+        }
       }
-      if (profile.telefone) {
-        yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
-      }
+
+      // Footer
+      page.drawLine({
+        start: { x: 50, y: 80 },
+        end: { x: width - 50, y: 80 },
+        thickness: 1,
+        color: lightGray,
+      });
+
+      page.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
+        x: 50,
+        y: 60,
+        size: 9,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
+        x: 50,
+        y: 48,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      page.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, {
+        x: 50,
+        y: 35,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      page.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
+        x: 50,
+        y: 22,
+        size: 8,
+        font: helveticaBold,
+        color: primaryColor,
+      });
     }
 
-    // Footer
-    page.drawLine({
-      start: { x: 50, y: 80 },
-      end: { x: width - 50, y: 80 },
-      thickness: 1,
-      color: lightGray,
-    });
+    // Helper functions for second page
+    function drawSectionOnPage(p: typeof page, title: string, startY: number, boldFont: typeof helveticaBold, color: typeof primaryColor): number {
+      p.drawText(title, {
+        x: 50,
+        y: startY,
+        size: 12,
+        font: boldFont,
+        color: color,
+      });
+      return startY - 20;
+    }
 
-    page.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
-      x: 50,
-      y: 60,
-      size: 9,
-      font: helvetica,
-      color: lightGray,
-    });
-
-    page.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })}`, {
-      x: 50,
-      y: 45,
-      size: 8,
-      font: helvetica,
-      color: lightGray,
-    });
-
-    page.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
-      x: 50,
-      y: 30,
-      size: 8,
-      font: helveticaBold,
-      color: primaryColor,
-    });
+    function drawFieldOnPage(p: typeof page, label: string, value: string, startY: number, boldFont: typeof helveticaBold, regularFont: typeof helvetica, color: typeof textColor): number {
+      p.drawText(`${label}:`, {
+        x: 50,
+        y: startY,
+        size: 10,
+        font: boldFont,
+        color: color,
+      });
+      p.drawText(value || '-', {
+        x: 160,
+        y: startY,
+        size: 10,
+        font: regularFont,
+        color: color,
+      });
+      return startY - 18;
+    }
 
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();

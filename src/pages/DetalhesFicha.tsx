@@ -20,7 +20,10 @@ import {
   Send,
   MessageCircle,
   AlertCircle,
-  FileDown
+  FileDown,
+  Shield,
+  MapPin,
+  Fingerprint
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -71,6 +74,26 @@ export default function DetalhesFicha() {
     },
     enabled: !!user && !!id,
   });
+
+  // Fetch legal acceptance data
+  const { data: confirmacoes } = useQuery({
+    queryKey: ['confirmacoes', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('confirmacoes_otp')
+        .select('*')
+        .eq('ficha_id', id)
+        .eq('confirmado', true);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!id && ficha?.status === 'completo',
+  });
+
+  const confirmacaoProprietario = confirmacoes?.find(c => c.tipo === 'proprietario');
+  const confirmacaoComprador = confirmacoes?.find(c => c.tipo === 'comprador');
 
   const formatPhone = (phone: string) => {
     const numbers = phone.replace(/\D/g, '');
@@ -506,6 +529,120 @@ export default function DetalhesFicha() {
               )}
             </CardContent>
           </Card>
+
+          {/* Dados Jurídicos - Only when complete */}
+          {ficha.status === 'completo' && (confirmacaoProprietario || confirmacaoComprador) && (
+            <Card className="border-primary/20">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Dados Jurídicos das Confirmações</CardTitle>
+                    <CardDescription>Assinaturas digitais e rastreabilidade</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Proprietário Legal Data */}
+                {confirmacaoProprietario && (
+                  <div className="space-y-3 p-4 rounded-lg bg-muted/30 border">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-sm">Proprietário</span>
+                      <Badge variant="outline" className="text-xs">Confirmado</Badge>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <Fingerprint className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Assinatura</p>
+                          <p className="font-medium">{confirmacaoProprietario.aceite_nome || '-'}</p>
+                          <p className="text-xs text-muted-foreground">CPF: {formatCPF(confirmacaoProprietario.aceite_cpf)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Localização</p>
+                          {confirmacaoProprietario.aceite_latitude && confirmacaoProprietario.aceite_longitude ? (
+                            <p className="font-medium text-xs">
+                              {Number(confirmacaoProprietario.aceite_latitude).toFixed(6)}, {Number(confirmacaoProprietario.aceite_longitude).toFixed(6)}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Não capturada</p>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">IP</p>
+                        <p className="font-medium font-mono text-xs">{confirmacaoProprietario.aceite_ip || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Data/Hora do Aceite</p>
+                        <p className="font-medium">
+                          {confirmacaoProprietario.aceite_em 
+                            ? format(new Date(confirmacaoProprietario.aceite_em), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
+                            : '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Comprador Legal Data */}
+                {confirmacaoComprador && (
+                  <div className="space-y-3 p-4 rounded-lg bg-muted/30 border">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-sm">Comprador/Visitante</span>
+                      <Badge variant="outline" className="text-xs">Confirmado</Badge>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <Fingerprint className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Assinatura</p>
+                          <p className="font-medium">{confirmacaoComprador.aceite_nome || '-'}</p>
+                          <p className="text-xs text-muted-foreground">CPF: {formatCPF(confirmacaoComprador.aceite_cpf)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Localização</p>
+                          {confirmacaoComprador.aceite_latitude && confirmacaoComprador.aceite_longitude ? (
+                            <p className="font-medium text-xs">
+                              {Number(confirmacaoComprador.aceite_latitude).toFixed(6)}, {Number(confirmacaoComprador.aceite_longitude).toFixed(6)}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Não capturada</p>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">IP</p>
+                        <p className="font-medium font-mono text-xs">{confirmacaoComprador.aceite_ip || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Data/Hora do Aceite</p>
+                        <p className="font-medium">
+                          {confirmacaoComprador.aceite_em 
+                            ? format(new Date(confirmacaoComprador.aceite_em), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })
+                            : '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground text-center">
+                  Dados coletados conforme Lei 14.063/2020 para validade jurídica da assinatura eletrônica.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
