@@ -10,8 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, User, Users, Calendar, FileText, Loader2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
+import { validateCPF, formatCPF } from '@/lib/cpf';
 
 const fichaSchema = z.object({
   imovel_endereco: z.string().min(5, 'Endereço deve ter no mínimo 5 caracteres'),
@@ -104,14 +105,6 @@ export default function NovaFicha() {
     return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
   };
 
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 3) return numbers;
-    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-    if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
-  };
-
   const handlePhoneChange = (field: 'proprietario_telefone' | 'comprador_telefone', value: string) => {
     setFormData({ ...formData, [field]: formatPhone(value) });
   };
@@ -119,6 +112,10 @@ export default function NovaFicha() {
   const handleCPFChange = (field: 'proprietario_cpf' | 'comprador_cpf', value: string) => {
     setFormData({ ...formData, [field]: formatCPF(value) });
   };
+
+  // CPF validation state
+  const proprietarioCpfValid = !formData.proprietario_cpf || validateCPF(formData.proprietario_cpf);
+  const compradorCpfValid = !formData.comprador_cpf || validateCPF(formData.comprador_cpf);
 
   const generateProtocolo = async (): Promise<string> => {
     const { data, error } = await supabase.rpc('generate_protocolo');
@@ -384,7 +381,14 @@ export default function NovaFicha() {
                       value={formData.proprietario_cpf}
                       onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
                       maxLength={14}
+                      className={!proprietarioCpfValid ? 'border-destructive' : ''}
                     />
+                    {!proprietarioCpfValid && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        CPF inválido. Verifique os dígitos.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -454,7 +458,14 @@ export default function NovaFicha() {
                       value={formData.comprador_cpf}
                       onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
                       maxLength={14}
+                      className={!compradorCpfValid ? 'border-destructive' : ''}
                     />
+                    {!compradorCpfValid && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        CPF inválido. Verifique os dígitos.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
