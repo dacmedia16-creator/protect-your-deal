@@ -15,6 +15,7 @@ import ListaClientes from "./pages/ListaClientes";
 import FormCliente from "./pages/FormCliente";
 import DetalhesCliente from "./pages/DetalhesCliente";
 import Integracoes from "./pages/Integracoes";
+import TemplatesMensagem from "./pages/TemplatesMensagem";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/clientes/:id" element={<DetalhesCliente />} />
             <Route path="/clientes/:id/editar" element={<FormCliente />} />
             <Route path="/integracoes" element={<Integracoes />} />
+            <Route path="/integracoes/templates" element={<TemplatesMensagem />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

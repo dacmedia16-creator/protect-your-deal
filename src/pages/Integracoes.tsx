@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plug, RefreshCw, CheckCircle, XCircle, Building, Users, Loader2, MessageCircle, Send } from "lucide-react";
+import { ArrowLeft, Plug, RefreshCw, CheckCircle, XCircle, Building, Users, Loader2, MessageCircle, Send, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -399,6 +399,16 @@ const Integracoes = () => {
                 </p>
               </div>
             )}
+
+            {/* Templates Link */}
+            <Button 
+              variant="secondary"
+              className="w-full"
+              onClick={() => navigate('/integracoes/templates')}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Configurar Templates de Mensagem
+            </Button>
           </CardContent>
         </Card>
       </main>
