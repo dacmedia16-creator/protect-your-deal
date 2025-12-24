@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { ficha_id } = await req.json();
+    const { ficha_id, app_url } = await req.json();
 
     if (!ficha_id) {
       return new Response(
@@ -57,8 +57,10 @@ serve(async (req) => {
       .eq('user_id', ficha.user_id)
       .single();
 
-    // Generate verification URL
-    const verificationUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/confirmar/${ficha.protocolo}`;
+    // Generate verification URL using app_url from frontend or fallback
+    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://visitasegura.lovable.app';
+    const verificationUrl = `${baseUrl}/verificar/${ficha.protocolo}`;
+    console.log('Generated verification URL:', verificationUrl);
 
     // Create PDF
     const pdfDoc = await PDFDocument.create();

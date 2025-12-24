@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.send-whatsapp]
 verify_jwt = true
+
+[functions.verify-comprovante]
+verify_jwt = false

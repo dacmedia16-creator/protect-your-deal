@@ -16,7 +16,9 @@ import FormCliente from "./pages/FormCliente";
 import DetalhesCliente from "./pages/DetalhesCliente";
 import Integracoes from "./pages/Integracoes";
 import TemplatesMensagem from "./pages/TemplatesMensagem";
+import VerificarComprovante from "./pages/VerificarComprovante";
 import NotFound from "./pages/NotFound";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,6 +36,7 @@ const App = () => (
             <Route path="/fichas/nova" element={<NovaFicha />} />
             <Route path="/fichas/:id" element={<DetalhesFicha />} />
             <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
+            <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
             <Route path="/clientes" element={<ListaClientes />} />
             <Route path="/clientes/novo" element={<FormCliente />} />
             <Route path="/clientes/:id" element={<DetalhesCliente />} />
