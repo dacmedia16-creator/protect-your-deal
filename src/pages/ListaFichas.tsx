@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,11 +15,11 @@ import {
   Clock,
   Search,
   Loader2,
-  Building2
+  Building2,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState } from 'react';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -29,10 +29,18 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   expirado: { label: 'Expirado', variant: 'destructive', icon: Clock },
 };
 
+const statusFilterLabels: Record<string, string> = {
+  completo: 'Confirmadas',
+  pendente: 'Pendentes',
+};
+
 export default function ListaFichas() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const statusFilter = searchParams.get('status');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -57,6 +65,13 @@ export default function ListaFichas() {
   });
 
   const filteredFichas = fichas?.filter(ficha => {
+    // Apply status filter
+    if (statusFilter) {
+      if (statusFilter === 'pendente' && ficha.status === 'completo') return false;
+      if (statusFilter === 'completo' && ficha.status !== 'completo') return false;
+    }
+    
+    // Apply search filter
     const term = searchTerm.toLowerCase();
     return (
       ficha.protocolo.toLowerCase().includes(term) ||
@@ -65,6 +80,10 @@ export default function ListaFichas() {
       ficha.comprador_nome.toLowerCase().includes(term)
     );
   });
+
+  const clearStatusFilter = () => {
+    setSearchParams({});
+  };
 
   if (authLoading) {
     return (
@@ -100,6 +119,21 @@ export default function ListaFichas() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
+        {/* Status Filter Badge */}
+        {statusFilter && (
+          <div className="mb-4">
+            <Badge variant="secondary" className="gap-2 text-sm py-1.5 px-3">
+              Filtro: {statusFilterLabels[statusFilter] || statusFilter}
+              <button 
+                onClick={clearStatusFilter}
+                className="hover:bg-muted rounded-full p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          </div>
+        )}
+
         {/* Search */}
         <div className="mb-6">
           <div className="relative max-w-md">
