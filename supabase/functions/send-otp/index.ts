@@ -182,6 +182,7 @@ serve(async (req) => {
     // Get phone based on tipo
     const telefone = tipo === 'proprietario' ? ficha.proprietario_telefone : ficha.comprador_telefone;
     const nome = tipo === 'proprietario' ? ficha.proprietario_nome : ficha.comprador_nome;
+    const autopreenchimento = tipo === 'proprietario' ? ficha.proprietario_autopreenchimento : ficha.comprador_autopreenchimento;
 
     // Generate OTP and token
     const codigo = generateOTP();
@@ -267,9 +268,14 @@ serve(async (req) => {
     } else {
       // Use default message
       const tipoLabel = tipo === 'proprietario' ? 'proprietário' : 'visitante';
-      message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+      const saudacao = nome && nome.trim() ? `Olá ${nome}!` : 'Olá!';
+      const instrucaoExtra = autopreenchimento 
+        ? '\n\n📝 *Você precisará preencher seus dados (nome e CPF) ao confirmar.*'
+        : '';
       
-      console.log('Using default template');
+      message = `🏠 *VisitaSegura*\n\n${saudacao}\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}${instrucaoExtra}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+      
+      console.log('Using default template, autopreenchimento:', autopreenchimento);
     }
 
     // Try to send via ZionTalk first (primary)
