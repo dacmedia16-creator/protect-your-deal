@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   Plus, 
@@ -15,8 +16,7 @@ import {
   Clock,
   Search,
   Loader2,
-  Building2,
-  X
+  Building2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -81,9 +81,20 @@ export default function ListaFichas() {
     );
   });
 
-  const clearStatusFilter = () => {
-    setSearchParams({});
+  // Count for tabs
+  const allCount = fichas?.length || 0;
+  const pendingCount = fichas?.filter(f => f.status !== 'completo').length || 0;
+  const confirmedCount = fichas?.filter(f => f.status === 'completo').length || 0;
+
+  const handleTabChange = (value: string) => {
+    if (value === 'todas') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ status: value });
+    }
   };
+
+  const currentTab = statusFilter || 'todas';
 
   if (authLoading) {
     return (
@@ -119,20 +130,29 @@ export default function ListaFichas() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        {/* Status Filter Badge */}
-        {statusFilter && (
-          <div className="mb-4">
-            <Badge variant="secondary" className="gap-2 text-sm py-1.5 px-3">
-              Filtro: {statusFilterLabels[statusFilter] || statusFilter}
-              <button 
-                onClick={clearStatusFilter}
-                className="hover:bg-muted rounded-full p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          </div>
-        )}
+        {/* Filter Tabs */}
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="mb-6">
+          <TabsList className="bg-muted">
+            <TabsTrigger value="todas" className="gap-2">
+              Todas
+              <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
+                {allCount}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pendente" className="gap-2">
+              Pendentes
+              <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
+                {pendingCount}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="completo" className="gap-2">
+              Confirmadas
+              <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
+                {confirmedCount}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Search */}
         <div className="mb-6">
