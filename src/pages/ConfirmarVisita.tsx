@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, Building2, Calendar, CheckCircle, AlertCircle, Loader2, XCircle, RefreshCw, MapPin, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { validateCPF, formatCPF } from '@/lib/cpf';
 
 interface FichaInfo {
   protocolo: string;
@@ -29,21 +30,6 @@ interface OtpInfo {
   expira_em?: string;
   ficha_id?: string;
 }
-
-// Format CPF as user types
-const formatCPF = (value: string): string => {
-  const numbers = value.replace(/\D/g, '').slice(0, 11);
-  if (numbers.length <= 3) return numbers;
-  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-  if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;
-};
-
-// Validate CPF digits
-const isValidCPF = (cpf: string): boolean => {
-  const numbers = cpf.replace(/\D/g, '');
-  return numbers.length === 11;
-};
 
 export default function ConfirmarVisita() {
   const { token } = useParams<{ token: string }>();
@@ -139,12 +125,12 @@ export default function ConfirmarVisita() {
       return;
     }
 
-    // Validate CPF
-    if (!isValidCPF(aceiteCpf)) {
+    // Validate CPF with digit verification
+    if (!validateCPF(aceiteCpf)) {
       toast({
         variant: 'destructive',
         title: 'CPF inválido',
-        description: 'Digite um CPF válido com 11 dígitos',
+        description: 'O CPF informado é inválido. Verifique os dígitos.',
       });
       return;
     }
@@ -269,7 +255,7 @@ export default function ConfirmarVisita() {
   };
 
   // Form validation state
-  const isFormValid = codigo.length === 6 && aceiteLegal && aceiteNome.trim().length >= 3 && isValidCPF(aceiteCpf);
+  const isFormValid = codigo.length === 6 && aceiteLegal && aceiteNome.trim().length >= 3 && validateCPF(aceiteCpf);
 
   if (loading) {
     return (

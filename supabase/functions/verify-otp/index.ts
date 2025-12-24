@@ -58,11 +58,56 @@ serve(async (req) => {
       );
     }
 
-    if (!aceite_cpf || aceite_cpf.replace(/\D/g, '').length !== 11) {
+    const cpfNumbers = aceite_cpf.replace(/\D/g, '');
+    if (cpfNumbers.length !== 11) {
       return new Response(
-        JSON.stringify({ error: 'CPF válido é obrigatório' }),
+        JSON.stringify({ error: 'CPF deve ter 11 dígitos' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Validate CPF checksum digits
+    if (!validateCPF(cpfNumbers)) {
+      return new Response(
+        JSON.stringify({ error: 'CPF inválido. Verifique os dígitos.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // CPF validation function
+    function validateCPF(cpf: string): boolean {
+      // Reject known invalid patterns (all same digit)
+      if (/^(\d)\1{10}$/.test(cpf)) {
+        return false;
+      }
+
+      // Calculate first verification digit
+      let sum = 0;
+      for (let i = 0; i < 9; i++) {
+        sum += parseInt(cpf[i]) * (10 - i);
+      }
+      let remainder = (sum * 10) % 11;
+      if (remainder === 10 || remainder === 11) {
+        remainder = 0;
+      }
+      if (remainder !== parseInt(cpf[9])) {
+        return false;
+      }
+
+      // Calculate second verification digit
+      sum = 0;
+      for (let i = 0; i < 10; i++) {
+        sum += parseInt(cpf[i]) * (11 - i);
+      }
+      remainder = (sum * 10) % 11;
+      if (remainder === 10 || remainder === 11) {
+        remainder = 0;
+      }
+      if (remainder !== parseInt(cpf[10])) {
+        return false;
+      }
+
+      return true;
     }
 
     // Find OTP by token
