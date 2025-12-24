@@ -65,6 +65,8 @@ serve(async (req) => {
             data_visita: ficha.data_visita,
             proprietario_nome: ficha.proprietario_nome,
             comprador_nome: ficha.comprador_nome,
+            proprietario_autopreenchimento: ficha.proprietario_autopreenchimento,
+            comprador_autopreenchimento: ficha.comprador_autopreenchimento,
             status: ficha.status,
           } : null
         }),
@@ -92,6 +94,8 @@ serve(async (req) => {
           data_visita: ficha.data_visita,
           proprietario_nome: ficha.proprietario_nome,
           comprador_nome: ficha.comprador_nome,
+          proprietario_autopreenchimento: ficha.proprietario_autopreenchimento,
+          comprador_autopreenchimento: ficha.comprador_autopreenchimento,
           status: ficha.status,
         } : null
       }),

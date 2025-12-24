@@ -15,8 +15,10 @@ interface FichaInfo {
   imovel_endereco: string;
   imovel_tipo: string;
   data_visita: string;
-  proprietario_nome: string;
-  comprador_nome: string;
+  proprietario_nome: string | null;
+  comprador_nome: string | null;
+  proprietario_autopreenchimento?: boolean;
+  comprador_autopreenchimento?: boolean;
   status: string;
   ficha_id?: string;
 }

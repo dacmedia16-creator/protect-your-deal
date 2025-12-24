@@ -155,10 +155,30 @@ serve(async (req) => {
       aceite_em: new Date().toISOString()
     });
 
-    // Update ficha with confirmation timestamp
+    // Check if this is autopreenchimento mode (name is null in ficha)
+    const ficha = otp.fichas_visita;
+    const isAutopreenchimento = otp.tipo === 'proprietario' 
+      ? !ficha.proprietario_nome || ficha.proprietario_autopreenchimento
+      : !ficha.comprador_nome || ficha.comprador_autopreenchimento;
+
+    // Update ficha with confirmation timestamp and data if autopreenchimento
     const updateField = otp.tipo === 'proprietario' 
-      ? { proprietario_confirmado_em: new Date().toISOString() }
-      : { comprador_confirmado_em: new Date().toISOString() };
+      ? { 
+          proprietario_confirmado_em: new Date().toISOString(),
+          ...(isAutopreenchimento && {
+            proprietario_nome: aceite_nome.trim(),
+            proprietario_cpf: aceite_cpf.replace(/\D/g, '')
+          })
+        }
+      : { 
+          comprador_confirmado_em: new Date().toISOString(),
+          ...(isAutopreenchimento && {
+            comprador_nome: aceite_nome.trim(),
+            comprador_cpf: aceite_cpf.replace(/\D/g, '')
+          })
+        };
+
+    console.log('Updating ficha with:', { isAutopreenchimento, updateField: { ...updateField, aceite_cpf: '***' } });
 
     await supabase
       .from('fichas_visita')

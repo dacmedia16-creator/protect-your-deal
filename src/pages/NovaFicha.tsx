@@ -16,17 +16,43 @@ import { z } from 'zod';
 const fichaSchema = z.object({
   imovel_endereco: z.string().min(5, 'Endereço deve ter no mínimo 5 caracteres'),
   imovel_tipo: z.string().min(1, 'Selecione o tipo do imóvel'),
-  proprietario_nome: z.string().min(2, 'Nome do proprietário é obrigatório'),
+  proprietario_autopreenchimento: z.boolean().default(false),
+  proprietario_nome: z.string().optional(),
   proprietario_cpf: z.string().optional(),
   proprietario_telefone: z.string().min(10, 'Telefone do proprietário é obrigatório'),
-  comprador_nome: z.string().min(2, 'Nome do comprador é obrigatório'),
+  comprador_autopreenchimento: z.boolean().default(false),
+  comprador_nome: z.string().optional(),
   comprador_cpf: z.string().optional(),
   comprador_telefone: z.string().min(10, 'Telefone do comprador é obrigatório'),
   data_visita: z.string().min(1, 'Data da visita é obrigatória'),
   observacoes: z.string().optional(),
-});
+}).refine((data) => {
+  if (!data.proprietario_autopreenchimento && (!data.proprietario_nome || data.proprietario_nome.length < 2)) {
+    return false;
+  }
+  return true;
+}, { message: 'Nome do proprietário é obrigatório', path: ['proprietario_nome'] })
+.refine((data) => {
+  if (!data.comprador_autopreenchimento && (!data.comprador_nome || data.comprador_nome.length < 2)) {
+    return false;
+  }
+  return true;
+}, { message: 'Nome do comprador é obrigatório', path: ['comprador_nome'] });
 
-type FichaFormData = z.infer<typeof fichaSchema>;
+type FichaFormData = {
+  imovel_endereco: string;
+  imovel_tipo: string;
+  proprietario_autopreenchimento: boolean;
+  proprietario_nome: string;
+  proprietario_cpf: string;
+  proprietario_telefone: string;
+  comprador_autopreenchimento: boolean;
+  comprador_nome: string;
+  comprador_cpf: string;
+  comprador_telefone: string;
+  data_visita: string;
+  observacoes: string;
+};
 
 const tiposImovel = [
   'Apartamento',
@@ -52,9 +78,11 @@ export default function NovaFicha() {
   const [formData, setFormData] = useState<FichaFormData>({
     imovel_endereco: '',
     imovel_tipo: '',
+    proprietario_autopreenchimento: false,
     proprietario_nome: '',
     proprietario_cpf: '',
     proprietario_telefone: '',
+    comprador_autopreenchimento: false,
     comprador_nome: '',
     comprador_cpf: '',
     comprador_telefone: '',
@@ -138,10 +166,12 @@ export default function NovaFicha() {
           protocolo,
           imovel_endereco: formData.imovel_endereco,
           imovel_tipo: formData.imovel_tipo,
-          proprietario_nome: formData.proprietario_nome,
+          proprietario_autopreenchimento: formData.proprietario_autopreenchimento,
+          proprietario_nome: formData.proprietario_autopreenchimento ? null : formData.proprietario_nome,
           proprietario_cpf: formData.proprietario_cpf || null,
           proprietario_telefone: formData.proprietario_telefone.replace(/\D/g, ''),
-          comprador_nome: formData.comprador_nome,
+          comprador_autopreenchimento: formData.comprador_autopreenchimento,
+          comprador_nome: formData.comprador_autopreenchimento ? null : formData.comprador_nome,
           comprador_cpf: formData.comprador_cpf || null,
           comprador_telefone: formData.comprador_telefone.replace(/\D/g, ''),
           data_visita: formData.data_visita,
@@ -316,28 +346,48 @@ export default function NovaFicha() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="proprietario_nome">Nome completo *</Label>
-                  <Input
-                    id="proprietario_nome"
-                    placeholder="Nome do proprietário"
-                    value={formData.proprietario_nome}
-                    onChange={(e) => setFormData({ ...formData, proprietario_nome: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="proprietario_cpf">CPF</Label>
-                  <Input
-                    id="proprietario_cpf"
-                    placeholder="000.000.000-00"
-                    value={formData.proprietario_cpf}
-                    onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
-                    maxLength={14}
-                  />
-                </div>
+              {/* Toggle de autopreenchimento */}
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                <Checkbox 
+                  id="proprietario_autopreenchimento"
+                  checked={formData.proprietario_autopreenchimento}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    proprietario_autopreenchimento: checked === true,
+                    proprietario_nome: checked ? '' : formData.proprietario_nome,
+                    proprietario_cpf: checked ? '' : formData.proprietario_cpf
+                  })}
+                />
+                <label htmlFor="proprietario_autopreenchimento" className="text-sm cursor-pointer">
+                  <span className="font-medium">Deixar o proprietário preencher</span>
+                  <p className="text-xs text-muted-foreground">O proprietário preencherá nome e CPF ao confirmar a visita</p>
+                </label>
               </div>
+
+              {!formData.proprietario_autopreenchimento && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="proprietario_nome">Nome completo *</Label>
+                    <Input
+                      id="proprietario_nome"
+                      placeholder="Nome do proprietário"
+                      value={formData.proprietario_nome}
+                      onChange={(e) => setFormData({ ...formData, proprietario_nome: e.target.value })}
+                      required={!formData.proprietario_autopreenchimento}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="proprietario_cpf">CPF</Label>
+                    <Input
+                      id="proprietario_cpf"
+                      placeholder="000.000.000-00"
+                      value={formData.proprietario_cpf}
+                      onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
+                      maxLength={14}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="proprietario_telefone">Telefone (WhatsApp) *</Label>
                 <Input
@@ -366,28 +416,48 @@ export default function NovaFicha() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="comprador_nome">Nome completo *</Label>
-                  <Input
-                    id="comprador_nome"
-                    placeholder="Nome do comprador"
-                    value={formData.comprador_nome}
-                    onChange={(e) => setFormData({ ...formData, comprador_nome: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="comprador_cpf">CPF</Label>
-                  <Input
-                    id="comprador_cpf"
-                    placeholder="000.000.000-00"
-                    value={formData.comprador_cpf}
-                    onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
-                    maxLength={14}
-                  />
-                </div>
+              {/* Toggle de autopreenchimento */}
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                <Checkbox 
+                  id="comprador_autopreenchimento"
+                  checked={formData.comprador_autopreenchimento}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    comprador_autopreenchimento: checked === true,
+                    comprador_nome: checked ? '' : formData.comprador_nome,
+                    comprador_cpf: checked ? '' : formData.comprador_cpf
+                  })}
+                />
+                <label htmlFor="comprador_autopreenchimento" className="text-sm cursor-pointer">
+                  <span className="font-medium">Deixar o comprador preencher</span>
+                  <p className="text-xs text-muted-foreground">O comprador preencherá nome e CPF ao confirmar a visita</p>
+                </label>
               </div>
+
+              {!formData.comprador_autopreenchimento && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="comprador_nome">Nome completo *</Label>
+                    <Input
+                      id="comprador_nome"
+                      placeholder="Nome do comprador"
+                      value={formData.comprador_nome}
+                      onChange={(e) => setFormData({ ...formData, comprador_nome: e.target.value })}
+                      required={!formData.comprador_autopreenchimento}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comprador_cpf">CPF</Label>
+                    <Input
+                      id="comprador_cpf"
+                      placeholder="000.000.000-00"
+                      value={formData.comprador_cpf}
+                      onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
+                      maxLength={14}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="comprador_telefone">Telefone (WhatsApp) *</Label>
                 <Input

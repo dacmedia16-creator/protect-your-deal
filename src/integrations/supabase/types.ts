@@ -129,9 +129,10 @@ export type Database = {
       }
       fichas_visita: {
         Row: {
+          comprador_autopreenchimento: boolean | null
           comprador_confirmado_em: string | null
           comprador_cpf: string | null
-          comprador_nome: string
+          comprador_nome: string | null
           comprador_telefone: string
           created_at: string
           data_visita: string
@@ -139,9 +140,10 @@ export type Database = {
           imovel_endereco: string
           imovel_tipo: string
           observacoes: string | null
+          proprietario_autopreenchimento: boolean | null
           proprietario_confirmado_em: string | null
           proprietario_cpf: string | null
-          proprietario_nome: string
+          proprietario_nome: string | null
           proprietario_telefone: string
           protocolo: string
           status: string
@@ -149,9 +151,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          comprador_autopreenchimento?: boolean | null
           comprador_confirmado_em?: string | null
           comprador_cpf?: string | null
-          comprador_nome: string
+          comprador_nome?: string | null
           comprador_telefone: string
           created_at?: string
           data_visita: string
@@ -159,9 +162,10 @@ export type Database = {
           imovel_endereco: string
           imovel_tipo: string
           observacoes?: string | null
+          proprietario_autopreenchimento?: boolean | null
           proprietario_confirmado_em?: string | null
           proprietario_cpf?: string | null
-          proprietario_nome: string
+          proprietario_nome?: string | null
           proprietario_telefone: string
           protocolo: string
           status?: string
@@ -169,9 +173,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          comprador_autopreenchimento?: boolean | null
           comprador_confirmado_em?: string | null
           comprador_cpf?: string | null
-          comprador_nome?: string
+          comprador_nome?: string | null
           comprador_telefone?: string
           created_at?: string
           data_visita?: string
@@ -179,9 +184,10 @@ export type Database = {
           imovel_endereco?: string
           imovel_tipo?: string
           observacoes?: string | null
+          proprietario_autopreenchimento?: boolean | null
           proprietario_confirmado_em?: string | null
           proprietario_cpf?: string | null
-          proprietario_nome?: string
+          proprietario_nome?: string | null
           proprietario_telefone?: string
           protocolo?: string
           status?: string
