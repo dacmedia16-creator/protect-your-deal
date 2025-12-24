@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Building2, Calendar, CheckCircle, AlertCircle, Loader2, XCircle } from 'lucide-react';
+import { Shield, Building2, Calendar, CheckCircle, AlertCircle, Loader2, XCircle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -17,12 +17,14 @@ interface FichaInfo {
   proprietario_nome: string;
   comprador_nome: string;
   status: string;
+  ficha_id?: string;
 }
 
 interface OtpInfo {
   tipo: 'proprietario' | 'comprador';
   confirmado: boolean;
   expira_em?: string;
+  ficha_id?: string;
 }
 
 export default function ConfirmarVisita() {
@@ -31,6 +33,7 @@ export default function ConfirmarVisita() {
   
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -38,6 +41,7 @@ export default function ConfirmarVisita() {
   const [expired, setExpired] = useState(false);
   const [ficha, setFicha] = useState<FichaInfo | null>(null);
   const [otpInfo, setOtpInfo] = useState<OtpInfo | null>(null);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   useEffect(() => {
     async function loadOtpInfo() {
@@ -128,6 +132,54 @@ export default function ConfirmarVisita() {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (!otpInfo?.ficha_id || !otpInfo?.tipo) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Informações insuficientes para reenviar o código',
+      });
+      return;
+    }
+
+    setResending(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { 
+          ficha_id: otpInfo.ficha_id, 
+          tipo: otpInfo.tipo,
+          app_url: window.location.origin
+        },
+      });
+
+      if (error || data?.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: data?.error || 'Erro ao reenviar código',
+        });
+        return;
+      }
+
+      setResendSuccess(true);
+      setExpired(false);
+      setCodigo('');
+      toast({
+        title: 'Código reenviado!',
+        description: 'Um novo código foi enviado para seu WhatsApp',
+      });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao reenviar código',
+      });
+    } finally {
+      setResending(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -159,16 +211,34 @@ export default function ConfirmarVisita() {
               <p className="text-muted-foreground">{error}</p>
             </CardContent>
           </Card>
-        ) : expired ? (
+        ) : expired && !resendSuccess ? (
           <Card className="w-full border-warning/50">
             <CardContent className="pt-6 text-center">
               <div className="h-16 w-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="h-8 w-8 text-warning" />
               </div>
               <h2 className="font-display text-xl font-bold mb-2">Código expirado</h2>
-              <p className="text-muted-foreground">
-                O código de confirmação expirou. Solicite um novo código ao corretor.
+              <p className="text-muted-foreground mb-4">
+                O código de confirmação expirou.
               </p>
+              <Button 
+                onClick={handleResendOtp} 
+                disabled={resending}
+                variant="outline"
+                className="w-full"
+              >
+                {resending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Reenviando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reenviar código por WhatsApp
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
         ) : alreadyConfirmed || success ? (

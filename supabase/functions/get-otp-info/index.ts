@@ -56,6 +56,7 @@ serve(async (req) => {
           otp: {
             tipo: otp.tipo,
             confirmado: true,
+            ficha_id: otp.ficha_id,
           },
           ficha: ficha ? {
             protocolo: ficha.protocolo,
@@ -82,6 +83,7 @@ serve(async (req) => {
           tipo: otp.tipo,
           confirmado: false,
           expira_em: otp.expira_em,
+          ficha_id: otp.ficha_id,
         },
         ficha: ficha ? {
           protocolo: ficha.protocolo,
