@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1';
-import QRCode from 'https://esm.sh/qrcode@1.5.3';
+import qrcode from 'https://esm.sh/qrcode-generator@1.4.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,13 +59,6 @@ serve(async (req) => {
 
     // Generate verification URL
     const verificationUrl = `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/confirmar/${ficha.protocolo}`;
-    
-    // Generate QR code as data URL
-    const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
-      width: 120,
-      margin: 1,
-      color: { dark: '#1e3a5f', light: '#ffffff' }
-    });
 
     // Create PDF
     const pdfDoc = await PDFDocument.create();
@@ -108,19 +101,44 @@ serve(async (req) => {
       color: primaryColor,
     });
 
-    // QR Code
-    const qrImageBytes = await fetch(qrCodeDataUrl).then(res => res.arrayBuffer());
-    const qrImage = await pdfDoc.embedPng(qrImageBytes);
-    page.drawImage(qrImage, {
-      x: width - 170,
-      y: height - 180,
-      width: 100,
-      height: 100,
+    // Generate QR Code using qrcode-generator (works without canvas/DOM)
+    const qr = qrcode(0, 'M'); // 0 = auto type number, 'M' = medium error correction
+    qr.addData(verificationUrl);
+    qr.make();
+
+    const moduleCount = qr.getModuleCount();
+    const cellSize = 3; // Size of each QR module in PDF points
+    const qrSize = moduleCount * cellSize;
+    const qrX = width - 150;
+    const qrY = height - 80 - qrSize;
+
+    // Draw white background for QR code
+    page.drawRectangle({
+      x: qrX - 5,
+      y: qrY - 5,
+      width: qrSize + 10,
+      height: qrSize + 10,
+      color: rgb(1, 1, 1),
     });
 
+    // Draw QR code pixel by pixel
+    for (let row = 0; row < moduleCount; row++) {
+      for (let col = 0; col < moduleCount; col++) {
+        if (qr.isDark(row, col)) {
+          page.drawRectangle({
+            x: qrX + col * cellSize,
+            y: qrY + (moduleCount - row - 1) * cellSize,
+            width: cellSize,
+            height: cellSize,
+            color: primaryColor,
+          });
+        }
+      }
+    }
+
     page.drawText('Escaneie para verificar', {
-      x: width - 175,
-      y: height - 195,
+      x: qrX - 5,
+      y: qrY - 15,
       size: 8,
       font: helvetica,
       color: lightGray,
