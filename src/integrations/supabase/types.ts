@@ -58,6 +58,14 @@ export type Database = {
       }
       confirmacoes_otp: {
         Row: {
+          aceite_cpf: string | null
+          aceite_em: string | null
+          aceite_ip: string | null
+          aceite_latitude: number | null
+          aceite_legal: boolean | null
+          aceite_longitude: number | null
+          aceite_nome: string | null
+          aceite_user_agent: string | null
           codigo: string
           confirmado: boolean | null
           created_at: string
@@ -70,6 +78,14 @@ export type Database = {
           token: string
         }
         Insert: {
+          aceite_cpf?: string | null
+          aceite_em?: string | null
+          aceite_ip?: string | null
+          aceite_latitude?: number | null
+          aceite_legal?: boolean | null
+          aceite_longitude?: number | null
+          aceite_nome?: string | null
+          aceite_user_agent?: string | null
           codigo: string
           confirmado?: boolean | null
           created_at?: string
@@ -82,6 +98,14 @@ export type Database = {
           token: string
         }
         Update: {
+          aceite_cpf?: string | null
+          aceite_em?: string | null
+          aceite_ip?: string | null
+          aceite_latitude?: number | null
+          aceite_legal?: boolean | null
+          aceite_longitude?: number | null
+          aceite_nome?: string | null
+          aceite_user_agent?: string | null
           codigo?: string
           confirmado?: boolean | null
           created_at?: string

@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Building2, Calendar, CheckCircle, AlertCircle, Loader2, XCircle, RefreshCw } from 'lucide-react';
+import { Shield, Building2, Calendar, CheckCircle, AlertCircle, Loader2, XCircle, RefreshCw, MapPin, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -27,6 +28,21 @@ interface OtpInfo {
   ficha_id?: string;
 }
 
+// Format CPF as user types
+const formatCPF = (value: string): string => {
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+  if (numbers.length <= 3) return numbers;
+  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+  if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9)}`;
+};
+
+// Validate CPF digits
+const isValidCPF = (cpf: string): boolean => {
+  const numbers = cpf.replace(/\D/g, '');
+  return numbers.length === 11;
+};
+
 export default function ConfirmarVisita() {
   const { token } = useParams<{ token: string }>();
   const { toast } = useToast();
@@ -42,6 +58,12 @@ export default function ConfirmarVisita() {
   const [ficha, setFicha] = useState<FichaInfo | null>(null);
   const [otpInfo, setOtpInfo] = useState<OtpInfo | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
+
+  // Legal acceptance fields
+  const [aceiteLegal, setAceiteLegal] = useState(false);
+  const [aceiteNome, setAceiteNome] = useState('');
+  const [aceiteCpf, setAceiteCpf] = useState('');
+  const [captandoLocalizacao, setCaptandoLocalizacao] = useState(false);
 
   useEffect(() => {
     async function loadOtpInfo() {
@@ -85,6 +107,7 @@ export default function ConfirmarVisita() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate OTP code
     if (codigo.length !== 6) {
       toast({
         variant: 'destructive',
@@ -94,11 +117,74 @@ export default function ConfirmarVisita() {
       return;
     }
 
+    // Validate legal acceptance
+    if (!aceiteLegal) {
+      toast({
+        variant: 'destructive',
+        title: 'Aceite obrigatório',
+        description: 'Você deve aceitar a declaração para continuar',
+      });
+      return;
+    }
+
+    // Validate name
+    if (aceiteNome.trim().length < 3) {
+      toast({
+        variant: 'destructive',
+        title: 'Nome inválido',
+        description: 'Digite seu nome completo',
+      });
+      return;
+    }
+
+    // Validate CPF
+    if (!isValidCPF(aceiteCpf)) {
+      toast({
+        variant: 'destructive',
+        title: 'CPF inválido',
+        description: 'Digite um CPF válido com 11 dígitos',
+      });
+      return;
+    }
+
     setVerifying(true);
+    setCaptandoLocalizacao(true);
+
+    // Try to get geolocation (optional)
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+
+    try {
+      if (navigator.geolocation) {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          });
+        });
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      }
+    } catch (geoError) {
+      // Geolocation is optional, continue without it
+      console.log('Geolocation not available or denied');
+    }
+
+    setCaptandoLocalizacao(false);
 
     try {
       const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: { token, codigo },
+        body: { 
+          token, 
+          codigo,
+          aceite_legal: aceiteLegal,
+          aceite_nome: aceiteNome.trim(),
+          aceite_cpf: aceiteCpf.replace(/\D/g, ''),
+          aceite_latitude: latitude,
+          aceite_longitude: longitude,
+          aceite_user_agent: navigator.userAgent
+        },
       });
 
       if (error || data.error) {
@@ -179,6 +265,9 @@ export default function ConfirmarVisita() {
       setResending(false);
     }
   };
+
+  // Form validation state
+  const isFormValid = codigo.length === 6 && aceiteLegal && aceiteNome.trim().length >= 3 && isValidCPF(aceiteCpf);
 
   if (loading) {
     return (
@@ -307,7 +396,8 @@ export default function ConfirmarVisita() {
               )}
 
               {/* OTP Form */}
-              <form onSubmit={handleVerify} className="space-y-4">
+              <form onSubmit={handleVerify} className="space-y-6">
+                {/* OTP Code */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Digite o código de 6 dígitos</label>
                   <Input
@@ -325,12 +415,71 @@ export default function ConfirmarVisita() {
                     O código foi enviado para seu WhatsApp
                   </p>
                 </div>
+
+                {/* Digital Signature Section */}
+                <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Assinatura Digital
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nome completo</label>
+                      <Input
+                        type="text"
+                        placeholder="Digite seu nome completo"
+                        value={aceiteNome}
+                        onChange={(e) => setAceiteNome(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">CPF</label>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="000.000.000-00"
+                        value={aceiteCpf}
+                        onChange={(e) => setAceiteCpf(formatCPF(e.target.value))}
+                        maxLength={14}
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Legal Acceptance */}
+                <div className="flex items-start gap-3 p-4 rounded-lg border bg-primary/5">
+                  <Checkbox 
+                    id="aceite-legal"
+                    checked={aceiteLegal}
+                    onCheckedChange={(checked) => setAceiteLegal(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="aceite-legal" className="text-sm leading-relaxed cursor-pointer">
+                    Declaro que fui apresentado ao imóvel por intermédio do corretor acima identificado.
+                  </label>
+                </div>
+
+                {/* Geolocation Notice */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground p-3 rounded-lg bg-muted/50">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span>
+                    Sua localização e IP serão registrados para fins de segurança jurídica.
+                  </span>
+                </div>
                 
-                <Button type="submit" className="w-full" disabled={verifying || codigo.length !== 6}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={verifying || !isFormValid}
+                >
                   {verifying ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Verificando...
+                      {captandoLocalizacao ? 'Capturando localização...' : 'Verificando...'}
                     </>
                   ) : (
                     <>
