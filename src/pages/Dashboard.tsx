@@ -13,7 +13,8 @@ import {
   Plus,
   CheckCircle,
   Clock,
-  LogOut
+  LogOut,
+  Plug
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -220,6 +221,21 @@ export default function Dashboard() {
               <CardTitle>Relatórios</CardTitle>
               <CardDescription>
                 Visualize estatísticas e histórico
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-medium transition-shadow group"
+            onClick={() => navigate('/integracoes')}
+          >
+            <CardHeader>
+              <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Plug className="h-6 w-6 text-secondary-foreground" />
+              </div>
+              <CardTitle>Integrações</CardTitle>
+              <CardDescription>
+                Conecte com Imoview e outros sistemas
               </CardDescription>
             </CardHeader>
           </Card>

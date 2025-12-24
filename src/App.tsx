@@ -14,8 +14,8 @@ import ConfirmarVisita from "./pages/ConfirmarVisita";
 import ListaClientes from "./pages/ListaClientes";
 import FormCliente from "./pages/FormCliente";
 import DetalhesCliente from "./pages/DetalhesCliente";
+import Integracoes from "./pages/Integracoes";
 import NotFound from "./pages/NotFound";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/clientes/novo" element={<FormCliente />} />
             <Route path="/clientes/:id" element={<DetalhesCliente />} />
             <Route path="/clientes/:id/editar" element={<FormCliente />} />
+            <Route path="/integracoes" element={<Integracoes />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
