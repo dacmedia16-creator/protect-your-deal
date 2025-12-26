@@ -5,13 +5,24 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
+import { UserRoleProvider } from "@/hooks/useUserRole";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
+// Public pages
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ConfirmarVisita from "./pages/ConfirmarVisita";
+import VerificarComprovante from "./pages/VerificarComprovante";
+import NotFound from "./pages/NotFound";
+
+// Auth pages
+import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
+
+// Corretor pages
 import Dashboard from "./pages/Dashboard";
 import NovaFicha from "./pages/NovaFicha";
 import DetalhesFicha from "./pages/DetalhesFicha";
 import ListaFichas from "./pages/ListaFichas";
-import ConfirmarVisita from "./pages/ConfirmarVisita";
 import ListaClientes from "./pages/ListaClientes";
 import FormCliente from "./pages/FormCliente";
 import DetalhesCliente from "./pages/DetalhesCliente";
@@ -20,10 +31,17 @@ import FormImovel from "./pages/FormImovel";
 import DetalhesImovel from "./pages/DetalhesImovel";
 import Integracoes from "./pages/Integracoes";
 import TemplatesMensagem from "./pages/TemplatesMensagem";
-import VerificarComprovante from "./pages/VerificarComprovante";
 import Perfil from "./pages/Perfil";
 import Relatorios from "./pages/Relatorios";
-import NotFound from "./pages/NotFound";
+
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminImobiliarias from "./pages/admin/AdminImobiliarias";
+import AdminPlanos from "./pages/admin/AdminPlanos";
+
+// Empresa (Imobiliaria Admin) pages
+import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
+import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
 
 const queryClient = new QueryClient();
 
@@ -31,36 +49,136 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/fichas" element={<ListaFichas />} />
-              <Route path="/fichas/nova" element={<NovaFicha />} />
-              <Route path="/fichas/:id" element={<DetalhesFicha />} />
-              <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
-              <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
-              <Route path="/clientes" element={<ListaClientes />} />
-              <Route path="/clientes/novo" element={<FormCliente />} />
-              <Route path="/clientes/:id" element={<DetalhesCliente />} />
-              <Route path="/clientes/:id/editar" element={<FormCliente />} />
-              <Route path="/imoveis" element={<ListaImoveis />} />
-              <Route path="/imoveis/novo" element={<FormImovel />} />
-              <Route path="/imoveis/:id" element={<DetalhesImovel />} />
-              <Route path="/imoveis/:id/editar" element={<FormImovel />} />
-              <Route path="/integracoes" element={<Integracoes />} />
-              <Route path="/integracoes/templates" element={<TemplatesMensagem />} />
-              <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/perfil" element={<Perfil />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <UserRoleProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/registro" element={<RegistroImobiliaria />} />
+                <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
+                <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
+
+                {/* Super Admin routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/imobiliarias" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminImobiliarias />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/planos" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminPlanos />
+                  </ProtectedRoute>
+                } />
+
+                {/* Imobiliaria Admin routes */}
+                <Route path="/empresa" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/corretores" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaCorretores />
+                  </ProtectedRoute>
+                } />
+
+                {/* Corretor routes (also accessible by imobiliaria_admin) */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/fichas" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <ListaFichas />
+                  </ProtectedRoute>
+                } />
+                <Route path="/fichas/nova" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <NovaFicha />
+                  </ProtectedRoute>
+                } />
+                <Route path="/fichas/:id" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <DetalhesFicha />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clientes" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <ListaClientes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clientes/novo" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <FormCliente />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clientes/:id" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <DetalhesCliente />
+                  </ProtectedRoute>
+                } />
+                <Route path="/clientes/:id/editar" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <FormCliente />
+                  </ProtectedRoute>
+                } />
+                <Route path="/imoveis" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <ListaImoveis />
+                  </ProtectedRoute>
+                } />
+                <Route path="/imoveis/novo" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <FormImovel />
+                  </ProtectedRoute>
+                } />
+                <Route path="/imoveis/:id" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <DetalhesImovel />
+                  </ProtectedRoute>
+                } />
+                <Route path="/imoveis/:id/editar" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <FormImovel />
+                  </ProtectedRoute>
+                } />
+                <Route path="/integracoes" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <Integracoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/integracoes/templates" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <TemplatesMensagem />
+                  </ProtectedRoute>
+                } />
+                <Route path="/relatorios" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <Relatorios />
+                  </ProtectedRoute>
+                } />
+                <Route path="/perfil" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin']}>
+                    <Perfil />
+                  </ProtectedRoute>
+                } />
+
+                {/* Catch-all */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </UserRoleProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
