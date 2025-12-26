@@ -48,7 +48,7 @@ export default function RegistroImobiliaria() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      navigate('/dashboard');
+      navigate('/empresa');
     }
   }, [user, authLoading, navigate]);
 

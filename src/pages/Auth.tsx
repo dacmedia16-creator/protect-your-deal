@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +24,7 @@ const signupSchema = loginSchema.extend({
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signUp, signIn, loading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -29,10 +32,10 @@ export default function Auth() {
   const [signupData, setSignupData] = useState({ email: '', password: '', nome: '' });
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
+    if (!loading && !roleLoading && user) {
+      navigate(getRedirectPathByRole(role));
     }
-  }, [user, navigate]);
+  }, [user, loading, role, roleLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
