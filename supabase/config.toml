@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.admin-create-corretor]
 verify_jwt = true
+
+[functions.admin-update-corretor]
+verify_jwt = true

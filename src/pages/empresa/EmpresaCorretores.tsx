@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -64,10 +64,14 @@ export default function EmpresaCorretores() {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [conviteForm, setConviteForm] = useState({ nome: '', email: '' });
   const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', telefone: '', creci: '' });
+  const [editForm, setEditForm] = useState({ user_id: '', nome: '', telefone: '', creci: '' });
+  const [selectedCorretor, setSelectedCorretor] = useState<Corretor | null>(null);
 
   async function fetchData() {
     if (!imobiliariaId) return;
@@ -254,6 +258,51 @@ export default function EmpresaCorretores() {
     } catch (error) {
       console.error('Error removing corretor:', error);
       toast.error('Erro ao remover corretor');
+    }
+  }
+
+  function openEditDialog(corretor: Corretor) {
+    setSelectedCorretor(corretor);
+    setEditForm({
+      user_id: corretor.user_id,
+      nome: corretor.nome,
+      telefone: corretor.telefone || '',
+      creci: corretor.creci || '',
+    });
+    setEditDialogOpen(true);
+  }
+
+  async function updateCorretor(e: React.FormEvent) {
+    e.preventDefault();
+    setEditing(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke('admin-update-corretor', {
+        body: {
+          user_id: editForm.user_id,
+          nome: editForm.nome,
+          telefone: editForm.telefone || null,
+          creci: editForm.creci || null,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Corretor atualizado com sucesso!');
+      setEditDialogOpen(false);
+      setSelectedCorretor(null);
+      fetchData();
+    } catch (error: any) {
+      console.error('Error updating corretor:', error);
+      toast.error(error.message || 'Erro ao atualizar corretor');
+    } finally {
+      setEditing(false);
     }
   }
 
@@ -492,6 +541,10 @@ export default function EmpresaCorretores() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditDialog(corretor)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => removeCorretor(corretor.user_id)}
                                 className="text-destructive focus:text-destructive"
@@ -510,6 +563,46 @@ export default function EmpresaCorretores() {
             )}
           </CardContent>
         </Card>
+
+        {/* Edit corretor dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Corretor</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={updateCorretor} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_nome">Nome *</Label>
+                <Input
+                  id="edit_nome"
+                  value={editForm.nome}
+                  onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_telefone">Telefone</Label>
+                <Input
+                  id="edit_telefone"
+                  value={editForm.telefone}
+                  onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_creci">CRECI</Label>
+                <Input
+                  id="edit_creci"
+                  value={editForm.creci}
+                  onChange={(e) => setEditForm({ ...editForm, creci: e.target.value })}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={editing}>
+                {editing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
+                Salvar Alterações
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </ImobiliariaLayout>
   );
