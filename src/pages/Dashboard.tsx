@@ -270,6 +270,21 @@ export default function Dashboard() {
 
           <Card 
             className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/imoveis')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <Building2 className="h-5 w-5 text-secondary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Imóveis</p>
+                <p className="text-xs text-muted-foreground truncate">Cadastrar e gerenciar imóveis</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
             onClick={() => navigate('/integracoes')}
           >
             <CardContent className="p-3 flex items-center gap-3">
