@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -63,8 +63,11 @@ export default function EmpresaCorretores() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [conviteForm, setConviteForm] = useState({ nome: '', email: '' });
+  const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', telefone: '', creci: '' });
 
   async function fetchData() {
     if (!imobiliariaId) return;
@@ -170,6 +173,51 @@ export default function EmpresaCorretores() {
     }
   }
 
+  async function createCorretor(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (createForm.senha.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('admin-create-corretor', {
+        body: {
+          nome: createForm.nome,
+          email: createForm.email,
+          senha: createForm.senha,
+          telefone: createForm.telefone || null,
+          creci: createForm.creci || null,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Corretor criado com sucesso!');
+      setCreateDialogOpen(false);
+      setCreateForm({ nome: '', email: '', senha: '', telefone: '', creci: '' });
+      fetchData();
+    } catch (error: any) {
+      console.error('Error creating corretor:', error);
+      if (error.message?.includes('already') || error.message?.includes('cadastrado')) {
+        toast.error('Este email já está cadastrado');
+      } else {
+        toast.error(error.message || 'Erro ao criar corretor');
+      }
+    } finally {
+      setCreating(false);
+    }
+  }
+
   async function cancelConvite(id: string) {
     try {
       const { error } = await supabase
@@ -237,47 +285,123 @@ export default function EmpresaCorretores() {
               {corretores.length} de {maxCorretores} corretores
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button disabled={!canAddMore}>
-                <Plus className="h-4 w-4 mr-2" />
-                Convidar Corretor
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Convidar Corretor</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={sendConvite} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Nome</Label>
-                  <Input
-                    id="nome"
-                    value={conviteForm.nome}
-                    onChange={(e) => setConviteForm({ ...conviteForm, nome: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={conviteForm.email}
-                    onChange={(e) => setConviteForm({ ...conviteForm, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  O corretor receberá um email com instruções para criar sua conta.
-                </p>
-                <Button type="submit" className="w-full" disabled={sending}>
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                  Enviar Convite
+          <div className="flex gap-2">
+            {/* Create corretor dialog */}
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button disabled={!canAddMore}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Criar Corretor
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Criar Corretor</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={createCorretor} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="create_nome">Nome *</Label>
+                    <Input
+                      id="create_nome"
+                      value={createForm.nome}
+                      onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="create_email">Email *</Label>
+                    <Input
+                      id="create_email"
+                      type="email"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="create_senha">Senha *</Label>
+                    <Input
+                      id="create_senha"
+                      type="password"
+                      value={createForm.senha}
+                      onChange={(e) => setCreateForm({ ...createForm, senha: e.target.value })}
+                      required
+                      minLength={6}
+                      placeholder="Mínimo 6 caracteres"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="create_telefone">Telefone</Label>
+                      <Input
+                        id="create_telefone"
+                        value={createForm.telefone}
+                        onChange={(e) => setCreateForm({ ...createForm, telefone: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="create_creci">CRECI</Label>
+                      <Input
+                        id="create_creci"
+                        value={createForm.creci}
+                        onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    O corretor poderá fazer login imediatamente com o email e senha definidos.
+                  </p>
+                  <Button type="submit" className="w-full" disabled={creating}>
+                    {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                    Criar Corretor
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Invite corretor dialog */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" disabled={!canAddMore}>
+                  <Send className="h-4 w-4 mr-2" />
+                  Convidar
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Convidar Corretor</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={sendConvite} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome</Label>
+                    <Input
+                      id="nome"
+                      value={conviteForm.nome}
+                      onChange={(e) => setConviteForm({ ...conviteForm, nome: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={conviteForm.email}
+                      onChange={(e) => setConviteForm({ ...conviteForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    O corretor receberá um email com instruções para criar sua conta.
+                  </p>
+                  <Button type="submit" className="w-full" disabled={sending}>
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                    Enviar Convite
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Pending invites */}
