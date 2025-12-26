@@ -14,12 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      assinaturas: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          imobiliaria_id: string
+          plano_id: string
+          proxima_cobranca: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          imobiliaria_id: string
+          plano_id: string
+          proxima_cobranca?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          imobiliaria_id?: string
+          plano_id?: string
+          proxima_cobranca?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          imobiliaria_id: string | null
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cpf: string | null
           created_at: string
           email: string | null
           id: string
+          imobiliaria_id: string | null
           nome: string
           notas: string | null
           tags: string[] | null
@@ -33,6 +141,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          imobiliaria_id?: string | null
           nome: string
           notas?: string | null
           tags?: string[] | null
@@ -46,6 +155,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          imobiliaria_id?: string | null
           nome?: string
           notas?: string | null
           tags?: string[] | null
@@ -54,7 +164,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clientes_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       confirmacoes_otp: {
         Row: {
@@ -127,6 +245,56 @@ export type Database = {
           },
         ]
       }
+      convites: {
+        Row: {
+          aceito_em: string | null
+          convidado_por: string | null
+          created_at: string
+          email: string
+          expira_em: string
+          id: string
+          imobiliaria_id: string
+          nome: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          aceito_em?: string | null
+          convidado_por?: string | null
+          created_at?: string
+          email: string
+          expira_em?: string
+          id?: string
+          imobiliaria_id: string
+          nome: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Update: {
+          aceito_em?: string | null
+          convidado_por?: string | null
+          created_at?: string
+          email?: string
+          expira_em?: string
+          id?: string
+          imobiliaria_id?: string
+          nome?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fichas_visita: {
         Row: {
           comprador_autopreenchimento: boolean | null
@@ -137,6 +305,7 @@ export type Database = {
           created_at: string
           data_visita: string
           id: string
+          imobiliaria_id: string | null
           imovel_endereco: string
           imovel_tipo: string
           observacoes: string | null
@@ -159,6 +328,7 @@ export type Database = {
           created_at?: string
           data_visita: string
           id?: string
+          imobiliaria_id?: string | null
           imovel_endereco: string
           imovel_tipo: string
           observacoes?: string | null
@@ -181,6 +351,7 @@ export type Database = {
           created_at?: string
           data_visita?: string
           id?: string
+          imobiliaria_id?: string | null
           imovel_endereco?: string
           imovel_tipo?: string
           observacoes?: string | null
@@ -194,6 +365,59 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_visita_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imobiliarias: {
+        Row: {
+          cidade: string | null
+          cnpj: string | null
+          created_at: string
+          email: string
+          endereco: string | null
+          estado: string | null
+          id: string
+          logo_url: string | null
+          nome: string
+          status: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          logo_url?: string | null
+          nome: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          email?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          logo_url?: string | null
+          nome?: string
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
         Relationships: []
       }
       imoveis: {
@@ -204,6 +428,7 @@ export type Database = {
           endereco: string
           estado: string | null
           id: string
+          imobiliaria_id: string | null
           notas: string | null
           proprietario_id: string | null
           tipo: string
@@ -217,6 +442,7 @@ export type Database = {
           endereco: string
           estado?: string | null
           id?: string
+          imobiliaria_id?: string | null
           notas?: string | null
           proprietario_id?: string | null
           tipo: string
@@ -230,6 +456,7 @@ export type Database = {
           endereco?: string
           estado?: string | null
           id?: string
+          imobiliaria_id?: string | null
           notas?: string | null
           proprietario_id?: string | null
           tipo?: string
@@ -237,6 +464,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "imoveis_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "imoveis_proprietario_id_fkey"
             columns: ["proprietario_id"]
@@ -246,6 +480,48 @@ export type Database = {
           },
         ]
       }
+      planos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          max_clientes: number
+          max_corretores: number
+          max_fichas_mes: number
+          max_imoveis: number
+          nome: string
+          updated_at: string
+          valor_mensal: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          max_clientes?: number
+          max_corretores?: number
+          max_fichas_mes?: number
+          max_imoveis?: number
+          nome: string
+          updated_at?: string
+          valor_mensal?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          max_clientes?: number
+          max_corretores?: number
+          max_fichas_mes?: number
+          max_imoveis?: number
+          nome?: string
+          updated_at?: string
+          valor_mensal?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -253,6 +529,7 @@ export type Database = {
           foto_url: string | null
           id: string
           imobiliaria: string | null
+          imobiliaria_id: string | null
           nome: string
           telefone: string | null
           updated_at: string
@@ -264,6 +541,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           imobiliaria?: string | null
+          imobiliaria_id?: string | null
           nome: string
           telefone?: string | null
           updated_at?: string
@@ -275,12 +553,21 @@ export type Database = {
           foto_url?: string | null
           id?: string
           imobiliaria?: string | null
+          imobiliaria_id?: string | null
           nome?: string
           telefone?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       templates_mensagem: {
         Row: {
@@ -288,6 +575,7 @@ export type Database = {
           conteudo: string
           created_at: string
           id: string
+          imobiliaria_id: string | null
           nome: string
           tipo: string
           updated_at: string
@@ -298,6 +586,7 @@ export type Database = {
           conteudo: string
           created_at?: string
           id?: string
+          imobiliaria_id?: string | null
           nome: string
           tipo: string
           updated_at?: string
@@ -308,22 +597,84 @@ export type Database = {
           conteudo?: string
           created_at?: string
           id?: string
+          imobiliaria_id?: string | null
           nome?: string
           tipo?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "templates_mensagem_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          imobiliaria_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_subscription_status: {
+        Args: { _imobiliaria_id: string }
+        Returns: string
+      }
       generate_protocolo: { Args: never; Returns: string }
+      get_user_imobiliaria: { Args: { _user_id: string }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_imobiliaria_admin: {
+        Args: { _imobiliaria_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      user_belongs_to_imobiliaria: {
+        Args: { _imobiliaria_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "imobiliaria_admin" | "corretor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -450,6 +801,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "imobiliaria_admin", "corretor"],
+    },
   },
 } as const
