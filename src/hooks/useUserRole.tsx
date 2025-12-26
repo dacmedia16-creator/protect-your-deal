@@ -51,7 +51,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [imobiliariaId, setImobiliariaId] = useState<string | null>(null);
   const [imobiliaria, setImobiliaria] = useState<Imobiliaria | null>(null);
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchUserRole = async () => {
     if (!user) {
@@ -60,8 +61,11 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       setImobiliaria(null);
       setAssinatura(null);
       setLoading(false);
+      setHasFetched(true);
       return;
     }
+
+    setLoading(true);
 
     try {
       // Fetch user role
@@ -126,8 +130,12 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       console.error('Error in fetchUserRole:', error);
     } finally {
       setLoading(false);
+      setHasFetched(true);
     }
   };
+
+  // Determine if we're truly loading
+  const isLoading = authLoading || (user && !hasFetched) || loading;
 
   useEffect(() => {
     if (!authLoading) {
@@ -141,7 +149,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       imobiliariaId, 
       imobiliaria, 
       assinatura, 
-      loading: loading || authLoading,
+      loading: isLoading,
       refetch: fetchUserRole
     }}>
       {children}
