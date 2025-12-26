@@ -93,11 +93,29 @@ const Integracoes = () => {
   const syncImoveis = async () => {
     setSyncing('imoveis');
     try {
+      console.log('Iniciando syncImoveis...');
       const { data, error } = await supabase.functions.invoke('imoview-sync', {
         body: { action: 'listar-imoveis', data: { limite: 100 } }
       });
 
-      if (error) throw error;
+      console.log('Resposta imoview-sync:', { data, error });
+
+      if (error) {
+        console.error('Erro Supabase function:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        const errorMsg = data?.error || data?.raw?.erro || 'Erro desconhecido da API Imoview';
+        console.error('Erro retornado pela API:', errorMsg, data);
+        toast({
+          title: "Erro na API Imoview",
+          description: String(errorMsg),
+          variant: "destructive",
+        });
+        setSyncResults(prev => ({ ...prev, imoveis: 0 }));
+        return;
+      }
 
       const imoveis = data?.imoveis || [];
       const count = imoveis.length;
@@ -105,13 +123,17 @@ const Integracoes = () => {
       setImoveisToImport(imoveis);
       
       toast({
-        title: "Imóveis sincronizados!",
-        description: `${count} imóveis encontrados no Imoview.`,
+        title: count > 0 ? "Imóveis sincronizados!" : "Nenhum imóvel encontrado",
+        description: count > 0 
+          ? `${count} imóveis encontrados no Imoview.`
+          : "A API não retornou imóveis. Verifique se há imóveis cadastrados no Imoview.",
+        variant: count > 0 ? "default" : "destructive",
       });
     } catch (error: any) {
+      console.error('Erro ao sincronizar imóveis:', error);
       toast({
         title: "Erro ao sincronizar imóveis",
-        description: error.message,
+        description: error?.message || 'Erro de conexão com a edge function',
         variant: "destructive",
       });
     } finally {
