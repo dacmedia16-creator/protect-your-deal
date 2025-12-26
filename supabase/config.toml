@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.admin-update-corretor]
 verify_jwt = true
+
+[functions.admin-reset-corretor-password]
+verify_jwt = true
