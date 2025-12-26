@@ -24,6 +24,7 @@ import { ptBR } from 'date-fns/locale';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { DesktopNav } from '@/components/DesktopNav';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -102,7 +103,10 @@ export default function ListaFichas() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      {/* Header */}
+      {/* Desktop Navigation */}
+      <DesktopNav />
+      
+      {/* Mobile Header */}
       <MobileHeader
         title="Fichas de Visita"
         subtitle={`${fichas?.length || 0} fichas no total`}

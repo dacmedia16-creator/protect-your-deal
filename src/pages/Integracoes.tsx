@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { DesktopNav } from "@/components/DesktopNav";
+import { MobileNav } from "@/components/MobileNav";
 
 const Integracoes = () => {
   const navigate = useNavigate();
@@ -214,9 +216,12 @@ const Integracoes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-4 py-4">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      {/* Desktop Navigation */}
+      <DesktopNav />
+      
+      {/* Mobile Header */}
+      <header className="md:hidden bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="h-5 w-5" />
@@ -227,6 +232,12 @@ const Integracoes = () => {
           </div>
         </div>
       </header>
+      
+      {/* Desktop Header */}
+      <div className="hidden md:block container mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold">Integrações</h1>
+        <p className="text-muted-foreground">Conecte sistemas externos</p>
+      </div>
 
       <main className="p-4 space-y-4">
         {/* Imoview Card */}
@@ -412,6 +423,9 @@ const Integracoes = () => {
           </CardContent>
         </Card>
       </main>
+      
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 };
