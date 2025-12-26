@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.admin-reset-corretor-password]
 verify_jwt = true
+
+[functions.admin-vincular-usuario]
+verify_jwt = true

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   CreditCard,
   Users,
+  UserPlus,
   Settings,
   LogOut,
   Shield,
@@ -26,6 +27,7 @@ const navItems = [
   { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
+  { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
   { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
