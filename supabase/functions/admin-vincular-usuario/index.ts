@@ -56,7 +56,8 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { user_id, imobiliaria_id } = await req.json();
+    const { user_id, imobiliaria_id, backfill_fichas } = await req.json();
+    const backfillFichas = Boolean(backfill_fichas);
 
     if (!user_id || !imobiliaria_id) {
       return new Response(
@@ -65,7 +66,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Vinculando usuário ${user_id} à imobiliária ${imobiliaria_id}`);
+    console.log(
+      `Vinculando usuário ${user_id} à imobiliária ${imobiliaria_id} | backfill_fichas=${backfillFichas}`
+    );
 
     // Create admin client for updates
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -98,10 +101,37 @@ Deno.serve(async (req) => {
       );
     }
 
+    let fichasBackfilled = 0;
+    if (backfillFichas) {
+      console.log(`Backfill: atualizando fichas_visita sem imobiliaria_id para o usuário ${user_id}`);
+
+      const { data: updatedFichas, error: backfillError } = await supabaseAdmin
+        .from('fichas_visita')
+        .update({ imobiliaria_id })
+        .eq('user_id', user_id)
+        .is('imobiliaria_id', null)
+        .select('id');
+
+      if (backfillError) {
+        console.error('Error backfilling fichas_visita:', backfillError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to backfill fichas_visita' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      fichasBackfilled = updatedFichas?.length ?? 0;
+      console.log(`Backfill concluído: ${fichasBackfilled} ficha(s) atualizada(s).`);
+    }
+
     console.log(`Usuário ${user_id} vinculado com sucesso à imobiliária ${imobiliaria_id}`);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'User linked to imobiliaria successfully' }),
+      JSON.stringify({
+        success: true,
+        message: 'User linked to imobiliaria successfully',
+        backfill: { enabled: backfillFichas, updated: fichasBackfilled },
+      }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
