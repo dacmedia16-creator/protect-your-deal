@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, Settings, MessageSquare, BarChart3 } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, Settings, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -17,7 +17,6 @@ const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
   { path: '/fichas', label: 'Fichas', icon: FileText },
   { path: '/clientes', label: 'Clientes', icon: Users },
-  { path: '/relatorios', label: 'Relatórios', icon: BarChart3 },
 ];
 
 export function MobileNav() {
