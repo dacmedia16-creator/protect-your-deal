@@ -155,25 +155,41 @@ export default function NovaFicha() {
       return;
     }
 
-    if (!imobiliariaId) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Você não está vinculado a nenhuma imobiliária',
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      // Always resolve imobiliaria_id from backend (must match RLS function get_user_imobiliaria(auth.uid()))
+      const { data: dbImobiliariaId, error: dbImobiliariaError } = await supabase.rpc(
+        'get_user_imobiliaria',
+        { _user_id: user.id }
+      );
+
+      if (dbImobiliariaError) throw dbImobiliariaError;
+
+      if (!dbImobiliariaId) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Seu usuário não está vinculado a nenhuma imobiliária. Peça ao admin para vincular seu acesso.',
+        });
+        return;
+      }
+
+      if (imobiliariaId && dbImobiliariaId !== imobiliariaId) {
+        console.warn('[NovaFicha] imobiliariaId diverge do backend', {
+          hookImobiliariaId: imobiliariaId,
+          dbImobiliariaId,
+          userId: user.id,
+        });
+      }
+
       const protocolo = await generateProtocolo();
       
       const { data, error } = await supabase
         .from('fichas_visita')
         .insert({
           user_id: user.id,
-          imobiliaria_id: imobiliariaId,
+          imobiliaria_id: dbImobiliariaId,
           protocolo,
           imovel_endereco: formData.imovel_endereco,
           imovel_tipo: formData.imovel_tipo,
