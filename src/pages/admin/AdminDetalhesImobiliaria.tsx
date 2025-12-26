@@ -32,9 +32,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, UserPlus } from 'lucide-react';
+import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -96,6 +112,14 @@ export default function AdminDetalhesImobiliaria() {
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [selectedPlano, setSelectedPlano] = useState<string>('');
   const [savingPlano, setSavingPlano] = useState(false);
+
+  // Password reset dialog state
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: string; nome: string } | null>(null);
+  const [resetAction, setResetAction] = useState<'set_password' | 'send_reset_email'>('set_password');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -293,6 +317,59 @@ export default function AdminDetalhesImobiliaria() {
       toast.error(error.message || 'Erro ao atribuir plano');
     } finally {
       setSavingPlano(false);
+    }
+  };
+
+  const openResetDialog = (corretor: Corretor) => {
+    setSelectedUser({ id: corretor.user_id, nome: corretor.profile?.nome || 'Usuário' });
+    setResetAction('set_password');
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetDialogOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+
+    if (resetAction === 'set_password') {
+      if (!newPassword) {
+        toast.error('Digite a nova senha');
+        return;
+      }
+      if (newPassword.length < 6) {
+        toast.error('A senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.error('As senhas não coincidem');
+        return;
+      }
+    }
+
+    setIsResetting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          user_id: selectedUser.id,
+          action: resetAction,
+          new_password: resetAction === 'set_password' ? newPassword : undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      toast.success(data?.message || 'Senha redefinida com sucesso!');
+      setResetDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast.error(error.message || 'Erro ao redefinir senha');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -589,6 +666,7 @@ export default function AdminDetalhesImobiliaria() {
                         <TableHead>Nome</TableHead>
                         <TableHead>Função</TableHead>
                         <TableHead>Data de Cadastro</TableHead>
+                        <TableHead className="w-12">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -605,6 +683,21 @@ export default function AdminDetalhesImobiliaria() {
                           <TableCell>
                             {format(new Date(corretor.created_at), 'dd/MM/yyyy', { locale: ptBR })}
                           </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openResetDialog(corretor)}>
+                                  <KeyRound className="h-4 w-4 mr-2" />
+                                  Redefinir Senha
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -615,6 +708,91 @@ export default function AdminDetalhesImobiliaria() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha</DialogTitle>
+            <DialogDescription>
+              Redefinindo senha para: <strong>{selectedUser?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <RadioGroup
+              value={resetAction}
+              onValueChange={(value) => setResetAction(value as typeof resetAction)}
+              className="space-y-3"
+            >
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value="set_password" id="set_password" />
+                <Label htmlFor="set_password" className="font-normal cursor-pointer">
+                  Definir nova senha manualmente
+                </Label>
+              </div>
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value="send_reset_email" id="send_reset_email" />
+                <Label htmlFor="send_reset_email" className="font-normal cursor-pointer">
+                  Enviar email de recuperação
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {resetAction === 'set_password' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new_password">Nova senha</Label>
+                  <Input
+                    id="new_password"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm_password">Confirmar senha</Label>
+                  <Input
+                    id="confirm_password"
+                    type="password"
+                    placeholder="Digite a senha novamente"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+                {newPassword && newPassword.length < 6 && (
+                  <p className="text-sm text-destructive">
+                    A senha deve ter pelo menos 6 caracteres
+                  </p>
+                )}
+                {confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-sm text-destructive">
+                    As senhas não coincidem
+                  </p>
+                )}
+              </div>
+            )}
+
+            {resetAction === 'send_reset_email' && (
+              <p className="text-sm text-muted-foreground">
+                Um email será enviado para o usuário com um link para redefinir a senha.
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleResetPassword} disabled={isResetting}>
+              {isResetting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <KeyRound className="h-4 w-4 mr-2" />
+              Redefinir Senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SuperAdminLayout>
   );
 }
