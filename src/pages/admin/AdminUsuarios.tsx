@@ -42,13 +42,12 @@ interface UserWithRole {
   created_at: string;
   profile: {
     nome: string;
-    email?: string;
     telefone?: string;
   } | null;
   imobiliaria: {
     nome: string;
   } | null;
-  user_email?: string;
+  email?: string;
 }
 
 export default function AdminUsuarios() {
@@ -61,11 +60,13 @@ export default function AdminUsuarios() {
   const [resetAction, setResetAction] = useState<"set_password" | "send_reset_email">("send_reset_email");
   const [isResetting, setIsResetting] = useState(false);
 
-  // Fetch all users with their roles
+  // Fetch all users with their roles and emails
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      // First fetch user_roles with imobiliarias
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      // Fetch user_roles with imobiliarias
       const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select(`
@@ -80,7 +81,7 @@ export default function AdminUsuarios() {
 
       if (rolesError) throw rolesError;
 
-      // Then fetch profiles separately
+      // Fetch profiles
       const userIds = userRoles.map((ur: any) => ur.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -89,7 +90,23 @@ export default function AdminUsuarios() {
 
       if (profilesError) throw profilesError;
 
-      // Create a map for quick lookup
+      // Fetch emails from auth.users via edge function
+      let emailMap = new Map<string, string>();
+      try {
+        const { data: usersData, error: usersError } = await supabase.functions.invoke("admin-list-users", {
+          headers: {
+            Authorization: `Bearer ${sessionData.session?.access_token}`,
+          },
+        });
+
+        if (!usersError && usersData?.users) {
+          emailMap = new Map(usersData.users.map((u: any) => [u.id, u.email]));
+        }
+      } catch (e) {
+        console.error("Error fetching user emails:", e);
+      }
+
+      // Create maps for quick lookup
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
       return userRoles.map((ur: any) => ({
@@ -100,6 +117,7 @@ export default function AdminUsuarios() {
         created_at: ur.created_at,
         profile: profileMap.get(ur.user_id) || null,
         imobiliaria: ur.imobiliarias,
+        email: emailMap.get(ur.user_id) || null,
       })) as UserWithRole[];
     },
   });
@@ -120,6 +138,7 @@ export default function AdminUsuarios() {
   const filteredUsers = users?.filter((user) => {
     const matchesSearch =
       user.profile?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.user_id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     const matchesImobiliaria =
@@ -258,6 +277,7 @@ export default function AdminUsuarios() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Imobiliária</TableHead>
                   <TableHead>Criado em</TableHead>
@@ -267,13 +287,13 @@ export default function AdminUsuarios() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>
@@ -281,12 +301,12 @@ export default function AdminUsuarios() {
                   filteredUsers?.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{user.profile?.nome || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                            {user.user_id}
-                          </p>
-                        </div>
+                        <p className="font-medium">{user.profile?.nome || "Sem nome"}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-muted-foreground">
+                          {user.email || "-"}
+                        </p>
                       </TableCell>
                       <TableCell>
                         <Badge variant={getRoleBadgeVariant(user.role)}>
