@@ -64,7 +64,7 @@ export function DesktopNav() {
   };
 
   return (
-    <nav className="hidden md:flex border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+    <nav className="hidden sm:flex border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo + Links */}
         <div className="flex items-center gap-8">

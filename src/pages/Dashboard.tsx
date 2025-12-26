@@ -68,12 +68,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background pb-20 sm:pb-0">
       {/* Desktop Navigation */}
       <DesktopNav />
       
       {/* Mobile Header */}
-      <header className="md:hidden border-b bg-card safe-area-top">
+      <header className="sm:hidden border-b bg-card safe-area-top">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
@@ -160,7 +160,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
-        <div className="hidden md:grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
             onClick={() => navigate('/fichas/nova')}
@@ -232,7 +232,7 @@ export default function Dashboard() {
         </div>
 
         {/* Mobile Quick Actions - Compact list */}
-        <div className="md:hidden space-y-2">
+        <div className="sm:hidden space-y-2">
           <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
           
           <Card 
