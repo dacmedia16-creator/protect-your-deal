@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,13 +41,21 @@ const formSchema = z.object({
   cidade: z.string().optional(),
   estado: z.string().optional(),
   status: z.string().default('ativo'),
+  plano_id: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
+interface Plano {
+  id: string;
+  nome: string;
+  valor_mensal: number;
+}
+
 export default function AdminNovaImobiliaria() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [planos, setPlanos] = useState<Plano[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,24 +68,60 @@ export default function AdminNovaImobiliaria() {
       cidade: '',
       estado: '',
       status: 'ativo',
+      plano_id: '',
     },
   });
+
+  useEffect(() => {
+    async function fetchPlanos() {
+      const { data } = await supabase
+        .from('planos')
+        .select('id, nome, valor_mensal')
+        .eq('ativo', true)
+        .order('valor_mensal', { ascending: true });
+      
+      setPlanos(data || []);
+    }
+    fetchPlanos();
+  }, []);
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('imobiliarias').insert({
-        nome: data.nome,
-        cnpj: data.cnpj || null,
-        email: data.email,
-        telefone: data.telefone || null,
-        endereco: data.endereco || null,
-        cidade: data.cidade || null,
-        estado: data.estado || null,
-        status: data.status,
-      });
+      // 1. Create imobiliaria
+      const { data: imobiliaria, error: imobError } = await supabase
+        .from('imobiliarias')
+        .insert({
+          nome: data.nome,
+          cnpj: data.cnpj || null,
+          email: data.email,
+          telefone: data.telefone || null,
+          endereco: data.endereco || null,
+          cidade: data.cidade || null,
+          estado: data.estado || null,
+          status: data.status,
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (imobError) throw imobError;
+
+      // 2. Create subscription if plano selected
+      if (data.plano_id && imobiliaria) {
+        const { error: assinError } = await supabase
+          .from('assinaturas')
+          .insert({
+            imobiliaria_id: imobiliaria.id,
+            plano_id: data.plano_id,
+            status: 'ativa',
+            data_inicio: new Date().toISOString().split('T')[0],
+          });
+
+        if (assinError) {
+          console.error('Error creating subscription:', assinError);
+          toast.error('Imobiliária criada, mas erro ao criar assinatura');
+        }
+      }
 
       toast.success('Imobiliária criada com sucesso!');
       navigate('/admin/imobiliarias');
@@ -190,6 +234,31 @@ export default function AdminNovaImobiliaria() {
                           <SelectContent>
                             <SelectItem value="ativo">Ativo</SelectItem>
                             <SelectItem value="suspenso">Suspenso</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="plano_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Plano</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um plano (opcional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {planos.map((plano) => (
+                              <SelectItem key={plano.id} value={plano.id}>
+                                {plano.nome} - R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

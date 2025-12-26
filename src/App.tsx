@@ -39,6 +39,7 @@ import Relatorios from "./pages/Relatorios";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminImobiliarias from "./pages/admin/AdminImobiliarias";
 import AdminNovaImobiliaria from "./pages/admin/AdminNovaImobiliaria";
+import AdminDetalhesImobiliaria from "./pages/admin/AdminDetalhesImobiliaria";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 
 // Empresa (Imobiliaria Admin) pages
@@ -46,6 +47,7 @@ import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
 import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
 import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
+import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
 import EmpresaFichas from "./pages/empresa/EmpresaFichas";
 
 const queryClient = new QueryClient();
@@ -85,6 +87,11 @@ const App = () => (
                     <AdminNovaImobiliaria />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/imobiliarias/:id" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminDetalhesImobiliaria />
+                  </ProtectedRoute>
+                } />
                 <Route path="/admin/planos" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminPlanos />
@@ -115,6 +122,11 @@ const App = () => (
                 <Route path="/empresa/assinatura" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaAssinatura />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/configuracoes" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaConfiguracoes />
                   </ProtectedRoute>
                 } />
 

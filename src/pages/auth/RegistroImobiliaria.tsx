@@ -93,13 +93,25 @@ export default function RegistroImobiliaria() {
     setSubmitting(true);
 
     try {
-      // 1. Create the user account
+      // 1. Create the user account with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: adminForm.email,
         password: adminForm.senha,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          data: { nome: adminForm.nome }
+          data: { 
+            nome: adminForm.nome,
+            pending_imobiliaria: {
+              nome: imobiliariaForm.nome,
+              cnpj: imobiliariaForm.cnpj,
+              email: imobiliariaForm.email,
+              telefone: imobiliariaForm.telefone,
+              endereco: imobiliariaForm.endereco,
+              cidade: imobiliariaForm.cidade,
+              estado: imobiliariaForm.estado,
+              plano_id: selectedPlano,
+            }
+          }
         }
       });
 
@@ -109,9 +121,67 @@ export default function RegistroImobiliaria() {
         throw new Error('Erro ao criar usuário');
       }
 
-      // 2. Create the imobiliaria (will be done after email confirmation)
-      // For now, we store the pending registration data
-      // The actual creation happens in a trigger or after confirmation
+      // 2. Create the imobiliaria immediately
+      const { data: imobiliaria, error: imobError } = await supabase
+        .from('imobiliarias')
+        .insert({
+          nome: imobiliariaForm.nome,
+          cnpj: imobiliariaForm.cnpj || null,
+          email: imobiliariaForm.email,
+          telefone: imobiliariaForm.telefone || null,
+          endereco: imobiliariaForm.endereco || null,
+          cidade: imobiliariaForm.cidade || null,
+          estado: imobiliariaForm.estado || null,
+          status: 'ativo',
+        })
+        .select()
+        .single();
+
+      if (imobError) {
+        console.error('Error creating imobiliaria:', imobError);
+        // Continue anyway - user was created
+      }
+
+      // 3. Create the user_role
+      if (imobiliaria) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: 'imobiliaria_admin',
+            imobiliaria_id: imobiliaria.id,
+          });
+
+        if (roleError) {
+          console.error('Error creating role:', roleError);
+        }
+
+        // 4. Update profile with imobiliaria_id
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ imobiliaria_id: imobiliaria.id })
+          .eq('user_id', authData.user.id);
+
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+        }
+
+        // 5. Create subscription
+        if (selectedPlano) {
+          const { error: assinError } = await supabase
+            .from('assinaturas')
+            .insert({
+              imobiliaria_id: imobiliaria.id,
+              plano_id: selectedPlano,
+              status: 'trial',
+              data_inicio: new Date().toISOString().split('T')[0],
+            });
+
+          if (assinError) {
+            console.error('Error creating subscription:', assinError);
+          }
+        }
+      }
 
       toast.success('Cadastro realizado! Verifique seu email para confirmar a conta.');
       navigate('/auth');
