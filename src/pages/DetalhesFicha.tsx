@@ -7,6 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { 
   ArrowLeft, 
   Building2, 
@@ -23,7 +34,8 @@ import {
   FileDown,
   Shield,
   MapPin,
-  Fingerprint
+  Fingerprint,
+  Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -46,6 +58,7 @@ export default function DetalhesFicha() {
   
   const [sendingOtp, setSendingOtp] = useState<'proprietario' | 'comprador' | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [lastOtpResult, setLastOtpResult] = useState<{
     tipo: string;
     simulation: boolean;
@@ -235,6 +248,37 @@ export default function DetalhesFicha() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!ficha) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('fichas_visita')
+        .delete()
+        .eq('id', ficha.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Ficha excluída',
+        description: 'A ficha foi excluída com sucesso.',
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['fichas'] });
+      navigate('/fichas');
+    } catch (err) {
+      console.error('Erro ao excluir:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao excluir a ficha',
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -277,10 +321,40 @@ export default function DetalhesFicha() {
                 </p>
               </div>
             </div>
-            <Badge variant={status.variant} className="gap-1">
-              <StatusIcon className="h-3 w-3" />
-              {status.label}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={status.variant} className="gap-1">
+                <StatusIcon className="h-3 w-3" />
+                {status.label}
+              </Badge>
+              {ficha.status !== 'completo' && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir ficha</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a ficha #{ficha.protocolo}? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </div>
         </div>
       </header>
