@@ -93,102 +93,41 @@ export default function RegistroImobiliaria() {
     setSubmitting(true);
 
     try {
-      // 1. Create the user account with metadata
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: adminForm.email,
-        password: adminForm.senha,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: { 
+      // Use edge function to create everything with service role
+      const { data, error } = await supabase.functions.invoke('registro-imobiliaria', {
+        body: {
+          imobiliaria: {
+            nome: imobiliariaForm.nome,
+            cnpj: imobiliariaForm.cnpj || null,
+            email: imobiliariaForm.email,
+            telefone: imobiliariaForm.telefone || null,
+            endereco: imobiliariaForm.endereco || null,
+            cidade: imobiliariaForm.cidade || null,
+            estado: imobiliariaForm.estado || null,
+          },
+          admin: {
             nome: adminForm.nome,
-            pending_imobiliaria: {
-              nome: imobiliariaForm.nome,
-              cnpj: imobiliariaForm.cnpj,
-              email: imobiliariaForm.email,
-              telefone: imobiliariaForm.telefone,
-              endereco: imobiliariaForm.endereco,
-              cidade: imobiliariaForm.cidade,
-              estado: imobiliariaForm.estado,
-              plano_id: selectedPlano,
-            }
-          }
-        }
+            email: adminForm.email,
+            senha: adminForm.senha,
+          },
+          plano_id: selectedPlano,
+        },
       });
 
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('Erro ao criar usuário');
+      if (error) {
+        throw new Error(error.message);
       }
 
-      // 2. Create the imobiliaria immediately
-      const { data: imobiliaria, error: imobError } = await supabase
-        .from('imobiliarias')
-        .insert({
-          nome: imobiliariaForm.nome,
-          cnpj: imobiliariaForm.cnpj || null,
-          email: imobiliariaForm.email,
-          telefone: imobiliariaForm.telefone || null,
-          endereco: imobiliariaForm.endereco || null,
-          cidade: imobiliariaForm.cidade || null,
-          estado: imobiliariaForm.estado || null,
-          status: 'ativo',
-        })
-        .select()
-        .single();
-
-      if (imobError) {
-        console.error('Error creating imobiliaria:', imobError);
-        // Continue anyway - user was created
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
-      // 3. Create the user_role
-      if (imobiliaria) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: 'imobiliaria_admin',
-            imobiliaria_id: imobiliaria.id,
-          });
-
-        if (roleError) {
-          console.error('Error creating role:', roleError);
-        }
-
-        // 4. Update profile with imobiliaria_id
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ imobiliaria_id: imobiliaria.id })
-          .eq('user_id', authData.user.id);
-
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-        }
-
-        // 5. Create subscription
-        if (selectedPlano) {
-          const { error: assinError } = await supabase
-            .from('assinaturas')
-            .insert({
-              imobiliaria_id: imobiliaria.id,
-              plano_id: selectedPlano,
-              status: 'trial',
-              data_inicio: new Date().toISOString().split('T')[0],
-            });
-
-          if (assinError) {
-            console.error('Error creating subscription:', assinError);
-          }
-        }
-      }
-
-      toast.success('Cadastro realizado! Verifique seu email para confirmar a conta.');
+      toast.success('Cadastro realizado com sucesso! Você já pode fazer login.');
       navigate('/auth');
     } catch (error: any) {
       console.error('Error during registration:', error);
       
-      if (error.message?.includes('already registered')) {
+      if (error.message?.includes('already') || error.message?.includes('cadastrado')) {
         toast.error('Este email já está cadastrado');
       } else {
         toast.error(error.message || 'Erro ao realizar cadastro');
