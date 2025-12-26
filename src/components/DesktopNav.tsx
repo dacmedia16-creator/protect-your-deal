@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { RoleBadge } from '@/components/RoleBadge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -34,6 +36,7 @@ const navItems = [
 export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { role } = useUserRole();
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -109,8 +112,11 @@ export function DesktopNav() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{profile?.nome || 'Usuário'}</p>
+                <div className="flex flex-col space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium truncate">{profile?.nome || 'Usuário'}</p>
+                    <RoleBadge role={role} variant="compact" />
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
