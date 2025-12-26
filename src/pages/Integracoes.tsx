@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plug, RefreshCw, CheckCircle, XCircle, Building, Users, Loader2, MessageCircle, Send, FileText } from "lucide-react";
+import { ArrowLeft, Plug, RefreshCw, CheckCircle, XCircle, Building, Users, Loader2, MessageCircle, Send, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface ImoviewImovel {
+  codigo?: string;
+  endereco?: string;
+  tipo?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  descricao?: string;
+}
 
 const Integracoes = () => {
   const navigate = useNavigate();
@@ -25,6 +45,9 @@ const Integracoes = () => {
     imoveis?: number;
     clientes?: number;
   }>({});
+  const [importing, setImporting] = useState(false);
+  const [imoveisToImport, setImoveisToImport] = useState<ImoviewImovel[]>([]);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // ZionTalk state
   const [ziontalkStatus, setZiontalkStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
@@ -76,8 +99,10 @@ const Integracoes = () => {
 
       if (error) throw error;
 
-      const count = data?.imoveis?.length || 0;
+      const imoveis = data?.imoveis || [];
+      const count = imoveis.length;
       setSyncResults(prev => ({ ...prev, imoveis: count }));
+      setImoveisToImport(imoveis);
       
       toast({
         title: "Imóveis sincronizados!",
@@ -91,6 +116,57 @@ const Integracoes = () => {
       });
     } finally {
       setSyncing(null);
+    }
+  };
+
+  const importarImoveis = async () => {
+    if (!user || imoveisToImport.length === 0) return;
+    
+    setImporting(true);
+    setShowImportDialog(false);
+    
+    try {
+      let importados = 0;
+      let erros = 0;
+
+      for (const imovel of imoveisToImport) {
+        try {
+          const { error } = await supabase.from('imoveis').insert({
+            user_id: user.id,
+            endereco: imovel.endereco || `Imóvel ${imovel.codigo}`,
+            tipo: imovel.tipo || 'Outro',
+            bairro: imovel.bairro || null,
+            cidade: imovel.cidade || null,
+            estado: imovel.estado || null,
+            notas: imovel.descricao || `Importado do Imoview - Código: ${imovel.codigo}`,
+          });
+
+          if (error) {
+            console.error('Erro ao importar imóvel:', error);
+            erros++;
+          } else {
+            importados++;
+          }
+        } catch (e) {
+          erros++;
+        }
+      }
+
+      toast({
+        title: "Importação concluída!",
+        description: `${importados} imóveis importados com sucesso.${erros > 0 ? ` ${erros} erros.` : ''}`,
+      });
+
+      setImoveisToImport([]);
+      setSyncResults(prev => ({ ...prev, imoveis: undefined }));
+    } catch (error: any) {
+      toast({
+        title: "Erro na importação",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -290,45 +366,63 @@ const Integracoes = () => {
 
             {/* Sync Options - only show if connected */}
             {imoviewStatus === 'connected' && (
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <Button 
-                  onClick={syncImoveis}
-                  disabled={syncing !== null}
-                  variant="secondary"
-                  className="flex-col h-auto py-4"
-                >
-                  {syncing === 'imoveis' ? (
-                    <Loader2 className="h-5 w-5 animate-spin mb-1" />
-                  ) : (
-                    <Building className="h-5 w-5 mb-1" />
-                  )}
-                  <span className="text-xs">Sincronizar Imóveis</span>
-                  {syncResults.imoveis !== undefined && (
-                    <span className="text-xs text-muted-foreground mt-1">
-                      {syncResults.imoveis} encontrados
-                    </span>
-                  )}
-                </Button>
+              <>
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <Button 
+                    onClick={syncImoveis}
+                    disabled={syncing !== null || importing}
+                    variant="secondary"
+                    className="flex-col h-auto py-4"
+                  >
+                    {syncing === 'imoveis' ? (
+                      <Loader2 className="h-5 w-5 animate-spin mb-1" />
+                    ) : (
+                      <Building className="h-5 w-5 mb-1" />
+                    )}
+                    <span className="text-xs">Buscar Imóveis</span>
+                    {syncResults.imoveis !== undefined && (
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {syncResults.imoveis} encontrados
+                      </span>
+                    )}
+                  </Button>
 
-                <Button 
-                  onClick={syncClientes}
-                  disabled={syncing !== null}
-                  variant="secondary"
-                  className="flex-col h-auto py-4"
-                >
-                  {syncing === 'clientes' ? (
-                    <Loader2 className="h-5 w-5 animate-spin mb-1" />
-                  ) : (
-                    <Users className="h-5 w-5 mb-1" />
-                  )}
-                  <span className="text-xs">Sincronizar Clientes</span>
-                  {syncResults.clientes !== undefined && (
-                    <span className="text-xs text-muted-foreground mt-1">
-                      {syncResults.clientes} encontrados
-                    </span>
-                  )}
-                </Button>
-              </div>
+                  <Button 
+                    onClick={syncClientes}
+                    disabled={syncing !== null || importing}
+                    variant="secondary"
+                    className="flex-col h-auto py-4"
+                  >
+                    {syncing === 'clientes' ? (
+                      <Loader2 className="h-5 w-5 animate-spin mb-1" />
+                    ) : (
+                      <Users className="h-5 w-5 mb-1" />
+                    )}
+                    <span className="text-xs">Buscar Clientes</span>
+                    {syncResults.clientes !== undefined && (
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {syncResults.clientes} encontrados
+                      </span>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Import Button - show when imoveis are fetched */}
+                {imoveisToImport.length > 0 && (
+                  <Button 
+                    onClick={() => setShowImportDialog(true)}
+                    disabled={importing}
+                    className="w-full gap-2"
+                  >
+                    {importing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    Importar {imoveisToImport.length} Imóveis para o Sistema
+                  </Button>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -426,6 +520,26 @@ const Integracoes = () => {
       
       {/* Mobile Navigation */}
       <MobileNav />
+
+      {/* Import Confirmation Dialog */}
+      <AlertDialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Importar Imóveis</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a importar {imoveisToImport.length} imóveis do Imoview para o sistema local. 
+              Esta ação irá criar novos registros de imóveis no seu cadastro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={importarImoveis}>
+              <Download className="h-4 w-4 mr-2" />
+              Importar Imóveis
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
