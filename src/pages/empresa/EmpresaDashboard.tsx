@@ -108,7 +108,7 @@ export default function EmpresaDashboard() {
               Bem-vindo, {imobiliaria?.nome}
             </p>
           </div>
-          <Link to="/empresa/corretores/novo">
+          <Link to="/empresa/corretores">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Novo Corretor

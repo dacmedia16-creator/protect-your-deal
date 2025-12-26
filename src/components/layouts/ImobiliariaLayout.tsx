@@ -115,7 +115,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
           {/* Footer */}
           <div className="p-4 border-t border-sidebar-border space-y-2">
             <Link 
-              to="/empresa/perfil"
+              to="/perfil"
               className="flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg"
             >
               <UserCircle className="h-5 w-5" />
