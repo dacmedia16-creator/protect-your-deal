@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, FileCheck, Users } from 'lucide-react';
+import { Shield, FileCheck, Users, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -104,10 +104,23 @@ export default function Auth() {
     }
   };
 
+  // Mostrar loading enquanto verifica autenticação inicial
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
+      </div>
+    );
+  }
+
+  // Mostrar loading enquanto verifica o role após login bem-sucedido
+  if (user && roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Verificando permissões...</p>
+        </div>
       </div>
     );
   }
