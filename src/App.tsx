@@ -46,6 +46,7 @@ import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminUsuariosPendentes from "./pages/admin/AdminUsuariosPendentes";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
+import AdminDiagnostico from "./pages/admin/AdminDiagnostico";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
@@ -117,6 +118,11 @@ const App = () => (
                 <Route path="/admin/configuracoes" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminConfiguracoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/diagnostico" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminDiagnostico />
                   </ProtectedRoute>
                 } />
 
