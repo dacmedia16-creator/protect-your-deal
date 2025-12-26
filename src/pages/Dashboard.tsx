@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { 
   FileText, 
   Users, 
@@ -13,11 +12,11 @@ import {
   Plus,
   CheckCircle,
   Clock,
-  LogOut,
   Plug
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { DesktopNav } from '@/components/DesktopNav';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -60,25 +59,6 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -89,30 +69,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      {/* Header */}
-      <header className="border-b bg-card safe-area-top">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg gradient-primary flex items-center justify-center">
-              <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
+      {/* Desktop Navigation */}
+      <DesktopNav />
+      
+      {/* Mobile Header */}
+      <header className="md:hidden border-b bg-card safe-area-top">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+              <FileText className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display text-lg md:text-xl font-bold">VisitaSegura</span>
+            <span className="font-display text-lg font-bold">VisitaSegura</span>
           </div>
-          
-          <div className="hidden md:flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              Olá, <span className="font-medium text-foreground">{profile?.nome || 'Corretor'}</span>
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </div>
-
-          {/* Mobile greeting */}
-          <span className="md:hidden text-sm text-muted-foreground">
-            Olá, <span className="font-medium text-foreground">{profile?.nome?.split(' ')[0] || 'Corretor'}</span>
-          </span>
         </div>
       </header>
 

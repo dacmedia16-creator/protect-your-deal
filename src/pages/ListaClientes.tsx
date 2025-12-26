@@ -40,6 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { DesktopNav } from '@/components/DesktopNav';
 
 type Cliente = {
   id: string;
@@ -141,7 +142,10 @@ export default function ListaClientes() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      {/* Header */}
+      {/* Desktop Navigation */}
+      <DesktopNav />
+      
+      {/* Mobile Header */}
       <MobileHeader
         title="CRM de Clientes"
         subtitle={`${clientes?.length || 0} clientes cadastrados`}
