@@ -65,7 +65,8 @@ export default function AdminUsuarios() {
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const { data: userRoles, error } = await supabase
+      // First fetch user_roles with imobiliarias
+      const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select(`
           id,
@@ -73,12 +74,23 @@ export default function AdminUsuarios() {
           role,
           imobiliaria_id,
           created_at,
-          profiles!user_roles_user_id_fkey(nome, telefone),
           imobiliarias(nome)
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (rolesError) throw rolesError;
+
+      // Then fetch profiles separately
+      const userIds = userRoles.map((ur: any) => ur.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, nome, telefone")
+        .in("user_id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Create a map for quick lookup
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
       return userRoles.map((ur: any) => ({
         id: ur.id,
@@ -86,7 +98,7 @@ export default function AdminUsuarios() {
         role: ur.role,
         imobiliaria_id: ur.imobiliaria_id,
         created_at: ur.created_at,
-        profile: ur.profiles,
+        profile: profileMap.get(ur.user_id) || null,
         imobiliaria: ur.imobiliarias,
       })) as UserWithRole[];
     },
