@@ -22,6 +22,7 @@ import Integracoes from "./pages/Integracoes";
 import TemplatesMensagem from "./pages/TemplatesMensagem";
 import VerificarComprovante from "./pages/VerificarComprovante";
 import Perfil from "./pages/Perfil";
+import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/imoveis/:id/editar" element={<FormImovel />} />
               <Route path="/integracoes" element={<Integracoes />} />
               <Route path="/integracoes/templates" element={<TemplatesMensagem />} />
+              <Route path="/relatorios" element={<Relatorios />} />
               <Route path="/perfil" element={<Perfil />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
