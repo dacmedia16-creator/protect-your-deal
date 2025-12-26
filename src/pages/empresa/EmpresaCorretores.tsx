@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,6 +44,7 @@ interface Corretor {
   creci: string | null;
   created_at: string;
   fichas_count?: number;
+  ativo: boolean;
 }
 
 interface Convite {
@@ -116,6 +117,7 @@ export default function EmpresaCorretores() {
               creci: profile.creci,
               created_at: roleData?.created_at || profile.created_at,
               fichas_count: count || 0,
+              ativo: profile.ativo ?? true,
             };
           })
         );
@@ -303,6 +305,33 @@ export default function EmpresaCorretores() {
       toast.error(error.message || 'Erro ao atualizar corretor');
     } finally {
       setEditing(false);
+    }
+  }
+
+  async function toggleCorretorAtivo(corretor: Corretor) {
+    const novoStatus = !corretor.ativo;
+    
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke('admin-update-corretor', {
+        body: {
+          user_id: corretor.user_id,
+          ativo: novoStatus,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(novoStatus ? 'Corretor ativado com sucesso!' : 'Corretor desativado com sucesso!');
+      fetchData();
+    } catch (error: any) {
+      console.error('Error toggling corretor status:', error);
+      toast.error(error.message || 'Erro ao alterar status do corretor');
     }
   }
 
@@ -513,13 +542,14 @@ export default function EmpresaCorretores() {
                       <TableHead className="hidden md:table-cell">CRECI</TableHead>
                       <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                       <TableHead>Fichas</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="hidden lg:table-cell">Desde</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCorretores.map((corretor) => (
-                      <TableRow key={corretor.id}>
+                      <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
                         <TableCell>
                           <p className="font-medium">{corretor.nome}</p>
                         </TableCell>
@@ -530,6 +560,11 @@ export default function EmpresaCorretores() {
                           {corretor.telefone || '-'}
                         </TableCell>
                         <TableCell>{corretor.fichas_count}</TableCell>
+                        <TableCell>
+                          <Badge variant={corretor.ativo ? 'default' : 'secondary'}>
+                            {corretor.ativo ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="hidden lg:table-cell text-muted-foreground">
                           {format(new Date(corretor.created_at), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
@@ -544,6 +579,19 @@ export default function EmpresaCorretores() {
                               <DropdownMenuItem onClick={() => openEditDialog(corretor)}>
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toggleCorretorAtivo(corretor)}>
+                                {corretor.ativo ? (
+                                  <>
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Desativar
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Ativar
+                                  </>
+                                )}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => removeCorretor(corretor.user_id)}
