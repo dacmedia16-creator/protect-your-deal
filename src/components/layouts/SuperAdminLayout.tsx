@@ -13,6 +13,7 @@ import {
   LogOut,
   Shield,
   Menu,
+  Stethoscope,
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
   { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
+  { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
   { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
