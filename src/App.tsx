@@ -15,6 +15,7 @@ import ConfirmarVisita from "./pages/ConfirmarVisita";
 import VerificarComprovante from "./pages/VerificarComprovante";
 import NotFound from "./pages/NotFound";
 import AssinaturaSuspensa from "./pages/AssinaturaSuspensa";
+import SemPermissao from "./pages/SemPermissao";
 
 // Auth pages
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
@@ -74,6 +75,7 @@ const App = () => (
                 <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
                 <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
                 <Route path="/assinatura-suspensa" element={<AssinaturaSuspensa />} />
+                <Route path="/sem-permissao" element={<SemPermissao />} />
 
                 {/* Super Admin routes */}
                 <Route path="/admin" element={

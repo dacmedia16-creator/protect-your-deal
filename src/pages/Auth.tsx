@@ -32,8 +32,15 @@ export default function Auth() {
   const [signupData, setSignupData] = useState({ email: '', password: '', nome: '' });
 
   useEffect(() => {
-    if (!loading && !roleLoading && user && role) {
-      navigate(getRedirectPathByRole(role));
+    // Quando terminar de carregar e o usuário estiver logado
+    if (!loading && !roleLoading && user) {
+      if (role) {
+        // Usuário tem role, redirecionar para o dashboard apropriado
+        navigate(getRedirectPathByRole(role));
+      } else {
+        // Usuário não tem role, redirecionar para página de pendente
+        navigate('/sem-permissao');
+      }
     }
   }, [user, loading, role, roleLoading, navigate]);
 
