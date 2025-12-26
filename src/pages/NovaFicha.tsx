@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,6 +75,7 @@ const tiposImovel = [
 export default function NovaFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { imobiliariaId, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [enviarWhatsApp, setEnviarWhatsApp] = useState(true);
@@ -153,6 +155,15 @@ export default function NovaFicha() {
       return;
     }
 
+    if (!imobiliariaId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Você não está vinculado a nenhuma imobiliária',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -162,6 +173,7 @@ export default function NovaFicha() {
         .from('fichas_visita')
         .insert({
           user_id: user.id,
+          imobiliaria_id: imobiliariaId,
           protocolo,
           imovel_endereco: formData.imovel_endereco,
           imovel_tipo: formData.imovel_tipo,
@@ -259,7 +271,7 @@ export default function NovaFicha() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
