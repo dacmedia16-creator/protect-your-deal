@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.registro-imobiliaria]
 verify_jwt = false
+
+[functions.admin-create-corretor]
+verify_jwt = true
