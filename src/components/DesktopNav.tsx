@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut, 
   User,
-  ChevronDown
+  ChevronDown,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +29,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/fichas', label: 'Fichas', icon: FileText },
   { to: '/clientes', label: 'Clientes', icon: Users },
+  { to: '/relatorios', label: 'Relatórios', icon: BarChart3 },
   { to: '/integracoes', label: 'Integrações', icon: Settings },
 ];
 
