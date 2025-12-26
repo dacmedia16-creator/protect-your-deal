@@ -17,6 +17,7 @@ import FormCliente from "./pages/FormCliente";
 import DetalhesCliente from "./pages/DetalhesCliente";
 import ListaImoveis from "./pages/ListaImoveis";
 import FormImovel from "./pages/FormImovel";
+import DetalhesImovel from "./pages/DetalhesImovel";
 import Integracoes from "./pages/Integracoes";
 import TemplatesMensagem from "./pages/TemplatesMensagem";
 import VerificarComprovante from "./pages/VerificarComprovante";
@@ -48,7 +49,7 @@ const App = () => (
               <Route path="/clientes/:id/editar" element={<FormCliente />} />
               <Route path="/imoveis" element={<ListaImoveis />} />
               <Route path="/imoveis/novo" element={<FormImovel />} />
-              <Route path="/imoveis/:id" element={<FormImovel />} />
+              <Route path="/imoveis/:id" element={<DetalhesImovel />} />
               <Route path="/imoveis/:id/editar" element={<FormImovel />} />
               <Route path="/integracoes" element={<Integracoes />} />
               <Route path="/integracoes/templates" element={<TemplatesMensagem />} />
