@@ -32,7 +32,7 @@ export default function Auth() {
   const [signupData, setSignupData] = useState({ email: '', password: '', nome: '' });
 
   useEffect(() => {
-    if (!loading && !roleLoading && user) {
+    if (!loading && !roleLoading && user && role) {
       navigate(getRedirectPathByRole(role));
     }
   }, [user, loading, role, roleLoading, navigate]);

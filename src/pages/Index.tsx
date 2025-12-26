@@ -23,7 +23,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !roleLoading && user) {
+    if (!loading && !roleLoading && user && role) {
       navigate(getRedirectPathByRole(role));
     }
   }, [user, loading, role, roleLoading, navigate]);
