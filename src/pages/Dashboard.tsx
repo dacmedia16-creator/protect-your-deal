@@ -16,6 +16,8 @@ import {
   LogOut,
   Plug
 } from 'lucide-react';
+import { MobileNav } from '@/components/MobileNav';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -86,18 +88,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center">
-              <FileText className="h-5 w-5 text-primary-foreground" />
+      <header className="border-b bg-card safe-area-top">
+        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="h-8 w-8 md:h-9 md:w-9 rounded-lg gradient-primary flex items-center justify-center">
+              <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
             </div>
-            <span className="font-display text-xl font-bold">VisitaSegura</span>
+            <span className="font-display text-lg md:text-xl font-bold">VisitaSegura</span>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
               Olá, <span className="font-medium text-foreground">{profile?.nome || 'Corretor'}</span>
             </span>
@@ -106,32 +108,37 @@ export default function Dashboard() {
               Sair
             </Button>
           </div>
+
+          {/* Mobile greeting */}
+          <span className="md:hidden text-sm text-muted-foreground">
+            Olá, <span className="font-medium text-foreground">{profile?.nome?.split(' ')[0] || 'Corretor'}</span>
+          </span>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-4 md:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas fichas de visita e clientes em um só lugar
+        <div className="mb-4 md:mb-8">
+          <h1 className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2">Dashboard</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Gerencie suas fichas de visita e clientes
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        {/* Stats Grid - 2x2 on mobile, 4 cols on desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
             className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all"
             onClick={() => navigate('/fichas')}
           >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Fichas
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                Total Fichas
               </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalFichas || 0}</div>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              <div className="text-xl md:text-2xl font-bold">{stats?.totalFichas || 0}</div>
             </CardContent>
           </Card>
 
@@ -140,14 +147,14 @@ export default function Dashboard() {
             style={{ animationDelay: '0.1s' }}
             onClick={() => navigate('/fichas?status=completo')}
           >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                 Confirmadas
               </CardTitle>
               <CheckCircle className="h-4 w-4 text-success" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              <div className="text-xl md:text-2xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
             </CardContent>
           </Card>
 
@@ -156,14 +163,14 @@ export default function Dashboard() {
             style={{ animationDelay: '0.2s' }}
             onClick={() => navigate('/fichas?status=pendente')}
           >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                 Pendentes
               </CardTitle>
               <Clock className="h-4 w-4 text-warning" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              <div className="text-xl md:text-2xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
             </CardContent>
           </Card>
 
@@ -172,20 +179,20 @@ export default function Dashboard() {
             style={{ animationDelay: '0.3s' }}
             onClick={() => navigate('/clientes')}
           >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                 Clientes
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalClientes || 0}</div>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              <div className="text-xl md:text-2xl font-bold">{stats?.totalClientes || 0}</div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Quick Actions - vertical on mobile, grid on desktop */}
+        <div className="hidden md:grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
             onClick={() => navigate('/fichas/nova')}
@@ -255,7 +262,66 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
         </div>
+
+        {/* Mobile Quick Actions - Compact list */}
+        <div className="md:hidden space-y-2">
+          <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
+          
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/fichas/nova')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
+                <Plus className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Nova Ficha de Visita</p>
+                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/clientes')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <Users className="h-5 w-5 text-secondary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Gerenciar Clientes</p>
+                <p className="text-xs text-muted-foreground truncate">Cadastrar e organizar clientes</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/integracoes')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <Plug className="h-5 w-5 text-secondary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Integrações</p>
+                <p className="text-xs text-muted-foreground truncate">Conectar com outros sistemas</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
+
+      {/* Floating Action Button for mobile */}
+      <FloatingActionButton 
+        onClick={() => navigate('/fichas/nova')} 
+        label="Nova Ficha"
+      />
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }

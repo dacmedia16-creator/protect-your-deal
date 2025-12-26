@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
-  ArrowLeft, 
   Plus, 
   Users,
   Search,
@@ -38,7 +37,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { MobileHeader } from '@/components/MobileHeader';
+import { MobileNav } from '@/components/MobileNav';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 type Cliente = {
   id: string;
@@ -139,44 +140,30 @@ export default function ListaClientes() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="font-display text-xl font-bold">CRM de Clientes</h1>
-                <p className="text-sm text-muted-foreground">
-                  {clientes?.length || 0} clientes cadastrados
-                </p>
-              </div>
-            </div>
-            <Button onClick={() => navigate('/clientes/novo')} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Cliente
-            </Button>
-          </div>
-        </div>
-      </header>
+      <MobileHeader
+        title="CRM de Clientes"
+        subtitle={`${clientes?.length || 0} clientes cadastrados`}
+        showAdd
+        onAdd={() => navigate('/clientes/novo')}
+        addLabel="Novo Cliente"
+      />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-4 md:py-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
           <Card 
             className={`cursor-pointer transition-all ${filterTipo === 'proprietario' ? 'ring-2 ring-primary' : ''}`}
             onClick={() => setFilterTipo(filterTipo === 'proprietario' ? null : 'proprietario')}
           >
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-primary" />
+            <CardContent className="p-3 md:p-4 flex items-center gap-3">
+              <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Building2 className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{totalProprietarios}</p>
-                <p className="text-sm text-muted-foreground">Proprietários</p>
+              <div className="min-w-0">
+                <p className="text-xl md:text-2xl font-bold">{totalProprietarios}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Proprietários</p>
               </div>
             </CardContent>
           </Card>
@@ -184,33 +171,33 @@ export default function ListaClientes() {
             className={`cursor-pointer transition-all ${filterTipo === 'comprador' ? 'ring-2 ring-primary' : ''}`}
             onClick={() => setFilterTipo(filterTipo === 'comprador' ? null : 'comprador')}
           >
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                <User className="h-5 w-5 text-secondary-foreground" />
+            <CardContent className="p-3 md:p-4 flex items-center gap-3">
+              <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <User className="h-4 w-4 md:h-5 md:w-5 text-secondary-foreground" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{totalCompradores}</p>
-                <p className="text-sm text-muted-foreground">Compradores</p>
+              <div className="min-w-0">
+                <p className="text-xl md:text-2xl font-bold">{totalCompradores}</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Compradores</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, telefone, email ou CPF..."
+              placeholder="Buscar por nome, telefone, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-10"
             />
           </div>
           {filterTipo && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Filtrando por:</span>
-              <Badge variant="secondary" className="cursor-pointer" onClick={() => setFilterTipo(null)}>
+              <span className="text-xs md:text-sm text-muted-foreground">Filtrando:</span>
+              <Badge variant="secondary" className="cursor-pointer text-xs" onClick={() => setFilterTipo(null)}>
                 {filterTipo === 'proprietario' ? 'Proprietários' : 'Compradores'} ✕
               </Badge>
             </div>
@@ -312,6 +299,15 @@ export default function ListaClientes() {
           </div>
         )}
       </main>
+
+      {/* Floating Action Button for mobile */}
+      <FloatingActionButton 
+        onClick={() => navigate('/clientes/novo')} 
+        label="Novo Cliente"
+      />
+
+      {/* Mobile Navigation */}
+      <MobileNav />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

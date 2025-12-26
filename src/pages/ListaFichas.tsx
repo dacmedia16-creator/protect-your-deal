@@ -9,29 +9,28 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ArrowLeft, 
   Plus, 
   FileText,
   CheckCircle,
   Clock,
   Search,
   Loader2,
-  Building2
+  Building2,
+  MapPin,
+  Calendar
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { MobileHeader } from '@/components/MobileHeader';
+import { MobileNav } from '@/components/MobileNav';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
-  aguardando_comprador: { label: 'Aguardando Comprador', variant: 'outline', icon: Clock },
-  aguardando_proprietario: { label: 'Aguardando Proprietário', variant: 'outline', icon: Clock },
+  aguardando_comprador: { label: 'Aguard. Comprador', variant: 'outline', icon: Clock },
+  aguardando_proprietario: { label: 'Aguard. Proprietário', variant: 'outline', icon: Clock },
   completo: { label: 'Confirmado', variant: 'default', icon: CheckCircle },
   expirado: { label: 'Expirado', variant: 'destructive', icon: Clock },
-};
-
-const statusFilterLabels: Record<string, string> = {
-  completo: 'Confirmadas',
-  pendente: 'Pendentes',
 };
 
 export default function ListaFichas() {
@@ -65,23 +64,20 @@ export default function ListaFichas() {
   });
 
   const filteredFichas = fichas?.filter(ficha => {
-    // Apply status filter
     if (statusFilter) {
       if (statusFilter === 'pendente' && ficha.status === 'completo') return false;
       if (statusFilter === 'completo' && ficha.status !== 'completo') return false;
     }
     
-    // Apply search filter
     const term = searchTerm.toLowerCase();
     return (
       ficha.protocolo.toLowerCase().includes(term) ||
       ficha.imovel_endereco.toLowerCase().includes(term) ||
-      ficha.proprietario_nome.toLowerCase().includes(term) ||
-      ficha.comprador_nome.toLowerCase().includes(term)
+      (ficha.proprietario_nome && ficha.proprietario_nome.toLowerCase().includes(term)) ||
+      (ficha.comprador_nome && ficha.comprador_nome.toLowerCase().includes(term))
     );
   });
 
-  // Count for tabs
   const allCount = fichas?.length || 0;
   const pendingCount = fichas?.filter(f => f.status !== 'completo').length || 0;
   const confirmedCount = fichas?.filter(f => f.status === 'completo').length || 0;
@@ -105,64 +101,52 @@ export default function ListaFichas() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="font-display text-xl font-bold">Fichas de Visita</h1>
-                <p className="text-sm text-muted-foreground">
-                  {fichas?.length || 0} fichas no total
-                </p>
-              </div>
-            </div>
-            <Button onClick={() => navigate('/fichas/nova')} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Ficha
-            </Button>
-          </div>
-        </div>
-      </header>
+      <MobileHeader
+        title="Fichas de Visita"
+        subtitle={`${fichas?.length || 0} fichas no total`}
+        showAdd
+        onAdd={() => navigate('/fichas/nova')}
+        addLabel="Nova Ficha"
+      />
 
-      <main className="container mx-auto px-4 py-6">
-        {/* Filter Tabs */}
-        <Tabs value={currentTab} onValueChange={handleTabChange} className="mb-6">
-          <TabsList className="bg-muted">
-            <TabsTrigger value="todas" className="gap-2">
-              Todas
-              <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
-                {allCount}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="pendente" className="gap-2">
-              Pendentes
-              <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
-                {pendingCount}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="completo" className="gap-2">
-              Confirmadas
-              <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0">
-                {confirmedCount}
-              </Badge>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <main className="container mx-auto px-4 py-4 md:py-6">
+        {/* Filter Tabs - horizontal scroll on mobile */}
+        <div className="mb-4 md:mb-6 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+          <Tabs value={currentTab} onValueChange={handleTabChange}>
+            <TabsList className="bg-muted inline-flex w-auto min-w-full md:min-w-0">
+              <TabsTrigger value="todas" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
+                Todas
+                <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
+                  {allCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="pendente" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
+                Pendentes
+                <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
+                  {pendingCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="completo" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
+                Confirmadas
+                <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
+                  {confirmedCount}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
         {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        <div className="mb-4 md:mb-6">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por protocolo, endereço ou nome..."
+              placeholder="Buscar por protocolo, endereço..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-10 md:max-w-md"
             />
           </div>
         </div>
@@ -173,7 +157,7 @@ export default function ListaFichas() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredFichas && filteredFichas.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredFichas.map((ficha) => {
               const status = statusConfig[ficha.status] || statusConfig.pendente;
               const StatusIcon = status.icon;
@@ -181,11 +165,43 @@ export default function ListaFichas() {
               return (
                 <Card 
                   key={ficha.id} 
-                  className="cursor-pointer hover:shadow-medium transition-shadow"
+                  className="cursor-pointer hover:shadow-medium active:bg-muted/30 transition-all"
                   onClick={() => navigate(`/fichas/${ficha.id}`)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
+                  <CardContent className="p-3 md:p-4">
+                    {/* Mobile Layout */}
+                    <div className="md:hidden space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-mono text-xs font-medium text-primary">
+                          #{ficha.protocolo}
+                        </span>
+                        <Badge variant={status.variant} className="gap-1 text-[10px] shrink-0">
+                          <StatusIcon className="h-3 w-3" />
+                          {status.label}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <p className="text-sm font-medium leading-tight line-clamp-2">{ficha.imovel_endereco}</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Building2 className="h-3.5 w-3.5" />
+                        <span>{ficha.imovel_tipo}</span>
+                        <span className="text-border">•</span>
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>{format(new Date(ficha.data_visita), "dd/MM 'às' HH:mm")}</span>
+                      </div>
+                      
+                      <div className="flex gap-3 text-xs text-muted-foreground pt-1 border-t">
+                        <span className="truncate">Prop: {ficha.proprietario_nome || 'A preencher'}</span>
+                        <span className="truncate">Comp: {ficha.comprador_nome || 'A preencher'}</span>
+                      </div>
+                    </div>
+
+                    {/* Desktop Layout */}
+                    <div className="hidden md:flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4">
                         <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           <Building2 className="h-6 w-6 text-primary" />
@@ -205,8 +221,8 @@ export default function ListaFichas() {
                             {ficha.imovel_tipo} • Visita em {format(new Date(ficha.data_visita), "dd/MM/yyyy 'às' HH:mm")}
                           </p>
                           <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                            <span>Proprietário: {ficha.proprietario_nome}</span>
-                            <span>Comprador: {ficha.comprador_nome}</span>
+                            <span>Proprietário: {ficha.proprietario_nome || 'A preencher'}</span>
+                            <span>Comprador: {ficha.comprador_nome || 'A preencher'}</span>
                           </div>
                         </div>
                       </div>
@@ -234,6 +250,15 @@ export default function ListaFichas() {
           </div>
         )}
       </main>
+
+      {/* Floating Action Button for mobile */}
+      <FloatingActionButton 
+        onClick={() => navigate('/fichas/nova')} 
+        label="Nova Ficha"
+      />
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }
