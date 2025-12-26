@@ -141,7 +141,7 @@ export default function ListaClientes() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background pb-20 sm:pb-0">
       {/* Desktop Navigation */}
       <DesktopNav />
       
