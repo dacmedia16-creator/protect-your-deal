@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -66,12 +66,15 @@ export default function EmpresaCorretores() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [conviteForm, setConviteForm] = useState({ nome: '', email: '' });
   const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', telefone: '', creci: '' });
   const [editForm, setEditForm] = useState({ user_id: '', nome: '', telefone: '', creci: '' });
+  const [resetPasswordForm, setResetPasswordForm] = useState({ user_id: '', nome: '', newPassword: '' });
   const [selectedCorretor, setSelectedCorretor] = useState<Corretor | null>(null);
 
   async function fetchData() {
@@ -335,6 +338,52 @@ export default function EmpresaCorretores() {
     }
   }
 
+  function openResetPasswordDialog(corretor: Corretor) {
+    setResetPasswordForm({
+      user_id: corretor.user_id,
+      nome: corretor.nome,
+      newPassword: '',
+    });
+    setResetPasswordDialogOpen(true);
+  }
+
+  async function resetCorretorPassword(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (resetPasswordForm.newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setResettingPassword(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke('admin-reset-corretor-password', {
+        body: {
+          user_id: resetPasswordForm.user_id,
+          new_password: resetPasswordForm.newPassword,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Senha redefinida com sucesso!');
+      setResetPasswordDialogOpen(false);
+      setResetPasswordForm({ user_id: '', nome: '', newPassword: '' });
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast.error(error.message || 'Erro ao redefinir senha');
+    } finally {
+      setResettingPassword(false);
+    }
+  }
+
   const filteredCorretores = corretores.filter(c =>
     c.nome.toLowerCase().includes(search.toLowerCase()) ||
     c.creci?.toLowerCase().includes(search.toLowerCase())
@@ -593,6 +642,10 @@ export default function EmpresaCorretores() {
                                   </>
                                 )}
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openResetPasswordDialog(corretor)}>
+                                <KeyRound className="h-4 w-4 mr-2" />
+                                Redefinir Senha
+                              </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => removeCorretor(corretor.user_id)}
                                 className="text-destructive focus:text-destructive"
@@ -647,6 +700,36 @@ export default function EmpresaCorretores() {
               <Button type="submit" className="w-full" disabled={editing}>
                 {editing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
                 Salvar Alterações
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reset password dialog */}
+        <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Redefinir Senha</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={resetCorretorPassword} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Definir nova senha para <strong>{resetPasswordForm.nome}</strong>
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="reset_password">Nova Senha *</Label>
+                <Input
+                  id="reset_password"
+                  type="password"
+                  value={resetPasswordForm.newPassword}
+                  onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
+                  required
+                  minLength={6}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={resettingPassword}>
+                {resettingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
+                Redefinir Senha
               </Button>
             </form>
           </DialogContent>
