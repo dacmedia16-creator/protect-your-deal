@@ -115,7 +115,7 @@ export default function FormImovel() {
       const imovelData = {
         ...data,
         user_id: user.id,
-        proprietario_id: data.proprietario_id || null,
+        proprietario_id: data.proprietario_id && data.proprietario_id !== 'none' ? data.proprietario_id : null,
       };
 
       if (isEditing) {
@@ -265,7 +265,7 @@ export default function FormImovel() {
                     <SelectValue placeholder="Selecione o proprietário (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {clientes?.map((cliente) => (
                       <SelectItem key={cliente.id} value={cliente.id}>
                         {cliente.nome}

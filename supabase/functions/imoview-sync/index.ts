@@ -90,6 +90,9 @@ async function makeImoviewRequest(
 ) {
   const url = `${IMOVIEW_BASE_URL}${endpoint}`;
   console.log(`Imoview request: ${method} ${url}`);
+  if (body) {
+    console.log(`Imoview request body:`, JSON.stringify(body));
+  }
 
   // A API Imoview usa 'chave' como header de autenticação
   const headers: Record<string, string> = {
@@ -106,17 +109,34 @@ async function makeImoviewRequest(
     options.body = JSON.stringify(body);
   }
 
-  const response = await fetch(url, options);
-  const text = await response.text();
-  
-  console.log(`Imoview response status: ${response.status}`);
-  console.log(`Imoview response preview:`, text.substring(0, 200));
-  
   try {
-    return JSON.parse(text);
-  } catch {
-    console.log('Response text (not JSON):', text);
-    return { raw: text, status: response.status };
+    const response = await fetch(url, options);
+    const text = await response.text();
+    
+    console.log(`Imoview response status: ${response.status}`);
+    console.log(`Imoview response headers:`, JSON.stringify(Object.fromEntries(response.headers.entries())));
+    console.log(`Imoview response body (first 500 chars):`, text.substring(0, 500));
+    
+    if (!response.ok) {
+      console.error(`Imoview HTTP error: ${response.status} ${response.statusText}`);
+      return { 
+        erro: `HTTP ${response.status}: ${response.statusText}`, 
+        raw: text,
+        status: response.status 
+      };
+    }
+    
+    try {
+      const parsed = JSON.parse(text);
+      console.log(`Imoview parsed response type: ${typeof parsed}, isArray: ${Array.isArray(parsed)}`);
+      return parsed;
+    } catch (parseError) {
+      console.error('Imoview response is not valid JSON:', text.substring(0, 200));
+      return { erro: 'Resposta inválida da API', raw: text, status: response.status };
+    }
+  } catch (fetchError) {
+    console.error(`Imoview fetch error:`, fetchError);
+    throw new Error(`Erro de conexão: ${fetchError instanceof Error ? fetchError.message : 'Erro desconhecido'}`);
   }
 }
 
@@ -150,25 +170,34 @@ async function testConnection(apiKey: string) {
 }
 
 async function listarImoveis(apiKey: string, filters?: Record<string, unknown>) {
-  const params = new URLSearchParams();
+  console.log('listarImoveis called with filters:', filters);
   
-  if (filters?.pagina) params.append('pagina', String(filters.pagina));
-  if (filters?.limite) params.append('limite', String(filters.limite));
-  if (filters?.tipo) params.append('tipo', String(filters.tipo));
-  if (filters?.cidade) params.append('cidade', String(filters.cidade));
-  if (filters?.bairro) params.append('bairro', String(filters.bairro));
-  
-  const queryString = params.toString();
   // Usa endpoint correto para listar imóveis disponíveis
   const endpoint = `/Imovel/RetornarImoveisDisponiveis`;
   
   const result = await makeImoviewRequest(apiKey, endpoint, 'POST', filters || {});
   
+  console.log('listarImoveis result:', JSON.stringify(result).substring(0, 500));
+  
+  // A API pode retornar array diretamente ou objeto com propriedade imoveis
+  let imoveis: unknown[] = [];
+  if (Array.isArray(result)) {
+    imoveis = result;
+  } else if (result?.imoveis && Array.isArray(result.imoveis)) {
+    imoveis = result.imoveis;
+  } else if (result?.data && Array.isArray(result.data)) {
+    imoveis = result.data;
+  }
+  
+  const hasError = result?.erro || result?.error;
+  
   return {
-    success: !result.erro,
-    imoveis: result.imoveis || result.data || [],
-    total: result.total || 0,
-    pagina: result.pagina || 1
+    success: !hasError,
+    imoveis,
+    total: imoveis.length,
+    pagina: result?.pagina || 1,
+    error: hasError ? (result.erro || result.error) : undefined,
+    raw: result
   };
 }
 
