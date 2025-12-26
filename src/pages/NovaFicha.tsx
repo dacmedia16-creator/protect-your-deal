@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
 import { validateCPF, formatCPF } from '@/lib/cpf';
+import { MobileHeader } from '@/components/MobileHeader';
+import { MobileNav } from '@/components/MobileNav';
 
 const fichaSchema = z.object({
   imovel_endereco: z.string().min(5, 'Endereço deve ter no mínimo 5 caracteres'),
@@ -266,23 +268,15 @@ export default function NovaFicha() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="font-display text-xl font-bold">Nova Ficha de Visita</h1>
-              <p className="text-sm text-muted-foreground">Preencha os dados da visita</p>
-            </div>
-          </div>
-        </div>
-      </header>
+      <MobileHeader
+        title="Nova Ficha de Visita"
+        subtitle="Preencha os dados da visita"
+        backPath="/fichas"
+      />
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Dados do Imóvel */}
           <Card>
@@ -545,27 +539,42 @@ export default function NovaFicha() {
             </CardContent>
           </Card>
 
-          {/* Botões */}
-          <div className="flex gap-4 justify-end">
-            <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="gap-2">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {enviarWhatsApp ? 'Criando e enviando...' : 'Criando...'}
-                </>
-              ) : (
-                <>
-                  <FileText className="h-4 w-4" />
-                  Criar Ficha
-                </>
-              )}
-            </Button>
+          {/* Botões - sticky on mobile */}
+          <div className="sticky bottom-20 md:static bg-background pt-4 pb-2 md:py-0 -mx-4 px-4 md:mx-0 border-t md:border-0">
+            <div className="flex gap-3 md:gap-4 justify-end">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate('/fichas')}
+                className="flex-1 md:flex-none h-12 md:h-10"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="gap-2 flex-1 md:flex-none h-12 md:h-10"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="hidden sm:inline">{enviarWhatsApp ? 'Criando e enviando...' : 'Criando...'}</span>
+                    <span className="sm:hidden">Criando...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4" />
+                    Criar Ficha
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </main>
+
+      {/* Mobile Navigation */}
+      <MobileNav />
     </div>
   );
 }
