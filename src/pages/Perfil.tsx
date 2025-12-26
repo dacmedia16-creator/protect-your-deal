@@ -34,6 +34,17 @@ export default function Perfil() {
   const [creci, setCreci] = useState('');
   const [telefone, setTelefone] = useState('');
   const [imobiliaria, setImobiliaria] = useState('');
+
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTelefone(formatPhone(e.target.value));
+  };
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,7 +72,7 @@ export default function Perfil() {
       setProfile(data);
       setNome(data.nome || '');
       setCreci(data.creci || '');
-      setTelefone(data.telefone || '');
+      setTelefone(formatPhone(data.telefone || ''));
       setImobiliaria(data.imobiliaria || '');
       setFotoUrl(data.foto_url);
     } catch (error) {
@@ -248,8 +259,9 @@ export default function Perfil() {
               <Label htmlFor="telefone">Telefone</Label>
               <Input
                 id="telefone"
+                type="tel"
                 value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
+                onChange={handleTelefoneChange}
                 placeholder="(00) 00000-0000"
               />
             </div>
