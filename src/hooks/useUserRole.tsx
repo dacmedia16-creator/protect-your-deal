@@ -51,8 +51,9 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [imobiliariaId, setImobiliariaId] = useState<string | null>(null);
   const [imobiliaria, setImobiliaria] = useState<Imobiliaria | null>(null);
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
+  // Track which user ID we have fetched for - null means never fetched
+  const [fetchedForUserId, setFetchedForUserId] = useState<string | null>(null);
 
   const fetchUserRole = async () => {
     if (!user) {
@@ -60,24 +61,26 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       setImobiliariaId(null);
       setImobiliaria(null);
       setAssinatura(null);
-      setLoading(false);
-      setHasFetched(true);
+      setInternalLoading(false);
+      setFetchedForUserId(null);
       return;
     }
 
-    setLoading(true);
+    const currentUserId = user.id;
+    setInternalLoading(true);
 
     try {
       // Fetch user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role, imobiliaria_id')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUserId)
         .maybeSingle();
 
       if (roleError) {
         console.error('Error fetching user role:', roleError);
-        setLoading(false);
+        setInternalLoading(false);
+        setFetchedForUserId(currentUserId);
         return;
       }
 
@@ -125,23 +128,38 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
             });
           }
         }
+      } else {
+        // No role found - reset role state
+        setRole(null);
+        setImobiliariaId(null);
+        setImobiliaria(null);
+        setAssinatura(null);
       }
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
     } finally {
-      setLoading(false);
-      setHasFetched(true);
+      setInternalLoading(false);
+      setFetchedForUserId(currentUserId);
     }
   };
 
-  // Determine if we're truly loading
-  const isLoading = authLoading || (user && !hasFetched) || loading;
+  // Loading is true when:
+  // 1. Auth is still loading, OR
+  // 2. We have a user but haven't fetched for THIS specific user yet, OR
+  // 3. We're actively fetching
+  const isLoading = authLoading || (user && fetchedForUserId !== user.id) || internalLoading;
 
   useEffect(() => {
     if (!authLoading) {
-      fetchUserRole();
+      // Only fetch if we haven't fetched for this user yet
+      if (user && fetchedForUserId !== user.id) {
+        fetchUserRole();
+      } else if (!user && fetchedForUserId !== null) {
+        // User logged out, reset state
+        fetchUserRole();
+      }
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchedForUserId]);
 
   return (
     <UserRoleContext.Provider value={{ 
