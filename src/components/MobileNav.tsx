@@ -5,10 +5,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { RoleBadge } from '@/components/RoleBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +26,7 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { role } = useUserRole();
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
 
   useEffect(() => {
@@ -86,6 +90,10 @@ export function MobileNav() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 mb-2 mr-2">
+            <DropdownMenuLabel className="pb-2">
+              <RoleBadge role={role} variant="compact" />
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/perfil')}>
               <User className="h-4 w-4 mr-2" />
               Meu Perfil
