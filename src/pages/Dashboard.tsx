@@ -8,7 +8,6 @@ import {
   FileText, 
   Users, 
   Building2, 
-  BarChart3, 
   Plus,
   CheckCircle,
   Clock,
@@ -202,18 +201,6 @@ export default function Dashboard() {
               <CardTitle>Imóveis</CardTitle>
               <CardDescription>
                 Cadastre imóveis para agilizar fichas
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-medium transition-shadow group">
-            <CardHeader>
-              <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <BarChart3 className="h-6 w-6 text-secondary-foreground" />
-              </div>
-              <CardTitle>Relatórios</CardTitle>
-              <CardDescription>
-                Visualize estatísticas e histórico
               </CardDescription>
             </CardHeader>
           </Card>
