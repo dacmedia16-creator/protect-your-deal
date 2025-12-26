@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 
 // Auth pages
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
+import AceitarConvite from "./pages/auth/AceitarConvite";
 
 // Corretor pages
 import Dashboard from "./pages/Dashboard";
@@ -42,6 +43,9 @@ import AdminPlanos from "./pages/admin/AdminPlanos";
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
+import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
+import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
+import EmpresaFichas from "./pages/empresa/EmpresaFichas";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +63,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/registro" element={<RegistroImobiliaria />} />
+                <Route path="/convite/:token" element={<AceitarConvite />} />
                 <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
                 <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
 
@@ -88,6 +93,21 @@ const App = () => (
                 <Route path="/empresa/corretores" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaCorretores />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/fichas" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaFichas />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/relatorios" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaRelatorios />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/assinatura" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaAssinatura />
                   </ProtectedRoute>
                 } />
 
