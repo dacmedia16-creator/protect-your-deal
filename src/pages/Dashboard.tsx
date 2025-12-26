@@ -215,7 +215,7 @@ export default function Dashboard() {
               </div>
               <CardTitle>Integrações</CardTitle>
               <CardDescription>
-                Conecte com Imoview e outros sistemas
+                Conecte com outros sistemas
               </CardDescription>
             </CardHeader>
           </Card>

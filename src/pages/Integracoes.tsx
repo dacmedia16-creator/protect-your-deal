@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plug, RefreshCw, CheckCircle, XCircle, Building, Users, Loader2, MessageCircle, Send, FileText, Download } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,213 +11,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
-interface ImoviewImovel {
-  codigo?: string;
-  endereco?: string;
-  tipo?: string;
-  bairro?: string;
-  cidade?: string;
-  estado?: string;
-  descricao?: string;
-}
 
 const Integracoes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  
-  // Imoview state
-  const [imoviewStatus, setImoviewStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
-  const [testing, setTesting] = useState(false);
-  const [syncing, setSyncing] = useState<string | null>(null);
-  const [syncResults, setSyncResults] = useState<{
-    imoveis?: number;
-    clientes?: number;
-  }>({});
-  const [importing, setImporting] = useState(false);
-  const [imoveisToImport, setImoveisToImport] = useState<ImoviewImovel[]>([]);
-  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // ZionTalk state
   const [ziontalkStatus, setZiontalkStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
   const [testingZiontalk, setTestingZiontalk] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [testPhone, setTestPhone] = useState('');
-
-  const testImoviewConnection = async () => {
-    setTesting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('imoview-sync', {
-        body: { action: 'testar-conexao' }
-      });
-
-      if (error) throw error;
-
-      if (data?.connected) {
-        setImoviewStatus('connected');
-        toast({
-          title: "Conexão estabelecida!",
-          description: "A integração com Imoview está funcionando.",
-        });
-      } else {
-        setImoviewStatus('error');
-        toast({
-          title: "Falha na conexão",
-          description: data?.message || "Não foi possível conectar ao Imoview.",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      setImoviewStatus('error');
-      toast({
-        title: "Erro ao testar conexão",
-        description: error.message || "Verifique a chave API.",
-        variant: "destructive",
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const syncImoveis = async () => {
-    setSyncing('imoveis');
-    try {
-      console.log('Iniciando syncImoveis...');
-      const { data, error } = await supabase.functions.invoke('imoview-sync', {
-        body: { action: 'listar-imoveis', data: { limite: 100 } }
-      });
-
-      console.log('Resposta imoview-sync:', { data, error });
-
-      if (error) {
-        console.error('Erro Supabase function:', error);
-        throw error;
-      }
-
-      if (!data?.success) {
-        const errorMsg = data?.error || data?.raw?.erro || 'Erro desconhecido da API Imoview';
-        console.error('Erro retornado pela API:', errorMsg, data);
-        toast({
-          title: "Erro na API Imoview",
-          description: String(errorMsg),
-          variant: "destructive",
-        });
-        setSyncResults(prev => ({ ...prev, imoveis: 0 }));
-        return;
-      }
-
-      const imoveis = data?.imoveis || [];
-      const count = imoveis.length;
-      setSyncResults(prev => ({ ...prev, imoveis: count }));
-      setImoveisToImport(imoveis);
-      
-      toast({
-        title: count > 0 ? "Imóveis sincronizados!" : "Nenhum imóvel encontrado",
-        description: count > 0 
-          ? `${count} imóveis encontrados no Imoview.`
-          : "A API não retornou imóveis. Verifique se há imóveis cadastrados no Imoview.",
-        variant: count > 0 ? "default" : "destructive",
-      });
-    } catch (error: any) {
-      console.error('Erro ao sincronizar imóveis:', error);
-      toast({
-        title: "Erro ao sincronizar imóveis",
-        description: error?.message || 'Erro de conexão com a edge function',
-        variant: "destructive",
-      });
-    } finally {
-      setSyncing(null);
-    }
-  };
-
-  const importarImoveis = async () => {
-    if (!user || imoveisToImport.length === 0) return;
-    
-    setImporting(true);
-    setShowImportDialog(false);
-    
-    try {
-      let importados = 0;
-      let erros = 0;
-
-      for (const imovel of imoveisToImport) {
-        try {
-          const { error } = await supabase.from('imoveis').insert({
-            user_id: user.id,
-            endereco: imovel.endereco || `Imóvel ${imovel.codigo}`,
-            tipo: imovel.tipo || 'Outro',
-            bairro: imovel.bairro || null,
-            cidade: imovel.cidade || null,
-            estado: imovel.estado || null,
-            notas: imovel.descricao || `Importado do Imoview - Código: ${imovel.codigo}`,
-          });
-
-          if (error) {
-            console.error('Erro ao importar imóvel:', error);
-            erros++;
-          } else {
-            importados++;
-          }
-        } catch (e) {
-          erros++;
-        }
-      }
-
-      toast({
-        title: "Importação concluída!",
-        description: `${importados} imóveis importados com sucesso.${erros > 0 ? ` ${erros} erros.` : ''}`,
-      });
-
-      setImoveisToImport([]);
-      setSyncResults(prev => ({ ...prev, imoveis: undefined }));
-    } catch (error: any) {
-      toast({
-        title: "Erro na importação",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const syncClientes = async () => {
-    setSyncing('clientes');
-    try {
-      const { data, error } = await supabase.functions.invoke('imoview-sync', {
-        body: { action: 'listar-clientes', data: { limite: 100 } }
-      });
-
-      if (error) throw error;
-
-      const count = data?.clientes?.length || 0;
-      setSyncResults(prev => ({ ...prev, clientes: count }));
-      
-      toast({
-        title: "Clientes sincronizados!",
-        description: `${count} clientes encontrados no Imoview.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao sincronizar clientes",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setSyncing(null);
-    }
-  };
 
   const testZiontalkConnection = async () => {
     setTestingZiontalk(true);
@@ -338,117 +142,6 @@ const Integracoes = () => {
       </div>
 
       <main className="p-4 space-y-4">
-        {/* Imoview Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Plug className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Imoview CRM</CardTitle>
-                  <CardDescription>Sistema de gestão imobiliária</CardDescription>
-                </div>
-              </div>
-              <Badge 
-                variant={
-                  imoviewStatus === 'connected' ? 'default' : 
-                  imoviewStatus === 'error' ? 'destructive' : 
-                  'secondary'
-                }
-              >
-                {imoviewStatus === 'connected' && <CheckCircle className="h-3 w-3 mr-1" />}
-                {imoviewStatus === 'error' && <XCircle className="h-3 w-3 mr-1" />}
-                {imoviewStatus === 'connected' ? 'Conectado' : 
-                 imoviewStatus === 'error' ? 'Erro' : 
-                 'Não testado'}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Integre com o Imoview para sincronizar imóveis, clientes e visitas automaticamente.
-            </p>
-
-            {/* Test Connection */}
-            <Button 
-              onClick={testImoviewConnection} 
-              disabled={testing}
-              variant="outline"
-              className="w-full"
-            >
-              {testing ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Testar Conexão
-            </Button>
-
-            {/* Sync Options - only show if connected */}
-            {imoviewStatus === 'connected' && (
-              <>
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <Button 
-                    onClick={syncImoveis}
-                    disabled={syncing !== null || importing}
-                    variant="secondary"
-                    className="flex-col h-auto py-4"
-                  >
-                    {syncing === 'imoveis' ? (
-                      <Loader2 className="h-5 w-5 animate-spin mb-1" />
-                    ) : (
-                      <Building className="h-5 w-5 mb-1" />
-                    )}
-                    <span className="text-xs">Buscar Imóveis</span>
-                    {syncResults.imoveis !== undefined && (
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {syncResults.imoveis} encontrados
-                      </span>
-                    )}
-                  </Button>
-
-                  <Button 
-                    onClick={syncClientes}
-                    disabled={syncing !== null || importing}
-                    variant="secondary"
-                    className="flex-col h-auto py-4"
-                  >
-                    {syncing === 'clientes' ? (
-                      <Loader2 className="h-5 w-5 animate-spin mb-1" />
-                    ) : (
-                      <Users className="h-5 w-5 mb-1" />
-                    )}
-                    <span className="text-xs">Buscar Clientes</span>
-                    {syncResults.clientes !== undefined && (
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {syncResults.clientes} encontrados
-                      </span>
-                    )}
-                  </Button>
-                </div>
-
-                {/* Import Button - show when imoveis are fetched */}
-                {imoveisToImport.length > 0 && (
-                  <Button 
-                    onClick={() => setShowImportDialog(true)}
-                    disabled={importing}
-                    className="w-full gap-2"
-                  >
-                    {importing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Download className="h-4 w-4" />
-                    )}
-                    Importar {imoveisToImport.length} Imóveis para o Sistema
-                  </Button>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
         {/* ZionTalk WhatsApp Card */}
         <Card>
           <CardHeader>
@@ -542,26 +235,6 @@ const Integracoes = () => {
       
       {/* Mobile Navigation */}
       <MobileNav />
-
-      {/* Import Confirmation Dialog */}
-      <AlertDialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Importar Imóveis</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você está prestes a importar {imoveisToImport.length} imóveis do Imoview para o sistema local. 
-              Esta ação irá criar novos registros de imóveis no seu cadastro.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={importarImoveis}>
-              <Download className="h-4 w-4 mr-2" />
-              Importar Imóveis
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
