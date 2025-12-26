@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { Button } from '@/components/ui/button';
 import { 
   Shield, 
@@ -17,15 +19,16 @@ import {
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
+    if (!loading && !roleLoading && user) {
+      navigate(getRedirectPathByRole(role));
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, role, roleLoading, navigate]);
 
-  if (loading) {
+  if (loading || (user && roleLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
