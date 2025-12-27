@@ -52,7 +52,15 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <Building2 className="h-6 w-6 text-primary" />
+          {imobiliaria?.logo_url ? (
+            <img 
+              src={imobiliaria.logo_url} 
+              alt={imobiliaria.nome} 
+              className="h-8 w-8 object-contain rounded"
+            />
+          ) : (
+            <Building2 className="h-6 w-6 text-primary" />
+          )}
           <span className="font-display font-bold text-lg truncate max-w-[180px]">
             {imobiliaria?.nome || 'Imobiliária'}
           </span>
@@ -70,8 +78,16 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo and company info */}
           <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="h-6 w-6 text-sidebar-primary" />
+            <div className="flex items-center gap-3 mb-2">
+              {imobiliaria?.logo_url ? (
+                <img 
+                  src={imobiliaria.logo_url} 
+                  alt={imobiliaria.nome} 
+                  className="h-10 w-10 object-contain rounded"
+                />
+              ) : (
+                <Building2 className="h-6 w-6 text-sidebar-primary" />
+              )}
               <span className="font-display font-bold text-lg text-sidebar-foreground truncate">
                 {imobiliaria?.nome || 'Imobiliária'}
               </span>
