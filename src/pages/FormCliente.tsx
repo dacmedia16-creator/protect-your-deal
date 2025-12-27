@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export default function FormCliente() {
   const isEditing = !!id;
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { imobiliariaId } = useUserRole();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -99,6 +101,7 @@ export default function FormCliente() {
 
       const payload = {
         user_id: user.id,
+        imobiliaria_id: imobiliariaId,
         nome: data.nome,
         cpf: data.cpf || null,
         telefone: data.telefone.replace(/\D/g, ''),
