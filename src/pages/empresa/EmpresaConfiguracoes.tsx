@@ -84,6 +84,15 @@ export default function EmpresaConfiguracoes() {
     }
   }, [imobiliaria, form]);
 
+  const extractFilePathFromUrl = (url: string): string | null => {
+    const urlParts = url.split('/logos-imobiliarias/');
+    if (urlParts.length > 1) {
+      // Remove query string if present (e.g., ?t=123456)
+      return urlParts[1].split('?')[0];
+    }
+    return null;
+  };
+
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !imobiliariaId) return;
@@ -103,13 +112,24 @@ export default function EmpresaConfiguracoes() {
     setUploadingLogo(true);
 
     try {
+      // Remove old logo if exists
+      if (logoUrl) {
+        const oldFilePath = extractFilePathFromUrl(logoUrl);
+        if (oldFilePath) {
+          await supabase.storage
+            .from('logos-imobiliarias')
+            .remove([oldFilePath]);
+        }
+      }
+
+      // Generate unique filename with timestamp to avoid cache issues
       const fileExt = file.name.split('.').pop();
-      const fileName = `${imobiliariaId}/logo.${fileExt}`;
+      const fileName = `${imobiliariaId}/logo-${Date.now()}.${fileExt}`;
 
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('logos-imobiliarias')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
@@ -146,10 +166,9 @@ export default function EmpresaConfiguracoes() {
     setUploadingLogo(true);
 
     try {
-      // Extract file path from URL
-      const urlParts = logoUrl.split('/logos-imobiliarias/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1];
+      // Extract file path from URL using helper function
+      const filePath = extractFilePathFromUrl(logoUrl);
+      if (filePath) {
         await supabase.storage
           .from('logos-imobiliarias')
           .remove([filePath]);
