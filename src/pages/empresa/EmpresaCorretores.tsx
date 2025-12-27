@@ -233,8 +233,9 @@ export default function EmpresaCorretores() {
       fetchData();
     } catch (error: any) {
       console.error('Error creating corretor:', error);
-      if (error.message?.includes('already') || error.message?.includes('cadastrado')) {
-        toast.error('Este email já está cadastrado');
+      const errorMsg = error.message?.toLowerCase() || '';
+      if (errorMsg.includes('already') || errorMsg.includes('cadastrado') || errorMsg.includes('registered') || errorMsg.includes('exists')) {
+        toast.error('Este email já está cadastrado no sistema');
       } else {
         toast.error(error.message || 'Erro ao criar corretor');
       }
