@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
 
     console.log("User role created");
 
-    // 3. Update profile with additional info
+    // 3. Update profile with additional info (garantir ativo = true)
     console.log("Updating profile...");
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -175,6 +175,7 @@ Deno.serve(async (req) => {
         nome: nome,
         telefone: telefone || null,
         creci: creci || null,
+        ativo: true,
       })
       .eq("user_id", userId);
 
