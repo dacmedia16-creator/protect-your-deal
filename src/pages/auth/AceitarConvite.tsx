@@ -141,10 +141,13 @@ export default function AceitarConvite() {
 
       if (roleError) throw roleError;
 
-      // 3. Update profile with imobiliaria_id
+      // 3. Update profile with imobiliaria_id and ensure ativo = true
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ imobiliaria_id: convite.imobiliaria.id })
+        .update({ 
+          imobiliaria_id: convite.imobiliaria.id,
+          ativo: true 
+        })
         .eq('user_id', authData.user.id);
 
       if (profileError) console.error('Profile update error:', profileError);
