@@ -73,7 +73,7 @@ export default function EmpresaCorretores() {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [conviteForm, setConviteForm] = useState({ nome: '', email: '' });
   const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', telefone: '', creci: '' });
-  const [editForm, setEditForm] = useState({ user_id: '', nome: '', telefone: '', creci: '' });
+  const [editForm, setEditForm] = useState({ user_id: '', nome: '', telefone: '', creci: '', email: '' });
   const [resetPasswordForm, setResetPasswordForm] = useState({ user_id: '', nome: '', newPassword: '' });
   const [selectedCorretor, setSelectedCorretor] = useState<Corretor | null>(null);
 
@@ -101,7 +101,23 @@ export default function EmpresaCorretores() {
 
         if (profilesError) throw profilesError;
 
-        // Enrich with fichas count
+        // Fetch emails from edge function
+        const { data: sessionData } = await supabase.auth.getSession();
+        let emailsMap: Record<string, string> = {};
+        
+        try {
+          const { data: emailsData } = await supabase.functions.invoke('admin-get-corretores-emails', {
+            body: { user_ids: userIds },
+            headers: {
+              Authorization: `Bearer ${sessionData.session?.access_token}`,
+            },
+          });
+          emailsMap = emailsData?.emails || {};
+        } catch (emailError) {
+          console.warn('Could not fetch emails:', emailError);
+        }
+
+        // Enrich with fichas count and emails
         const enrichedCorretores = await Promise.all(
           (profilesData || []).map(async (profile) => {
             const { count } = await supabase
@@ -115,7 +131,7 @@ export default function EmpresaCorretores() {
               id: profile.id,
               user_id: profile.user_id,
               nome: profile.nome,
-              email: '', // Will fetch from auth if needed
+              email: emailsMap[profile.user_id] || '',
               telefone: profile.telefone,
               creci: profile.creci,
               created_at: roleData?.created_at || profile.created_at,
@@ -273,6 +289,7 @@ export default function EmpresaCorretores() {
       nome: corretor.nome,
       telefone: corretor.telefone || '',
       creci: corretor.creci || '',
+      email: corretor.email || '',
     });
     setEditDialogOpen(true);
   }
@@ -680,6 +697,19 @@ export default function EmpresaCorretores() {
                   onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_email">Email</Label>
+                <Input
+                  id="edit_email"
+                  type="email"
+                  value={editForm.email}
+                  disabled
+                  className="bg-muted text-muted-foreground cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O email não pode ser alterado diretamente.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit_telefone">Telefone</Label>
