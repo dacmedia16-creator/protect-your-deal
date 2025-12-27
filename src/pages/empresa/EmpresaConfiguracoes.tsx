@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,7 +27,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Building2, Settings, Bell, Link as LinkIcon, Save } from 'lucide-react';
+import { Loader2, Building2, Settings, Bell, Link as LinkIcon, Save, Upload, Image, Trash2 } from 'lucide-react';
 
 const estadosBrasileiros = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -51,6 +51,9 @@ export default function EmpresaConfiguracoes() {
   const { imobiliaria, imobiliariaId, refetch } = useUserRole();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -76,9 +79,100 @@ export default function EmpresaConfiguracoes() {
         cidade: imobiliaria.cidade || '',
         estado: imobiliaria.estado || '',
       });
+      setLogoUrl(imobiliaria.logo_url || null);
       setLoading(false);
     }
   }, [imobiliaria, form]);
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !imobiliariaId) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem válida');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 2MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${imobiliariaId}/logo.${fileExt}`;
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('logos-imobiliarias')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos-imobiliarias')
+        .getPublicUrl(fileName);
+
+      // Update imobiliaria with logo_url
+      const { error: updateError } = await supabase
+        .from('imobiliarias')
+        .update({ logo_url: publicUrl })
+        .eq('id', imobiliariaId);
+
+      if (updateError) throw updateError;
+
+      setLogoUrl(publicUrl);
+      toast.success('Logo atualizado com sucesso!');
+      refetch();
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast.error(error.message || 'Erro ao fazer upload do logo');
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!imobiliariaId || !logoUrl) return;
+
+    setUploadingLogo(true);
+
+    try {
+      // Extract file path from URL
+      const urlParts = logoUrl.split('/logos-imobiliarias/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        await supabase.storage
+          .from('logos-imobiliarias')
+          .remove([filePath]);
+      }
+
+      // Update imobiliaria to remove logo_url
+      const { error: updateError } = await supabase
+        .from('imobiliarias')
+        .update({ logo_url: null })
+        .eq('id', imobiliariaId);
+
+      if (updateError) throw updateError;
+
+      setLogoUrl(null);
+      toast.success('Logo removido com sucesso!');
+      refetch();
+    } catch (error: any) {
+      console.error('Error removing logo:', error);
+      toast.error(error.message || 'Erro ao remover logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     if (!imobiliariaId) return;
@@ -140,7 +234,81 @@ export default function EmpresaConfiguracoes() {
             <TabsTrigger value="integracoes">Integrações</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dados">
+          <TabsContent value="dados" className="space-y-6">
+            {/* Logo Upload Card */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Image className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Logo da Empresa</CardTitle>
+                    <CardDescription>O logo aparecerá nos comprovantes de visita em PDF</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    {logoUrl ? (
+                      <div className="h-24 w-24 rounded-lg border-2 border-dashed border-border overflow-hidden bg-muted flex items-center justify-center">
+                        <img 
+                          src={logoUrl} 
+                          alt="Logo da imobiliária" 
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-24 w-24 rounded-lg border-2 border-dashed border-border bg-muted flex items-center justify-center">
+                        <Building2 className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/png,image/jpeg,image/jpg"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingLogo}
+                      >
+                        {uploadingLogo ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        {logoUrl ? 'Alterar Logo' : 'Fazer Upload'}
+                      </Button>
+                      {logoUrl && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveLogo}
+                          disabled={uploadingLogo}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Formatos aceitos: PNG, JPG. Tamanho máximo: 2MB
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Company Data Card */}
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
