@@ -67,6 +67,18 @@ serve(async (req) => {
       .eq('user_id', ficha.user_id)
       .single();
 
+    // Get imobiliaria data if exists
+    let imobiliaria = null;
+    if (ficha.imobiliaria_id) {
+      const { data: imobData } = await supabase
+        .from('imobiliarias')
+        .select('nome, logo_url')
+        .eq('id', ficha.imobiliaria_id)
+        .single();
+      imobiliaria = imobData;
+      console.log('Imobiliaria data:', imobiliaria);
+    }
+
     // Generate verification URL using app_url from frontend or fallback
     const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://visitasegura.lovable.app';
     const verificationUrl = `${baseUrl}/verificar/${ficha.protocolo}`;
@@ -85,19 +97,80 @@ serve(async (req) => {
     const lightGray = rgb(0.6, 0.6, 0.6);
 
     let yPosition = height - 50;
+    let logoHeight = 0;
+    let headerTextX = 50;
 
-    // Header
+    // Try to embed imobiliaria logo if exists
+    if (imobiliaria?.logo_url) {
+      try {
+        console.log('Fetching logo from:', imobiliaria.logo_url);
+        const logoResponse = await fetch(imobiliaria.logo_url);
+        
+        if (logoResponse.ok) {
+          const logoBytes = await logoResponse.arrayBuffer();
+          const logoContentType = logoResponse.headers.get('content-type') || '';
+          
+          let logoImage;
+          if (logoContentType.includes('png')) {
+            logoImage = await pdfDoc.embedPng(logoBytes);
+          } else {
+            logoImage = await pdfDoc.embedJpg(logoBytes);
+          }
+          
+          // Calculate proportional dimensions (max 80 width, 50 height)
+          const maxLogoWidth = 80;
+          const maxLogoHeight = 50;
+          const aspectRatio = logoImage.width / logoImage.height;
+          
+          let finalWidth = maxLogoWidth;
+          let finalHeight = maxLogoWidth / aspectRatio;
+          
+          if (finalHeight > maxLogoHeight) {
+            finalHeight = maxLogoHeight;
+            finalWidth = maxLogoHeight * aspectRatio;
+          }
+          
+          logoHeight = finalHeight;
+          
+          // Draw logo at top left
+          page.drawImage(logoImage, {
+            x: 50,
+            y: height - 30 - finalHeight,
+            width: finalWidth,
+            height: finalHeight,
+          });
+          
+          headerTextX = 50 + finalWidth + 15; // Offset text after logo
+          console.log('Logo embedded successfully');
+        }
+      } catch (error) {
+        console.log('Error loading logo, continuing without it:', error);
+      }
+    }
+
+    // Header - with imobiliaria name if exists
+    if (imobiliaria?.nome) {
+      page.drawText(imobiliaria.nome, {
+        x: headerTextX,
+        y: yPosition,
+        size: 14,
+        font: helveticaBold,
+        color: primaryColor,
+      });
+      yPosition -= 20;
+    }
+
     page.drawText('COMPROVANTE DE VISITA IMOBILIÁRIA', {
-      x: 50,
+      x: headerTextX,
       y: yPosition,
-      size: 18,
+      size: 16,
       font: helveticaBold,
       color: primaryColor,
     });
 
-    yPosition -= 25;
+    yPosition -= 22;
     page.drawText(`Protocolo: ${ficha.protocolo}`, {
-      x: 50,
+      x: headerTextX,
       y: yPosition,
       size: 12,
       font: helveticaBold,
