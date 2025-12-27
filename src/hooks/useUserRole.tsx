@@ -185,12 +185,13 @@ export function useUserRole() {
 
 // Permission helpers
 export function usePermissions() {
-  const { role } = useUserRole();
+  const { role, imobiliariaId } = useUserRole();
 
   return {
     isSuperAdmin: role === 'super_admin',
     isImobiliariaAdmin: role === 'imobiliaria_admin',
     isCorretor: role === 'corretor',
+    isCorretorAutonomo: role === 'corretor' && !imobiliariaId,
     canManageImobiliarias: role === 'super_admin',
     canManagePlanos: role === 'super_admin',
     canManageCorretores: role === 'imobiliaria_admin' || role === 'super_admin',

@@ -166,13 +166,11 @@ export default function NovaFicha() {
 
       if (dbImobiliariaError) throw dbImobiliariaError;
 
-      if (!dbImobiliariaId) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro',
-          description: 'Seu usuário não está vinculado a nenhuma imobiliária. Peça ao admin para vincular seu acesso.',
-        });
-        return;
+      // Corretor autônomo (sem imobiliária) pode criar fichas normalmente
+      const isCorretorAutonomo = !dbImobiliariaId;
+      
+      if (isCorretorAutonomo) {
+        console.info('[NovaFicha] Corretor autônomo criando ficha sem imobiliária');
       }
 
       if (imobiliariaId && dbImobiliariaId !== imobiliariaId) {
@@ -189,7 +187,7 @@ export default function NovaFicha() {
         .from('fichas_visita')
         .insert({
           user_id: user.id,
-          imobiliaria_id: dbImobiliariaId,
+          imobiliaria_id: dbImobiliariaId || null, // null para corretor autônomo
           protocolo,
           imovel_endereco: formData.imovel_endereco,
           imovel_tipo: formData.imovel_tipo,
