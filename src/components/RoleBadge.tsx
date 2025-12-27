@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Shield, Building2, UserCheck } from 'lucide-react';
+import { Shield, Building2, UserCheck, UserX } from 'lucide-react';
 import { AppRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 
@@ -7,6 +7,7 @@ interface RoleBadgeProps {
   role: AppRole | null;
   variant?: 'default' | 'compact';
   className?: string;
+  isAutonomo?: boolean;
 }
 
 const roleConfig: Record<string, { 
@@ -29,12 +30,19 @@ const roleConfig: Record<string, {
     icon: UserCheck, 
     className: 'bg-muted text-muted-foreground border-border' 
   },
+  corretor_autonomo: { 
+    label: 'Corretor Autônomo', 
+    icon: UserX, 
+    className: 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400' 
+  },
 };
 
-export function RoleBadge({ role, variant = 'default', className }: RoleBadgeProps) {
+export function RoleBadge({ role, variant = 'default', className, isAutonomo = false }: RoleBadgeProps) {
   if (!role) return null;
 
-  const config = roleConfig[role] || roleConfig.corretor;
+  // Usa config de corretor autônomo se for corretor sem imobiliária
+  const configKey = role === 'corretor' && isAutonomo ? 'corretor_autonomo' : role;
+  const config = roleConfig[configKey] || roleConfig.corretor;
   const Icon = config.icon;
 
   if (variant === 'compact') {
