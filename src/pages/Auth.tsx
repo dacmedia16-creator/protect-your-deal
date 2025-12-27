@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, FileCheck, Users, Loader2 } from 'lucide-react';
+import { Shield, FileCheck, Users, Loader2, Building2 } from 'lucide-react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -21,6 +22,11 @@ const signupSchema = loginSchema.extend({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100),
 });
 
+interface ImobiliariaData {
+  nome: string;
+  logo_url: string | null;
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signUp, signIn, loading } = useAuth();
@@ -30,6 +36,11 @@ export default function Auth() {
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ email: '', password: '', nome: '' });
+  
+  // Estado para dados da imobiliária
+  const [imobiliariaData, setImobiliariaData] = useState<ImobiliariaData | null>(null);
+  const [loadingImobiliaria, setLoadingImobiliaria] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Quando terminar de carregar e o usuário estiver logado
@@ -43,6 +54,48 @@ export default function Auth() {
       }
     }
   }, [user, loading, role, roleLoading, navigate]);
+
+  // Buscar imobiliária quando o email mudar (com debounce)
+  useEffect(() => {
+    // Limpar timeout anterior
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Limpar dados se email inválido
+    if (!loginData.email || !loginData.email.includes('@') || !loginData.email.includes('.')) {
+      setImobiliariaData(null);
+      return;
+    }
+
+    // Debounce de 600ms
+    debounceRef.current = setTimeout(async () => {
+      setLoadingImobiliaria(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('get-imobiliaria-by-email', {
+          body: { email: loginData.email },
+        });
+
+        if (error) {
+          console.error('Erro ao buscar imobiliária:', error);
+          setImobiliariaData(null);
+        } else {
+          setImobiliariaData(data?.imobiliaria || null);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar imobiliária:', error);
+        setImobiliariaData(null);
+      } finally {
+        setLoadingImobiliaria(false);
+      }
+    }, 600);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [loginData.email]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,6 +251,33 @@ export default function Auth() {
             <TabsContent value="login">
               <Card className="border-0 shadow-soft">
                 <CardHeader className="space-y-1">
+                  {/* Logo da imobiliária quando encontrada */}
+                  {imobiliariaData && (
+                    <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
+                      {imobiliariaData.logo_url ? (
+                        <img 
+                          src={imobiliariaData.logo_url} 
+                          alt={imobiliariaData.nome}
+                          className="h-16 w-auto max-w-[180px] object-contain"
+                        />
+                      ) : (
+                        <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                          <Building2 className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <span className="text-sm text-muted-foreground font-medium">
+                        {imobiliariaData.nome}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Loading indicator */}
+                  {loadingImobiliaria && (
+                    <div className="flex justify-center pb-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  
                   <CardTitle className="font-display text-2xl">Bem-vindo de volta</CardTitle>
                   <CardDescription>
                     Entre com suas credenciais para acessar
