@@ -38,3 +38,9 @@ verify_jwt = true
 
 [functions.admin-vincular-usuario]
 verify_jwt = true
+
+[functions.admin-get-corretores-emails]
+verify_jwt = true
+
+[functions.get-imobiliaria-by-email]
+verify_jwt = false
