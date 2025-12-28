@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Building2, Users, FileText, CreditCard, TrendingUp, AlertCircle } from 'lucide-react';
+import { Building2, Users, FileText, TrendingUp, AlertCircle } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 interface DashboardStats {
@@ -17,6 +18,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -153,7 +155,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/financeiro')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -163,7 +168,7 @@ export default function AdminDashboard() {
                 R$ {stats?.receitaMensal?.toFixed(2).replace('.', ',')}
               </div>
               <p className="text-xs text-muted-foreground">
-                {stats?.assinaturasAtivas} assinaturas ativas
+                {stats?.assinaturasAtivas} assinaturas ativas · Ver detalhes →
               </p>
             </CardContent>
           </Card>
