@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ChatAssistente } from '@/components/ChatAssistente';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -164,6 +165,9 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
           {children}
         </div>
       </main>
+
+      {/* Chat Assistente Sofia */}
+      <ChatAssistente />
     </div>
   );
 }
