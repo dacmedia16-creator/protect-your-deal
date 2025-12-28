@@ -17,7 +17,8 @@ import {
   X,
   FileText,
   Mail,
-  UserCircle
+  UserCircle,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
   { href: '/admin/assinaturas', icon: FileText, label: 'Assinaturas' },
+  { href: '/admin/financeiro', icon: TrendingUp, label: 'Financeiro' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
   { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
   { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
