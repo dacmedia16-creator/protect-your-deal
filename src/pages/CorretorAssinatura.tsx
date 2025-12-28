@@ -111,7 +111,6 @@ export default function CorretorAssinatura() {
     setSubscribing(planoId);
 
     try {
-      // Gerar link de pagamento via Asaas
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
         body: { planoId },
       });
@@ -119,15 +118,29 @@ export default function CorretorAssinatura() {
       if (error) throw error;
 
       if (data?.paymentLinkUrl) {
-        // Abrir link de pagamento em nova aba
         window.open(data.paymentLinkUrl, '_blank');
-        toast.success('Link de pagamento aberto! Complete o pagamento para ativar sua assinatura.');
+        toast.success('Link de pagamento aberto!', {
+          description: 'Complete o pagamento para ativar sua assinatura.',
+          duration: 5000,
+        });
+      } else if (data?.error) {
+        throw new Error(data.error);
       } else {
         throw new Error('Link de pagamento não gerado');
       }
     } catch (error: any) {
       console.error('Error subscribing:', error);
-      toast.error(error.message || 'Erro ao gerar link de pagamento');
+      
+      const errorMessage = error.message || 'Erro desconhecido ao gerar link de pagamento';
+      
+      toast.error('Erro ao gerar link de pagamento', {
+        description: errorMessage,
+        duration: 10000,
+        action: {
+          label: 'Tentar novamente',
+          onClick: () => handleSubscribe(planoId),
+        },
+      });
     } finally {
       setSubscribing(null);
     }
