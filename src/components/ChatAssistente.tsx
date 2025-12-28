@@ -1,35 +1,93 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
+interface UserContext {
+  nome: string | null;
+  role: string | null;
+  plano: string | null;
+  empresa: string | null;
+  isLoggedIn: boolean;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistente`;
 
-const QUICK_REPLIES = [
+const QUICK_REPLIES_VISITOR = [
   "Como funciona o sistema?",
   "Quais são os planos?",
   "Como instalar o app?",
   "Formas de pagamento"
 ];
 
+const QUICK_REPLIES_USER = [
+  "Como criar uma ficha?",
+  "Como enviar confirmação?",
+  "Problemas com WhatsApp",
+  "Alterar meu plano"
+];
+
 export function ChatAssistente() {
+  const { user } = useAuth();
+  const { role, imobiliaria, assinatura, loading: roleLoading } = useUserRole();
+  const [profileName, setProfileName] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Olá! 👋 Sou a Sofia, assistente virtual do VisitaSegura. Posso te ajudar com dúvidas sobre o sistema, mostrar como funciona ou dar suporte técnico. Como posso te ajudar hoje?'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch profile name when user is available
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) {
+        setProfileName(null);
+        return;
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setProfileName(data?.nome || null);
+    }
+    fetchProfile();
+  }, [user]);
+
+  // Build user context
+  const userContext: UserContext = useMemo(() => ({
+    nome: profileName,
+    role: role,
+    plano: assinatura?.plano?.nome || null,
+    empresa: imobiliaria?.nome || null,
+    isLoggedIn: !!user
+  }), [profileName, role, assinatura, imobiliaria, user]);
+
+  // Generate personalized greeting
+  const getGreeting = () => {
+    if (userContext.isLoggedIn && userContext.nome) {
+      const firstName = userContext.nome.split(' ')[0];
+      return `Olá, ${firstName}! 👋 Sou a Sofia, sua assistente virtual do VisitaSegura. Como posso te ajudar hoje?`;
+    }
+    return 'Olá! 👋 Sou a Sofia, assistente virtual do VisitaSegura. Posso te ajudar com dúvidas sobre o sistema, mostrar como funciona ou dar suporte técnico. Como posso te ajudar hoje?';
+  };
+
+  // Initialize messages with personalized greeting
+  useEffect(() => {
+    if (!roleLoading) {
+      setMessages([{ role: 'assistant', content: getGreeting() }]);
+    }
+  }, [roleLoading, userContext.nome]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,7 +121,8 @@ export function ChatAssistente() {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ 
-          messages: allMessages.map(m => ({ role: m.role, content: m.content }))
+          messages: allMessages.map(m => ({ role: m.role, content: m.content })),
+          userContext
         }),
       });
 
@@ -169,6 +228,8 @@ export function ChatAssistente() {
     streamChat(reply);
   };
 
+  const quickReplies = userContext.isLoggedIn ? QUICK_REPLIES_USER : QUICK_REPLIES_VISITOR;
+
   if (!isOpen) {
     return (
       <Button
@@ -266,7 +327,7 @@ export function ChatAssistente() {
           {/* Quick Replies */}
           {messages.length <= 2 && !isLoading && (
             <div className="px-4 pb-2 flex flex-wrap gap-2">
-              {QUICK_REPLIES.map((reply, index) => (
+              {quickReplies.map((reply, index) => (
                 <button
                   key={index}
                   onClick={() => handleQuickReply(reply)}

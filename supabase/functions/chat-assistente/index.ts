@@ -274,7 +274,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, userContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -283,6 +283,58 @@ serve(async (req) => {
     }
 
     console.log("Received messages:", JSON.stringify(messages));
+    console.log("User context:", JSON.stringify(userContext));
+
+    // Build dynamic context based on user info
+    let dynamicContext = "";
+    if (userContext?.isLoggedIn) {
+      dynamicContext = `\n\n---\n\n# CONTEXTO DO USUÁRIO ATUAL\n\n`;
+      dynamicContext += `**IMPORTANTE**: Este é um usuário logado no sistema. Personalize suas respostas.\n\n`;
+      
+      if (userContext.nome) {
+        const firstName = userContext.nome.split(' ')[0];
+        dynamicContext += `- **Nome**: ${userContext.nome} (chame-o de "${firstName}")\n`;
+      }
+      
+      if (userContext.role) {
+        const roleNames: Record<string, string> = {
+          'super_admin': 'Administrador do Sistema',
+          'imobiliaria_admin': 'Administrador de Imobiliária',
+          'corretor': 'Corretor'
+        };
+        dynamicContext += `- **Função**: ${roleNames[userContext.role] || userContext.role}\n`;
+      }
+      
+      if (userContext.empresa) {
+        dynamicContext += `- **Empresa**: ${userContext.empresa}\n`;
+      }
+      
+      if (userContext.plano) {
+        dynamicContext += `- **Plano Atual**: ${userContext.plano}\n`;
+      } else {
+        dynamicContext += `- **Plano**: Ainda não possui assinatura ativa\n`;
+      }
+
+      // Add behavior guidelines for logged users
+      dynamicContext += `\n**Diretrizes para este usuário**:\n`;
+      dynamicContext += `- Use o primeiro nome dele nas respostas\n`;
+      dynamicContext += `- Ofereça suporte técnico quando apropriado\n`;
+      dynamicContext += `- Se estiver no plano gratuito, sugira upgrade quando fizer sentido\n`;
+      dynamicContext += `- Foque em dicas práticas de uso do sistema\n`;
+      
+      if (userContext.role === 'corretor' && !userContext.empresa) {
+        dynamicContext += `- Este é um corretor autônomo (não está vinculado a imobiliária)\n`;
+      }
+    } else {
+      dynamicContext = `\n\n---\n\n# CONTEXTO DO USUÁRIO ATUAL\n\n`;
+      dynamicContext += `Este é um visitante não logado. Foque em:\n`;
+      dynamicContext += `- Apresentar o sistema\n`;
+      dynamicContext += `- Explicar benefícios\n`;
+      dynamicContext += `- Incentivar o cadastro gratuito\n`;
+      dynamicContext += `- Responder dúvidas sobre planos e funcionalidades\n`;
+    }
+
+    const fullSystemPrompt = SYSTEM_PROMPT + dynamicContext;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -293,7 +345,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: fullSystemPrompt },
           ...messages,
         ],
         stream: true,
