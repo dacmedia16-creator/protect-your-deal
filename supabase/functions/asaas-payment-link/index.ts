@@ -55,11 +55,66 @@ serve(async (req) => {
       throw new Error('Plano não encontrado');
     }
 
+    // Criar ou atualizar registro de assinatura pendente
+    const assinaturaQuery = imobiliariaId 
+      ? { imobiliaria_id: imobiliariaId }
+      : { user_id: user.id };
+
+    let assinaturaId: string;
+
+    // Verificar se já existe assinatura
+    const { data: existingAssinatura } = await supabase
+      .from('assinaturas')
+      .select('id')
+      .match(assinaturaQuery)
+      .maybeSingle();
+
+    if (existingAssinatura) {
+      // Atualizar assinatura existente
+      const { error: updateError } = await supabase
+        .from('assinaturas')
+        .update({
+          plano_id: planoId,
+          status: 'aguardando_pagamento',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingAssinatura.id);
+
+      if (updateError) {
+        console.error('Error updating subscription:', updateError);
+        throw new Error('Erro ao atualizar assinatura');
+      }
+
+      assinaturaId = existingAssinatura.id;
+      console.log('Updated existing subscription:', assinaturaId);
+    } else {
+      // Criar nova assinatura
+      const { data: newAssinatura, error: insertError } = await supabase
+        .from('assinaturas')
+        .insert({
+          plano_id: planoId,
+          user_id: imobiliariaId ? null : user.id,
+          imobiliaria_id: imobiliariaId || null,
+          status: 'aguardando_pagamento',
+          data_inicio: new Date().toISOString().split('T')[0],
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !newAssinatura) {
+        console.error('Error creating subscription:', insertError);
+        throw new Error('Erro ao criar registro de assinatura');
+      }
+
+      assinaturaId = newAssinatura.id;
+      console.log('Created new subscription:', assinaturaId);
+    }
+
     // Calcular data de expiração (7 dias)
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
 
-    // Criar link de pagamento no Asaas
+    // Criar link de pagamento no Asaas usando apenas o ID da assinatura (36 chars)
     const paymentLinkResponse = await fetch(`${ASAAS_API_URL}/paymentLinks`, {
       method: 'POST',
       headers: {
@@ -71,16 +126,12 @@ serve(async (req) => {
         description: `Plano ${plano.nome} - Visita Segura. Assinatura mensal com renovação automática.`,
         endDate: expirationDate.toISOString().split('T')[0],
         value: plano.valor_mensal,
-        billingType: 'UNDEFINED', // Cliente escolhe: Pix, Boleto ou Cartão
+        billingType: 'UNDEFINED',
         chargeType: 'RECURRENT',
         subscriptionCycle: 'MONTHLY',
         dueDateLimitDays: 3,
         notificationEnabled: true,
-        externalReference: JSON.stringify({
-          planoId,
-          userId: imobiliariaId ? null : user.id,
-          imobiliariaId: imobiliariaId || null,
-        }),
+        externalReference: assinaturaId, // UUID de 36 caracteres
       }),
     });
 
@@ -98,6 +149,7 @@ serve(async (req) => {
         success: true,
         paymentLinkId: paymentLinkData.id,
         paymentLinkUrl: paymentLinkData.url,
+        assinaturaId: assinaturaId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
