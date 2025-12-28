@@ -11,6 +11,7 @@ interface CreateCorretorRequest {
   senha: string;
   telefone?: string;
   creci?: string;
+  autonomo?: boolean; // Flag to create autonomous corretor
 }
 
 Deno.serve(async (req) => {
@@ -58,7 +59,13 @@ Deno.serve(async (req) => {
 
     console.log("Current user ID:", currentUser.id);
 
-    // Check if the current user is an imobiliaria_admin
+    // Parse request body
+    const body: CreateCorretorRequest = await req.json();
+    const { nome, email, senha, telefone, creci, autonomo } = body;
+
+    console.log("Creating corretor:", email, "autonomo:", autonomo);
+
+    // Check if the current user is an admin
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from("user_roles")
       .select("role, imobiliaria_id")
@@ -82,19 +89,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    const imobiliariaId = roleData.imobiliaria_id;
-    if (!imobiliariaId && roleData.role !== "super_admin") {
-      return new Response(
-        JSON.stringify({ error: "Usuário não está vinculado a uma imobiliária" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Determine imobiliaria_id based on request
+    let imobiliariaId: string | null = null;
+    
+    if (autonomo) {
+      // Only super_admin can create autonomous corretores
+      if (roleData.role !== "super_admin") {
+        return new Response(
+          JSON.stringify({ error: "Apenas super admins podem criar corretores autônomos" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // imobiliariaId stays null for autonomous
+      imobiliariaId = null;
+    } else {
+      // Regular flow - link to imobiliaria
+      imobiliariaId = roleData.imobiliaria_id;
+      if (!imobiliariaId && roleData.role !== "super_admin") {
+        return new Response(
+          JSON.stringify({ error: "Usuário não está vinculado a uma imobiliária" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
-
-    // Parse request body
-    const body: CreateCorretorRequest = await req.json();
-    const { nome, email, senha, telefone, creci } = body;
-
-    console.log("Creating corretor:", email);
 
     // Validate required fields
     if (!nome || !email || !senha) {
@@ -144,8 +161,8 @@ Deno.serve(async (req) => {
     const userId = authData.user.id;
     console.log("User created:", userId);
 
-    // 2. Create the user_role as corretor
-    console.log("Creating user role...");
+    // 2. Create the user_role as corretor (with or without imobiliaria)
+    console.log("Creating user role...", imobiliariaId ? `for imobiliaria ${imobiliariaId}` : "as autonomous");
     const { error: userRoleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
@@ -184,13 +201,14 @@ Deno.serve(async (req) => {
       // Non-critical, continue
     }
 
-    console.log("Corretor created successfully");
+    console.log("Corretor created successfully", autonomo ? "(autonomous)" : "");
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Corretor criado com sucesso!",
+        message: autonomo ? "Corretor autônomo criado com sucesso!" : "Corretor criado com sucesso!",
         user_id: userId,
+        autonomo: !!autonomo,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

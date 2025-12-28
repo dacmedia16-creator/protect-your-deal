@@ -52,13 +52,13 @@ import {
   Search, 
   MoreVertical, 
   Link as LinkIcon, 
-  Edit, 
   KeyRound, 
   Trash2,
   UserCircle,
   FileText,
   Users as UsersIcon,
-  Home
+  Home,
+  UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -110,6 +110,17 @@ export default function AdminCorretoresAutonomos() {
   const [newPassword, setNewPassword] = useState("");
   const [resetAction, setResetAction] = useState<"set_password" | "send_reset_email">("send_reset_email");
   const [isResetting, setIsResetting] = useState(false);
+
+  // Create autonomous corretor dialog
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newCorretor, setNewCorretor] = useState({
+    nome: "",
+    email: "",
+    senha: "",
+    telefone: "",
+    creci: "",
+  });
 
   // Fetch corretores autônomos
   const { data: corretores, isLoading, refetch } = useQuery({
@@ -335,6 +346,50 @@ export default function AdminCorretoresAutonomos() {
     setIsLinkDialogOpen(true);
   };
 
+  const handleCreateAutonomo = async () => {
+    if (!newCorretor.nome || !newCorretor.email || !newCorretor.senha) {
+      toast.error("Nome, email e senha são obrigatórios");
+      return;
+    }
+
+    if (newCorretor.senha.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-create-corretor", {
+        body: {
+          nome: newCorretor.nome,
+          email: newCorretor.email,
+          senha: newCorretor.senha,
+          telefone: newCorretor.telefone || undefined,
+          creci: newCorretor.creci || undefined,
+          autonomo: true,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao criar corretor");
+      }
+
+      toast.success("Corretor autônomo criado com sucesso!");
+      setIsCreateDialogOpen(false);
+      setNewCorretor({ nome: "", email: "", senha: "", telefone: "", creci: "" });
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar corretor");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
@@ -345,11 +400,15 @@ export default function AdminCorretoresAutonomos() {
               Corretores sem vínculo com imobiliária
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-lg px-4 py-2 bg-amber-500/10 text-amber-600 border-amber-500/30">
               <UserCircle className="h-5 w-5 mr-2" />
               {corretores?.length || 0} autônomos
             </Badge>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Novo Corretor Autônomo
+            </Button>
           </div>
         </div>
 
@@ -611,6 +670,72 @@ export default function AdminCorretoresAutonomos() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Autonomous Corretor Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Corretor Autônomo</DialogTitle>
+            <DialogDescription>
+              Crie um corretor sem vínculo com imobiliária
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input
+                value={newCorretor.nome}
+                onChange={(e) => setNewCorretor({ ...newCorretor, nome: e.target.value })}
+                placeholder="Nome completo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={newCorretor.email}
+                onChange={(e) => setNewCorretor({ ...newCorretor, email: e.target.value })}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Senha *</Label>
+              <Input
+                type="password"
+                value={newCorretor.senha}
+                onChange={(e) => setNewCorretor({ ...newCorretor, senha: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input
+                  value={newCorretor.telefone}
+                  onChange={(e) => setNewCorretor({ ...newCorretor, telefone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>CRECI</Label>
+                <Input
+                  value={newCorretor.creci}
+                  onChange={(e) => setNewCorretor({ ...newCorretor, creci: e.target.value })}
+                  placeholder="CRECI"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateAutonomo} disabled={isCreating}>
+              {isCreating ? "Criando..." : "Criar Corretor"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SuperAdminLayout>
   );
 }
