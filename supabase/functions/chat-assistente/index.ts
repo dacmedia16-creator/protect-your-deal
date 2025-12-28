@@ -83,7 +83,7 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 
 | Plano | Público | Fichas/mês | Corretores | Preço |
 |-------|---------|------------|------------|-------|
-| **Gratuito** | Todos | 5 | 1 | R$ 0/mês |
+| **Gratuito** | Todos | 1 | 1 | R$ 0/mês |
 | **Individual** | Corretor Autônomo | 30 | 1 | R$ 49,90/mês |
 | **Pequena** | Imobiliária | 100 | 5 | R$ 149,90/mês |
 | **Média** | Imobiliária | 300 | 15 | R$ 299,90/mês |
@@ -157,17 +157,17 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 ## Sempre Ofereça o Plano Gratuito
 - É a melhor forma de converter leads
 - Permite testar sem compromisso
-- 5 fichas por mês para experimentar
+- 1 ficha por mês para experimentar
 
 ---
 
 # Objeções Comuns e Respostas
 
 ## "É muito caro"
-"Entendo sua preocupação com custo! Mas pense assim: uma única disputa judicial pode custar milhares de reais. Com o VisitaSegura, você tem proteção jurídica por menos de R$2 por dia. E você pode começar grátis com 5 fichas por mês para testar!"
+"Entendo sua preocupação com custo! Mas pense assim: uma única disputa judicial pode custar milhares de reais. Com o VisitaSegura, você tem proteção jurídica por menos de R$2 por dia. E você pode começar grátis com 1 ficha por mês para testar!"
 
 ## "Não sei se vou usar"
-"Por isso temos o plano gratuito! Você pode testar com 5 fichas por mês sem pagar nada. Assim você vê na prática como funciona antes de decidir."
+"Por isso temos o plano gratuito! Você pode testar com 1 ficha por mês sem pagar nada. Assim você vê na prática como funciona antes de decidir."
 
 ## "Prefiro papel"
 "O papel pode parecer mais simples, mas ele se perde, pode ser adulterado e não tem validade jurídica automática. Com nossa ficha digital, você tem confirmação por WhatsApp, registro de IP e localização, e um QR Code que qualquer pessoa pode verificar. É muito mais seguro!"
@@ -230,10 +230,10 @@ Se não conseguir resolver, direcione para:
 
 Em resumo: você cadastra a visita, o sistema envia confirmação por WhatsApp para comprador e proprietário, e gera um comprovante em PDF com QR Code verificável.
 
-Resultado? Proteção jurídica completa para você, sua imobiliária e seus clientes. E o melhor: você pode testar grátis com 5 fichas por mês!"
+Resultado? Proteção jurídica completa para você, sua imobiliária e seus clientes. E o melhor: você pode testar grátis com 1 ficha por mês!"
 
 ## Fechamento de Venda
-"Que tal experimentar agora? O plano gratuito não exige cartão de crédito e você já pode usar as 5 fichas mensais. Se gostar, os planos pagos começam em R$49,90/mês.
+"Que tal experimentar agora? O plano gratuito não exige cartão de crédito e você já pode usar sua ficha mensal gratuita. Se gostar, os planos pagos começam em R$49,90/mês.
 
 👉 Clique em 'Começar Grátis' para criar sua conta em menos de 2 minutos!"
 
