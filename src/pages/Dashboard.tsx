@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +21,8 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
+  const { imobiliaria } = useUserRole();
   
 
   useEffect(() => {
@@ -77,10 +79,20 @@ export default function Dashboard() {
       <header className="sm:hidden border-b bg-card safe-area-top">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-              <FileText className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-display text-lg font-bold">VisitaSegura</span>
+            {imobiliaria?.logo_url ? (
+              <img 
+                src={imobiliaria.logo_url} 
+                alt={imobiliaria.nome} 
+                className="h-8 w-8 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+                <FileText className="h-4 w-4 text-primary-foreground" />
+              </div>
+            )}
+            <span className="font-display text-lg font-bold truncate max-w-[180px]">
+              {imobiliaria?.nome || 'VisitaSegura'}
+            </span>
           </div>
         </div>
       </header>
