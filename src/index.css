@@ -171,4 +171,14 @@
   .touch-action-manipulation {
     touch-action: manipulation;
   }
+
+  /* Progress bar animation for autoplay */
+  @keyframes progress {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
 }
