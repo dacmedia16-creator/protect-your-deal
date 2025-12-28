@@ -14,6 +14,14 @@ import {
   BarChart3,
   Lock
 } from 'lucide-react';
+import {
+  FichaDigitalMockup,
+  WhatsAppOTPMockup,
+  QRCodeMockup,
+  PDFComprovanteMockup,
+  CRMMockup,
+  MobileAppMockup
+} from '@/components/mockups';
 
 const Funcionalidades = () => {
   const features = [
@@ -206,29 +214,22 @@ const Funcionalidades = () => {
                   </ul>
                 </div>
                 
-                {/* Screenshot placeholder */}
+                {/* Screenshot Mockup */}
                 <div className="flex-1 w-full">
-                  <div className="relative rounded-xl overflow-hidden border border-border bg-gradient-to-br from-muted/50 to-muted shadow-xl">
-                    <div className="aspect-[4/3] flex items-center justify-center p-8">
-                      <div className="text-center space-y-4">
-                        <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                          <feature.icon className="h-10 w-10 text-primary" />
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">
-                            Captura de tela
-                          </p>
-                          <p className="text-xs text-muted-foreground/60">
-                            {feature.title}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="relative rounded-xl overflow-hidden border border-border bg-gradient-to-br from-muted/50 to-muted shadow-xl p-4">
                     {/* Decorative elements */}
-                    <div className="absolute top-4 left-4 flex gap-1.5">
+                    <div className="absolute top-4 left-4 flex gap-1.5 z-10">
                       <div className="h-3 w-3 rounded-full bg-red-400/50" />
                       <div className="h-3 w-3 rounded-full bg-yellow-400/50" />
                       <div className="h-3 w-3 rounded-full bg-green-400/50" />
+                    </div>
+                    <div className="pt-6">
+                      {feature.id === 'fichas-digitais' && <FichaDigitalMockup />}
+                      {feature.id === 'confirmacao-otp' && <WhatsAppOTPMockup />}
+                      {feature.id === 'qrcode' && <QRCodeMockup />}
+                      {feature.id === 'comprovante-pdf' && <PDFComprovanteMockup />}
+                      {feature.id === 'crm' && <CRMMockup />}
+                      {feature.id === 'app-mobile' && <MobileAppMockup />}
                     </div>
                   </div>
                 </div>
