@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.asaas-cancel-subscription]
 verify_jwt = true
+
+[functions.chat-assistente]
+verify_jwt = false

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
+import { ChatAssistente } from '@/components/ChatAssistente';
 import { 
   Shield, 
   FileCheck, 
@@ -632,6 +633,9 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Chat Assistente */}
+      <ChatAssistente />
     </div>
   );
 };
