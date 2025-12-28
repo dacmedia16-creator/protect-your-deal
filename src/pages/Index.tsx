@@ -147,6 +147,12 @@ const Index = () => {
           
           {/* Navigation Links - Desktop */}
           <nav className="hidden md:flex items-center gap-6">
+            <Link 
+              to="/funcionalidades" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Funcionalidades
+            </Link>
             <a 
               href="#como-funciona" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -196,6 +202,13 @@ const Index = () => {
                   </div>
                   
                   <nav className="flex flex-col gap-4">
+                    <Link 
+                      to="/funcionalidades" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Funcionalidades
+                    </Link>
                     <a 
                       href="#como-funciona" 
                       onClick={() => setMobileMenuOpen(false)}
