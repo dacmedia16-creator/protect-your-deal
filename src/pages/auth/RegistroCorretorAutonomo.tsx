@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Shield, Loader2, ArrowLeft, Check, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPhone } from '@/lib/phone';
 
 interface Plano {
   id: string;
@@ -289,7 +290,7 @@ export default function RegistroCorretorAutonomo() {
                     <Input
                       id="telefone"
                       value={corretorForm.telefone}
-                      onChange={(e) => setCorretorForm({ ...corretorForm, telefone: e.target.value })}
+                      onChange={(e) => setCorretorForm({ ...corretorForm, telefone: formatPhone(e.target.value) })}
                       placeholder="(00) 00000-0000"
                     />
                   </div>
