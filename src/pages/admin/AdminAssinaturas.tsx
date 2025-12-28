@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
@@ -187,6 +187,14 @@ export default function AdminAssinaturas() {
     return matchesSearch && matchesStatus;
   });
 
+  const statusCounts = useMemo(() => {
+    if (!assinaturas) return {} as Record<string, number>;
+    return assinaturas.reduce((acc, assinatura) => {
+      acc[assinatura.status] = (acc[assinatura.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [assinaturas]);
+
   const openEditDialog = (assinatura: Assinatura) => {
     setAssinaturaToEdit(assinatura);
     setEditForm({
@@ -336,6 +344,73 @@ export default function AdminAssinaturas() {
               <span className="text-2xl font-bold">{assinaturas?.length || 0}</span>
             </div>
           </div>
+        </div>
+
+        {/* Status Counters */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'ativa' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'ativa' ? 'all' : 'ativa')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-green-600">{statusCounts.ativa || 0}</p>
+              <p className="text-xs text-muted-foreground">Ativas</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'trial' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'trial' ? 'all' : 'trial')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-blue-500">{statusCounts.trial || 0}</p>
+              <p className="text-xs text-muted-foreground">Trial</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'gratuito' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'gratuito' ? 'all' : 'gratuito')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-purple-500">{statusCounts.gratuito || 0}</p>
+              <p className="text-xs text-muted-foreground">Gratuito</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'pendente' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'pendente' ? 'all' : 'pendente')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-yellow-600">{statusCounts.pendente || 0}</p>
+              <p className="text-xs text-muted-foreground">Pendente</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'suspensa' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'suspensa' ? 'all' : 'suspensa')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-orange-500">{statusCounts.suspensa || 0}</p>
+              <p className="text-xs text-muted-foreground">Suspensa</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'cancelada' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'cancelada' ? 'all' : 'cancelada')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-red-500">{statusCounts.cancelada || 0}</p>
+              <p className="text-xs text-muted-foreground">Cancelada</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className={`cursor-pointer transition-colors hover:bg-accent ${statusFilter === 'desativada' ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => setStatusFilter(statusFilter === 'desativada' ? 'all' : 'desativada')}
+          >
+            <CardContent className="p-3 text-center">
+              <p className="text-2xl font-bold text-gray-500">{statusCounts.desativada || 0}</p>
+              <p className="text-xs text-muted-foreground">Desativada</p>
+            </CardContent>
+          </Card>
         </div>
 
         <Card>
