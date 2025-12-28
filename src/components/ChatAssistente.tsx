@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -17,9 +18,78 @@ interface UserContext {
   plano: string | null;
   empresa: string | null;
   isLoggedIn: boolean;
+  currentPage: string;
+  pageContext: string;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistente`;
+
+// Map routes to page context and quick replies
+const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[] }> = {
+  '/dashboard': {
+    context: 'Dashboard principal - visão geral de fichas e métricas',
+    quickReplies: ['Como interpretar as métricas?', 'Exportar relatório', 'Ver fichas pendentes']
+  },
+  '/fichas': {
+    context: 'Lista de fichas de visita',
+    quickReplies: ['Como filtrar fichas?', 'Reenviar confirmação', 'Baixar comprovante PDF']
+  },
+  '/fichas/nova': {
+    context: 'Formulário de criação de nova ficha de visita',
+    quickReplies: ['Campos obrigatórios?', 'Como funciona o OTP?', 'Posso editar depois?']
+  },
+  '/clientes': {
+    context: 'Lista de clientes cadastrados',
+    quickReplies: ['Como adicionar cliente?', 'Diferença comprador/proprietário?', 'Importar clientes']
+  },
+  '/clientes/novo': {
+    context: 'Formulário de cadastro de novo cliente',
+    quickReplies: ['CPF é obrigatório?', 'Posso editar depois?', 'Para que servem as tags?']
+  },
+  '/imoveis': {
+    context: 'Lista de imóveis cadastrados',
+    quickReplies: ['Como cadastrar imóvel?', 'Vincular proprietário', 'Tipos de imóvel']
+  },
+  '/imoveis/novo': {
+    context: 'Formulário de cadastro de novo imóvel',
+    quickReplies: ['Campos obrigatórios?', 'Posso vincular proprietário?', 'Adicionar notas']
+  },
+  '/perfil': {
+    context: 'Página de perfil do usuário',
+    quickReplies: ['Alterar minha foto', 'Atualizar CRECI', 'Alterar senha']
+  },
+  '/relatorios': {
+    context: 'Página de relatórios e métricas',
+    quickReplies: ['Exportar dados', 'Período personalizado', 'Métricas disponíveis']
+  },
+  '/templates': {
+    context: 'Página de templates de mensagem',
+    quickReplies: ['Criar template', 'Variáveis disponíveis', 'Template padrão']
+  },
+  '/assinatura': {
+    context: 'Página de gerenciamento de assinatura',
+    quickReplies: ['Alterar plano', 'Formas de pagamento', 'Cancelar assinatura']
+  },
+  '/empresa/corretores': {
+    context: 'Gerenciamento de corretores da imobiliária',
+    quickReplies: ['Adicionar corretor', 'Resetar senha', 'Limite de corretores']
+  },
+  '/empresa/dashboard': {
+    context: 'Dashboard da imobiliária',
+    quickReplies: ['Métricas por corretor', 'Relatório consolidado', 'Fichas da equipe']
+  },
+  '/instalar': {
+    context: 'Página de instalação do app PWA',
+    quickReplies: ['Como instalar no Android?', 'Como instalar no iPhone?', 'Funciona offline?']
+  }
+};
+
+const DEFAULT_QUICK_REPLIES_USER = [
+  "Como criar uma ficha?",
+  "Como enviar confirmação?",
+  "Problemas com WhatsApp",
+  "Alterar meu plano"
+];
 
 const QUICK_REPLIES_VISITOR = [
   "Como funciona o sistema?",
@@ -28,16 +98,10 @@ const QUICK_REPLIES_VISITOR = [
   "Formas de pagamento"
 ];
 
-const QUICK_REPLIES_USER = [
-  "Como criar uma ficha?",
-  "Como enviar confirmação?",
-  "Problemas com WhatsApp",
-  "Alterar meu plano"
-];
-
 export function ChatAssistente() {
   const { user } = useAuth();
   const { role, imobiliaria, assinatura, loading: roleLoading } = useUserRole();
+  const location = useLocation();
   const [profileName, setProfileName] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -46,6 +110,23 @@ export function ChatAssistente() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Get current page context
+  const currentPageInfo = useMemo(() => {
+    const path = location.pathname;
+    // Try exact match first
+    if (PAGE_CONTEXT_MAP[path]) {
+      return PAGE_CONTEXT_MAP[path];
+    }
+    // Try prefix match for dynamic routes (e.g., /fichas/123)
+    const matchingKey = Object.keys(PAGE_CONTEXT_MAP).find(key => 
+      path.startsWith(key) && key !== '/'
+    );
+    if (matchingKey) {
+      return PAGE_CONTEXT_MAP[matchingKey];
+    }
+    return null;
+  }, [location.pathname]);
 
   // Fetch profile name when user is available
   useEffect(() => {
@@ -64,14 +145,16 @@ export function ChatAssistente() {
     fetchProfile();
   }, [user]);
 
-  // Build user context
+  // Build user context with page info
   const userContext: UserContext = useMemo(() => ({
     nome: profileName,
     role: role,
     plano: assinatura?.plano?.nome || null,
     empresa: imobiliaria?.nome || null,
-    isLoggedIn: !!user
-  }), [profileName, role, assinatura, imobiliaria, user]);
+    isLoggedIn: !!user,
+    currentPage: location.pathname,
+    pageContext: currentPageInfo?.context || 'Navegação geral'
+  }), [profileName, role, assinatura, imobiliaria, user, location.pathname, currentPageInfo]);
 
   // Generate personalized greeting
   const getGreeting = () => {
@@ -228,7 +311,13 @@ export function ChatAssistente() {
     streamChat(reply);
   };
 
-  const quickReplies = userContext.isLoggedIn ? QUICK_REPLIES_USER : QUICK_REPLIES_VISITOR;
+  // Get context-aware quick replies
+  const quickReplies = useMemo(() => {
+    if (!userContext.isLoggedIn) {
+      return QUICK_REPLIES_VISITOR;
+    }
+    return currentPageInfo?.quickReplies || DEFAULT_QUICK_REPLIES_USER;
+  }, [userContext.isLoggedIn, currentPageInfo]);
 
   if (!isOpen) {
     return (

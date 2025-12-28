@@ -315,10 +315,56 @@ serve(async (req) => {
         dynamicContext += `- **Plano**: Ainda não possui assinatura ativa\n`;
       }
 
+      // Add current page context
+      if (userContext.currentPage) {
+        dynamicContext += `\n## Página Atual\n`;
+        dynamicContext += `- **Rota**: ${userContext.currentPage}\n`;
+        dynamicContext += `- **Contexto**: ${userContext.pageContext || 'Navegação geral'}\n`;
+        
+        // Page-specific guidance
+        dynamicContext += `\n**Dicas contextuais para esta página**:\n`;
+        
+        if (userContext.currentPage.includes('/fichas/nova')) {
+          dynamicContext += `- O usuário está criando uma nova ficha de visita\n`;
+          dynamicContext += `- Ajude com: campos obrigatórios, como funciona o OTP, dicas de preenchimento\n`;
+          dynamicContext += `- Explique que após criar, o sistema envia WhatsApp para comprador e proprietário\n`;
+        } else if (userContext.currentPage.includes('/fichas')) {
+          dynamicContext += `- O usuário está visualizando fichas de visita\n`;
+          dynamicContext += `- Ajude com: como filtrar, reenviar confirmações, baixar PDFs\n`;
+        } else if (userContext.currentPage.includes('/clientes/novo')) {
+          dynamicContext += `- O usuário está cadastrando um novo cliente\n`;
+          dynamicContext += `- Ajude com: diferença entre comprador e proprietário, campos importantes\n`;
+        } else if (userContext.currentPage.includes('/clientes')) {
+          dynamicContext += `- O usuário está na lista de clientes\n`;
+          dynamicContext += `- Ajude com: buscar clientes, editar, tags\n`;
+        } else if (userContext.currentPage.includes('/imoveis')) {
+          dynamicContext += `- O usuário está gerenciando imóveis\n`;
+          dynamicContext += `- Ajude com: cadastro, vinculação com proprietário\n`;
+        } else if (userContext.currentPage.includes('/dashboard')) {
+          dynamicContext += `- O usuário está no dashboard principal\n`;
+          dynamicContext += `- Ajude com: interpretar métricas, ações rápidas\n`;
+        } else if (userContext.currentPage.includes('/assinatura')) {
+          dynamicContext += `- O usuário está vendo sua assinatura\n`;
+          dynamicContext += `- Ajude com: upgrade, formas de pagamento, cancelamento\n`;
+        } else if (userContext.currentPage.includes('/perfil')) {
+          dynamicContext += `- O usuário está no perfil\n`;
+          dynamicContext += `- Ajude com: atualizar dados, foto, CRECI\n`;
+        } else if (userContext.currentPage.includes('/empresa/corretores')) {
+          dynamicContext += `- O admin está gerenciando corretores da imobiliária\n`;
+          dynamicContext += `- Ajude com: adicionar corretor, limites do plano, reset de senha\n`;
+        } else if (userContext.currentPage.includes('/relatorios')) {
+          dynamicContext += `- O usuário está vendo relatórios\n`;
+          dynamicContext += `- Ajude com: exportar dados, filtrar períodos\n`;
+        } else if (userContext.currentPage.includes('/instalar')) {
+          dynamicContext += `- O usuário quer instalar o app\n`;
+          dynamicContext += `- Dê instruções claras para Android e iOS\n`;
+        }
+      }
+
       // Add behavior guidelines for logged users
-      dynamicContext += `\n**Diretrizes para este usuário**:\n`;
+      dynamicContext += `\n**Diretrizes gerais**:\n`;
       dynamicContext += `- Use o primeiro nome dele nas respostas\n`;
-      dynamicContext += `- Ofereça suporte técnico quando apropriado\n`;
+      dynamicContext += `- Ofereça ajuda contextual baseada na página atual\n`;
       dynamicContext += `- Se estiver no plano gratuito, sugira upgrade quando fizer sentido\n`;
       dynamicContext += `- Foque em dicas práticas de uso do sistema\n`;
       
