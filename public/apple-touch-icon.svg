@@ -1,9 +1,5 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="180" height="180" rx="40" fill="#0f172a"/>
-  <path d="M90 24C58.52 24 33 49.52 33 81C33 112.48 58.52 138 90 138C121.48 138 147 112.48 147 81C147 49.52 121.48 24 90 24Z" fill="#1e293b" stroke="#3b82f6" stroke-width="4"/>
-  <path d="M90 44L112 66L90 88L68 66L90 44Z" fill="#3b82f6"/>
-  <path d="M90 66L100 76L90 86L80 76L90 66Z" fill="#60a5fa"/>
-  <path d="M90 88V118" stroke="#3b82f6" stroke-width="6" stroke-linecap="round"/>
-  <path d="M76 104L90 118L104 104" stroke="#3b82f6" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="90" y="162" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="white" text-anchor="middle">VISITA</text>
+  <rect width="180" height="180" rx="40" fill="#1565c0"/>
+  <path d="M45 50L90 130L135 50" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M67 90L90 118L130 56" stroke="#22c55e" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
