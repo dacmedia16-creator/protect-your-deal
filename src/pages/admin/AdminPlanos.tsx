@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Loader2, CreditCard, Users, FileText, Building2, Home } from 'lucide-react';
+import { Plus, Edit, Loader2, Users, FileText, Building2, Home } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Plano {
@@ -28,6 +28,7 @@ interface Plano {
   max_imoveis: number;
   valor_mensal: number;
   ativo: boolean;
+  asaas_plan_id: string | null;
 }
 
 interface PlanoForm {
@@ -39,6 +40,7 @@ interface PlanoForm {
   max_imoveis: number;
   valor_mensal: number;
   ativo: boolean;
+  asaas_plan_id: string;
 }
 
 const defaultForm: PlanoForm = {
@@ -50,6 +52,7 @@ const defaultForm: PlanoForm = {
   max_imoveis: 200,
   valor_mensal: 0,
   ativo: true,
+  asaas_plan_id: '',
 };
 
 export default function AdminPlanos() {
@@ -92,6 +95,7 @@ export default function AdminPlanos() {
       max_imoveis: plano.max_imoveis,
       valor_mensal: plano.valor_mensal,
       ativo: plano.ativo,
+      asaas_plan_id: plano.asaas_plan_id || '',
     });
     setDialogOpen(true);
   }
@@ -107,10 +111,15 @@ export default function AdminPlanos() {
     setSaving(true);
 
     try {
+      const dataToSave = {
+        ...form,
+        asaas_plan_id: form.asaas_plan_id || null,
+      };
+
       if (editingId) {
         const { error } = await supabase
           .from('planos')
-          .update(form)
+          .update(dataToSave)
           .eq('id', editingId);
 
         if (error) throw error;
@@ -118,7 +127,7 @@ export default function AdminPlanos() {
       } else {
         const { error } = await supabase
           .from('planos')
-          .insert(form);
+          .insert(dataToSave);
 
         if (error) throw error;
         toast.success('Plano criado com sucesso');
@@ -159,7 +168,7 @@ export default function AdminPlanos() {
                 Novo Plano
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingId ? 'Editar Plano' : 'Novo Plano'}</DialogTitle>
               </DialogHeader>
@@ -238,6 +247,19 @@ export default function AdminPlanos() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="asaas_plan_id">ID do Plano no Asaas (opcional)</Label>
+                  <Input
+                    id="asaas_plan_id"
+                    value={form.asaas_plan_id}
+                    onChange={(e) => setForm({ ...form, asaas_plan_id: e.target.value })}
+                    placeholder="sub_xxxxxxxxxx"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ID da assinatura no Asaas para rastreamento
+                  </p>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <Label htmlFor="ativo">Plano ativo</Label>
                   <Switch
@@ -305,6 +327,14 @@ export default function AdminPlanos() {
                     <span>{plano.max_imoveis >= 99999 ? 'Ilimitado' : plano.max_imoveis} imóveis</span>
                   </div>
                 </div>
+
+                {plano.asaas_plan_id && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground">
+                      Asaas ID: <code className="bg-muted px-1 rounded">{plano.asaas_plan_id}</code>
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

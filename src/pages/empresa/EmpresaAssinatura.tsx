@@ -15,7 +15,8 @@ import {
   Building2, 
   Home,
   AlertCircle,
-  Calendar
+  Calendar,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -40,11 +41,11 @@ interface UsageStats {
 }
 
 export default function EmpresaAssinatura() {
-  const { imobiliariaId, assinatura, refetch } = useUserRole();
+  const { imobiliariaId, assinatura, imobiliaria, refetch } = useUserRole();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [changing, setChanging] = useState(false);
+  const [subscribing, setSubscribing] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -102,45 +103,31 @@ export default function EmpresaAssinatura() {
     fetchData();
   }, [imobiliariaId]);
 
-  async function handleChangePlan(planoId: string) {
+  async function handleSubscribe(planoId: string) {
     if (!imobiliariaId) return;
     
-    setChanging(true);
+    setSubscribing(planoId);
 
     try {
-      if (assinatura) {
-        // Update existing subscription
-        const { error } = await supabase
-          .from('assinaturas')
-          .update({ 
-            plano_id: planoId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', assinatura.id);
+      // Gerar link de pagamento via Asaas
+      const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
+        body: { planoId, imobiliariaId },
+      });
 
-        if (error) throw error;
+      if (error) throw error;
+
+      if (data?.paymentLinkUrl) {
+        // Abrir link de pagamento em nova aba
+        window.open(data.paymentLinkUrl, '_blank');
+        toast.success('Link de pagamento aberto! Complete o pagamento para ativar sua assinatura.');
       } else {
-        // Create new subscription
-        const { error } = await supabase
-          .from('assinaturas')
-          .insert({
-            imobiliaria_id: imobiliariaId,
-            plano_id: planoId,
-            status: 'ativa',
-            data_inicio: new Date().toISOString().split('T')[0],
-            proxima_cobranca: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          });
-
-        if (error) throw error;
+        throw new Error('Link de pagamento não gerado');
       }
-
-      toast.success('Plano atualizado com sucesso!');
-      refetch();
-    } catch (error) {
-      console.error('Error changing plan:', error);
-      toast.error('Erro ao alterar plano');
+    } catch (error: any) {
+      console.error('Error subscribing:', error);
+      toast.error(error.message || 'Erro ao gerar link de pagamento');
     } finally {
-      setChanging(false);
+      setSubscribing(null);
     }
   }
 
@@ -152,6 +139,14 @@ export default function EmpresaAssinatura() {
     pendente: 'bg-warning text-warning-foreground',
     suspensa: 'bg-destructive text-destructive-foreground',
     cancelada: 'bg-muted text-muted-foreground',
+  };
+
+  const statusLabels: Record<string, string> = {
+    ativa: 'Ativa',
+    trial: 'Período de Teste',
+    pendente: 'Aguardando Pagamento',
+    suspensa: 'Suspensa',
+    cancelada: 'Cancelada',
   };
 
   if (loading) {
@@ -182,11 +177,7 @@ export default function EmpresaAssinatura() {
                   Sua Assinatura
                 </CardTitle>
                 <Badge className={statusColors[assinatura.status]}>
-                  {assinatura.status === 'ativa' && 'Ativa'}
-                  {assinatura.status === 'trial' && 'Período de Teste'}
-                  {assinatura.status === 'pendente' && 'Pendente'}
-                  {assinatura.status === 'suspensa' && 'Suspensa'}
-                  {assinatura.status === 'cancelada' && 'Cancelada'}
+                  {statusLabels[assinatura.status] || assinatura.status}
                 </Badge>
               </div>
             </CardHeader>
@@ -198,6 +189,18 @@ export default function EmpresaAssinatura() {
                     <p className="font-medium text-destructive">Assinatura Suspensa</p>
                     <p className="text-sm text-muted-foreground">
                       Sua assinatura está suspensa por inadimplência. Regularize o pagamento para continuar usando todos os recursos.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {assinatura.status === 'pendente' && (
+                <div className="flex items-start gap-3 p-4 bg-warning/10 border border-warning/20 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-warning">Aguardando Pagamento</p>
+                    <p className="text-sm text-muted-foreground">
+                      Seu pagamento está sendo processado. Assim que confirmado, sua assinatura será ativada automaticamente.
                     </p>
                   </div>
                 </div>
@@ -285,6 +288,7 @@ export default function EmpresaAssinatura() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos.map((plano) => {
               const isCurrentPlan = currentPlano?.id === plano.id;
+              const isSubscribing = subscribing === plano.id;
               
               return (
                 <Card 
@@ -333,25 +337,54 @@ export default function EmpresaAssinatura() {
                       </li>
                     </ul>
 
-                    <Button 
-                      className="w-full" 
-                      variant={isCurrentPlan ? 'outline' : 'default'}
-                      disabled={isCurrentPlan || changing}
-                      onClick={() => handleChangePlan(plano.id)}
-                    >
-                      {changing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : isCurrentPlan ? (
-                        'Plano Atual'
-                      ) : (
-                        'Selecionar Plano'
-                      )}
-                    </Button>
+                    {plano.valor_mensal > 0 && (
+                      <Button 
+                        className="w-full" 
+                        variant={isCurrentPlan ? 'outline' : 'default'}
+                        disabled={isCurrentPlan || isSubscribing}
+                        onClick={() => handleSubscribe(plano.id)}
+                      >
+                        {isSubscribing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Gerando link...
+                          </>
+                        ) : isCurrentPlan ? (
+                          'Plano Atual'
+                        ) : (
+                          <>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Assinar Plano
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    {plano.valor_mensal === 0 && (
+                      <Button 
+                        className="w-full" 
+                        variant="outline"
+                        asChild
+                      >
+                        <a href="mailto:contato@visitasegura.com">
+                          Entrar em Contato
+                        </a>
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </div>
+        </div>
+
+        <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+          <p className="font-medium mb-2">Formas de pagamento aceitas:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Pix (confirmação instantânea)</li>
+            <li>Boleto bancário (até 3 dias úteis)</li>
+            <li>Cartão de crédito (recorrência automática)</li>
+          </ul>
         </div>
 
         <p className="text-sm text-center text-muted-foreground">

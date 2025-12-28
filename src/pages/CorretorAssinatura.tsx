@@ -19,7 +19,8 @@ import {
   FileText,
   Users,
   Home,
-  Loader2
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 
 interface Plano {
@@ -46,7 +47,7 @@ export default function CorretorAssinatura() {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [changing, setChanging] = useState(false);
+  const [subscribing, setSubscribing] = useState<string | null>(null);
 
   // Redirecionar se não for corretor autônomo
   useEffect(() => {
@@ -105,40 +106,30 @@ export default function CorretorAssinatura() {
     fetchData();
   }, [user]);
 
-  const handleChangePlan = async (planoId: string) => {
+  const handleSubscribe = async (planoId: string) => {
     if (!user) return;
-    setChanging(true);
+    setSubscribing(planoId);
 
     try {
-      if (assinatura) {
-        // Atualizar assinatura existente
-        const { error } = await supabase
-          .from('assinaturas')
-          .update({ plano_id: planoId })
-          .eq('id', assinatura.id);
+      // Gerar link de pagamento via Asaas
+      const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
+        body: { planoId },
+      });
 
-        if (error) throw error;
+      if (error) throw error;
+
+      if (data?.paymentLinkUrl) {
+        // Abrir link de pagamento em nova aba
+        window.open(data.paymentLinkUrl, '_blank');
+        toast.success('Link de pagamento aberto! Complete o pagamento para ativar sua assinatura.');
       } else {
-        // Criar nova assinatura para corretor autônomo
-        const { error } = await supabase
-          .from('assinaturas')
-          .insert({
-            user_id: user.id,
-            plano_id: planoId,
-            status: 'ativa',
-            data_inicio: new Date().toISOString().split('T')[0],
-          });
-
-        if (error) throw error;
+        throw new Error('Link de pagamento não gerado');
       }
-
-      toast.success('Plano atualizado com sucesso!');
-      await refetch();
     } catch (error: any) {
-      console.error('Error changing plan:', error);
-      toast.error(error.message || 'Erro ao alterar plano');
+      console.error('Error subscribing:', error);
+      toast.error(error.message || 'Erro ao gerar link de pagamento');
     } finally {
-      setChanging(false);
+      setSubscribing(null);
     }
   };
 
@@ -147,6 +138,20 @@ export default function CorretorAssinatura() {
       style: 'currency',
       currency: 'BRL',
     }).format(value);
+  };
+
+  const statusColors: Record<string, string> = {
+    ativa: 'bg-success/10 text-success border-success/30',
+    pendente: 'bg-warning/10 text-warning border-warning/30',
+    suspensa: 'bg-destructive/10 text-destructive border-destructive/30',
+    cancelada: 'bg-muted text-muted-foreground border-muted',
+  };
+
+  const statusLabels: Record<string, string> = {
+    ativa: 'Ativa',
+    pendente: 'Aguardando Pagamento',
+    suspensa: 'Suspensa',
+    cancelada: 'Cancelada',
   };
 
   if (loading) {
@@ -195,26 +200,19 @@ export default function CorretorAssinatura() {
                     </CardTitle>
                     <CardDescription>
                       {assinatura 
-                        ? `Status: ${assinatura.status}` 
+                        ? `Status: ${statusLabels[assinatura.status] || assinatura.status}` 
                         : 'Escolha um plano para começar'}
                     </CardDescription>
                   </div>
                 </div>
                 {assinatura && (
-                  <Badge 
-                    variant="outline" 
-                    className={
-                      assinatura.status === 'ativa' 
-                        ? 'bg-success/10 text-success border-success/30' 
-                        : 'bg-warning/10 text-warning border-warning/30'
-                    }
-                  >
+                  <Badge variant="outline" className={statusColors[assinatura.status]}>
                     {assinatura.status === 'ativa' ? (
                       <CheckCircle className="h-3 w-3 mr-1" />
                     ) : (
                       <AlertCircle className="h-3 w-3 mr-1" />
                     )}
-                    {assinatura.status}
+                    {statusLabels[assinatura.status] || assinatura.status}
                   </Badge>
                 )}
               </div>
@@ -222,6 +220,18 @@ export default function CorretorAssinatura() {
             
             {assinatura?.plano && usage && (
               <CardContent className="space-y-4">
+                {assinatura.status === 'pendente' && (
+                  <div className="flex items-start gap-3 p-4 bg-warning/10 border border-warning/20 rounded-lg mb-4">
+                    <AlertCircle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-warning">Aguardando Pagamento</p>
+                      <p className="text-sm text-muted-foreground">
+                        Seu pagamento está sendo processado. Assim que confirmado, sua assinatura será ativada automaticamente.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
@@ -288,6 +298,7 @@ export default function CorretorAssinatura() {
               .filter(plano => plano.max_corretores === 1) // Mostrar apenas planos individuais
               .map((plano) => {
                 const isCurrentPlan = assinatura?.plano?.id === plano.id;
+                const isSubscribing = subscribing === plano.id;
                 
                 return (
                   <Card 
@@ -327,15 +338,21 @@ export default function CorretorAssinatura() {
                       <Button 
                         className="w-full"
                         variant={isCurrentPlan ? 'outline' : 'default'}
-                        disabled={isCurrentPlan || changing}
-                        onClick={() => handleChangePlan(plano.id)}
+                        disabled={isCurrentPlan || isSubscribing}
+                        onClick={() => handleSubscribe(plano.id)}
                       >
-                        {changing ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                        {isSubscribing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Gerando link...
+                          </>
                         ) : isCurrentPlan ? (
                           'Plano Atual'
                         ) : (
-                          'Selecionar Plano'
+                          <>
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Assinar Plano
+                          </>
                         )}
                       </Button>
                     </CardContent>
@@ -351,6 +368,15 @@ export default function CorretorAssinatura() {
               </CardContent>
             </Card>
           )}
+
+          <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground mt-6">
+            <p className="font-medium mb-2">Formas de pagamento aceitas:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Pix (confirmação instantânea)</li>
+              <li>Boleto bancário (até 3 dias úteis)</li>
+              <li>Cartão de crédito (recorrência automática)</li>
+            </ul>
+          </div>
         </div>
       </main>
 

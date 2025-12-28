@@ -56,3 +56,18 @@ verify_jwt = true
 
 [functions.admin-fix-inconsistencies]
 verify_jwt = true
+
+[functions.asaas-create-customer]
+verify_jwt = true
+
+[functions.asaas-create-subscription]
+verify_jwt = true
+
+[functions.asaas-payment-link]
+verify_jwt = true
+
+[functions.asaas-webhook]
+verify_jwt = false
+
+[functions.asaas-cancel-subscription]
+verify_jwt = true
