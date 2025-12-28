@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,11 +22,47 @@ import {
   RefreshCw
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export default function InstalarApp() {
   const { isInstallable, isInstalled, isIOS, isAndroid, isDesktop, install } = usePWAInstall();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'left' | 'right'>('right');
   const [iosStep, setIosStep] = useState<1 | 2 | 3>(1);
   const [androidStep, setAndroidStep] = useState<1 | 2 | 3>(1);
+
+  const handleStepChange = (
+    currentStep: 1 | 2 | 3,
+    direction: 'prev' | 'next',
+    setter: React.Dispatch<React.SetStateAction<1 | 2 | 3>>
+  ) => {
+    if (direction === 'prev' && currentStep === 1) return;
+    if (direction === 'next' && currentStep === 3) return;
+
+    setTransitionDirection(direction === 'next' ? 'right' : 'left');
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      setter(prev => direction === 'next' ? (prev + 1) as 1 | 2 | 3 : (prev - 1) as 1 | 2 | 3);
+      setIsTransitioning(false);
+    }, 150);
+  };
+
+  const handleStepClick = (
+    targetStep: 1 | 2 | 3,
+    currentStep: 1 | 2 | 3,
+    setter: React.Dispatch<React.SetStateAction<1 | 2 | 3>>
+  ) => {
+    if (targetStep === currentStep) return;
+    
+    setTransitionDirection(targetStep > currentStep ? 'right' : 'left');
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      setter(targetStep);
+      setIsTransitioning(false);
+    }, 150);
+  };
 
   const handleInstall = async () => {
     const success = await install();
@@ -176,49 +212,93 @@ export default function InstalarApp() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Mockup */}
                   <div className="flex flex-col items-center">
-                    <IOSInstallMockup step={iosStep} />
-                    <div className="flex items-center gap-2 mt-4">
+                    <div 
+                      className={cn(
+                        "transition-all duration-300 ease-out",
+                        isTransitioning 
+                          ? transitionDirection === 'right'
+                            ? "opacity-0 -translate-x-4"
+                            : "opacity-0 translate-x-4"
+                          : "opacity-100 translate-x-0"
+                      )}
+                    >
+                      <IOSInstallMockup step={iosStep} />
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setIosStep(prev => prev > 1 ? (prev - 1) as 1 | 2 | 3 : prev)}
+                        onClick={() => handleStepChange(iosStep, 'prev', setIosStep)}
                         disabled={iosStep === 1}
+                        className="transition-transform hover:scale-105 active:scale-95"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
-                      <span className="text-sm text-muted-foreground">
-                        Passo {iosStep} de 3
-                      </span>
+                      
+                      {/* Step indicators */}
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3].map((step) => (
+                          <button
+                            key={step}
+                            onClick={() => handleStepClick(step as 1 | 2 | 3, iosStep, setIosStep)}
+                            className={cn(
+                              "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                              iosStep === step 
+                                ? "bg-primary scale-125" 
+                                : "bg-muted hover:bg-muted-foreground/30"
+                            )}
+                          />
+                        ))}
+                      </div>
+                      
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setIosStep(prev => prev < 3 ? (prev + 1) as 1 | 2 | 3 : prev)}
+                        onClick={() => handleStepChange(iosStep, 'next', setIosStep)}
                         disabled={iosStep === 3}
+                        className="transition-transform hover:scale-105 active:scale-95"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
+                    <span className="text-xs text-muted-foreground mt-2">
+                      Passo {iosStep} de 3
+                    </span>
                   </div>
 
                   {/* Steps */}
                   <div className="space-y-4">
-                    <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg animate-fade-in">
                       <p className="text-sm text-amber-800 dark:text-amber-200">
                         <strong>Importante:</strong> Use o navegador <strong>Safari</strong> para instalar no iOS.
                       </p>
                     </div>
 
                     <div 
-                      className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${iosStep === 1 ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/50'}`}
-                      onClick={() => setIosStep(1)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        iosStep === 1 
+                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(1, iosStep, setIosStep)}
                     >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 ${iosStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        iosStep === 1 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
                         1
                       </span>
-                      <div>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        iosStep === 1 ? "opacity-100" : "opacity-70"
+                      )}>
                         <p className="font-medium flex items-center gap-2">
                           Toque no ícone de Compartilhar
-                          <Share2 className="h-4 w-4 text-primary" />
+                          <Share2 className={cn(
+                            "h-4 w-4 transition-all duration-300",
+                            iosStep === 1 ? "text-primary animate-pulse" : "text-muted-foreground"
+                          )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           Na barra inferior do Safari, toque no ícone de compartilhamento (quadrado com seta para cima)
@@ -227,16 +307,30 @@ export default function InstalarApp() {
                     </div>
 
                     <div 
-                      className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${iosStep === 2 ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/50'}`}
-                      onClick={() => setIosStep(2)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        iosStep === 2 
+                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(2, iosStep, setIosStep)}
                     >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 ${iosStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        iosStep === 2 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
                         2
                       </span>
-                      <div>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        iosStep === 2 ? "opacity-100" : "opacity-70"
+                      )}>
                         <p className="font-medium flex items-center gap-2">
                           Adicionar à Tela de Início
-                          <PlusSquare className="h-4 w-4 text-primary" />
+                          <PlusSquare className={cn(
+                            "h-4 w-4 transition-all duration-300",
+                            iosStep === 2 ? "text-primary animate-pulse" : "text-muted-foreground"
+                          )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           Role para baixo no menu e toque em "Adicionar à Tela de Início"
@@ -245,16 +339,30 @@ export default function InstalarApp() {
                     </div>
 
                     <div 
-                      className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${iosStep === 3 ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/50'}`}
-                      onClick={() => setIosStep(3)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        iosStep === 3 
+                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(3, iosStep, setIosStep)}
                     >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 ${iosStep === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        iosStep === 3 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
                         3
                       </span>
-                      <div>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        iosStep === 3 ? "opacity-100" : "opacity-70"
+                      )}>
                         <p className="font-medium flex items-center gap-2">
                           Confirme a instalação
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className={cn(
+                            "h-4 w-4 transition-all duration-300",
+                            iosStep === 3 ? "text-green-500 animate-pulse" : "text-muted-foreground"
+                          )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           Toque em "Adicionar" no canto superior direito para concluir
@@ -270,46 +378,87 @@ export default function InstalarApp() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Mockup */}
                   <div className="flex flex-col items-center">
-                    <AndroidInstallMockup step={androidStep} />
-                    <div className="flex items-center gap-2 mt-4">
+                    <div 
+                      className={cn(
+                        "transition-all duration-300 ease-out",
+                        isTransitioning 
+                          ? transitionDirection === 'right'
+                            ? "opacity-0 -translate-x-4"
+                            : "opacity-0 translate-x-4"
+                          : "opacity-100 translate-x-0"
+                      )}
+                    >
+                      <AndroidInstallMockup step={androidStep} />
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setAndroidStep(prev => prev > 1 ? (prev - 1) as 1 | 2 | 3 : prev)}
+                        onClick={() => handleStepChange(androidStep, 'prev', setAndroidStep)}
                         disabled={androidStep === 1}
+                        className="transition-transform hover:scale-105 active:scale-95"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
-                      <span className="text-sm text-muted-foreground">
-                        Passo {androidStep} de 3
-                      </span>
+                      
+                      {/* Step indicators */}
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3].map((step) => (
+                          <button
+                            key={step}
+                            onClick={() => handleStepClick(step as 1 | 2 | 3, androidStep, setAndroidStep)}
+                            className={cn(
+                              "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                              androidStep === step 
+                                ? "bg-primary scale-125" 
+                                : "bg-muted hover:bg-muted-foreground/30"
+                            )}
+                          />
+                        ))}
+                      </div>
+                      
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setAndroidStep(prev => prev < 3 ? (prev + 1) as 1 | 2 | 3 : prev)}
+                        onClick={() => handleStepChange(androidStep, 'next', setAndroidStep)}
                         disabled={androidStep === 3}
+                        className="transition-transform hover:scale-105 active:scale-95"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
+                    <span className="text-xs text-muted-foreground mt-2">
+                      Passo {androidStep} de 3
+                    </span>
                   </div>
 
                   {/* Steps */}
                   <div className="space-y-4">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg animate-fade-in">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
                         <strong>Dica:</strong> Use o navegador <strong>Chrome</strong> para a melhor experiência no Android.
                       </p>
                     </div>
 
                     <div 
-                      className={`flex items-start gap-4 p-4 rounded-lg transition-colors cursor-pointer ${androidStep === 1 ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/50'}`}
-                      onClick={() => setAndroidStep(1)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        androidStep === 1 
+                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(1, androidStep, setAndroidStep)}
                     >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 ${androidStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        androidStep === 1 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
                         1
                       </span>
-                      <div>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        androidStep === 1 ? "opacity-100" : "opacity-70"
+                      )}>
                         <p className="font-medium">Abra o menu do Chrome</p>
                         <p className="text-sm text-muted-foreground mt-1">
                           Toque nos três pontos (⋮) no canto superior direito da tela
@@ -318,16 +467,30 @@ export default function InstalarApp() {
                     </div>
 
                     <div 
-                      className={`flex items-start gap-4 p-4 rounded-lg transition-colors cursor-pointer ${androidStep === 2 ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/50'}`}
-                      onClick={() => setAndroidStep(2)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        androidStep === 2 
+                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(2, androidStep, setAndroidStep)}
                     >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 ${androidStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        androidStep === 2 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
                         2
                       </span>
-                      <div>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        androidStep === 2 ? "opacity-100" : "opacity-70"
+                      )}>
                         <p className="font-medium flex items-center gap-2">
                           Toque em "Instalar app"
-                          <Download className="h-4 w-4 text-primary" />
+                          <Download className={cn(
+                            "h-4 w-4 transition-all duration-300",
+                            androidStep === 2 ? "text-primary animate-pulse" : "text-muted-foreground"
+                          )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           Ou toque em "Adicionar à tela inicial" se a opção "Instalar" não aparecer
@@ -336,16 +499,30 @@ export default function InstalarApp() {
                     </div>
 
                     <div 
-                      className={`flex items-start gap-4 p-4 rounded-lg transition-colors cursor-pointer ${androidStep === 3 ? 'bg-primary/10 border-2 border-primary' : 'bg-muted/50'}`}
-                      onClick={() => setAndroidStep(3)}
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        androidStep === 3 
+                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(3, androidStep, setAndroidStep)}
                     >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 ${androidStep === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        androidStep === 3 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
                         3
                       </span>
-                      <div>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        androidStep === 3 ? "opacity-100" : "opacity-70"
+                      )}>
                         <p className="font-medium flex items-center gap-2">
                           Confirme a instalação
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className={cn(
+                            "h-4 w-4 transition-all duration-300",
+                            androidStep === 3 ? "text-green-500 animate-pulse" : "text-muted-foreground"
+                          )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           Toque em "Instalar" na janela de confirmação que aparecer
