@@ -434,7 +434,7 @@ const Index = () => {
                       variant={isFreePlan ? 'default' : 'outline'}
                       asChild
                     >
-                      <Link to={isAutonomo ? `/registro-autonomo${isFreePlan ? '?plano=gratuito' : ''}` : '/registro'}>
+                      <Link to={`/registro/tipo?plano=${plano.nome.toLowerCase()}`}>
                         {isFreePlan ? (
                           <>
                             <Sparkles className="h-4 w-4 mr-2" />
