@@ -114,6 +114,20 @@
     @apply border-border;
   }
 
+  /* Eliminar delay de 300ms em elementos interativos no mobile */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  label,
+  [tabindex]:not([tabindex="-1"]),
+  .cursor-pointer {
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
