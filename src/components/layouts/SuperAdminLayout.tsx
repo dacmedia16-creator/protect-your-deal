@@ -1,11 +1,12 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 import {
   Building2,
   LayoutDashboard,
@@ -47,6 +48,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const location = useLocation();
   const { signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Buscar contagem de assinaturas suspensas/pendentes
   const { data: assinaturasCount } = useQuery({
@@ -58,7 +60,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         .in('status', ['suspensa', 'pendente']);
       return count || 0;
     },
-    refetchInterval: 60000, // Atualiza a cada minuto
+    refetchInterval: 60000,
   });
 
   // Buscar contagem de usuários pendentes (sem imobiliária)
@@ -87,6 +89,88 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     },
     refetchInterval: 60000,
   });
+
+  // Subscriptions em tempo real para notificações
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'assinaturas',
+        },
+        (payload) => {
+          const newRecord = payload.new as { status?: string };
+          const oldRecord = payload.old as { status?: string };
+          
+          if (payload.eventType === 'UPDATE' && 
+              (newRecord?.status === 'suspensa' || newRecord?.status === 'pendente') &&
+              oldRecord?.status !== newRecord?.status) {
+            toast.warning('Assinatura requer atenção', {
+              description: `Uma assinatura foi marcada como ${newRecord.status}`,
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ['sidebar-assinaturas-pendentes'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_roles',
+        },
+        (payload) => {
+          const newRecord = payload.new as { imobiliaria_id?: string; role?: string };
+          if (!newRecord?.imobiliaria_id && newRecord?.role !== 'super_admin') {
+            toast.info('Novo usuário pendente', {
+              description: 'Um novo usuário aguarda vinculação a uma imobiliária',
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ['sidebar-usuarios-pendentes'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'convites',
+        },
+        () => {
+          toast.info('Novo convite criado', {
+            description: 'Um novo convite foi enviado e aguarda aceitação',
+          });
+          queryClient.invalidateQueries({ queryKey: ['sidebar-convites-pendentes'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'convites',
+        },
+        (payload) => {
+          const newRecord = payload.new as { status?: string };
+          const oldRecord = payload.old as { status?: string };
+          
+          if (oldRecord?.status === 'pendente' && newRecord?.status === 'aceito') {
+            toast.success('Convite aceito', {
+              description: 'Um convite foi aceito com sucesso',
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ['sidebar-convites-pendentes'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Mapeamento de badges por href
   const badgeCounts: Record<string, number | undefined> = {
