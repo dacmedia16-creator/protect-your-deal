@@ -75,7 +75,7 @@ serve(async (req) => {
         .from('assinaturas')
         .update({
           plano_id: planoId,
-          status: 'aguardando_pagamento',
+          status: 'pendente',
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingAssinatura.id);
@@ -95,7 +95,7 @@ serve(async (req) => {
           plano_id: planoId,
           user_id: imobiliariaId ? null : user.id,
           imobiliaria_id: imobiliariaId || null,
-          status: 'aguardando_pagamento',
+          status: 'pendente',
           data_inicio: new Date().toISOString().split('T')[0],
         })
         .select('id')
@@ -109,6 +109,7 @@ serve(async (req) => {
       assinaturaId = newAssinatura.id;
       console.log('Created new subscription:', assinaturaId);
     }
+
 
     // Calcular data de expiração (7 dias)
     const expirationDate = new Date();
