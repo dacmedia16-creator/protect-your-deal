@@ -98,7 +98,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
 
           setImobiliaria(imobData);
 
-          // Fetch subscription
+          // Fetch subscription for imobiliária
           const { data: assData } = await supabase
             .from('assinaturas')
             .select(`
@@ -126,6 +126,38 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
               ...assData,
               plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
             });
+          }
+        } else if (roleData.role === 'corretor') {
+          // Corretor autônomo - buscar assinatura individual via user_id
+          const { data: assData } = await supabase
+            .from('assinaturas')
+            .select(`
+              id,
+              status,
+              data_inicio,
+              data_fim,
+              proxima_cobranca,
+              plano:planos (
+                id,
+                nome,
+                max_corretores,
+                max_fichas_mes,
+                max_clientes,
+                max_imoveis,
+                valor_mensal
+              )
+            `)
+            .eq('user_id', currentUserId)
+            .order('created_at', { ascending: false })
+            .maybeSingle();
+
+          if (assData) {
+            setAssinatura({
+              ...assData,
+              plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
+            });
+          } else {
+            setAssinatura(null);
           }
         }
       } else {

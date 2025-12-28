@@ -11,7 +11,8 @@ import {
   Users, 
   LogOut, 
   User,
-  ChevronDown
+  ChevronDown,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,7 +35,9 @@ const navItems = [
 export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { role, imobiliaria } = useUserRole();
+  const { role, imobiliaria, imobiliariaId } = useUserRole();
+  
+  const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -131,6 +134,12 @@ export function DesktopNav() {
                 <User className="mr-2 h-4 w-4" />
                 Meu Perfil
               </DropdownMenuItem>
+              {isCorretorAutonomo && (
+                <DropdownMenuItem onClick={() => navigate('/minha-assinatura')} className="cursor-pointer">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Minha Assinatura
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />

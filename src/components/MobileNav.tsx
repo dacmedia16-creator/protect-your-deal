@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -26,7 +26,9 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { role } = useUserRole();
+  const { role, imobiliariaId } = useUserRole();
+  
+  const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
 
   useEffect(() => {
@@ -98,6 +100,12 @@ export function MobileNav() {
               <User className="h-4 w-4 mr-2" />
               Meu Perfil
             </DropdownMenuItem>
+            {isCorretorAutonomo && (
+              <DropdownMenuItem onClick={() => navigate('/minha-assinatura')}>
+                <CreditCard className="h-4 w-4 mr-2" />
+                Minha Assinatura
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
               <LogOut className="h-4 w-4 mr-2" />

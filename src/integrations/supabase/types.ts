@@ -20,39 +20,42 @@ export type Database = {
           data_fim: string | null
           data_inicio: string
           id: string
-          imobiliaria_id: string
+          imobiliaria_id: string | null
           plano_id: string
           proxima_cobranca: string | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           data_fim?: string | null
           data_inicio?: string
           id?: string
-          imobiliaria_id: string
+          imobiliaria_id?: string | null
           plano_id: string
           proxima_cobranca?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           data_fim?: string | null
           data_inicio?: string
           id?: string
-          imobiliaria_id?: string
+          imobiliaria_id?: string | null
           plano_id?: string
           proxima_cobranca?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -657,8 +660,23 @@ export type Database = {
         Args: { _imobiliaria_id: string }
         Returns: string
       }
+      check_user_subscription_status: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       generate_protocolo: { Args: never; Returns: string }
       get_user_imobiliaria: { Args: { _user_id: string }; Returns: string }
+      get_user_subscription: {
+        Args: { _user_id: string }
+        Returns: {
+          data_fim: string
+          data_inicio: string
+          id: string
+          plano_id: string
+          proxima_cobranca: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
