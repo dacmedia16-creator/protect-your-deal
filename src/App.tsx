@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import AssinaturaSuspensa from "./pages/AssinaturaSuspensa";
 import SemPermissao from "./pages/SemPermissao";
 import InstalarApp from "./pages/InstalarApp";
+import Funcionalidades from "./pages/Funcionalidades";
 
 // Auth pages
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
@@ -91,6 +92,7 @@ const App = () => (
                 <Route path="/assinatura-suspensa" element={<AssinaturaSuspensa />} />
                 <Route path="/sem-permissao" element={<SemPermissao />} />
                 <Route path="/instalar" element={<InstalarApp />} />
+                <Route path="/funcionalidades" element={<Funcionalidades />} />
 
                 {/* Super Admin routes */}
                 <Route path="/admin" element={
