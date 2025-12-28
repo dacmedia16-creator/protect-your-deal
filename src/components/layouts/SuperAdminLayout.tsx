@@ -14,7 +14,9 @@ import {
   Shield,
   Menu,
   Stethoscope,
-  X
+  X,
+  FileText,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -27,8 +29,10 @@ const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
+  { href: '/admin/assinaturas', icon: FileText, label: 'Assinaturas' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
   { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
+  { href: '/admin/convites', icon: Mail, label: 'Convites' },
   { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
   { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
 ];
