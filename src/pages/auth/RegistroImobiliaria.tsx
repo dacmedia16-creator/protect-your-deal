@@ -136,8 +136,15 @@ export default function RegistroImobiliaria() {
         throw new Error(data.error);
       }
 
-      toast.success('Cadastro realizado com sucesso! Você já pode fazer login.');
-      navigate('/auth');
+      toast.success('Cadastro realizado com sucesso!');
+      
+      // Se for plano gratuito, redireciona para página de confirmação
+      const planoSelecionado = planos.find(p => p.id === selectedPlano);
+      if (planoSelecionado && (planoSelecionado.nome.toLowerCase() === 'gratuito' || planoSelecionado.valor_mensal === 0)) {
+        navigate('/cadastro-concluido');
+      } else {
+        navigate('/auth');
+      }
     } catch (error: any) {
       console.error('Error during registration:', error);
       
