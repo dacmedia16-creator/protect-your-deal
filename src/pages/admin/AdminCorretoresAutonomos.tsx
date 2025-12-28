@@ -60,7 +60,8 @@ import {
   Users as UsersIcon,
   Home,
   UserPlus,
-  CreditCard
+  CreditCard,
+  Power
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -141,6 +142,9 @@ export default function AdminCorretoresAutonomos() {
   const [corretorToAssign, setCorretorToAssign] = useState<CorretorAutonomo | null>(null);
   const [selectedPlanoId, setSelectedPlanoId] = useState("");
   const [isAssigningPlano, setIsAssigningPlano] = useState(false);
+
+  // Toggle subscription status
+  const [isTogglingStatus, setIsTogglingStatus] = useState<string | null>(null);
 
   // Fetch corretores autônomos
   const { data: corretores, isLoading, refetch } = useQuery({
@@ -405,6 +409,36 @@ export default function AdminCorretoresAutonomos() {
     setIsPlanoDialogOpen(true);
   };
 
+  const handleToggleAssinatura = async (corretor: CorretorAutonomo) => {
+    if (!corretor.assinatura) {
+      toast.error("Corretor não possui assinatura vinculada");
+      return;
+    }
+
+    setIsTogglingStatus(corretor.user_id);
+    try {
+      const novoStatus = corretor.assinatura.status === "ativa" ? "suspensa" : "ativa";
+      
+      const { error } = await supabase
+        .from("assinaturas")
+        .update({ status: novoStatus })
+        .eq("id", corretor.assinatura.id);
+
+      if (error) throw error;
+
+      toast.success(
+        novoStatus === "ativa" 
+          ? "Assinatura ativada com sucesso!" 
+          : "Assinatura suspensa com sucesso!"
+      );
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao alterar status da assinatura");
+    } finally {
+      setIsTogglingStatus(null);
+    }
+  };
+
   const handleAssignPlano = async () => {
     if (!corretorToAssign || !selectedPlanoId) {
       toast.error("Selecione um plano");
@@ -650,6 +684,15 @@ export default function AdminCorretoresAutonomos() {
                               <CreditCard className="h-4 w-4 mr-2" />
                               {corretor.assinatura ? "Alterar Plano" : "Vincular Plano"}
                             </DropdownMenuItem>
+                            {corretor.assinatura && (
+                              <DropdownMenuItem 
+                                onClick={() => handleToggleAssinatura(corretor)}
+                                disabled={isTogglingStatus === corretor.user_id}
+                              >
+                                <Power className="h-4 w-4 mr-2" />
+                                {corretor.assinatura.status === "ativa" ? "Desativar Assinatura" : "Ativar Assinatura"}
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => openLinkDialog(corretor)}>
                               <LinkIcon className="h-4 w-4 mr-2" />
                               Vincular a Imobiliária
