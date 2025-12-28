@@ -367,8 +367,9 @@ const Index = () => {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {planos.slice(0, 4).map((plano) => {
-              const isFreePlan = plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise');
+            {planos.slice(0, 6).map((plano) => {
+              const isEnterprise = plano.nome.toLowerCase() === 'enterprise';
+              const isFreePlan = plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && !isEnterprise);
               const isAutonomo = plano.max_corretores === 1;
               
               return (
@@ -609,7 +610,7 @@ const Index = () => {
             garantir segurança e profissionalismo em cada visita.
           </p>
           <Button size="lg" variant="secondary" className="text-base" asChild>
-            <Link to="/auth">
+            <Link to="/registro-autonomo?plano=gratuito">
               Criar Conta Gratuita
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>

@@ -231,8 +231,10 @@ export default function RegistroImobiliaria() {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{plano.nome}</span>
                           <span className="font-bold text-primary">
-                            {plano.valor_mensal === 0 
-                              ? 'Sob consulta' 
+                            {plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise')
+                              ? 'Grátis' 
+                              : plano.nome.toLowerCase() === 'enterprise' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'gratuito')
+                              ? 'Sob consulta'
                               : `R$ ${plano.valor_mensal.toFixed(2).replace('.', ',')}/mês`
                             }
                           </span>
