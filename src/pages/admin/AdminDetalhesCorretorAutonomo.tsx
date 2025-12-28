@@ -532,7 +532,7 @@ export default function AdminDetalhesCorretorAutonomo() {
   return (
     <SuperAdminLayout>
       <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate("/admin/autonomos")} className="mb-6">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
