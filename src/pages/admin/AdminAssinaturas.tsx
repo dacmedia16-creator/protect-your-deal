@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, CreditCard, MoreVertical, Play, Pause, XCircle, Edit, Plus, Building2 } from "lucide-react";
+import { Search, CreditCard, MoreVertical, Play, Pause, XCircle, Edit, Plus, Building2, User } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,9 +54,15 @@ interface Imobiliaria {
   nome: string;
 }
 
+interface UserProfile {
+  nome: string;
+  user_id: string;
+}
+
 interface Assinatura {
   id: string;
-  imobiliaria_id: string;
+  imobiliaria_id: string | null;
+  user_id: string | null;
   plano_id: string;
   status: string;
   data_inicio: string;
@@ -65,6 +71,7 @@ interface Assinatura {
   created_at: string;
   imobiliaria?: Imobiliaria | null;
   plano?: Plano | null;
+  user?: UserProfile | null;
 }
 
 export default function AdminAssinaturas() {
@@ -99,6 +106,7 @@ export default function AdminAssinaturas() {
   const { data: assinaturas, isLoading, refetch } = useQuery({
     queryKey: ["admin-assinaturas"],
     queryFn: async () => {
+      // Buscar assinaturas com imobiliárias e planos
       const { data, error } = await supabase
         .from("assinaturas")
         .select(`
@@ -110,10 +118,31 @@ export default function AdminAssinaturas() {
 
       if (error) throw error;
 
+      // Para assinaturas com user_id, buscar os profiles
+      const userIds = data
+        .filter((a: any) => a.user_id && !a.imobiliaria_id)
+        .map((a: any) => a.user_id);
+
+      let userProfiles: Record<string, UserProfile> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("nome, user_id")
+          .in("user_id", userIds);
+        
+        if (profiles) {
+          userProfiles = profiles.reduce((acc: Record<string, UserProfile>, p: any) => {
+            acc[p.user_id] = p;
+            return acc;
+          }, {});
+        }
+      }
+
       return data.map((a: any) => ({
         ...a,
         imobiliaria: a.imobiliarias,
         plano: a.planos,
+        user: a.user_id ? userProfiles[a.user_id] || null : null,
       })) as Assinatura[];
     },
   });
@@ -151,9 +180,9 @@ export default function AdminAssinaturas() {
   });
 
   const filteredAssinaturas = assinaturas?.filter((assinatura) => {
-    const matchesSearch = assinatura.imobiliaria?.nome
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const nomeDisplay = assinatura.imobiliaria?.nome || assinatura.user?.nome || "";
+    const matchesSearch = searchTerm === "" || 
+      nomeDisplay.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || assinatura.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -253,10 +282,13 @@ export default function AdminAssinaturas() {
       case "ativa":
         return "default";
       case "trial":
+      case "gratuito":
         return "secondary";
       case "suspensa":
+      case "pendente":
         return "destructive";
       case "cancelada":
+      case "desativada":
         return "outline";
       default:
         return "secondary";
@@ -269,10 +301,16 @@ export default function AdminAssinaturas() {
         return "Ativa";
       case "trial":
         return "Trial";
+      case "gratuito":
+        return "Gratuito";
       case "suspensa":
         return "Suspensa";
+      case "pendente":
+        return "Pendente";
       case "cancelada":
         return "Cancelada";
+      case "desativada":
+        return "Desativada";
       default:
         return status;
     }
@@ -309,7 +347,7 @@ export default function AdminAssinaturas() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por imobiliária..."
+                  placeholder="Buscar por imobiliária ou corretor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -323,8 +361,11 @@ export default function AdminAssinaturas() {
                   <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="ativa">Ativa</SelectItem>
                   <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="gratuito">Gratuito</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="suspensa">Suspensa</SelectItem>
                   <SelectItem value="cancelada">Cancelada</SelectItem>
+                  <SelectItem value="desativada">Desativada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -336,7 +377,7 @@ export default function AdminAssinaturas() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Imobiliária</TableHead>
+                  <TableHead>Titular</TableHead>
                   <TableHead>Plano</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Início</TableHead>
@@ -361,13 +402,28 @@ export default function AdminAssinaturas() {
                   filteredAssinaturas?.map((assinatura) => (
                     <TableRow key={assinatura.id}>
                       <TableCell>
-                        <button
-                          onClick={() => navigate(`/admin/imobiliarias/${assinatura.imobiliaria_id}`)}
-                          className="font-medium hover:underline text-left flex items-center gap-2"
-                        >
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          {assinatura.imobiliaria?.nome || "-"}
-                        </button>
+                        {assinatura.imobiliaria_id ? (
+                          <button
+                            onClick={() => navigate(`/admin/imobiliarias/${assinatura.imobiliaria_id}`)}
+                            className="font-medium hover:underline text-left flex items-center gap-2"
+                          >
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            {assinatura.imobiliaria?.nome || "-"}
+                          </button>
+                        ) : assinatura.user_id ? (
+                          <button
+                            onClick={() => navigate(`/admin/corretores-autonomos/${assinatura.user_id}`)}
+                            className="font-medium hover:underline text-left flex items-center gap-2"
+                          >
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <span>{assinatura.user?.nome || "Corretor Autônomo"}</span>
+                              <span className="block text-xs text-muted-foreground">Corretor Autônomo</span>
+                            </div>
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div>
@@ -451,7 +507,7 @@ export default function AdminAssinaturas() {
             <DialogTitle>Editar Assinatura</DialogTitle>
             <DialogDescription>
               Altere os dados da assinatura de{" "}
-              <strong>{assinaturaToEdit?.imobiliaria?.nome}</strong>
+              <strong>{assinaturaToEdit?.imobiliaria?.nome || assinaturaToEdit?.user?.nome || "Corretor Autônomo"}</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -486,8 +542,11 @@ export default function AdminAssinaturas() {
                 <SelectContent>
                   <SelectItem value="ativa">Ativa</SelectItem>
                   <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="gratuito">Gratuito</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="suspensa">Suspensa</SelectItem>
                   <SelectItem value="cancelada">Cancelada</SelectItem>
+                  <SelectItem value="desativada">Desativada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
