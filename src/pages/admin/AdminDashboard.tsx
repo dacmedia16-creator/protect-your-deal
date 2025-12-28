@@ -118,7 +118,10 @@ export default function AdminDashboard() {
 
         {/* Stats grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/imobiliarias')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Imobiliárias</CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -126,23 +129,29 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalImobiliarias}</div>
               <p className="text-xs text-muted-foreground">
-                {stats?.imobiliariasAtivas} ativas
+                {stats?.imobiliariasAtivas} ativas · Ver detalhes →
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/usuarios')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Corretores</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalCorretores}</div>
-              <p className="text-xs text-muted-foreground">usuários ativos</p>
+              <p className="text-xs text-muted-foreground">usuários ativos · Ver detalhes →</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/fichas')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Fichas de Visita</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -150,7 +159,7 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalFichas}</div>
               <p className="text-xs text-muted-foreground">
-                {stats?.fichasMes} este mês
+                {stats?.fichasMes} este mês · Ver detalhes →
               </p>
             </CardContent>
           </Card>
