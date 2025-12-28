@@ -221,7 +221,9 @@ export default function RegistroCorretorAutonomo() {
                           <RadioGroupItem value={plano.id} className="mt-1" />
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium">{plano.nome}</span>
+                              <span className="font-medium">
+                                {plano.nome.toLowerCase() === 'gratuito' ? 'Gratuito CPF' : plano.nome}
+                              </span>
                               <span className={`font-bold ${isFreePlan ? 'text-emerald-600' : 'text-primary'}`}>
                                 {isFreePlan 
                                   ? 'Grátis' 
