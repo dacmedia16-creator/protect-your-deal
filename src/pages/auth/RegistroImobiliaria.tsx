@@ -229,7 +229,9 @@ export default function RegistroImobiliaria() {
                       <RadioGroupItem value={plano.id} className="mt-1" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">{plano.nome}</span>
+                          <span className="font-medium">
+                            {plano.nome.toLowerCase() === 'gratuito' ? 'Gratuito CNPJ' : plano.nome}
+                          </span>
                           <span className="font-bold text-primary">
                             {plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise')
                               ? 'Grátis' 
