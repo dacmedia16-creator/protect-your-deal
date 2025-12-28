@@ -412,7 +412,7 @@ export default function AdminAssinaturas() {
                           </button>
                         ) : assinatura.user_id ? (
                           <button
-                            onClick={() => navigate(`/admin/corretores-autonomos/${assinatura.user_id}`)}
+                            onClick={() => navigate(`/admin/autonomos/${assinatura.user_id}`)}
                             className="font-medium hover:underline text-left flex items-center gap-2"
                           >
                             <User className="h-4 w-4 text-muted-foreground" />
