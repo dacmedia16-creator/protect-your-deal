@@ -17,7 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface MonthlyRevenue {
   month: string;
@@ -34,6 +34,12 @@ interface FinancialStats {
   crescimentoMensal: number;
 }
 
+interface PlanDistribution {
+  name: string;
+  value: number;
+  color: string;
+}
+
 const chartConfig = {
   revenue: {
     label: 'Receita',
@@ -41,10 +47,20 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+const PLAN_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--success))',
+  'hsl(var(--warning))',
+  'hsl(var(--destructive))',
+  'hsl(217, 91%, 60%)',
+  'hsl(280, 65%, 60%)',
+];
+
 export default function AdminRelatoriosFinanceiros() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<FinancialStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyRevenue[]>([]);
+  const [planDistribution, setPlanDistribution] = useState<PlanDistribution[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Date range filter - default to last 12 months
@@ -58,7 +74,7 @@ export default function AdminRelatoriosFinanceiros() {
         // Fetch all subscriptions with plan info
         const { data: allSubscriptions } = await supabase
           .from('assinaturas')
-          .select('status, created_at, plano:planos(valor_mensal)');
+          .select('status, created_at, plano_id, plano:planos(nome, valor_mensal)');
 
         // Calculate stats
         const activeSubscriptions = allSubscriptions?.filter(s => s.status === 'ativa') || [];
@@ -121,6 +137,22 @@ export default function AdminRelatoriosFinanceiros() {
         });
 
         setMonthlyData(months);
+
+        // Calculate plan distribution (only active subscriptions)
+        const planCounts: Record<string, number> = {};
+        activeSubscriptions.forEach(sub => {
+          const plano = Array.isArray(sub.plano) ? sub.plano[0] : sub.plano;
+          const planName = plano?.nome || 'Sem plano';
+          planCounts[planName] = (planCounts[planName] || 0) + 1;
+        });
+
+        const distribution: PlanDistribution[] = Object.entries(planCounts).map(([name, value], index) => ({
+          name,
+          value,
+          color: PLAN_COLORS[index % PLAN_COLORS.length],
+        }));
+
+        setPlanDistribution(distribution);
       } catch (error) {
         console.error('Error fetching financial data:', error);
       } finally {
@@ -349,41 +381,75 @@ export default function AdminRelatoriosFinanceiros() {
           </CardContent>
         </Card>
 
-        {/* Subscription breakdown */}
-        <div className="grid gap-4 md:grid-cols-3">
+        {/* Plan Distribution + Subscription breakdown */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Pie Chart */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-success">Ativas</CardTitle>
+              <CardTitle>Distribuição por Plano</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-success">{stats?.assinaturasAtivas}</div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Assinaturas em dia gerando receita recorrente
-              </p>
+              {planDistribution.length > 0 ? (
+                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                  <PieChart>
+                    <Pie
+                      data={planDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {planDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value: number, name: string) => [`${value} assinaturas`, name]}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ChartContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  Nenhuma assinatura ativa
+                </div>
+              )}
             </CardContent>
           </Card>
 
+          {/* Subscription breakdown */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-warning">Suspensas</CardTitle>
+              <CardTitle>Status das Assinaturas</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-warning">{stats?.assinaturasSuspensas}</div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Assinaturas com pagamento pendente
-              </p>
-            </CardContent>
-          </Card>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-success/10 border border-success/20">
+                <div>
+                  <p className="text-sm font-medium text-success">Ativas</p>
+                  <p className="text-xs text-muted-foreground">Gerando receita recorrente</p>
+                </div>
+                <div className="text-3xl font-bold text-success">{stats?.assinaturasAtivas}</div>
+              </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-destructive">Canceladas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-destructive">{stats?.assinaturasCanceladas}</div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Assinaturas canceladas ou encerradas
-              </p>
+              <div className="flex items-center justify-between p-4 rounded-lg bg-warning/10 border border-warning/20">
+                <div>
+                  <p className="text-sm font-medium text-warning">Suspensas</p>
+                  <p className="text-xs text-muted-foreground">Pagamento pendente</p>
+                </div>
+                <div className="text-3xl font-bold text-warning">{stats?.assinaturasSuspensas}</div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                <div>
+                  <p className="text-sm font-medium text-destructive">Canceladas</p>
+                  <p className="text-xs text-muted-foreground">Assinaturas encerradas</p>
+                </div>
+                <div className="text-3xl font-bold text-destructive">{stats?.assinaturasCanceladas}</div>
+              </div>
             </CardContent>
           </Card>
         </div>
