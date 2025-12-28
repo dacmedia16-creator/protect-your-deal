@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -29,7 +30,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, KeyRound, Mail, Users } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,6 +61,7 @@ interface UserWithRole {
   profile: {
     nome: string;
     telefone?: string;
+    creci?: string;
   } | null;
   imobiliaria: {
     nome: string;
@@ -50,15 +69,53 @@ interface UserWithRole {
   email?: string;
 }
 
+interface Imobiliaria {
+  id: string;
+  nome: string;
+}
+
 export default function AdminUsuarios() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
+  
+  // Reset password dialog
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resetAction, setResetAction] = useState<"set_password" | "send_reset_email">("send_reset_email");
   const [isResetting, setIsResetting] = useState(false);
+
+  // Delete dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<UserWithRole | null>(null);
+  const [editForm, setEditForm] = useState({
+    nome: "",
+    telefone: "",
+    creci: "",
+    role: "",
+    imobiliaria_id: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Create dialog
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    password: "",
+    nome: "",
+    telefone: "",
+    creci: "",
+    role: "corretor",
+    imobiliaria_id: "",
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch all users with their roles and emails
   const { data: users, isLoading, refetch } = useQuery({
@@ -85,7 +142,7 @@ export default function AdminUsuarios() {
       const userIds = userRoles.map((ur: any) => ur.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, nome, telefone")
+        .select("user_id, nome, telefone, creci")
         .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
@@ -131,7 +188,7 @@ export default function AdminUsuarios() {
         .select("id, nome")
         .order("nome");
       if (error) throw error;
-      return data;
+      return data as Imobiliaria[];
     },
   });
 
@@ -188,6 +245,136 @@ export default function AdminUsuarios() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-delete-user", {
+        body: { user_id: userToDelete.user_id },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao excluir usuário");
+      }
+
+      toast.success("Usuário excluído com sucesso");
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao excluir usuário");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openEditDialog = (user: UserWithRole) => {
+    setUserToEdit(user);
+    setEditForm({
+      nome: user.profile?.nome || "",
+      telefone: user.profile?.telefone || "",
+      creci: user.profile?.creci || "",
+      role: user.role,
+      imobiliaria_id: user.imobiliaria_id || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditUser = async () => {
+    if (!userToEdit) return;
+
+    setIsEditing(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-update-user", {
+        body: {
+          user_id: userToEdit.user_id,
+          nome: editForm.nome || undefined,
+          telefone: editForm.telefone || undefined,
+          creci: editForm.creci || undefined,
+          role: editForm.role !== userToEdit.role ? editForm.role : undefined,
+          imobiliaria_id: editForm.imobiliaria_id !== userToEdit.imobiliaria_id ? editForm.imobiliaria_id : undefined,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao atualizar usuário");
+      }
+
+      toast.success("Usuário atualizado com sucesso");
+      setIsEditDialogOpen(false);
+      setUserToEdit(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao atualizar usuário");
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!createForm.email || !createForm.password || !createForm.nome || !createForm.imobiliaria_id) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (createForm.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-create-user", {
+        body: {
+          email: createForm.email,
+          password: createForm.password,
+          nome: createForm.nome,
+          telefone: createForm.telefone || undefined,
+          creci: createForm.creci || undefined,
+          role: createForm.role,
+          imobiliaria_id: createForm.imobiliaria_id,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao criar usuário");
+      }
+
+      toast.success("Usuário criado com sucesso");
+      setIsCreateDialogOpen(false);
+      setCreateForm({
+        email: "",
+        password: "",
+        nome: "",
+        telefone: "",
+        creci: "",
+        role: "corretor",
+        imobiliaria_id: "",
+      });
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar usuário");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "super_admin":
@@ -222,9 +409,15 @@ export default function AdminUsuarios() {
               Gerencie todos os usuários do sistema
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-8 w-8 text-muted-foreground" />
-            <span className="text-2xl font-bold">{users?.length || 0}</span>
+          <div className="flex items-center gap-4">
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Novo Usuário
+            </Button>
+            <div className="flex items-center gap-2">
+              <Users className="h-8 w-8 text-muted-foreground" />
+              <span className="text-2xl font-bold">{users?.length || 0}</span>
+            </div>
           </div>
         </div>
 
@@ -237,7 +430,7 @@ export default function AdminUsuarios() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome ou ID..."
+                  placeholder="Buscar por nome ou email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -324,18 +517,39 @@ export default function AdminUsuarios() {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setIsResetDialogOpen(true);
-                          }}
-                          disabled={user.role === "super_admin"}
-                        >
-                          <KeyRound className="h-4 w-4 mr-1" />
-                          Redefinir Senha
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={user.role === "super_admin"}>
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(user)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsResetDialogOpen(true);
+                              }}
+                            >
+                              <KeyRound className="h-4 w-4 mr-2" />
+                              Redefinir Senha
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => {
+                                setUserToDelete(user);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -346,6 +560,7 @@ export default function AdminUsuarios() {
         </Card>
       </div>
 
+      {/* Reset Password Dialog */}
       <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -394,6 +609,190 @@ export default function AdminUsuarios() {
             </Button>
             <Button onClick={handleResetPassword} disabled={isResetting}>
               {isResetting ? "Processando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário{" "}
+              <strong>{userToDelete?.profile?.nome}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Altere os dados do usuário <strong>{userToEdit?.profile?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input
+                value={editForm.nome}
+                onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input
+                value={editForm.telefone}
+                onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CRECI</Label>
+              <Input
+                value={editForm.creci}
+                onChange={(e) => setEditForm({ ...editForm, creci: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="corretor">Corretor</SelectItem>
+                  <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Imobiliária</Label>
+              <Select value={editForm.imobiliaria_id} onValueChange={(v) => setEditForm({ ...editForm, imobiliaria_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma imobiliária" />
+                </SelectTrigger>
+                <SelectContent>
+                  {imobiliarias?.map((imob) => (
+                    <SelectItem key={imob.id} value={imob.id}>
+                      {imob.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditUser} disabled={isEditing}>
+              {isEditing ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Usuário</DialogTitle>
+            <DialogDescription>
+              Crie um novo usuário vinculado a uma imobiliária
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Senha *</Label>
+              <Input
+                type="password"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input
+                value={createForm.nome}
+                onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input
+                value={createForm.telefone}
+                onChange={(e) => setCreateForm({ ...createForm, telefone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CRECI</Label>
+              <Input
+                value={createForm.creci}
+                onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Role *</Label>
+              <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="corretor">Corretor</SelectItem>
+                  <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Imobiliária *</Label>
+              <Select value={createForm.imobiliaria_id} onValueChange={(v) => setCreateForm({ ...createForm, imobiliaria_id: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma imobiliária" />
+                </SelectTrigger>
+                <SelectContent>
+                  {imobiliarias?.map((imob) => (
+                    <SelectItem key={imob.id} value={imob.id}>
+                      {imob.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateUser} disabled={isCreating}>
+              {isCreating ? "Criando..." : "Criar Usuário"}
             </Button>
           </DialogFooter>
         </DialogContent>
