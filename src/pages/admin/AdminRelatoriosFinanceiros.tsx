@@ -2,17 +2,22 @@ import { useEffect, useState } from 'react';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { TrendingUp, TrendingDown, DollarSign, CreditCard, ArrowLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, CreditCard, ArrowLeft, CalendarIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { format, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval, isWithinInterval } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface MonthlyRevenue {
   month: string;
@@ -21,7 +26,7 @@ interface MonthlyRevenue {
 }
 
 interface FinancialStats {
-  receitaMensalAtual: number;
+  receitaPeriodo: number;
   assinaturasAtivas: number;
   assinaturasSuspensas: number;
   assinaturasCanceladas: number;
@@ -41,9 +46,14 @@ export default function AdminRelatoriosFinanceiros() {
   const [stats, setStats] = useState<FinancialStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyRevenue[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Date range filter - default to last 12 months
+  const [startDate, setStartDate] = useState<Date>(startOfMonth(subMonths(new Date(), 11)));
+  const [endDate, setEndDate] = useState<Date>(endOfMonth(new Date()));
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
         // Fetch all subscriptions with plan info
         const { data: allSubscriptions } = await supabase
@@ -64,18 +74,15 @@ export default function AdminRelatoriosFinanceiros() {
           ? receitaMensalAtual / activeSubscriptions.length 
           : 0;
 
-        // Generate last 12 months data
+        // Generate months in selected range
         const months: MonthlyRevenue[] = [];
-        const now = new Date();
+        const monthsInRange = eachMonthOfInterval({ start: startDate, end: endDate });
         
-        for (let i = 11; i >= 0; i--) {
-          const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+        for (const date of monthsInRange) {
+          const monthKey = format(date, 'yyyy-MM');
+          const monthLabel = format(date, 'MMM/yy', { locale: ptBR });
           
-          // For current month, use active subscriptions
-          // For past months, estimate based on subscriptions created before that month end
-          const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+          const monthEnd = endOfMonth(date);
           
           const subscriptionsAtMonth = allSubscriptions?.filter(sub => {
             const createdAt = new Date(sub.created_at);
@@ -94,7 +101,10 @@ export default function AdminRelatoriosFinanceiros() {
           });
         }
 
-        // Calculate growth (comparing current month to previous month)
+        // Calculate total revenue in period
+        const receitaPeriodo = months.reduce((total, m) => total + m.revenue, 0);
+
+        // Calculate growth (comparing last month in range to previous month)
         const currentMonthRevenue = months[months.length - 1]?.revenue || 0;
         const previousMonthRevenue = months[months.length - 2]?.revenue || 0;
         const crescimentoMensal = previousMonthRevenue > 0 
@@ -102,7 +112,7 @@ export default function AdminRelatoriosFinanceiros() {
           : 0;
 
         setStats({
-          receitaMensalAtual,
+          receitaPeriodo,
           assinaturasAtivas: activeSubscriptions.length,
           assinaturasSuspensas: suspendedSubscriptions.length,
           assinaturasCanceladas: cancelledSubscriptions.length,
@@ -119,7 +129,13 @@ export default function AdminRelatoriosFinanceiros() {
     }
 
     fetchData();
-  }, []);
+  }, [startDate, endDate]);
+
+  const handleQuickFilter = (months: number) => {
+    const now = new Date();
+    setStartDate(startOfMonth(subMonths(now, months - 1)));
+    setEndDate(endOfMonth(now));
+  };
 
   if (loading) {
     return (
@@ -144,19 +160,107 @@ export default function AdminRelatoriosFinanceiros() {
           </div>
         </div>
 
+        {/* Date Range Filter */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium">Filtrar por Período</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickFilter(3)}
+                >
+                  3 meses
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickFilter(6)}
+                >
+                  6 meses
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleQuickFilter(12)}
+                >
+                  12 meses
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[160px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "MMM/yyyy", { locale: ptBR }) : "Início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={(date) => date && setStartDate(startOfMonth(date))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+                
+                <span className="text-muted-foreground">até</span>
+                
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[160px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "MMM/yyyy", { locale: ptBR }) : "Fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={(date) => date && setEndDate(endOfMonth(date))}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stats grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
+              <CardTitle className="text-sm font-medium">Receita do Período</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-primary">
-                R$ {stats?.receitaMensalAtual?.toFixed(2).replace('.', ',')}
+                R$ {stats?.receitaPeriodo?.toFixed(2).replace('.', ',')}
               </div>
               <p className="text-xs text-muted-foreground">
-                Receita recorrente atual
+                Soma total no período selecionado
               </p>
             </CardContent>
           </Card>
@@ -212,7 +316,9 @@ export default function AdminRelatoriosFinanceiros() {
         {/* Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Receita Mensal (últimos 12 meses)</CardTitle>
+            <CardTitle>
+              Receita Mensal ({format(startDate, "MMM/yyyy", { locale: ptBR })} - {format(endDate, "MMM/yyyy", { locale: ptBR })})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[350px] w-full">
