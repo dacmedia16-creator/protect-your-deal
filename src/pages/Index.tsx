@@ -127,17 +127,34 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="h-7 w-7 text-primary" />
             <span className="font-heading text-xl font-bold">VisitaSegura</span>
           </div>
+          
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6">
+            <a 
+              href="#como-funciona" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Como Funciona
+            </a>
+            <a 
+              href="#planos" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Ver Planos
+            </a>
+          </nav>
+          
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="hidden sm:inline-flex">
               <Link to="/registro?plano=gratuito">Teste Grátis</Link>
             </Button>
             <Button asChild>
