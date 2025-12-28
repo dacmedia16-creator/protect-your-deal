@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt'],
+      injectRegister: null,
       manifest: {
         name: 'VisitaSegura - Fichas de Visita Digitais',
         short_name: 'VisitaSegura',
