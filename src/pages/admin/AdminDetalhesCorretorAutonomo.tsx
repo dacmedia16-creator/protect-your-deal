@@ -56,6 +56,7 @@ import {
   Users,
   Link as LinkIcon,
   CalendarDays,
+  CreditCard,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -102,6 +103,31 @@ interface Imovel {
   created_at: string;
 }
 
+interface Assinatura {
+  id: string;
+  status: string;
+  data_inicio: string;
+  data_fim: string | null;
+  proxima_cobranca: string | null;
+  plano: {
+    id: string;
+    nome: string;
+    valor_mensal: number;
+    max_fichas_mes: number;
+    max_clientes: number;
+    max_imoveis: number;
+  } | null;
+}
+
+interface Plano {
+  id: string;
+  nome: string;
+  valor_mensal: number;
+  max_fichas_mes: number;
+  max_clientes: number;
+  max_imoveis: number;
+}
+
 export default function AdminDetalhesCorretorAutonomo() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
@@ -115,6 +141,8 @@ export default function AdminDetalhesCorretorAutonomo() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [imobiliarias, setImobiliarias] = useState<Imobiliaria[]>([]);
+  const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
+  const [planos, setPlanos] = useState<Plano[]>([]);
 
   // Link dialog
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
@@ -128,6 +156,11 @@ export default function AdminDetalhesCorretorAutonomo() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+
+  // Assinatura management
+  const [isAssinaturaDialogOpen, setIsAssinaturaDialogOpen] = useState(false);
+  const [selectedPlanoId, setSelectedPlanoId] = useState("");
+  const [isSavingAssinatura, setIsSavingAssinatura] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -218,6 +251,44 @@ export default function AdminDetalhesCorretorAutonomo() {
           .order("nome");
 
         setImobiliarias(imobiliariasData || []);
+
+        // Fetch assinatura do corretor autônomo
+        const { data: assData } = await supabase
+          .from("assinaturas")
+          .select(`
+            id,
+            status,
+            data_inicio,
+            data_fim,
+            proxima_cobranca,
+            plano:planos (
+              id,
+              nome,
+              valor_mensal,
+              max_fichas_mes,
+              max_clientes,
+              max_imoveis
+            )
+          `)
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .maybeSingle();
+
+        if (assData) {
+          setAssinatura({
+            ...assData,
+            plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
+          });
+        }
+
+        // Fetch planos disponíveis
+        const { data: planosData } = await supabase
+          .from("planos")
+          .select("id, nome, valor_mensal, max_fichas_mes, max_clientes, max_imoveis")
+          .eq("ativo", true)
+          .order("valor_mensal");
+
+        setPlanos(planosData || []);
       } catch (error: any) {
         console.error("Error fetching data:", error);
         toast.error("Erro ao carregar dados");
@@ -354,10 +425,92 @@ export default function AdminDetalhesCorretorAutonomo() {
     }
   };
 
+  const handleSaveAssinatura = async () => {
+    if (!userId || !selectedPlanoId) {
+      toast.error("Selecione um plano");
+      return;
+    }
+
+    setIsSavingAssinatura(true);
+    try {
+      if (assinatura) {
+        // Atualizar assinatura existente
+        const { error } = await supabase
+          .from("assinaturas")
+          .update({ plano_id: selectedPlanoId, status: 'ativa' })
+          .eq("id", assinatura.id);
+
+        if (error) throw error;
+      } else {
+        // Criar nova assinatura
+        const { error } = await supabase
+          .from("assinaturas")
+          .insert({
+            user_id: userId,
+            plano_id: selectedPlanoId,
+            status: 'ativa',
+            data_inicio: new Date().toISOString().split('T')[0],
+          });
+
+        if (error) throw error;
+      }
+
+      // Refresh assinatura
+      const { data: newAssData } = await supabase
+        .from("assinaturas")
+        .select(`
+          id,
+          status,
+          data_inicio,
+          data_fim,
+          proxima_cobranca,
+          plano:planos (
+            id,
+            nome,
+            valor_mensal,
+            max_fichas_mes,
+            max_clientes,
+            max_imoveis
+          )
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .maybeSingle();
+
+      if (newAssData) {
+        setAssinatura({
+          ...newAssData,
+          plano: Array.isArray(newAssData.plano) ? newAssData.plano[0] : newAssData.plano
+        });
+      }
+
+      toast.success("Assinatura atualizada com sucesso!");
+      setIsAssinaturaDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error saving assinatura:", error);
+      toast.error(error.message || "Erro ao salvar assinatura");
+    } finally {
+      setIsSavingAssinatura(false);
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
   const statusColors: Record<string, string> = {
     pendente: "bg-warning/10 text-warning border-warning/30",
     confirmado: "bg-success/10 text-success border-success/30",
     cancelado: "bg-destructive/10 text-destructive border-destructive/30",
+  };
+
+  const assinaturaStatusColors: Record<string, string> = {
+    ativa: "bg-success/10 text-success border-success/30",
+    suspensa: "bg-warning/10 text-warning border-warning/30",
+    cancelada: "bg-destructive/10 text-destructive border-destructive/30",
   };
 
   const tipoColors: Record<string, string> = {
@@ -419,6 +572,7 @@ export default function AdminDetalhesCorretorAutonomo() {
         <Tabs defaultValue="dados" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="dados">Dados</TabsTrigger>
+            <TabsTrigger value="assinatura">Assinatura</TabsTrigger>
             <TabsTrigger value="fichas">Fichas ({fichas.length})</TabsTrigger>
             <TabsTrigger value="clientes">Clientes ({clientes.length})</TabsTrigger>
             <TabsTrigger value="imoveis">Imóveis ({imoveis.length})</TabsTrigger>
@@ -514,6 +668,92 @@ export default function AdminDetalhesCorretorAutonomo() {
                     </div>
                   </form>
                 </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Assinatura Tab */}
+          <TabsContent value="assinatura">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5" />
+                      Assinatura
+                    </CardTitle>
+                    <CardDescription>
+                      Gerencie o plano de assinatura do corretor
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setSelectedPlanoId(assinatura?.plano?.id || "");
+                      setIsAssinaturaDialogOpen(true);
+                    }}
+                  >
+                    {assinatura ? "Alterar Plano" : "Adicionar Plano"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {assinatura ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Plano</Label>
+                        <p className="font-medium">{assinatura.plano?.nome || "-"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Valor</Label>
+                        <p className="font-medium">
+                          {assinatura.plano ? formatCurrency(assinatura.plano.valor_mensal) : "-"}/mês
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Status</Label>
+                        <div>
+                          <Badge variant="outline" className={assinaturaStatusColors[assinatura.status] || ""}>
+                            {assinatura.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Início</Label>
+                        <p className="font-medium">
+                          {format(new Date(assinatura.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {assinatura.plano && (
+                      <div className="border-t pt-4 mt-4">
+                        <Label className="text-muted-foreground text-xs mb-2 block">Limites do Plano</Label>
+                        <div className="grid gap-2 md:grid-cols-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span>{assinatura.plano.max_fichas_mes} fichas/mês</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span>{assinatura.plano.max_clientes} clientes</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Home className="h-4 w-4 text-muted-foreground" />
+                            <span>{assinatura.plano.max_imoveis} imóveis</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>Este corretor não possui assinatura ativa.</p>
+                    <p className="text-sm">Clique em "Adicionar Plano" para criar uma assinatura.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -751,6 +991,44 @@ export default function AdminDetalhesCorretorAutonomo() {
             <Button onClick={handleResetPassword} disabled={isResetting}>
               {isResetting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <KeyRound className="h-4 w-4 mr-2" />}
               Redefinir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assinatura Dialog */}
+      <Dialog open={isAssinaturaDialogOpen} onOpenChange={setIsAssinaturaDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gerenciar Assinatura</DialogTitle>
+            <DialogDescription>
+              Selecione um plano para o corretor "{form.getValues("nome")}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Plano</Label>
+              <Select value={selectedPlanoId} onValueChange={setSelectedPlanoId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {planos.map((plano) => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - {formatCurrency(plano.valor_mensal)}/mês
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssinaturaDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveAssinatura} disabled={isSavingAssinatura || !selectedPlanoId}>
+              {isSavingAssinatura ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CreditCard className="h-4 w-4 mr-2" />}
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

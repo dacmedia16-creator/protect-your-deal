@@ -38,6 +38,7 @@ import Integracoes from "./pages/Integracoes";
 import TemplatesMensagem from "./pages/TemplatesMensagem";
 import Perfil from "./pages/Perfil";
 import Relatorios from "./pages/Relatorios";
+import CorretorAssinatura from "./pages/CorretorAssinatura";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -265,6 +266,11 @@ const App = () => (
                 <Route path="/perfil" element={
                   <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin']}>
                     <Perfil />
+                  </ProtectedRoute>
+                } />
+                <Route path="/minha-assinatura" element={
+                  <ProtectedRoute allowedRoles={['corretor']}>
+                    <CorretorAssinatura />
                   </ProtectedRoute>
                 } />
 
