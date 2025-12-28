@@ -110,7 +110,7 @@ const Index = () => {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button asChild>
-              <Link to="/registro">Cadastrar Imobiliária</Link>
+              <Link to="/registro">Cadastrar</Link>
             </Button>
           </div>
         </div>
