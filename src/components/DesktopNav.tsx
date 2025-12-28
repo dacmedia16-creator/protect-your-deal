@@ -34,7 +34,7 @@ const navItems = [
 export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { role } = useUserRole();
+  const { role, imobiliaria } = useUserRole();
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -70,8 +70,16 @@ export function DesktopNav() {
         {/* Logo + Links */}
         <div className="flex items-center gap-8">
           <NavLink to="/dashboard" className="flex items-center gap-2 font-semibold text-lg text-primary">
-            <FileText className="h-6 w-6" />
-            <span>Ficha de Visita</span>
+            {imobiliaria?.logo_url ? (
+              <img 
+                src={imobiliaria.logo_url} 
+                alt={imobiliaria.nome} 
+                className="h-7 w-7 rounded object-contain"
+              />
+            ) : (
+              <FileText className="h-6 w-6" />
+            )}
+            <span className="truncate max-w-[200px]">{imobiliaria?.nome || 'Ficha de Visita'}</span>
           </NavLink>
           
           <div className="flex items-center gap-1">
