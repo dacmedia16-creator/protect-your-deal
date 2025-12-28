@@ -17,12 +17,16 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 
 interface MonthlyRevenue {
   month: string;
   monthLabel: string;
   revenue: number;
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  suspendedSubscriptions: number;
+  cancelledSubscriptions: number;
 }
 
 interface FinancialStats {
@@ -44,6 +48,22 @@ const chartConfig = {
   revenue: {
     label: 'Receita',
     color: 'hsl(var(--primary))',
+  },
+  totalSubscriptions: {
+    label: 'Total',
+    color: 'hsl(var(--primary))',
+  },
+  activeSubscriptions: {
+    label: 'Ativas',
+    color: 'hsl(var(--success))',
+  },
+  suspendedSubscriptions: {
+    label: 'Suspensas',
+    color: 'hsl(var(--warning))',
+  },
+  cancelledSubscriptions: {
+    label: 'Canceladas',
+    color: 'hsl(var(--destructive))',
   },
 } satisfies ChartConfig;
 
@@ -102,10 +122,15 @@ export default function AdminRelatoriosFinanceiros() {
           
           const subscriptionsAtMonth = allSubscriptions?.filter(sub => {
             const createdAt = new Date(sub.created_at);
-            return createdAt <= monthEnd && (sub.status === 'ativa' || sub.status === 'suspensa');
+            return createdAt <= monthEnd;
           }) || [];
 
-          const revenue = subscriptionsAtMonth.reduce((total, sub) => {
+          const activeAtMonth = subscriptionsAtMonth.filter(s => s.status === 'ativa').length;
+          const suspendedAtMonth = subscriptionsAtMonth.filter(s => s.status === 'suspensa').length;
+          const cancelledAtMonth = subscriptionsAtMonth.filter(s => s.status === 'cancelada').length;
+
+          const revenueSubscriptions = subscriptionsAtMonth.filter(s => s.status === 'ativa' || s.status === 'suspensa');
+          const revenue = revenueSubscriptions.reduce((total, sub) => {
             const plano = Array.isArray(sub.plano) ? sub.plano[0] : sub.plano;
             return total + (plano?.valor_mensal || 0);
           }, 0);
@@ -114,6 +139,10 @@ export default function AdminRelatoriosFinanceiros() {
             month: monthKey,
             monthLabel: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
             revenue,
+            totalSubscriptions: subscriptionsAtMonth.length,
+            activeSubscriptions: activeAtMonth,
+            suspendedSubscriptions: suspendedAtMonth,
+            cancelledSubscriptions: cancelledAtMonth,
           });
         }
 
@@ -377,6 +406,59 @@ export default function AdminRelatoriosFinanceiros() {
                   name="Receita"
                 />
               </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Subscription Evolution Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Evolução de Assinaturas ({format(startDate, "MMM/yyyy", { locale: ptBR })} - {format(endDate, "MMM/yyyy", { locale: ptBR })})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[350px] w-full">
+              <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="monthLabel" 
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis 
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+                />
+                <ChartTooltip 
+                  content={<ChartTooltipContent />}
+                />
+                <Legend />
+                <Line 
+                  type="monotone"
+                  dataKey="activeSubscriptions" 
+                  stroke="hsl(var(--success))" 
+                  strokeWidth={2}
+                  dot={{ fill: 'hsl(var(--success))' }}
+                  name="Ativas"
+                />
+                <Line 
+                  type="monotone"
+                  dataKey="suspendedSubscriptions" 
+                  stroke="hsl(var(--warning))" 
+                  strokeWidth={2}
+                  dot={{ fill: 'hsl(var(--warning))' }}
+                  name="Suspensas"
+                />
+                <Line 
+                  type="monotone"
+                  dataKey="cancelledSubscriptions" 
+                  stroke="hsl(var(--destructive))" 
+                  strokeWidth={2}
+                  dot={{ fill: 'hsl(var(--destructive))' }}
+                  name="Canceladas"
+                />
+              </LineChart>
             </ChartContainer>
           </CardContent>
         </Card>
