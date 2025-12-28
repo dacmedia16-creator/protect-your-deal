@@ -277,7 +277,7 @@ const Index = () => {
               gere comprovantes PDF com QR Code e acesse tudo pelo app no seu celular.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
-              <Button size="lg" className="text-base bg-emerald-500 hover:bg-emerald-600 text-white" asChild>
+              <Button size="lg" className="text-base bg-emerald-500 hover:bg-emerald-600 text-white animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] shadow-lg shadow-emerald-500/30" asChild>
                 <Link to="/registro-autonomo?plano=gratuito">
                   <Sparkles className="mr-2 h-5 w-5" />
                   Teste Grátis
