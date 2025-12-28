@@ -16,7 +16,8 @@ import {
   Home,
   AlertCircle,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -289,15 +290,30 @@ export default function EmpresaAssinatura() {
             {planos.map((plano) => {
               const isCurrentPlan = currentPlano?.id === plano.id;
               const isSubscribing = subscribing === plano.id;
+              const isFreePlan = plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise');
               
               return (
                 <Card 
                   key={plano.id} 
-                  className={isCurrentPlan ? 'border-primary ring-2 ring-primary/20' : ''}
+                  className={`relative overflow-hidden ${
+                    isCurrentPlan 
+                      ? 'border-primary ring-2 ring-primary/20' 
+                      : isFreePlan 
+                        ? 'border-emerald-500/50 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-950/20 dark:to-transparent' 
+                        : ''
+                  }`}
                 >
+                  {isFreePlan && !isCurrentPlan && (
+                    <div className="absolute top-0 right-0 px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-bl-lg flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Comece Grátis
+                    </div>
+                  )}
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle>{plano.nome}</CardTitle>
+                      <CardTitle className={isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : ''}>
+                        {plano.nome}
+                      </CardTitle>
                       {isCurrentPlan && (
                         <Badge variant="outline" className="border-primary text-primary">
                           Atual
@@ -307,8 +323,13 @@ export default function EmpresaAssinatura() {
                     <CardDescription>{plano.descricao}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="text-3xl font-bold text-primary">
-                      {plano.valor_mensal === 0 ? (
+                    <div className={`text-3xl font-bold ${isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}`}>
+                      {isFreePlan ? (
+                        <>
+                          Grátis
+                          <span className="text-sm font-normal text-muted-foreground ml-1">para sempre</span>
+                        </>
+                      ) : plano.valor_mensal === 0 ? (
                         'Sob consulta'
                       ) : (
                         <>
@@ -320,24 +341,32 @@ export default function EmpresaAssinatura() {
 
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-success" />
+                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
                         {plano.max_corretores === 999 ? 'Corretores ilimitados' : `Até ${plano.max_corretores} corretores`}
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-success" />
+                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
                         {plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-success" />
+                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
                         {plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-success" />
+                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
                         {plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}
                       </li>
                     </ul>
 
-                    {plano.valor_mensal > 0 && (
+                    {isFreePlan ? (
+                      <Button 
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" 
+                        disabled={isCurrentPlan}
+                        onClick={() => !isCurrentPlan && handleSubscribe(plano.id)}
+                      >
+                        {isCurrentPlan ? 'Plano Atual' : 'Começar Grátis'}
+                      </Button>
+                    ) : plano.valor_mensal > 0 ? (
                       <Button 
                         className="w-full" 
                         variant={isCurrentPlan ? 'outline' : 'default'}
@@ -358,9 +387,7 @@ export default function EmpresaAssinatura() {
                           </>
                         )}
                       </Button>
-                    )}
-
-                    {plano.valor_mensal === 0 && (
+                    ) : (
                       <Button 
                         className="w-full" 
                         variant="outline"
