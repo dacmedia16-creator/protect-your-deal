@@ -246,12 +246,12 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 <Route path="/integracoes" element={
-                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
                     <Integracoes />
                   </ProtectedRoute>
                 } />
                 <Route path="/integracoes/templates" element={
-                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
                     <TemplatesMensagem />
                   </ProtectedRoute>
                 } />
