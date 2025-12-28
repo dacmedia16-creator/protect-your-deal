@@ -5,6 +5,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
@@ -18,7 +19,8 @@ import {
   Send,
   Download,
   Check,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 
 interface Plano {
@@ -357,6 +359,93 @@ const Index = () => {
               </Button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+              <HelpCircle className="h-4 w-4" />
+              Tire suas dúvidas
+            </div>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Perguntas Frequentes
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Encontre respostas para as dúvidas mais comuns sobre o VisitaSegura.
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              <AccordionItem value="item-1" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  O que é o VisitaSegura?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  O VisitaSegura é uma plataforma digital para corretores de imóveis criarem fichas de visita 
+                  com confirmação via WhatsApp. Proprietários e compradores confirmam a visita através de um 
+                  código OTP, gerando um comprovante PDF com QR Code para verificação de autenticidade.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-2" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Como funciona a confirmação via OTP?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Após criar a ficha de visita, você envia códigos de confirmação para o proprietário e o 
+                  comprador via WhatsApp. Cada um recebe um código único que deve ser inserido na plataforma 
+                  para confirmar a visita. Isso garante que ambas as partes concordaram com os termos.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-3" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  O plano gratuito tem alguma limitação?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  O plano gratuito é ideal para corretores autônomos que estão começando. Ele oferece 
+                  recursos básicos para gerenciar suas visitas. Para recursos avançados, mais fichas por mês 
+                  ou gestão de equipe, você pode fazer upgrade para um plano pago a qualquer momento.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-4" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Posso cancelar minha assinatura a qualquer momento?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Sim! Você pode cancelar sua assinatura a qualquer momento sem taxas ou multas. Após o 
+                  cancelamento, você ainda terá acesso ao plano pago até o final do período já pago, 
+                  e depois será automaticamente migrado para o plano gratuito.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-5" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  O comprovante PDF tem validade jurídica?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  O comprovante serve como prova de que a visita foi agendada e confirmada por ambas as partes, 
+                  com registro de data, hora, CPF e aceite legal. O QR Code permite verificar a autenticidade 
+                  do documento. Recomendamos consultar um advogado para casos específicos.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-6" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Como faço para adicionar corretores à minha imobiliária?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Se você tem um plano de imobiliária, pode convidar corretores pelo painel de administração. 
+                  Basta enviar um convite por e-mail e o corretor poderá criar sua conta vinculada à sua 
+                  imobiliária. Você terá acesso às fichas e relatórios de toda a equipe.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         </div>
       </section>
 
