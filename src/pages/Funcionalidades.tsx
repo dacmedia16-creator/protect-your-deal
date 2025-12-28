@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { 
   Shield, 
   FileCheck, 
@@ -12,7 +14,8 @@ import {
   CheckCircle2,
   ClipboardList,
   BarChart3,
-  Lock
+  Lock,
+  Menu
 } from 'lucide-react';
 import {
   FichaDigitalMockup,
@@ -25,6 +28,7 @@ import {
 import AnimatedSection from '@/components/AnimatedSection';
 
 const Funcionalidades = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const features = [
     {
       id: 'fichas-digitais',
@@ -146,13 +150,104 @@ const Funcionalidades = () => {
             <span className="font-heading text-xl font-bold">VisitaSegura</span>
           </Link>
           
+          {/* Navigation Links - Desktop */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link 
+              to="/" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Início
+            </Link>
+            <a 
+              href="/#como-funciona" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Como Funciona
+            </a>
+            <a 
+              href="/#planos" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Ver Planos
+            </a>
+            <Link 
+              to="/instalar" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <Smartphone className="h-4 w-4" />
+              Baixar App
+            </Link>
+          </nav>
+          
           <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild>
+            {/* Desktop buttons */}
+            <Button variant="ghost" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button asChild>
+            <Button asChild className="hidden sm:inline-flex">
               <Link to="/registro-autonomo?plano=gratuito">Começar Grátis</Link>
             </Button>
+
+            {/* Mobile menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Abrir menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px] sm:w-[320px]">
+                <div className="flex flex-col gap-6 mt-6">
+                  <div className="flex items-center gap-2 pb-4 border-b">
+                    <Shield className="h-6 w-6 text-primary" />
+                    <span className="font-heading text-lg font-bold">VisitaSegura</span>
+                  </div>
+                  
+                  <nav className="flex flex-col gap-4">
+                    <Link 
+                      to="/" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Início
+                    </Link>
+                    <a 
+                      href="/#como-funciona" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Como Funciona
+                    </a>
+                    <a 
+                      href="/#planos" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Ver Planos
+                    </a>
+                    <Link 
+                      to="/instalar" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                      Baixar App
+                    </Link>
+                  </nav>
+                  
+                  <div className="flex flex-col gap-3 pt-4 border-t">
+                    <Button variant="outline" asChild className="w-full">
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
+                        Começar Grátis
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
