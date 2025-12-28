@@ -33,8 +33,20 @@ import {
   ShieldCheck,
   User,
   UserPlus,
+  Wrench,
   XCircle,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
 
 interface DiagnosticResult {
@@ -64,6 +76,9 @@ interface SystemAlert {
   affectedItems: number;
   actionLabel?: string;
   actionHref?: string;
+  fixable?: boolean;
+  fixOperation?: string;
+  fixLabel?: string;
 }
 
 type HookInfo = { role: string | null; imobiliariaId: string | null };
@@ -90,6 +105,7 @@ export default function AdminDiagnostico() {
   // System alerts state
   const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
   const [isCheckingSystem, setIsCheckingSystem] = useState(false);
+  const [fixingOperation, setFixingOperation] = useState<string | null>(null);
 
   const normalizedSearchEmail = useMemo(
     () => searchEmail.trim().toLowerCase(),
@@ -157,6 +173,38 @@ export default function AdminDiagnostico() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, roleLoading]);
 
+  // Fix inconsistency mutation
+  const fixInconsistencyMutation = useMutation({
+    mutationFn: async (operation: string) => {
+      setFixingOperation(operation);
+      const { data, error } = await supabase.functions.invoke("admin-fix-inconsistencies", {
+        body: { operation },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      return data as { success: boolean; message: string; affectedCount: number };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Correção aplicada",
+        description: data.message,
+      });
+      checkSystemInconsistencies();
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Erro ao corrigir",
+        description: error?.message ?? "Não foi possível aplicar a correção.",
+      });
+    },
+    onSettled: () => {
+      setFixingOperation(null);
+    },
+  });
+
   // Check for system-wide inconsistencies
   const checkSystemInconsistencies = async () => {
     setIsCheckingSystem(true);
@@ -179,6 +227,7 @@ export default function AdminDiagnostico() {
           affectedItems: corretoresSemImob,
           actionLabel: "Ver corretores autônomos",
           actionHref: "/admin/autonomos",
+          fixable: false, // Requires manual action to choose imobiliaria
         });
       }
 
@@ -198,6 +247,9 @@ export default function AdminDiagnostico() {
           affectedItems: superAdminComImob,
           actionLabel: "Ver usuários",
           actionHref: "/admin/usuarios",
+          fixable: true,
+          fixOperation: "remove_super_admin_imobiliaria",
+          fixLabel: "Remover vínculo",
         });
       }
 
@@ -214,6 +266,9 @@ export default function AdminDiagnostico() {
           title: "Fichas órfãs",
           description: `${fichasSemImob} ficha(s) de visita não possuem imobiliaria_id, ficando invisíveis para admins de imobiliária.`,
           affectedItems: fichasSemImob,
+          fixable: true,
+          fixOperation: "backfill_orphan_fichas",
+          fixLabel: "Corrigir fichas órfãs",
         });
       }
 
@@ -246,6 +301,9 @@ export default function AdminDiagnostico() {
           title: "Divergência profile vs user_roles",
           description: `${divergencias} usuário(s) possuem imobiliaria_id diferente entre profiles e user_roles.`,
           affectedItems: divergencias,
+          fixable: true,
+          fixOperation: "sync_profiles",
+          fixLabel: "Sincronizar perfis",
         });
       }
 
@@ -277,6 +335,7 @@ export default function AdminDiagnostico() {
             affectedItems: usuariosEmImobInativa,
             actionLabel: "Ver imobiliárias",
             actionHref: "/admin/imobiliarias",
+            fixable: false, // Requires manual decision
           });
         }
       }
@@ -307,6 +366,9 @@ export default function AdminDiagnostico() {
             title: "Usuários sem perfil",
             description: `${semPerfil} usuário(s) possuem role mas não têm registro na tabela profiles.`,
             affectedItems: semPerfil,
+            fixable: true,
+            fixOperation: "create_missing_profiles",
+            fixLabel: "Criar perfis faltantes",
           });
         }
       }
@@ -709,15 +771,55 @@ export default function AdminDiagnostico() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{alert.description}</p>
-                    {alert.actionHref && (
-                      <Link
-                        to={alert.actionHref}
-                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
-                      >
-                        {alert.actionLabel || "Ver detalhes"}
-                        <ExternalLink className="h-3 w-3" />
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {alert.actionHref && (
+                        <Link
+                          to={alert.actionHref}
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                        >
+                          {alert.actionLabel || "Ver detalhes"}
+                          <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      )}
+                      {alert.fixable && alert.fixOperation && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={fixingOperation !== null}
+                            >
+                              {fixingOperation === alert.fixOperation ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              ) : (
+                                <Wrench className="h-4 w-4 mr-1" />
+                              )}
+                              {alert.fixLabel || "Corrigir"}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar correção</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação irá corrigir {alert.affectedItems} item(ns). 
+                                <br />
+                                <strong>{alert.title}</strong>: {alert.description}
+                                <br /><br />
+                                Deseja continuar?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => fixInconsistencyMutation.mutate(alert.fixOperation!)}
+                              >
+                                Confirmar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
