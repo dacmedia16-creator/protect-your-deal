@@ -22,6 +22,7 @@ import InstalarApp from "./pages/InstalarApp";
 // Auth pages
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
 import AceitarConvite from "./pages/auth/AceitarConvite";
+import CadastroConcluido from "./pages/auth/CadastroConcluido";
 
 // Corretor pages
 import Dashboard from "./pages/Dashboard";
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/registro" element={<RegistroImobiliaria />} />
                 <Route path="/convite/:token" element={<AceitarConvite />} />
+                <Route path="/cadastro-concluido" element={<CadastroConcluido />} />
                 <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
                 <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
                 <Route path="/assinatura-suspensa" element={<AssinaturaSuspensa />} />
