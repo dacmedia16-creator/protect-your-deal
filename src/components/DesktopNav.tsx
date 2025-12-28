@@ -9,7 +9,6 @@ import {
   LayoutDashboard, 
   FileText, 
   Users, 
-  Settings, 
   LogOut, 
   User,
   ChevronDown
@@ -30,7 +29,6 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/fichas', label: 'Fichas', icon: FileText },
   { to: '/clientes', label: 'Clientes', icon: Users },
-  { to: '/integracoes', label: 'Integrações', icon: Settings },
 ];
 
 export function DesktopNav() {

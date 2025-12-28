@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, Settings, MessageSquare } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -97,14 +97,6 @@ export function MobileNav() {
             <DropdownMenuItem onClick={() => navigate('/perfil')}>
               <User className="h-4 w-4 mr-2" />
               Meu Perfil
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/integracoes')}>
-              <Settings className="h-4 w-4 mr-2" />
-              Integrações
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/integracoes/templates')}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Templates
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
