@@ -19,7 +19,9 @@ import {
   ChevronLeft,
   Zap,
   Wifi,
-  RefreshCw
+  RefreshCw,
+  Play,
+  Pause
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -30,12 +32,45 @@ export default function InstalarApp() {
   const [transitionDirection, setTransitionDirection] = useState<'left' | 'right'>('right');
   const [iosStep, setIosStep] = useState<1 | 2 | 3>(1);
   const [androidStep, setAndroidStep] = useState<1 | 2 | 3>(1);
+  const [isAutoplayEnabled, setIsAutoplayEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>(isIOS ? "ios" : isAndroid ? "android" : "ios");
+
+  // Autoplay effect
+  useEffect(() => {
+    if (!isAutoplayEnabled) return;
+
+    const interval = setInterval(() => {
+      if (activeTab === 'ios') {
+        setTransitionDirection('right');
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setIosStep(prev => prev === 3 ? 1 : (prev + 1) as 1 | 2 | 3);
+          setIsTransitioning(false);
+        }, 150);
+      } else if (activeTab === 'android') {
+        setTransitionDirection('right');
+        setIsTransitioning(true);
+        setTimeout(() => {
+          setAndroidStep(prev => prev === 3 ? 1 : (prev + 1) as 1 | 2 | 3);
+          setIsTransitioning(false);
+        }, 150);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isAutoplayEnabled, activeTab]);
+
+  // Pause autoplay on user interaction
+  const pauseAutoplay = () => {
+    setIsAutoplayEnabled(false);
+  };
 
   const handleStepChange = (
     currentStep: 1 | 2 | 3,
     direction: 'prev' | 'next',
     setter: React.Dispatch<React.SetStateAction<1 | 2 | 3>>
   ) => {
+    pauseAutoplay();
     if (direction === 'prev' && currentStep === 1) return;
     if (direction === 'next' && currentStep === 3) return;
 
@@ -53,6 +88,7 @@ export default function InstalarApp() {
     currentStep: 1 | 2 | 3,
     setter: React.Dispatch<React.SetStateAction<1 | 2 | 3>>
   ) => {
+    pauseAutoplay();
     if (targetStep === currentStep) return;
     
     setTransitionDirection(targetStep > currentStep ? 'right' : 'left');
@@ -62,6 +98,10 @@ export default function InstalarApp() {
       setter(targetStep);
       setIsTransitioning(false);
     }, 150);
+  };
+
+  const toggleAutoplay = () => {
+    setIsAutoplayEnabled(prev => !prev);
   };
 
   const handleInstall = async () => {
@@ -182,13 +222,46 @@ export default function InstalarApp() {
         {/* Platform-specific Instructions */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Guia de Instalação Passo a Passo</CardTitle>
-            <CardDescription>
-              Siga as instruções para o seu dispositivo
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Guia de Instalação Passo a Passo</CardTitle>
+                <CardDescription>
+                  Siga as instruções para o seu dispositivo
+                </CardDescription>
+              </div>
+              {/* Autoplay control */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleAutoplay}
+                className={cn(
+                  "flex items-center gap-2 transition-all",
+                  isAutoplayEnabled && "bg-primary/10 border-primary text-primary"
+                )}
+              >
+                {isAutoplayEnabled ? (
+                  <>
+                    <Pause className="h-4 w-4" />
+                    <span className="hidden sm:inline">Pausar</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    <span className="hidden sm:inline">Reproduzir</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={defaultTab} className="w-full">
+            <Tabs 
+              defaultValue={defaultTab} 
+              className="w-full"
+              onValueChange={(value) => {
+                setActiveTab(value);
+                pauseAutoplay();
+              }}
+            >
               <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="ios" className="flex items-center gap-2">
                   <Apple className="h-4 w-4" />
@@ -235,19 +308,31 @@ export default function InstalarApp() {
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       
-                      {/* Step indicators */}
+                      {/* Step indicators with progress */}
                       <div className="flex items-center gap-2">
                         {[1, 2, 3].map((step) => (
                           <button
                             key={step}
                             onClick={() => handleStepClick(step as 1 | 2 | 3, iosStep, setIosStep)}
                             className={cn(
-                              "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                              "relative w-8 h-2 rounded-full transition-all duration-300 overflow-hidden",
                               iosStep === step 
-                                ? "bg-primary scale-125" 
+                                ? "bg-primary/30" 
                                 : "bg-muted hover:bg-muted-foreground/30"
                             )}
-                          />
+                          >
+                            {iosStep === step && isAutoplayEnabled && (
+                              <div 
+                                className="absolute inset-0 bg-primary rounded-full animate-[progress_3s_linear_infinite]"
+                                style={{ 
+                                  animation: 'progress 3s linear infinite',
+                                }}
+                              />
+                            )}
+                            {iosStep === step && !isAutoplayEnabled && (
+                              <div className="absolute inset-0 bg-primary rounded-full" />
+                            )}
+                          </button>
                         ))}
                       </div>
                       
@@ -401,19 +486,31 @@ export default function InstalarApp() {
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       
-                      {/* Step indicators */}
+                      {/* Step indicators with progress */}
                       <div className="flex items-center gap-2">
                         {[1, 2, 3].map((step) => (
                           <button
                             key={step}
                             onClick={() => handleStepClick(step as 1 | 2 | 3, androidStep, setAndroidStep)}
                             className={cn(
-                              "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                              "relative w-8 h-2 rounded-full transition-all duration-300 overflow-hidden",
                               androidStep === step 
-                                ? "bg-primary scale-125" 
+                                ? "bg-primary/30" 
                                 : "bg-muted hover:bg-muted-foreground/30"
                             )}
-                          />
+                          >
+                            {androidStep === step && isAutoplayEnabled && (
+                              <div 
+                                className="absolute inset-0 bg-primary rounded-full"
+                                style={{ 
+                                  animation: 'progress 3s linear infinite',
+                                }}
+                              />
+                            )}
+                            {androidStep === step && !isAutoplayEnabled && (
+                              <div className="absolute inset-0 bg-primary rounded-full" />
+                            )}
+                          </button>
                         ))}
                       </div>
                       
