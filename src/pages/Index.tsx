@@ -110,7 +110,7 @@ const Index = () => {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/registro">Teste Grátis</Link>
+              <Link to="/registro?plano=gratuito">Teste Grátis</Link>
             </Button>
             <Button asChild>
               <Link to="/registro">Cadastrar</Link>

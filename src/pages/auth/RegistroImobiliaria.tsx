@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,12 +21,15 @@ interface Plano {
 
 export default function RegistroImobiliaria() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedPlano, setSelectedPlano] = useState<string>('');
+  
+  const planoParam = searchParams.get('plano');
   
   const [imobiliariaForm, setImobiliariaForm] = useState({
     nome: '',
@@ -64,7 +67,18 @@ export default function RegistroImobiliaria() {
 
         if (error) throw error;
         setPlanos(data || []);
-        if (data && data.length > 0) {
+        
+        // Se veio com parâmetro plano=gratuito, seleciona o plano gratuito automaticamente
+        if (planoParam === 'gratuito' && data) {
+          const planoGratuito = data.find(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0);
+          if (planoGratuito) {
+            setSelectedPlano(planoGratuito.id);
+            // Pula direto para o step 2 (dados da imobiliária)
+            setStep(2);
+          } else if (data.length > 0) {
+            setSelectedPlano(data[0].id);
+          }
+        } else if (data && data.length > 0) {
           setSelectedPlano(data[0].id);
         }
       } catch (error) {
@@ -75,7 +89,7 @@ export default function RegistroImobiliaria() {
     }
 
     fetchPlanos();
-  }, []);
+  }, [planoParam]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
