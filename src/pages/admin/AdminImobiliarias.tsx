@@ -19,8 +19,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2, Power } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2, Power, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -37,6 +53,16 @@ interface Imobiliaria {
   created_at: string;
   corretores_count?: number;
   assinatura_status?: string;
+  assinatura_id?: string;
+  assinatura_plano_id?: string;
+  assinatura_plano_nome?: string;
+}
+
+interface Plano {
+  id: string;
+  nome: string;
+  valor_mensal: number;
+  max_corretores: number;
 }
 
 export default function AdminImobiliarias() {
@@ -44,6 +70,29 @@ export default function AdminImobiliarias() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isTogglingAssinatura, setIsTogglingAssinatura] = useState<string | null>(null);
+  
+  // Estados para alterar plano
+  const [planos, setPlanos] = useState<Plano[]>([]);
+  const [isPlanoDialogOpen, setIsPlanoDialogOpen] = useState(false);
+  const [imobiliariaToChangePlan, setImobiliariaToChangePlan] = useState<Imobiliaria | null>(null);
+  const [selectedPlanoId, setSelectedPlanoId] = useState("");
+  const [isChangingPlano, setIsChangingPlano] = useState(false);
+
+  async function fetchPlanos() {
+    try {
+      const { data, error } = await supabase
+        .from("planos")
+        .select("id, nome, valor_mensal, max_corretores")
+        .eq("ativo", true)
+        .gt("max_corretores", 1)
+        .order("valor_mensal");
+
+      if (error) throw error;
+      setPlanos(data || []);
+    } catch (error) {
+      console.error("Error fetching planos:", error);
+    }
+  }
 
   async function fetchImobiliarias() {
     try {
@@ -63,19 +112,24 @@ export default function AdminImobiliarias() {
             .select('*', { count: 'exact', head: true })
             .eq('imobiliaria_id', imob.id);
 
-          // Get subscription status
+          // Get subscription with plan info
           const { data: assData } = await supabase
             .from('assinaturas')
-            .select('status')
+            .select('id, status, plano_id, plano:planos(nome)')
             .eq('imobiliaria_id', imob.id)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
 
+          const planoData = assData?.plano as { nome: string } | null;
+
           return {
             ...imob,
             corretores_count: count || 0,
             assinatura_status: assData?.status || 'sem_assinatura',
+            assinatura_id: assData?.id,
+            assinatura_plano_id: assData?.plano_id,
+            assinatura_plano_nome: planoData?.nome,
           };
         })
       );
@@ -91,6 +145,7 @@ export default function AdminImobiliarias() {
 
   useEffect(() => {
     fetchImobiliarias();
+    fetchPlanos();
   }, []);
 
   async function toggleStatus(imob: Imobiliaria) {
@@ -161,6 +216,53 @@ export default function AdminImobiliarias() {
       toast.error(error.message || 'Erro ao alterar status da assinatura');
     } finally {
       setIsTogglingAssinatura(null);
+    }
+  }
+
+  function openPlanoDialog(imob: Imobiliaria) {
+    setImobiliariaToChangePlan(imob);
+    setSelectedPlanoId(imob.assinatura_plano_id || "");
+    setIsPlanoDialogOpen(true);
+  }
+
+  async function handleChangePlano() {
+    if (!imobiliariaToChangePlan || !selectedPlanoId) {
+      toast.error("Selecione um plano");
+      return;
+    }
+
+    setIsChangingPlano(true);
+    try {
+      if (imobiliariaToChangePlan.assinatura_id) {
+        // Atualizar assinatura existente
+        const { error } = await supabase
+          .from("assinaturas")
+          .update({ plano_id: selectedPlanoId, status: "ativa" })
+          .eq("id", imobiliariaToChangePlan.assinatura_id);
+        if (error) throw error;
+      } else {
+        // Criar nova assinatura
+        const { error } = await supabase
+          .from("assinaturas")
+          .insert({
+            imobiliaria_id: imobiliariaToChangePlan.id,
+            plano_id: selectedPlanoId,
+            status: "ativa",
+            data_inicio: new Date().toISOString().split("T")[0],
+          });
+        if (error) throw error;
+      }
+
+      toast.success("Plano alterado com sucesso!");
+      setIsPlanoDialogOpen(false);
+      setImobiliariaToChangePlan(null);
+      setSelectedPlanoId("");
+      fetchImobiliarias();
+    } catch (error: any) {
+      console.error("Error changing plan:", error);
+      toast.error(error.message || "Erro ao alterar plano");
+    } finally {
+      setIsChangingPlano(false);
     }
   }
 
@@ -306,6 +408,10 @@ export default function AdminImobiliarias() {
                                 <Ban className="h-4 w-4 mr-2" />
                                 {imob.status === 'ativo' ? 'Suspender Imobiliária' : 'Ativar Imobiliária'}
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openPlanoDialog(imob)}>
+                                <CreditCard className="h-4 w-4 mr-2" />
+                                Alterar Plano
+                              </DropdownMenuItem>
                               {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
                                 <DropdownMenuItem 
                                   onClick={() => toggleAssinatura(imob)}
@@ -333,6 +439,49 @@ export default function AdminImobiliarias() {
             )}
           </CardContent>
         </Card>
+
+        {/* Dialog para alterar plano */}
+        <Dialog open={isPlanoDialogOpen} onOpenChange={setIsPlanoDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Plano da Imobiliária</DialogTitle>
+              <DialogDescription>
+                Selecione o novo plano para {imobiliariaToChangePlan?.nome}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Plano atual</Label>
+                <p className="text-sm text-muted-foreground">
+                  {imobiliariaToChangePlan?.assinatura_plano_nome || "Sem plano"}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Novo plano</Label>
+                <Select value={selectedPlanoId} onValueChange={setSelectedPlanoId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um plano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {planos.map((plano) => (
+                      <SelectItem key={plano.id} value={plano.id}>
+                        {plano.nome} - R$ {plano.valor_mensal.toFixed(2)} ({plano.max_corretores} corretores)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPlanoDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleChangePlano} disabled={isChangingPlano || !selectedPlanoId}>
+                {isChangingPlano ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </SuperAdminLayout>
   );
