@@ -217,7 +217,34 @@ export default function RegistroImobiliaria() {
             {/* Step 1: Choose plan */}
             {step === 1 && (
               <div className="space-y-4">
-                <RadioGroup value={selectedPlano} onValueChange={setSelectedPlano}>
+                <RadioGroup value={selectedPlano} onValueChange={(value) => {
+                  if (value === 'cpf-gratuito') {
+                    navigate('/registro-autonomo?plano=gratuito');
+                  } else {
+                    setSelectedPlano(value);
+                  }
+                }}>
+                  {/* Opção Gratuito CPF - redireciona para registro autônomo */}
+                  {planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
+                    <label
+                      className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors border-border hover:border-primary/50"
+                      onClick={() => navigate('/registro-autonomo?plano=gratuito')}
+                    >
+                      <RadioGroupItem value="cpf-gratuito" className="mt-1" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Gratuito CPF</span>
+                          <span className="font-bold text-primary">Grátis</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">Para corretores autônomos (pessoa física)</p>
+                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                          <span>1 corretor</span>
+                          <span>2 fichas/mês</span>
+                        </div>
+                      </div>
+                    </label>
+                  )}
+                  
                   {planos.map((plano) => (
                     <label
                       key={plano.id}
