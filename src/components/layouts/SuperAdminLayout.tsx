@@ -1,8 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
 import {
   Building2,
   LayoutDashboard,
@@ -21,7 +24,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
@@ -45,6 +47,53 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const location = useLocation();
   const { signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Buscar contagem de assinaturas suspensas/pendentes
+  const { data: assinaturasCount } = useQuery({
+    queryKey: ['sidebar-assinaturas-pendentes'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('assinaturas')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['suspensa', 'pendente']);
+      return count || 0;
+    },
+    refetchInterval: 60000, // Atualiza a cada minuto
+  });
+
+  // Buscar contagem de usuários pendentes (sem imobiliária)
+  const { data: usuariosPendentesCount } = useQuery({
+    queryKey: ['sidebar-usuarios-pendentes'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .is('imobiliaria_id', null)
+        .neq('role', 'super_admin');
+      return count || 0;
+    },
+    refetchInterval: 60000,
+  });
+
+  // Buscar contagem de convites pendentes
+  const { data: convitesPendentesCount } = useQuery({
+    queryKey: ['sidebar-convites-pendentes'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('convites')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pendente');
+      return count || 0;
+    },
+    refetchInterval: 60000,
+  });
+
+  // Mapeamento de badges por href
+  const badgeCounts: Record<string, number | undefined> = {
+    '/admin/assinaturas': assinaturasCount,
+    '/admin/usuarios-pendentes': usuariosPendentesCount,
+    '/admin/convites': convitesPendentesCount,
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,6 +125,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || 
                 (item.href !== '/admin' && location.pathname.startsWith(item.href));
+              const badgeCount = badgeCounts[item.href];
               
               return (
                 <Link
@@ -91,6 +141,14 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
                 >
                   <item.icon className="h-5 w-5" />
                   {item.label}
+                  {badgeCount !== undefined && badgeCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-auto h-5 min-w-5 flex items-center justify-center px-1.5 text-[10px]"
+                    >
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </Badge>
+                  )}
                 </Link>
               );
             })}
