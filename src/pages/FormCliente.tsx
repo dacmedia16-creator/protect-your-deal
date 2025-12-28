@@ -30,7 +30,7 @@ export default function FormCliente() {
   const isEditing = !!id;
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { imobiliariaId } = useUserRole();
+  const { imobiliariaId, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -143,6 +143,15 @@ export default function FormCliente() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!imobiliariaId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Seu usuário não está vinculado a uma imobiliária. Entre em contato com o administrador.',
+      });
+      return;
+    }
+
     const result = clienteSchema.safeParse(formData);
     if (!result.success) {
       toast({
@@ -156,7 +165,7 @@ export default function FormCliente() {
     saveMutation.mutate(formData);
   };
 
-  if (authLoading || (isEditing && isLoadingCliente)) {
+  if (authLoading || roleLoading || (isEditing && isLoadingCliente)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
