@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Database,
+  Info,
   Loader2,
   RefreshCw,
   Search,
@@ -34,7 +35,7 @@ import {
 
 interface DiagnosticResult {
   name: string;
-  status: "success" | "error" | "pending";
+  status: "success" | "error" | "pending" | "info";
   message: string;
   details?: string;
 }
@@ -181,6 +182,8 @@ export default function AdminDiagnostico() {
       .eq("user_id", userId)
       .maybeSingle();
 
+    const isSuperAdmin = roleData?.role === 'super_admin';
+
     // Test 1: Role exists
     tests.push({
       name: "Verificar role na tabela user_roles",
@@ -190,10 +193,15 @@ export default function AdminDiagnostico() {
     });
 
     // Test 2: Imobiliaria linked via get_user_imobiliaria
+    // Para super_admin, não ter imobiliaria_id é ESPERADO
     tests.push({
       name: "Verificar imobiliaria_id via get_user_imobiliaria()",
-      status: dbImobiliariaId ? "success" : "error",
-      message: dbImobiliariaId ? `ID: ${dbImobiliariaId}` : "Não vinculado a nenhuma imobiliária",
+      status: isSuperAdmin 
+        ? "info"
+        : (dbImobiliariaId ? "success" : "error"),
+      message: isSuperAdmin
+        ? "N/A - Super admins não são vinculados a imobiliárias"
+        : (dbImobiliariaId ? `ID: ${dbImobiliariaId}` : "Não vinculado a nenhuma imobiliária"),
       details: dbImobiliariaError?.message,
     });
 
@@ -221,24 +229,35 @@ export default function AdminDiagnostico() {
     });
 
     // Test 5: Check if can theoretically insert (based on role and imobiliaria)
+    // Super admins não criam fichas - não é erro
     const canInsert = !!(roleData?.role && dbImobiliariaId);
     tests.push({
       name: "Permissão: Criar ficha (INSERT - verificação)",
-      status: canInsert ? "success" : "error",
-      message: canInsert
-        ? "Pré-requisitos atendidos (role + imobiliaria_id)"
-        : "Falta role ou imobiliaria_id para criar fichas",
-      details: !canInsert
+      status: isSuperAdmin 
+        ? "info"
+        : (canInsert ? "success" : "error"),
+      message: isSuperAdmin
+        ? "N/A - Super admins gerenciam, não criam fichas"
+        : (canInsert 
+            ? "Pré-requisitos atendidos (role + imobiliaria_id)" 
+            : "Falta role ou imobiliaria_id para criar fichas"),
+      details: (!canInsert && !isSuperAdmin)
         ? "A política RLS exige user_id = auth.uid() E imobiliaria_id = get_user_imobiliaria(auth.uid())"
         : undefined,
     });
 
     // Test 6: Consistency check between user_roles.imobiliaria_id and get_user_imobiliaria
+    // Para super_admin, ambos null é consistente e esperado
+    const bothNull = roleData?.imobiliaria_id === null && dbImobiliariaId === null;
     const isConsistent = roleData?.imobiliaria_id === dbImobiliariaId;
     tests.push({
       name: "Consistência: user_roles.imobiliaria_id vs get_user_imobiliaria()",
-      status: isConsistent ? "success" : "error",
-      message: isConsistent ? "Valores consistentes" : "DIVERGÊNCIA DETECTADA!",
+      status: isConsistent 
+        ? (isSuperAdmin && bothNull ? "info" : "success") 
+        : "error",
+      message: isConsistent 
+        ? (isSuperAdmin && bothNull ? "Consistente (ambos null, esperado para super_admin)" : "Valores consistentes")
+        : "DIVERGÊNCIA DETECTADA!",
       details: !isConsistent
         ? `user_roles: ${roleData?.imobiliaria_id || "null"} | função: ${dbImobiliariaId || "null"}`
         : undefined,
@@ -380,7 +399,9 @@ export default function AdminDiagnostico() {
                     ? "bg-green-500/10 border-green-500/30"
                     : test.status === "error"
                       ? "bg-destructive/10 border-destructive/30"
-                      : "bg-muted/50 border-border"
+                      : test.status === "info"
+                        ? "bg-blue-500/10 border-blue-500/30"
+                        : "bg-muted/50 border-border"
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -388,6 +409,8 @@ export default function AdminDiagnostico() {
                     <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                   ) : test.status === "error" ? (
                     <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  ) : test.status === "info" ? (
+                    <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                   ) : (
                     <Loader2 className="h-5 w-5 animate-spin shrink-0 mt-0.5" />
                   )}
