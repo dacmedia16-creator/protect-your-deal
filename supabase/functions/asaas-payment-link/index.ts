@@ -1,0 +1,113 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const ASAAS_API_URL = Deno.env.get('ASAAS_SANDBOX') === 'true' 
+  ? 'https://sandbox.asaas.com/api/v3'
+  : 'https://api.asaas.com/v3';
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const asaasApiKey = Deno.env.get('ASAAS_API_KEY');
+    if (!asaasApiKey) {
+      throw new Error('ASAAS_API_KEY não configurada');
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      throw new Error('Não autorizado');
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    const { planoId, imobiliariaId } = await req.json();
+
+    if (!planoId) {
+      throw new Error('planoId é obrigatório');
+    }
+
+    // Buscar dados do plano
+    const { data: plano, error: planoError } = await supabase
+      .from('planos')
+      .select('*')
+      .eq('id', planoId)
+      .single();
+
+    if (planoError || !plano) {
+      throw new Error('Plano não encontrado');
+    }
+
+    // Calcular data de expiração (7 dias)
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 7);
+
+    // Criar link de pagamento no Asaas
+    const paymentLinkResponse = await fetch(`${ASAAS_API_URL}/paymentLinks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': asaasApiKey,
+      },
+      body: JSON.stringify({
+        name: `Assinatura ${plano.nome}`,
+        description: `Plano ${plano.nome} - Visita Segura. Assinatura mensal com renovação automática.`,
+        endDate: expirationDate.toISOString().split('T')[0],
+        value: plano.valor_mensal,
+        billingType: 'UNDEFINED', // Cliente escolhe: Pix, Boleto ou Cartão
+        chargeType: 'RECURRENT',
+        subscriptionCycle: 'MONTHLY',
+        dueDateLimitDays: 3,
+        notificationEnabled: true,
+        externalReference: JSON.stringify({
+          planoId,
+          userId: imobiliariaId ? null : user.id,
+          imobiliariaId: imobiliariaId || null,
+        }),
+      }),
+    });
+
+    const paymentLinkData = await paymentLinkResponse.json();
+
+    if (!paymentLinkResponse.ok) {
+      console.error('Asaas payment link error:', paymentLinkData);
+      throw new Error(paymentLinkData.errors?.[0]?.description || 'Erro ao criar link de pagamento');
+    }
+
+    console.log('Payment link created:', paymentLinkData.id);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        paymentLinkId: paymentLinkData.id,
+        paymentLinkUrl: paymentLinkData.url,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error: unknown) {
+    console.error('Error in asaas-payment-link:', error);
+    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

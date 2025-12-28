@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       assinaturas: {
         Row: {
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           created_at: string
           data_fim: string | null
           data_inicio: string
@@ -30,6 +32,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string
@@ -44,6 +48,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           created_at?: string
           data_fim?: string | null
           data_inicio?: string
@@ -485,6 +491,7 @@ export type Database = {
       }
       planos: {
         Row: {
+          asaas_plan_id: string | null
           ativo: boolean
           created_at: string
           descricao: string | null
@@ -498,6 +505,7 @@ export type Database = {
           valor_mensal: number
         }
         Insert: {
+          asaas_plan_id?: string | null
           ativo?: boolean
           created_at?: string
           descricao?: string | null
@@ -511,6 +519,7 @@ export type Database = {
           valor_mensal?: number
         }
         Update: {
+          asaas_plan_id?: string | null
           ativo?: boolean
           created_at?: string
           descricao?: string | null
