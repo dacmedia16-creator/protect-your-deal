@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2, Power } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,6 +43,7 @@ export default function AdminImobiliarias() {
   const [imobiliarias, setImobiliarias] = useState<Imobiliaria[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [isTogglingAssinatura, setIsTogglingAssinatura] = useState<string | null>(null);
 
   async function fetchImobiliarias() {
     try {
@@ -129,6 +130,37 @@ export default function AdminImobiliarias() {
     } catch (error) {
       console.error('Error deleting imobiliaria:', error);
       toast.error('Erro ao excluir imobiliária');
+    }
+  }
+
+  async function toggleAssinatura(imob: Imobiliaria) {
+    if (!imob.assinatura_status || imob.assinatura_status === 'sem_assinatura') {
+      toast.error('Imobiliária não possui assinatura vinculada');
+      return;
+    }
+
+    setIsTogglingAssinatura(imob.id);
+    try {
+      const novoStatus = imob.assinatura_status === 'ativa' ? 'suspensa' : 'ativa';
+
+      const { error } = await supabase
+        .from('assinaturas')
+        .update({ status: novoStatus })
+        .eq('imobiliaria_id', imob.id);
+
+      if (error) throw error;
+
+      toast.success(
+        novoStatus === 'ativa'
+          ? 'Assinatura ativada com sucesso!'
+          : 'Assinatura suspensa com sucesso!'
+      );
+      fetchImobiliarias();
+    } catch (error: any) {
+      console.error('Error toggling subscription:', error);
+      toast.error(error.message || 'Erro ao alterar status da assinatura');
+    } finally {
+      setIsTogglingAssinatura(null);
     }
   }
 
@@ -272,8 +304,17 @@ export default function AdminImobiliarias() {
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => toggleStatus(imob)}>
                                 <Ban className="h-4 w-4 mr-2" />
-                                {imob.status === 'ativo' ? 'Suspender' : 'Ativar'}
+                                {imob.status === 'ativo' ? 'Suspender Imobiliária' : 'Ativar Imobiliária'}
                               </DropdownMenuItem>
+                              {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
+                                <DropdownMenuItem 
+                                  onClick={() => toggleAssinatura(imob)}
+                                  disabled={isTogglingAssinatura === imob.id}
+                                >
+                                  <Power className="h-4 w-4 mr-2" />
+                                  {imob.assinatura_status === 'ativa' ? 'Desativar Assinatura' : 'Ativar Assinatura'}
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem 
                                 onClick={() => deleteImobiliaria(imob.id)}
                                 className="text-destructive focus:text-destructive"
