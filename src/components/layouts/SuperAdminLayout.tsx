@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 import {
   Building2,
   LayoutDashboard,
@@ -49,6 +50,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const { signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { playNotificationSound } = useNotificationSound();
 
   // Buscar contagem de assinaturas suspensas/pendentes
   const { data: assinaturasCount } = useQuery({
@@ -108,6 +110,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           if (payload.eventType === 'UPDATE' && 
               (newRecord?.status === 'suspensa' || newRecord?.status === 'pendente') &&
               oldRecord?.status !== newRecord?.status) {
+            playNotificationSound('warning');
             toast.warning('Assinatura requer atenção', {
               description: `Uma assinatura foi marcada como ${newRecord.status}`,
             });
@@ -125,6 +128,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         (payload) => {
           const newRecord = payload.new as { imobiliaria_id?: string; role?: string };
           if (!newRecord?.imobiliaria_id && newRecord?.role !== 'super_admin') {
+            playNotificationSound('info');
             toast.info('Novo usuário pendente', {
               description: 'Um novo usuário aguarda vinculação a uma imobiliária',
             });
@@ -140,6 +144,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           table: 'convites',
         },
         () => {
+          playNotificationSound('info');
           toast.info('Novo convite criado', {
             description: 'Um novo convite foi enviado e aguarda aceitação',
           });
@@ -158,6 +163,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           const oldRecord = payload.old as { status?: string };
           
           if (oldRecord?.status === 'pendente' && newRecord?.status === 'aceito') {
+            playNotificationSound('success');
             toast.success('Convite aceito', {
               description: 'Um convite foi aceito com sucesso',
             });
@@ -170,7 +176,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, playNotificationSound]);
 
   // Mapeamento de badges por href
   const badgeCounts: Record<string, number | undefined> = {
