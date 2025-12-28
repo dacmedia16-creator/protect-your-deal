@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { usePermissions } from '@/hooks/useUserRole';
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,6 @@ import {
   Plus,
   CheckCircle,
   Clock,
-  Plug
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
@@ -22,7 +21,7 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
-  const { isImobiliariaAdmin } = usePermissions();
+  
 
   useEffect(() => {
     if (!loading && !user) {
@@ -211,22 +210,6 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
 
-          {isImobiliariaAdmin && (
-            <Card 
-              className="cursor-pointer hover:shadow-medium transition-shadow group"
-              onClick={() => navigate('/integracoes')}
-            >
-              <CardHeader>
-                <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Plug className="h-6 w-6 text-secondary-foreground" />
-                </div>
-                <CardTitle>Integrações</CardTitle>
-                <CardDescription>
-                  Conecte com outros sistemas
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          )}
         </div>
 
         {/* Mobile Quick Actions - Compact list */}
@@ -278,22 +261,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {isImobiliariaAdmin && (
-            <Card 
-              className="cursor-pointer active:bg-muted/50 transition-colors"
-              onClick={() => navigate('/integracoes')}
-            >
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                  <Plug className="h-5 w-5 text-secondary-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">Integrações</p>
-                  <p className="text-xs text-muted-foreground truncate">Conectar com outros sistemas</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
 
