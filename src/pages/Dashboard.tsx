@@ -16,6 +16,7 @@ import {
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
+import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -84,6 +85,9 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-4 md:py-8">
+        {/* PWA Install Banner */}
+        <PWAInstallBanner />
+
         {/* Welcome Section */}
         <div className="mb-4 md:mb-8">
           <h1 className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2">Dashboard</h1>
