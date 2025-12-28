@@ -22,6 +22,7 @@ import {
   CRMMockup,
   MobileAppMockup
 } from '@/components/mockups';
+import AnimatedSection from '@/components/AnimatedSection';
 
 const Funcionalidades = () => {
   const features = [
@@ -159,18 +160,24 @@ const Funcionalidades = () => {
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
         <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Shield className="h-4 w-4" />
-            Conheça todos os recursos
-          </div>
-          <h1 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-6">
-            Funcionalidades do{' '}
-            <span className="text-primary">VisitaSegura</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Descubra como cada recurso foi pensado para facilitar seu trabalho 
-            e garantir segurança jurídica em todas as suas visitas.
-          </p>
+          <AnimatedSection>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Shield className="h-4 w-4" />
+              Conheça todos os recursos
+            </div>
+          </AnimatedSection>
+          <AnimatedSection delay={100}>
+            <h1 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-6">
+              Funcionalidades do{' '}
+              <span className="text-primary">VisitaSegura</span>
+            </h1>
+          </AnimatedSection>
+          <AnimatedSection delay={200}>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+              Descubra como cada recurso foi pensado para facilitar seu trabalho 
+              e garantir segurança jurídica em todas as suas visitas.
+            </p>
+          </AnimatedSection>
         </div>
       </section>
 
@@ -185,7 +192,10 @@ const Funcionalidades = () => {
                 className={`flex flex-col ${feature.reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-8 lg:gap-16 items-center`}
               >
                 {/* Content */}
-                <div className="flex-1 space-y-6">
+                <AnimatedSection 
+                  className="flex-1 space-y-6"
+                  direction={feature.reverse ? 'right' : 'left'}
+                >
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
                     <feature.icon className="h-4 w-4" />
                     Recurso {String(index + 1).padStart(2, '0')}
@@ -212,10 +222,14 @@ const Funcionalidades = () => {
                       </li>
                     ))}
                   </ul>
-                </div>
+                </AnimatedSection>
                 
                 {/* Screenshot Mockup */}
-                <div className="flex-1 w-full">
+                <AnimatedSection 
+                  className="flex-1 w-full"
+                  direction={feature.reverse ? 'left' : 'right'}
+                  delay={150}
+                >
                   <div className="relative rounded-xl overflow-hidden border border-border bg-gradient-to-br from-muted/50 to-muted shadow-xl p-4">
                     {/* Decorative elements */}
                     <div className="absolute top-4 left-4 flex gap-1.5 z-10">
@@ -232,7 +246,7 @@ const Funcionalidades = () => {
                       {feature.id === 'app-mobile' && <MobileAppMockup />}
                     </div>
                   </div>
-                </div>
+                </AnimatedSection>
               </div>
             ))}
           </div>
@@ -242,27 +256,29 @@ const Funcionalidades = () => {
       {/* Additional Features */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <AnimatedSection className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
               E muito mais...
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Recursos adicionais para tornar sua experiência ainda melhor.
             </p>
-          </div>
+          </AnimatedSection>
           
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {additionalFeatures.map((feature, index) => (
-              <div 
+              <AnimatedSection 
                 key={index}
-                className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300"
+                delay={index * 100}
               >
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-primary" />
+                <div className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-all duration-300 h-full">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <feature.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-heading font-semibold text-lg mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm">{feature.description}</p>
                 </div>
-                <h3 className="font-heading font-semibold text-lg mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.description}</p>
-              </div>
+              </AnimatedSection>
             ))}
           </div>
         </div>
@@ -271,24 +287,30 @@ const Funcionalidades = () => {
       {/* CTA */}
       <section className="py-20 bg-primary">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary-foreground mb-4">
-            Pronto para experimentar?
-          </h2>
-          <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
-            Comece gratuitamente e descubra como o VisitaSegura pode 
-            transformar a forma como você trabalha.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="text-base" asChild>
-              <Link to="/registro-autonomo?plano=gratuito">
-                Começar Grátis
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="text-base bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-              <Link to="/#planos">Ver Planos</Link>
-            </Button>
-          </div>
+          <AnimatedSection>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary-foreground mb-4">
+              Pronto para experimentar?
+            </h2>
+          </AnimatedSection>
+          <AnimatedSection delay={100}>
+            <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
+              Comece gratuitamente e descubra como o VisitaSegura pode 
+              transformar a forma como você trabalha.
+            </p>
+          </AnimatedSection>
+          <AnimatedSection delay={200}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" variant="secondary" className="text-base" asChild>
+                <Link to="/registro-autonomo?plano=gratuito">
+                  Começar Grátis
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="text-base bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+                <Link to="/#planos">Ver Planos</Link>
+              </Button>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
