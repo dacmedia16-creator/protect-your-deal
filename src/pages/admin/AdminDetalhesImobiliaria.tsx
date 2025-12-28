@@ -48,9 +48,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound } from 'lucide-react';
+import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound, UserCircle, Home, FileText, Phone, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -102,6 +103,35 @@ interface Corretor {
   };
 }
 
+interface Cliente {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string | null;
+  tipo: string;
+  created_at: string;
+}
+
+interface Imovel {
+  id: string;
+  endereco: string;
+  tipo: string;
+  bairro: string | null;
+  cidade: string | null;
+  created_at: string;
+}
+
+interface Ficha {
+  id: string;
+  protocolo: string;
+  comprador_nome: string | null;
+  proprietario_nome: string | null;
+  imovel_endereco: string;
+  status: string;
+  data_visita: string;
+  created_at: string;
+}
+
 export default function AdminDetalhesImobiliaria() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -110,6 +140,9 @@ export default function AdminDetalhesImobiliaria() {
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [corretores, setCorretores] = useState<Corretor[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [fichas, setFichas] = useState<Ficha[]>([]);
   const [selectedPlano, setSelectedPlano] = useState<string>('');
   const [savingPlano, setSavingPlano] = useState(false);
 
@@ -219,6 +252,33 @@ export default function AdminDetalhesImobiliaria() {
 
           setCorretores(corretoresWithProfiles);
         }
+
+        // Fetch clientes
+        const { data: clientesData } = await supabase
+          .from('clientes')
+          .select('id, nome, telefone, email, tipo, created_at')
+          .eq('imobiliaria_id', id)
+          .order('created_at', { ascending: false });
+
+        setClientes(clientesData || []);
+
+        // Fetch imóveis
+        const { data: imoveisData } = await supabase
+          .from('imoveis')
+          .select('id, endereco, tipo, bairro, cidade, created_at')
+          .eq('imobiliaria_id', id)
+          .order('created_at', { ascending: false });
+
+        setImoveis(imoveisData || []);
+
+        // Fetch fichas
+        const { data: fichasData } = await supabase
+          .from('fichas_visita')
+          .select('id, protocolo, comprador_nome, proprietario_nome, imovel_endereco, status, data_visita, created_at')
+          .eq('imobiliaria_id', id)
+          .order('created_at', { ascending: false });
+
+        setFichas(fichasData || []);
       } catch (error: any) {
         console.error('Error fetching data:', error);
         toast.error('Erro ao carregar dados');
@@ -414,10 +474,13 @@ export default function AdminDetalhesImobiliaria() {
         </div>
 
         <Tabs defaultValue="dados" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="assinatura">Assinatura</TabsTrigger>
-            <TabsTrigger value="corretores">Corretores</TabsTrigger>
+            <TabsTrigger value="corretores">Corretores ({corretores.length})</TabsTrigger>
+            <TabsTrigger value="clientes">Clientes ({clientes.length})</TabsTrigger>
+            <TabsTrigger value="imoveis">Imóveis ({imoveis.length})</TabsTrigger>
+            <TabsTrigger value="fichas">Fichas ({fichas.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados">
@@ -702,6 +765,192 @@ export default function AdminDetalhesImobiliaria() {
                       ))}
                     </TableBody>
                   </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Clientes Tab */}
+          <TabsContent value="clientes">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <UserCircle className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Clientes</CardTitle>
+                    <CardDescription>
+                      {clientes.length} cliente(s) cadastrado(s)
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {clientes.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <UserCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhum cliente cadastrado nesta imobiliária</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Telefone</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Cadastro</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {clientes.map((cliente) => (
+                          <TableRow key={cliente.id}>
+                            <TableCell className="font-medium">{cliente.nome}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {cliente.tipo === 'comprador' ? 'Comprador' : 'Proprietário'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Phone className="h-3 w-3 text-muted-foreground" />
+                                {cliente.telefone}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {cliente.email ? (
+                                <div className="flex items-center gap-1">
+                                  <Mail className="h-3 w-3 text-muted-foreground" />
+                                  {cliente.email}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(cliente.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Imóveis Tab */}
+          <TabsContent value="imoveis">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Home className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Imóveis</CardTitle>
+                    <CardDescription>
+                      {imoveis.length} imóvel(is) cadastrado(s)
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {imoveis.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Home className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhum imóvel cadastrado nesta imobiliária</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Endereço</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Bairro</TableHead>
+                          <TableHead>Cidade</TableHead>
+                          <TableHead>Cadastro</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {imoveis.map((imovel) => (
+                          <TableRow key={imovel.id}>
+                            <TableCell className="font-medium">{imovel.endereco}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{imovel.tipo}</Badge>
+                            </TableCell>
+                            <TableCell>{imovel.bairro || '-'}</TableCell>
+                            <TableCell>{imovel.cidade || '-'}</TableCell>
+                            <TableCell>
+                              {format(new Date(imovel.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Fichas Tab */}
+          <TabsContent value="fichas">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Fichas de Visita</CardTitle>
+                    <CardDescription>
+                      {fichas.length} ficha(s) registrada(s)
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {fichas.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhuma ficha de visita registrada nesta imobiliária</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Protocolo</TableHead>
+                          <TableHead>Comprador</TableHead>
+                          <TableHead>Proprietário</TableHead>
+                          <TableHead>Imóvel</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Data Visita</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {fichas.map((ficha) => (
+                          <TableRow key={ficha.id}>
+                            <TableCell className="font-mono font-medium">{ficha.protocolo}</TableCell>
+                            <TableCell>{ficha.comprador_nome || '-'}</TableCell>
+                            <TableCell>{ficha.proprietario_nome || '-'}</TableCell>
+                            <TableCell className="max-w-[200px] truncate">{ficha.imovel_endereco}</TableCell>
+                            <TableCell>
+                              <Badge className={
+                                ficha.status === 'confirmado' ? 'bg-success text-success-foreground' :
+                                ficha.status === 'pendente' ? 'bg-warning text-warning-foreground' :
+                                'bg-muted text-muted-foreground'
+                              }>
+                                {ficha.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(ficha.data_visita), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
