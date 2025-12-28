@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
@@ -89,6 +90,7 @@ interface Imobiliaria {
 }
 
 export default function AdminCorretoresAutonomos() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -465,7 +467,12 @@ export default function AdminCorretoresAutonomos() {
                             <UserCircle className="h-5 w-5 text-amber-600" />
                           </div>
                           <div>
-                            <p className="font-medium">{corretor.profile?.nome || "Sem nome"}</p>
+                            <button
+                              onClick={() => navigate(`/admin/autonomos/${corretor.user_id}`)}
+                              className="font-medium hover:underline hover:text-primary text-left"
+                            >
+                              {corretor.profile?.nome || "Sem nome"}
+                            </button>
                             {corretor.profile?.creci && (
                               <p className="text-xs text-muted-foreground">CRECI: {corretor.profile.creci}</p>
                             )}
