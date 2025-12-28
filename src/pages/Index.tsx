@@ -6,6 +6,7 @@ import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Shield, 
@@ -21,7 +22,8 @@ import {
   Check,
   Sparkles,
   HelpCircle,
-  Smartphone
+  Smartphone,
+  Menu
 } from 'lucide-react';
 
 interface Plano {
@@ -40,6 +42,7 @@ const Index = () => {
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [planos, setPlanos] = useState<Plano[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function fetchPlanos() {
@@ -142,7 +145,7 @@ const Index = () => {
             <span className="font-heading text-xl font-bold">VisitaSegura</span>
           </div>
           
-          {/* Navigation Links */}
+          {/* Navigation Links - Desktop */}
           <nav className="hidden md:flex items-center gap-6">
             <a 
               href="#como-funciona" 
@@ -166,15 +169,73 @@ const Index = () => {
           </nav>
           
           <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild>
+            {/* Desktop buttons */}
+            <Button variant="ghost" asChild className="hidden sm:inline-flex">
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button variant="outline" asChild className="hidden sm:inline-flex">
               <Link to="/registro-autonomo?plano=gratuito">Teste Grátis</Link>
             </Button>
-            <Button asChild>
+            <Button asChild className="hidden sm:inline-flex">
               <Link to="/registro">Cadastrar</Link>
             </Button>
+
+            {/* Mobile menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Abrir menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px] sm:w-[320px]">
+                <div className="flex flex-col gap-6 mt-6">
+                  <div className="flex items-center gap-2 pb-4 border-b">
+                    <Shield className="h-6 w-6 text-primary" />
+                    <span className="font-heading text-lg font-bold">VisitaSegura</span>
+                  </div>
+                  
+                  <nav className="flex flex-col gap-4">
+                    <a 
+                      href="#como-funciona" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Como Funciona
+                    </a>
+                    <a 
+                      href="#planos" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Ver Planos
+                    </a>
+                    <Link 
+                      to="/instalar" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                      Baixar App
+                    </Link>
+                  </nav>
+                  
+                  <div className="flex flex-col gap-3 pt-4 border-t">
+                    <Button variant="outline" asChild className="w-full">
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
+                    </Button>
+                    <Button variant="outline" asChild className="w-full">
+                      <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
+                        Teste Grátis
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link to="/registro" onClick={() => setMobileMenuOpen(false)}>Cadastrar</Link>
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
