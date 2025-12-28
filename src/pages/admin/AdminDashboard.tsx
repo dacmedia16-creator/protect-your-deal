@@ -191,7 +191,10 @@ export default function AdminDashboard() {
 
         {/* Quick stats */}
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
+          <Card 
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/assinaturas')}
+          >
             <CardHeader>
               <CardTitle>Assinaturas</CardTitle>
             </CardHeader>
@@ -204,6 +207,7 @@ export default function AdminDashboard() {
                 <span className="text-sm text-muted-foreground">Suspensas</span>
                 <span className="font-medium text-destructive">{stats?.assinaturasSuspensas}</span>
               </div>
+              <p className="text-xs text-muted-foreground text-right">Ver detalhes →</p>
             </CardContent>
           </Card>
 
