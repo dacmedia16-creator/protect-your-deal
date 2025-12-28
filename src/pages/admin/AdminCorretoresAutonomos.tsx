@@ -59,7 +59,8 @@ import {
   FileText,
   Users as UsersIcon,
   Home,
-  UserPlus
+  UserPlus,
+  CreditCard
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -82,6 +83,17 @@ interface CorretorAutonomo {
     clientes: number;
     imoveis: number;
   };
+  assinatura?: {
+    id: string;
+    status: string;
+    plano_nome: string;
+  } | null;
+}
+
+interface Plano {
+  id: string;
+  nome: string;
+  valor_mensal: number;
 }
 
 interface Imobiliaria {
@@ -123,6 +135,12 @@ export default function AdminCorretoresAutonomos() {
     telefone: "",
     creci: "",
   });
+
+  // Assign plan dialog
+  const [isPlanoDialogOpen, setIsPlanoDialogOpen] = useState(false);
+  const [corretorToAssign, setCorretorToAssign] = useState<CorretorAutonomo | null>(null);
+  const [selectedPlanoId, setSelectedPlanoId] = useState("");
+  const [isAssigningPlano, setIsAssigningPlano] = useState(false);
 
   // Fetch corretores autônomos
   const { data: corretores, isLoading, refetch } = useQuery({
@@ -193,6 +211,23 @@ export default function AdminCorretoresAutonomos() {
 
       const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
 
+      // Fetch subscriptions for these users
+      const { data: assinaturas } = await supabase
+        .from("assinaturas")
+        .select("id, user_id, status, plano:planos(nome)")
+        .in("user_id", userIds);
+
+      const assinaturaMap = new Map(
+        assinaturas?.map((a) => [
+          a.user_id,
+          {
+            id: a.id,
+            status: a.status,
+            plano_nome: (a.plano as any)?.nome || "Plano desconhecido",
+          },
+        ]) || []
+      );
+
       return userRoles.map((ur) => ({
         id: ur.id,
         user_id: ur.user_id,
@@ -201,6 +236,7 @@ export default function AdminCorretoresAutonomos() {
         profile: profileMap.get(ur.user_id) || null,
         email: emailMap.get(ur.user_id) || null,
         stats: statsMap.get(ur.user_id) || { fichas: 0, fichasConfirmadas: 0, clientes: 0, imoveis: 0 },
+        assinatura: assinaturaMap.get(ur.user_id) || null,
       })) as CorretorAutonomo[];
     },
   });
@@ -216,6 +252,21 @@ export default function AdminCorretoresAutonomos() {
         .order("nome");
       if (error) throw error;
       return data as Imobiliaria[];
+    },
+  });
+
+  // Fetch individual plans (max_corretores = 1)
+  const { data: planosIndividuais } = useQuery({
+    queryKey: ["admin-planos-individuais"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("planos")
+        .select("id, nome, valor_mensal")
+        .eq("ativo", true)
+        .eq("max_corretores", 1)
+        .order("valor_mensal");
+      if (error) throw error;
+      return data as Plano[];
     },
   });
 
@@ -348,6 +399,65 @@ export default function AdminCorretoresAutonomos() {
     setIsLinkDialogOpen(true);
   };
 
+  const openPlanoDialog = (corretor: CorretorAutonomo) => {
+    setCorretorToAssign(corretor);
+    setSelectedPlanoId(corretor.assinatura ? "" : "");
+    setIsPlanoDialogOpen(true);
+  };
+
+  const handleAssignPlano = async () => {
+    if (!corretorToAssign || !selectedPlanoId) {
+      toast.error("Selecione um plano");
+      return;
+    }
+
+    setIsAssigningPlano(true);
+    try {
+      // Check if subscription already exists
+      const { data: existing } = await supabase
+        .from("assinaturas")
+        .select("id")
+        .eq("user_id", corretorToAssign.user_id)
+        .maybeSingle();
+
+      if (existing) {
+        // UPDATE existing subscription
+        const { error } = await supabase
+          .from("assinaturas")
+          .update({
+            plano_id: selectedPlanoId,
+            status: "ativa",
+            data_inicio: new Date().toISOString().split("T")[0],
+          })
+          .eq("id", existing.id);
+
+        if (error) throw error;
+      } else {
+        // INSERT new subscription
+        const { error } = await supabase
+          .from("assinaturas")
+          .insert({
+            user_id: corretorToAssign.user_id,
+            plano_id: selectedPlanoId,
+            status: "ativa",
+            data_inicio: new Date().toISOString().split("T")[0],
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("Plano vinculado com sucesso!");
+      setIsPlanoDialogOpen(false);
+      setCorretorToAssign(null);
+      setSelectedPlanoId("");
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao vincular plano");
+    } finally {
+      setIsAssigningPlano(false);
+    }
+  };
+
   const handleCreateAutonomo = async () => {
     if (!newCorretor.nome || !newCorretor.email || !newCorretor.senha) {
       toast.error("Nome, email e senha são obrigatórios");
@@ -438,6 +548,7 @@ export default function AdminCorretoresAutonomos() {
                 <TableRow>
                   <TableHead>Corretor</TableHead>
                   <TableHead>Contato</TableHead>
+                  <TableHead>Assinatura</TableHead>
                   <TableHead className="text-center">Fichas</TableHead>
                   <TableHead className="text-center">Clientes</TableHead>
                   <TableHead className="text-center">Imóveis</TableHead>
@@ -448,13 +559,13 @@ export default function AdminCorretoresAutonomos() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : filteredCorretores?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhum corretor autônomo encontrado
                     </TableCell>
                   </TableRow>
@@ -482,6 +593,20 @@ export default function AdminCorretoresAutonomos() {
                       <TableCell>
                         <p className="text-sm">{corretor.email || "-"}</p>
                         <p className="text-xs text-muted-foreground">{corretor.profile?.telefone || "-"}</p>
+                      </TableCell>
+                      <TableCell>
+                        {corretor.assinatura ? (
+                          <Badge 
+                            variant={corretor.assinatura.status === "ativa" ? "default" : "secondary"}
+                            className={corretor.assinatura.status === "ativa" ? "bg-green-600" : ""}
+                          >
+                            {corretor.assinatura.status === "ativa" ? "✓" : "⏳"} {corretor.assinatura.plano_nome}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Sem plano
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex flex-col items-center gap-1">
@@ -521,6 +646,10 @@ export default function AdminCorretoresAutonomos() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openPlanoDialog(corretor)}>
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              {corretor.assinatura ? "Alterar Plano" : "Vincular Plano"}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openLinkDialog(corretor)}>
                               <LinkIcon className="h-4 w-4 mr-2" />
                               Vincular a Imobiliária
@@ -739,6 +868,56 @@ export default function AdminCorretoresAutonomos() {
             </Button>
             <Button onClick={handleCreateAutonomo} disabled={isCreating}>
               {isCreating ? "Criando..." : "Criar Corretor"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Plan Dialog */}
+      <Dialog open={isPlanoDialogOpen} onOpenChange={setIsPlanoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {corretorToAssign?.assinatura ? "Alterar Plano" : "Vincular Plano"}
+            </DialogTitle>
+            <DialogDescription>
+              {corretorToAssign?.assinatura 
+                ? `Altere o plano do corretor ${corretorToAssign?.profile?.nome}. Plano atual: ${corretorToAssign.assinatura.plano_nome}`
+                : `Vincule o corretor ${corretorToAssign?.profile?.nome} a um plano de assinatura individual.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Selecione o Plano</Label>
+              <Select value={selectedPlanoId} onValueChange={setSelectedPlanoId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {planosIndividuais?.map((plano) => (
+                    <SelectItem key={plano.id} value={plano.id}>
+                      {plano.nome} - R$ {plano.valor_mensal.toFixed(2).replace(".", ",")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {(!planosIndividuais || planosIndividuais.length === 0) && (
+              <p className="text-sm text-muted-foreground">
+                Nenhum plano individual disponível. Crie um plano com max_corretores = 1.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPlanoDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleAssignPlano} 
+              disabled={isAssigningPlano || !selectedPlanoId}
+            >
+              {isAssigningPlano ? "Vinculando..." : "Vincular Plano"}
             </Button>
           </DialogFooter>
         </DialogContent>
