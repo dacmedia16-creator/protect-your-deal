@@ -23,15 +23,19 @@ import {
   AlertTriangle,
   CheckCircle,
   Database,
+  ExternalLink,
   Info,
   Loader2,
   RefreshCw,
   Search,
   Shield,
+  ShieldAlert,
+  ShieldCheck,
   User,
   UserPlus,
   XCircle,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface DiagnosticResult {
   name: string;
@@ -50,6 +54,16 @@ interface UserDiagnostics {
   profileExists: boolean;
   profileImobiliariaId: string | null;
   tests: DiagnosticResult[];
+}
+
+interface SystemAlert {
+  id: string;
+  type: "error" | "warning" | "info";
+  title: string;
+  description: string;
+  affectedItems: number;
+  actionLabel?: string;
+  actionHref?: string;
 }
 
 type HookInfo = { role: string | null; imobiliariaId: string | null };
@@ -72,6 +86,10 @@ export default function AdminDiagnostico() {
 
   const [selectedImobiliariaId, setSelectedImobiliariaId] = useState<string>("");
   const [backfillFichas, setBackfillFichas] = useState<boolean>(true);
+
+  // System alerts state
+  const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
+  const [isCheckingSystem, setIsCheckingSystem] = useState(false);
 
   const normalizedSearchEmail = useMemo(
     () => searchEmail.trim().toLowerCase(),
@@ -130,13 +148,176 @@ export default function AdminDiagnostico() {
     },
   });
 
-  // Run diagnostics for current user on mount
+  // Run diagnostics for current user and system alerts on mount
   useEffect(() => {
     if (user && !roleLoading) {
       runDiagnosticsForCurrentUser();
+      checkSystemInconsistencies();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, roleLoading]);
+
+  // Check for system-wide inconsistencies
+  const checkSystemInconsistencies = async () => {
+    setIsCheckingSystem(true);
+    const alerts: SystemAlert[] = [];
+
+    try {
+      // 1. Corretores/admins sem imobiliária
+      const { count: corretoresSemImob } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .in("role", ["corretor", "imobiliaria_admin"])
+        .is("imobiliaria_id", null);
+
+      if (corretoresSemImob && corretoresSemImob > 0) {
+        alerts.push({
+          id: "corretor_sem_imobiliaria",
+          type: "warning",
+          title: "Corretores/Admins sem imobiliária",
+          description: `${corretoresSemImob} usuário(s) com role corretor ou imobiliaria_admin não estão vinculados a nenhuma imobiliária.`,
+          affectedItems: corretoresSemImob,
+          actionLabel: "Ver corretores autônomos",
+          actionHref: "/admin/autonomos",
+        });
+      }
+
+      // 2. Super admins com imobiliária (incorreto)
+      const { count: superAdminComImob } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "super_admin")
+        .not("imobiliaria_id", "is", null);
+
+      if (superAdminComImob && superAdminComImob > 0) {
+        alerts.push({
+          id: "super_admin_com_imobiliaria",
+          type: "error",
+          title: "Super admin com imobiliária vinculada",
+          description: `${superAdminComImob} super admin(s) possuem imobiliaria_id preenchido, o que é incorreto.`,
+          affectedItems: superAdminComImob,
+          actionLabel: "Ver usuários",
+          actionHref: "/admin/usuarios",
+        });
+      }
+
+      // 3. Fichas sem imobiliaria_id
+      const { count: fichasSemImob } = await supabase
+        .from("fichas_visita")
+        .select("*", { count: "exact", head: true })
+        .is("imobiliaria_id", null);
+
+      if (fichasSemImob && fichasSemImob > 0) {
+        alerts.push({
+          id: "fichas_sem_imobiliaria",
+          type: "warning",
+          title: "Fichas órfãs",
+          description: `${fichasSemImob} ficha(s) de visita não possuem imobiliaria_id, ficando invisíveis para admins de imobiliária.`,
+          affectedItems: fichasSemImob,
+        });
+      }
+
+      // 4. Perfis com imobiliaria_id divergente de user_roles
+      // Consulta profiles com imobiliaria_id preenchido
+      const { data: profilesWithImob } = await supabase
+        .from("profiles")
+        .select("user_id, imobiliaria_id")
+        .not("imobiliaria_id", "is", null);
+
+      let divergencias = 0;
+      if (profilesWithImob && profilesWithImob.length > 0) {
+        for (const profile of profilesWithImob) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("imobiliaria_id")
+            .eq("user_id", profile.user_id)
+            .maybeSingle();
+
+          if (roleData && roleData.imobiliaria_id !== profile.imobiliaria_id) {
+            divergencias++;
+          }
+        }
+      }
+
+      if (divergencias > 0) {
+        alerts.push({
+          id: "perfil_divergente",
+          type: "error",
+          title: "Divergência profile vs user_roles",
+          description: `${divergencias} usuário(s) possuem imobiliaria_id diferente entre profiles e user_roles.`,
+          affectedItems: divergencias,
+        });
+      }
+
+      // 5. Imobiliárias inativas com usuários ativos
+      const { data: imobsInativas } = await supabase
+        .from("imobiliarias")
+        .select("id, nome")
+        .eq("status", "inativo");
+
+      if (imobsInativas && imobsInativas.length > 0) {
+        let usuariosEmImobInativa = 0;
+        for (const imob of imobsInativas) {
+          const { count } = await supabase
+            .from("user_roles")
+            .select("*", { count: "exact", head: true })
+            .eq("imobiliaria_id", imob.id);
+          
+          if (count && count > 0) {
+            usuariosEmImobInativa += count;
+          }
+        }
+
+        if (usuariosEmImobInativa > 0) {
+          alerts.push({
+            id: "imobiliaria_inativa_com_usuarios",
+            type: "warning",
+            title: "Imobiliárias inativas com usuários",
+            description: `${usuariosEmImobInativa} usuário(s) estão vinculados a imobiliárias inativas.`,
+            affectedItems: usuariosEmImobInativa,
+            actionLabel: "Ver imobiliárias",
+            actionHref: "/admin/imobiliarias",
+          });
+        }
+      }
+
+      // 6. Usuários com role mas sem perfil
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("user_id");
+
+      if (rolesData && rolesData.length > 0) {
+        let semPerfil = 0;
+        for (const roleEntry of rolesData) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", roleEntry.user_id)
+            .maybeSingle();
+
+          if (!profileData) {
+            semPerfil++;
+          }
+        }
+
+        if (semPerfil > 0) {
+          alerts.push({
+            id: "usuario_sem_perfil",
+            type: "error",
+            title: "Usuários sem perfil",
+            description: `${semPerfil} usuário(s) possuem role mas não têm registro na tabela profiles.`,
+            affectedItems: semPerfil,
+          });
+        }
+      }
+
+    } catch (error) {
+      console.error("Error checking system inconsistencies:", error);
+    } finally {
+      setSystemAlerts(alerts);
+      setIsCheckingSystem(false);
+    }
+  };
 
   const runDiagnosticsForCurrentUser = async () => {
     if (!user) return;
@@ -436,6 +617,117 @@ export default function AdminDiagnostico() {
     return true;
   }, [searchedUserDiag]);
 
+  // System Alerts Section Component
+  const SystemAlertsSection = () => {
+    const errorCount = systemAlerts.filter((a) => a.type === "error").length;
+    const warningCount = systemAlerts.filter((a) => a.type === "warning").length;
+    const hasAlerts = systemAlerts.length > 0;
+
+    const cardClasses = hasAlerts
+      ? errorCount > 0
+        ? "border-destructive/50 bg-destructive/5"
+        : "border-amber-500/50 bg-amber-500/5"
+      : "border-green-500/50 bg-green-500/5";
+
+    const iconClasses = hasAlerts
+      ? errorCount > 0
+        ? "text-destructive"
+        : "text-amber-500"
+      : "text-green-500";
+
+    return (
+      <Card className={cardClasses}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              {hasAlerts ? (
+                <ShieldAlert className={`h-5 w-5 ${iconClasses}`} />
+              ) : (
+                <ShieldCheck className="h-5 w-5 text-green-500" />
+              )}
+              Alertas do Sistema
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              {hasAlerts && (
+                <div className="flex gap-2">
+                  {errorCount > 0 && (
+                    <Badge variant="destructive">{errorCount} erro(s)</Badge>
+                  )}
+                  {warningCount > 0 && (
+                    <Badge className="bg-amber-500 text-white hover:bg-amber-600">
+                      {warningCount} aviso(s)
+                    </Badge>
+                  )}
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={checkSystemInconsistencies}
+                disabled={isCheckingSystem}
+              >
+                {isCheckingSystem ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <CardDescription>
+            {hasAlerts
+              ? "Foram detectadas inconsistências que requerem atenção"
+              : "Nenhuma inconsistência detectada no sistema"}
+          </CardDescription>
+        </CardHeader>
+        {hasAlerts && (
+          <CardContent className="space-y-3">
+            {systemAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={`p-4 rounded-lg border ${
+                  alert.type === "error"
+                    ? "bg-destructive/10 border-destructive/30"
+                    : alert.type === "warning"
+                      ? "bg-amber-500/10 border-amber-500/30"
+                      : "bg-blue-500/10 border-blue-500/30"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {alert.type === "error" ? (
+                    <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  ) : alert.type === "warning" ? (
+                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-medium text-sm">{alert.title}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {alert.affectedItems} item(ns)
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{alert.description}</p>
+                    {alert.actionHref && (
+                      <Link
+                        to={alert.actionHref}
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                      >
+                        {alert.actionLabel || "Ver detalhes"}
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        )}
+      </Card>
+    );
+  };
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
@@ -455,10 +747,11 @@ export default function AdminDiagnostico() {
             onClick={async () => {
               await refetch();
               runDiagnosticsForCurrentUser();
+              checkSystemInconsistencies();
             }}
-            disabled={isRunningCurrentTests}
+            disabled={isRunningCurrentTests || isCheckingSystem}
           >
-            {isRunningCurrentTests ? (
+            {isRunningCurrentTests || isCheckingSystem ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -466,6 +759,9 @@ export default function AdminDiagnostico() {
             Atualizar
           </Button>
         </div>
+
+        {/* System Alerts */}
+        <SystemAlertsSection />
 
         {/* Current User Diagnostics */}
         {isRunningCurrentTests ? (
