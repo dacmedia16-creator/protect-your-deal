@@ -17,7 +17,9 @@ import {
   AlertCircle,
   Calendar,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  QrCode,
+  Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -419,12 +421,30 @@ export default function EmpresaAssinatura() {
         </div>
 
         <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-          <p className="font-medium mb-2">Formas de pagamento aceitas:</p>
-          <ul className="list-disc list-inside space-y-1">
-            <li>Pix (confirmação instantânea)</li>
-            <li>Boleto bancário (até 3 dias úteis)</li>
-            <li>Cartão de crédito (recorrência automática)</li>
-          </ul>
+          <p className="font-medium mb-3">Formas de pagamento aceitas:</p>
+          <div className="flex flex-wrap gap-4">
+            <span className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
+              <QrCode className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-medium text-foreground">PIX</span>
+                <p className="text-xs">Confirmação instantânea</p>
+              </div>
+            </span>
+            <span className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
+              <CreditCard className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-medium text-foreground">Cartão</span>
+                <p className="text-xs">Recorrência automática</p>
+              </div>
+            </span>
+            <span className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
+              <Receipt className="h-5 w-5 text-primary" />
+              <div>
+                <span className="font-medium text-foreground">Boleto</span>
+                <p className="text-xs">Até 3 dias úteis</p>
+              </div>
+            </span>
+          </div>
         </div>
 
         <p className="text-sm text-center text-muted-foreground">
