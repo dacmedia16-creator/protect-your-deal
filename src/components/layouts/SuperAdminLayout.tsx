@@ -16,7 +16,8 @@ import {
   Stethoscope,
   X,
   FileText,
-  Mail
+  Mail,
+  UserCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
   { href: '/admin/assinaturas', icon: FileText, label: 'Assinaturas' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
+  { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
   { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
   { href: '/admin/convites', icon: Mail, label: 'Convites' },
   { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
