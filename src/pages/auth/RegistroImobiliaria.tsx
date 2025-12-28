@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Shield, Loader2, Building2, ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPhone } from '@/lib/phone';
 
 interface Plano {
   id: string;
@@ -287,7 +288,8 @@ export default function RegistroImobiliaria() {
                     <Input
                       id="telefone"
                       value={imobiliariaForm.telefone}
-                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, telefone: e.target.value })}
+                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, telefone: formatPhone(e.target.value) })}
+                      placeholder="(00) 00000-0000"
                     />
                   </div>
                   <div className="sm:col-span-2 space-y-2">
