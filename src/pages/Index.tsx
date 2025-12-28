@@ -157,7 +157,7 @@ const Index = () => {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button variant="outline" asChild className="hidden sm:inline-flex">
-              <Link to="/registro?plano=gratuito">Teste Grátis</Link>
+              <Link to="/registro-autonomo?plano=gratuito">Teste Grátis</Link>
             </Button>
             <Button asChild>
               <Link to="/registro">Cadastrar</Link>
@@ -270,6 +270,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {planos.slice(0, 4).map((plano) => {
               const isFreePlan = plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise');
+              const isAutonomo = plano.max_corretores === 1;
               
               return (
                 <Card 
@@ -333,7 +334,7 @@ const Index = () => {
                       variant={isFreePlan ? 'default' : 'outline'}
                       asChild
                     >
-                      <Link to={isFreePlan ? '/registro?plano=gratuito' : '/registro'}>
+                      <Link to={isAutonomo ? `/registro-autonomo${isFreePlan ? '?plano=gratuito' : ''}` : '/registro'}>
                         {isFreePlan ? (
                           <>
                             <Sparkles className="h-4 w-4 mr-2" />
