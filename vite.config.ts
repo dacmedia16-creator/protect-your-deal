@@ -58,13 +58,31 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {
+            // Chat/streaming endpoints - always network only
+            urlPattern: /^https:\/\/.*supabase\.co\/functions\/v1\/chat.*/i,
+            handler: 'NetworkOnly',
+          },
+          {
+            // Edge functions - network first with short cache
+            urlPattern: /^https:\/\/.*supabase\.co\/functions\/v1\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'edge-functions-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 5 // 5 minutes
+              }
+            }
+          },
+          {
+            // Other Supabase API calls
             urlPattern: /^https:\/\/.*supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 horas
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
               }
             }
           }
