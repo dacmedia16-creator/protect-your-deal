@@ -59,85 +59,124 @@ const AceitarTermos = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Shield className="h-12 w-12 text-primary" />
+        <CardHeader className="text-center pb-4 sm:pb-6">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-heading">Termos de Uso</CardTitle>
-          <CardDescription>
-            Antes de continuar, você precisa ler e aceitar nossos Termos de Uso
+          <CardTitle className="text-xl sm:text-2xl font-heading">Termos de Uso</CardTitle>
+          <CardDescription className="text-sm">
+            <span className="hidden sm:inline">Antes de continuar, você precisa ler e aceitar nossos Termos de Uso</span>
+            <span className="sm:hidden">Aceite os Termos para continuar</span>
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {/* Summary of Terms */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3 text-sm">
-            <h3 className="font-semibold text-foreground">Resumo dos principais pontos:</h3>
-            <ul className="space-y-2 text-muted-foreground">
+          <div className="bg-muted/50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 text-xs sm:text-sm">
+            <h3 className="font-semibold text-foreground text-sm sm:text-base">
+              <span className="hidden sm:inline">Resumo dos principais pontos:</span>
+              <span className="sm:hidden">Resumo:</span>
+            </h3>
+            <ul className="space-y-1.5 sm:space-y-2 text-muted-foreground">
               <li className="flex gap-2">
                 <span>•</span>
-                <span>O VisitaSegura é uma ferramenta tecnológica para registro de visitas imobiliárias</span>
+                <span>
+                  <span className="hidden sm:inline">O VisitaSegura é uma ferramenta tecnológica para registro de visitas imobiliárias</span>
+                  <span className="sm:hidden">Ferramenta para registro de visitas</span>
+                </span>
               </li>
               <li className="flex gap-2">
                 <span>•</span>
-                <span>Os documentos gerados constituem meio de prova</span>
+                <span>
+                  <span className="hidden sm:inline">Os documentos gerados constituem meio de prova</span>
+                  <span className="sm:hidden">Documentos como prova</span>
+                </span>
               </li>
               <li className="flex gap-2">
                 <span>•</span>
-                <span>O usuário é responsável pelas informações inseridas</span>
+                <span>
+                  <span className="hidden sm:inline">O usuário é responsável pelas informações inseridas</span>
+                  <span className="sm:hidden">Você é responsável pelos dados</span>
+                </span>
               </li>
               <li className="flex gap-2">
                 <span>•</span>
-                <span>A plataforma não substitui advogados ou corretores</span>
+                <span>
+                  <span className="hidden sm:inline">A plataforma não substitui advogados ou corretores</span>
+                  <span className="sm:hidden">Não substitui advogados</span>
+                </span>
               </li>
               <li className="flex gap-2">
                 <span>•</span>
-                <span>Foro: Comarca de Sorocaba/SP</span>
+                <span>Foro: Sorocaba/SP</span>
               </li>
             </ul>
           </div>
 
           {/* Links to full terms */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            <Button variant="link" asChild className="text-primary">
+          <div className="flex flex-row items-center justify-center gap-1 sm:gap-2">
+            <Button variant="link" asChild className="text-primary text-xs sm:text-sm px-2 sm:px-4">
               <Link to="/termos-de-uso" target="_blank">
-                <FileText className="h-4 w-4 mr-2" />
-                Termos de Uso
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Termos de Uso</span>
+                <span className="sm:hidden">Termos</span>
               </Link>
             </Button>
-            <span className="hidden sm:inline text-muted-foreground">•</span>
-            <Button variant="link" asChild className="text-primary">
+            <span className="text-muted-foreground text-xs">•</span>
+            <Button variant="link" asChild className="text-primary text-xs sm:text-sm px-2 sm:px-4">
               <Link to="/politica-privacidade" target="_blank">
-                <FileText className="h-4 w-4 mr-2" />
-                Política de Responsabilidade
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Política de Responsabilidade</span>
+                <span className="sm:hidden">Política</span>
               </Link>
             </Button>
           </div>
 
           {/* Checkbox */}
-          <div className="flex items-start space-x-3 border border-border rounded-lg p-4">
+          <div className="flex items-start space-x-2 sm:space-x-3 border border-border rounded-lg p-3 sm:p-4">
             <Checkbox 
               id="aceito" 
               checked={aceito} 
               onCheckedChange={(checked) => setAceito(checked === true)}
+              className="mt-0.5"
             />
-            <Label htmlFor="aceito" className="text-sm leading-relaxed cursor-pointer">
-              Li e concordo com os{' '}
-              <Link 
-                to="/termos-de-uso" 
-                target="_blank" 
-                className="text-primary hover:underline"
-              >
-                Termos de Uso
-              </Link>{' '}
-              e a{' '}
-              <Link 
-                to="/politica-privacidade" 
-                target="_blank" 
-                className="text-primary hover:underline"
-              >
-                Política de Responsabilidade
-              </Link>{' '}
-              da plataforma VisitaSegura
+            <Label htmlFor="aceito" className="text-xs sm:text-sm leading-relaxed cursor-pointer">
+              <span className="hidden sm:inline">
+                Li e concordo com os{' '}
+                <Link 
+                  to="/termos-de-uso" 
+                  target="_blank" 
+                  className="text-primary hover:underline"
+                >
+                  Termos de Uso
+                </Link>{' '}
+                e a{' '}
+                <Link 
+                  to="/politica-privacidade" 
+                  target="_blank" 
+                  className="text-primary hover:underline"
+                >
+                  Política de Responsabilidade
+                </Link>{' '}
+                da plataforma VisitaSegura
+              </span>
+              <span className="sm:hidden">
+                Aceito os{' '}
+                <Link 
+                  to="/termos-de-uso" 
+                  target="_blank" 
+                  className="text-primary hover:underline"
+                >
+                  Termos
+                </Link>{' '}
+                e{' '}
+                <Link 
+                  to="/politica-privacidade" 
+                  target="_blank" 
+                  className="text-primary hover:underline"
+                >
+                  Política
+                </Link>
+              </span>
             </Label>
           </div>
 
