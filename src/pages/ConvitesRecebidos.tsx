@@ -15,7 +15,9 @@ import {
   XCircle,
   ArrowLeft,
   Inbox,
-  Send
+  Send,
+  PlayCircle,
+  FileEdit
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -34,6 +36,35 @@ interface ConviteParceiro {
   expira_em: string;
   created_at: string;
 }
+
+interface FichaDetalhe {
+  id: string;
+  imovel_endereco: string;
+  imovel_tipo: string;
+  data_visita: string;
+  proprietario_telefone: string | null;
+  comprador_telefone: string | null;
+  proprietario_confirmado_em: string | null;
+  comprador_confirmado_em: string | null;
+}
+
+type ConviteState = 'aguardando_dados' | 'aguardando_confirmacao' | 'completo';
+
+const getConviteState = (convite: ConviteParceiro, ficha?: FichaDetalhe): ConviteState => {
+  if (!ficha) return 'aguardando_dados';
+  
+  const parte = convite.parte_faltante;
+  const telefone = parte === 'proprietario' 
+    ? ficha.proprietario_telefone 
+    : ficha.comprador_telefone;
+  const confirmado = parte === 'proprietario'
+    ? ficha.proprietario_confirmado_em
+    : ficha.comprador_confirmado_em;
+    
+  if (confirmado) return 'completo';
+  if (telefone) return 'aguardando_confirmacao';
+  return 'aguardando_dados';
+};
 
 export default function ConvitesRecebidos() {
   const navigate = useNavigate();
@@ -69,7 +100,7 @@ export default function ConvitesRecebidos() {
       const [fichas, corretores] = await Promise.all([
         supabase
           .from('fichas_visita')
-          .select('id, imovel_endereco, imovel_tipo, data_visita')
+          .select('id, imovel_endereco, imovel_tipo, data_visita, proprietario_telefone, comprador_telefone, proprietario_confirmado_em, comprador_confirmado_em')
           .in('id', fichaIds),
         supabase
           .from('profiles')
@@ -77,10 +108,10 @@ export default function ConvitesRecebidos() {
           .in('user_id', corretorIds)
       ]);
       
-      const fichasMap: Record<string, any> = {};
+      const fichasMap: Record<string, FichaDetalhe> = {};
       const corretoresMap: Record<string, string> = {};
       
-      fichas.data?.forEach(f => { fichasMap[f.id] = f; });
+      fichas.data?.forEach(f => { fichasMap[f.id] = f as FichaDetalhe; });
       corretores.data?.forEach(c => { corretoresMap[c.user_id] = c.nome; });
       
       return { fichas: fichasMap, corretores: corretoresMap };
@@ -165,9 +196,25 @@ export default function ConvitesRecebidos() {
     c.status === 'pendente' && !isPast(new Date(c.expira_em))
   ) || [];
   
-  const convitesOutros = convites?.filter(c => 
-    c.status !== 'pendente' || isPast(new Date(c.expira_em))
-  ) || [];
+  // Convites aceitos que ainda precisam de ação (dados ou confirmação)
+  const convitesEmAndamento = convites?.filter(c => {
+    if (c.status !== 'aceito') return false;
+    const ficha = detalhes?.fichas?.[c.ficha_id];
+    const state = getConviteState(c, ficha);
+    return state !== 'completo';
+  }) || [];
+  
+  // Histórico: convites completos, recusados ou expirados
+  const convitesHistorico = convites?.filter(c => {
+    if (c.status === 'recusado') return true;
+    if (c.status === 'pendente' && isPast(new Date(c.expira_em))) return true;
+    if (c.status === 'aceito') {
+      const ficha = detalhes?.fichas?.[c.ficha_id];
+      const state = getConviteState(c, ficha);
+      return state === 'completo';
+    }
+    return false;
+  }) || [];
 
   if (isLoading) {
     return (
@@ -305,12 +352,86 @@ export default function ConvitesRecebidos() {
           </div>
         )}
 
+        {/* Em Andamento */}
+        {convitesEmAndamento.length > 0 && (
+          <div className="mb-8">
+            <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
+              <PlayCircle className="h-5 w-5 text-primary" />
+              Em Andamento ({convitesEmAndamento.length})
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {convitesEmAndamento.map((convite) => {
+                const ficha = detalhes?.fichas?.[convite.ficha_id];
+                const corretorNome = detalhes?.corretores?.[convite.corretor_origem_id];
+                const state = getConviteState(convite, ficha);
+                
+                return (
+                  <Card key={convite.id} className="border-primary/30 bg-primary/5">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-base font-medium line-clamp-1">
+                          {ficha?.imovel_tipo || 'Imóvel'}
+                        </CardTitle>
+                        {state === 'aguardando_dados' ? (
+                          <Badge variant="warning" className="flex items-center gap-1">
+                            <FileEdit className="h-3 w-3" />
+                            Aguardando dados
+                          </Badge>
+                        ) : (
+                          <Badge variant="default" className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Aguardando confirmação
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span className="line-clamp-1">{ficha?.imovel_endereco || 'Endereço não disponível'}</span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        <span>Parceria com: <strong className="text-foreground">{corretorNome || 'Corretor'}</strong></span>
+                      </div>
+                      
+                      {ficha?.data_visita && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>Visita: {format(new Date(ficha.data_visita), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-2 text-sm">
+                        <Badge variant="outline" className="text-xs">
+                          Preencher: {convite.parte_faltante === 'comprador' ? 'Comprador' : 'Proprietário'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="pt-2">
+                        <Button 
+                          className="w-full" 
+                          size="sm"
+                          onClick={() => navigate(`/convite-parceiro/${convite.token}`)}
+                        >
+                          <PlayCircle className="h-4 w-4 mr-2" />
+                          Continuar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Histórico */}
-        {convitesOutros.length > 0 && (
+        {convitesHistorico.length > 0 && (
           <div>
             <h2 className="font-display text-lg font-semibold mb-4">Histórico</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {convitesOutros.map((convite) => {
+              {convitesHistorico.map((convite) => {
                 const ficha = detalhes?.fichas?.[convite.ficha_id];
                 const corretorNome = detalhes?.corretores?.[convite.corretor_origem_id];
                 
