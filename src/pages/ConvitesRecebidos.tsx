@@ -17,7 +17,8 @@ import {
   Inbox,
   Send,
   PlayCircle,
-  FileEdit
+  FileEdit,
+  FileText
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -247,21 +248,31 @@ export default function ConvitesRecebidos() {
             <h1 className="font-display text-2xl md:text-3xl font-bold hidden sm:block">
               Convites de Parceria
             </h1>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/convites-enviados')}
-              className="hidden sm:flex"
-            >
-              <Send className="h-4 w-4 mr-2" />
-              Ver Enviados
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/convites-enviados')}
+                className="hidden sm:flex"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Ver Enviados
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/fichas-parceiro')}
+                className="hidden sm:flex"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Fichas como Parceiro
+              </Button>
+            </div>
           </div>
           <p className="text-muted-foreground">
             Gerencie os convites de parceria recebidos de outros corretores
           </p>
 
           {/* Mobile Tab Navigation */}
-          <div className="sm:hidden mt-4">
+          <div className="sm:hidden mt-4 space-y-2">
             <div className="flex gap-2">
               <Button variant="default" className="flex-1" size="sm">
                 <Inbox className="h-4 w-4 mr-2" />
@@ -272,6 +283,15 @@ export default function ConvitesRecebidos() {
                 Enviados
               </Button>
             </div>
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              size="sm" 
+              onClick={() => navigate('/fichas-parceiro')}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Fichas como Parceiro
+            </Button>
           </div>
         </div>
 
