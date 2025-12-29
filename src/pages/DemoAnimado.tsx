@@ -20,7 +20,11 @@ import {
   ArrowRight,
   Volume2,
   VolumeX,
-  Loader2
+  Loader2,
+  Maximize,
+  Minimize,
+  Video,
+  X
 } from 'lucide-react';
 
 // Demo steps with timing, content and narration text
@@ -158,6 +162,12 @@ export default function DemoAnimado() {
   const [audioCache, setAudioCache] = useState<Record<string, string>>({});
   const [audioReady, setAudioReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Recording mode states
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isRecordingMode, setIsRecordingMode] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const demoContainerRef = useRef<HTMLDivElement | null>(null);
 
   const currentStep = DEMO_STEPS[currentStepIndex];
   const totalDuration = DEMO_STEPS.reduce((acc, step) => acc + step.duration, 0);
@@ -308,6 +318,91 @@ export default function DemoAnimado() {
     }
     setAudioEnabled(prev => !prev);
   }, [audioEnabled]);
+
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(async () => {
+    if (!document.fullscreenElement) {
+      try {
+        await demoContainerRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error('Fullscreen not supported:', err);
+      }
+    } else {
+      await document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Recording mode with countdown
+  const startRecordingMode = useCallback(async () => {
+    setIsRecordingMode(true);
+    
+    // Enter fullscreen
+    if (!document.fullscreenElement && demoContainerRef.current) {
+      try {
+        await demoContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error('Fullscreen not supported:', err);
+      }
+    }
+
+    // Reset demo
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setCurrentStepIndex(0);
+    setStepProgress(0);
+    setTypingIndex(0);
+    setIsPlaying(false);
+
+    // Generate audio if needed
+    if (!audioReady && audioEnabled) {
+      await generateAllAudio();
+    }
+
+    // Start countdown
+    setCountdown(5);
+  }, [audioReady, audioEnabled, generateAllAudio]);
+
+  // Countdown effect
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    if (countdown === 0) {
+      setCountdown(null);
+      setIsPlaying(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown(prev => prev !== null ? prev - 1 : null);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  // Exit recording mode
+  const exitRecordingMode = useCallback(async () => {
+    setIsRecordingMode(false);
+    setCountdown(null);
+    setIsPlaying(false);
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
 
   const renderContent = () => {
     switch (currentStep.content) {
@@ -624,36 +719,85 @@ export default function DemoAnimado() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
-            <Shield className="h-6 w-6" />
-            VisitaSegura
-          </Link>
-          <Link to="/">
-            <Button variant="outline" size="sm">
-              Voltar ao início
-            </Button>
-          </Link>
-        </div>
-      </header>
+  // Calculate total duration in seconds for display
+  const totalDurationSeconds = Math.round(totalDuration / 1000);
+  const totalMinutes = Math.floor(totalDurationSeconds / 60);
+  const totalSeconds = totalDurationSeconds % 60;
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Demo Animado com Narração
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Veja como o VisitaSegura funciona na prática com narração em áudio sincronizada.
-          </p>
+  return (
+    <div 
+      ref={demoContainerRef}
+      className={`min-h-screen bg-gradient-to-b from-background to-muted/30 ${isRecordingMode ? 'bg-background' : ''}`}
+    >
+      {/* Countdown Overlay */}
+      {countdown !== null && (
+        <div className="fixed inset-0 z-[100] bg-background/95 flex flex-col items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">Iniciando gravação em...</p>
+            <div className="text-9xl font-bold text-primary animate-pulse">
+              {countdown}
+            </div>
+            <p className="text-sm text-muted-foreground mt-8">
+              Inicie a gravação de tela agora!
+            </p>
+            <Button 
+              variant="ghost" 
+              className="mt-6"
+              onClick={() => {
+                setCountdown(null);
+                exitRecordingMode();
+              }}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+          </div>
         </div>
+      )}
+
+      {/* Recording Mode UI */}
+      {isRecordingMode && countdown === null && (
+        <button
+          onClick={exitRecordingMode}
+          className="fixed top-4 right-4 z-[100] bg-destructive text-destructive-foreground px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-destructive/90 transition-colors"
+        >
+          <X className="h-4 w-4" />
+          Sair do modo gravação
+        </button>
+      )}
+
+      {/* Header - hidden in recording mode */}
+      {!isRecordingMode && (
+        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
+              <Shield className="h-6 w-6" />
+              VisitaSegura
+            </Link>
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                Voltar ao início
+              </Button>
+            </Link>
+          </div>
+        </header>
+      )}
+
+      <main className={`container mx-auto px-4 py-8 ${isRecordingMode ? 'max-w-6xl' : 'max-w-4xl'}`}>
+        {/* Title - hidden in recording mode */}
+        {!isRecordingMode && (
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              Demo Animado com Narração
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Veja como o VisitaSegura funciona na prática com narração em áudio sincronizada.
+            </p>
+          </div>
+        )}
 
         {/* Progress */}
-        <div className="mb-4">
+        <div className={`mb-4 ${isRecordingMode ? 'mt-8' : ''}`}>
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span className="flex items-center gap-2">
               {audioEnabled && audioReady && <Volume2 className="h-4 w-4 text-primary" />}
@@ -664,8 +808,8 @@ export default function DemoAnimado() {
           <Progress value={overallProgress} className="h-2" />
         </div>
 
-        {/* Demo Screen */}
-        <Card className="overflow-hidden mb-6">
+        {/* Demo Screen - 16:9 aspect ratio in recording mode */}
+        <Card className={`overflow-hidden mb-6 ${isRecordingMode ? 'aspect-video' : ''}`}>
           <div className="bg-muted/50 px-4 py-3 border-b flex items-center gap-2">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-500" />
@@ -676,7 +820,7 @@ export default function DemoAnimado() {
               <span className="text-xs text-muted-foreground">app.visitasegura.com.br</span>
             </div>
           </div>
-          <CardContent className="p-0 min-h-[400px] relative overflow-hidden">
+          <CardContent className={`p-0 relative overflow-hidden ${isRecordingMode ? 'h-full' : 'min-h-[400px]'}`}>
             {/* Step Info Overlay */}
             <div className="absolute top-4 left-4 right-4 z-10">
               <div className="bg-background/90 backdrop-blur border rounded-lg p-3 flex items-center gap-3 shadow-lg">
@@ -694,7 +838,7 @@ export default function DemoAnimado() {
             </div>
 
             {/* Content Area */}
-            <div className="pt-20 min-h-[400px]">
+            <div className={`pt-20 ${isRecordingMode ? 'h-full' : 'min-h-[400px]'}`}>
               {renderContent()}
             </div>
           </CardContent>
@@ -737,6 +881,33 @@ export default function DemoAnimado() {
               <Play className="h-6 w-6 ml-1" />
             )}
           </Button>
+
+          {/* Fullscreen button */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-4 w-4" />
+            ) : (
+              <Maximize className="h-4 w-4" />
+            )}
+          </Button>
+
+          {/* Recording mode button - hidden when in recording mode */}
+          {!isRecordingMode && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={startRecordingMode}
+              disabled={isGeneratingAudio}
+              className="gap-2 ml-4"
+            >
+              <Video className="h-4 w-4" />
+              Modo Gravação
+            </Button>
+          )}
         </div>
 
         {/* Audio status */}
@@ -749,20 +920,48 @@ export default function DemoAnimado() {
           </div>
         )}
 
-        {/* Instructions */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            💡 <strong>Dica:</strong> Use um gravador de tela como{' '}
-            <a href="https://www.loom.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              Loom
-            </a>
-            {' '}ou{' '}
-            <a href="https://obsproject.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              OBS
-            </a>
-            {' '}para capturar esta demonstração com áudio.
-          </p>
-        </div>
+        {/* Recording mode info */}
+        {!isRecordingMode && (
+          <>
+            {/* Recording Instructions Card */}
+            <Card className="mt-8 p-6 border-dashed">
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg">
+                  <Video className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold mb-2">Como gravar o demo</h3>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Clique no botão <strong>"Modo Gravação"</strong> acima</li>
+                    <li>A tela entrará em modo fullscreen 16:9</li>
+                    <li>Uma contagem regressiva de 5 segundos começará</li>
+                    <li>Inicie a gravação de tela durante a contagem</li>
+                    <li>O demo começará automaticamente com áudio</li>
+                    <li>Duração total: <strong>{totalMinutes}:{totalSeconds.toString().padStart(2, '0')}</strong></li>
+                  </ol>
+                </div>
+              </div>
+            </Card>
+
+            {/* Tools suggestion */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                🎬 <strong>Ferramentas recomendadas:</strong>{' '}
+                <a href="https://www.loom.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Loom
+                </a>
+                {' • '}
+                <a href="https://obsproject.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  OBS Studio
+                </a>
+                {' • '}
+                Windows (Win+G)
+                {' • '}
+                Mac (Cmd+Shift+5)
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Step Navigation */}
         <div className="mt-8 flex flex-wrap justify-center gap-2">
