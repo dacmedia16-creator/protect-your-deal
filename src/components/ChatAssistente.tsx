@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
+import { MessageCircle, X, Send, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +23,10 @@ interface UserContext {
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistente`;
+
+// Typing speed configuration (ms per character)
+const TYPING_SPEED_MIN = 15;
+const TYPING_SPEED_MAX = 35;
 
 // Map routes to page context and quick replies
 const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[] }> = {
@@ -108,17 +112,21 @@ export function ChatAssistente() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Typing queue for human-like effect
+  const typingQueueRef = useRef<string>('');
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const streamDoneRef = useRef<boolean>(false);
 
   // Get current page context
   const currentPageInfo = useMemo(() => {
     const path = location.pathname;
-    // Try exact match first
     if (PAGE_CONTEXT_MAP[path]) {
       return PAGE_CONTEXT_MAP[path];
     }
-    // Try prefix match for dynamic routes (e.g., /fichas/123)
     const matchingKey = Object.keys(PAGE_CONTEXT_MAP).find(key => 
       path.startsWith(key) && key !== '/'
     );
@@ -186,15 +194,71 @@ export function ChatAssistente() {
     }
   }, [isOpen, isMinimized]);
 
+  // Cleanup typing interval on unmount
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Get random typing speed for human-like variation
+  const getRandomTypingSpeed = () => {
+    return Math.floor(Math.random() * (TYPING_SPEED_MAX - TYPING_SPEED_MIN + 1)) + TYPING_SPEED_MIN;
+  };
+
+  // Process typing queue - reveals text character by character
+  const processTypingQueue = useCallback(() => {
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+    }
+
+    typingIntervalRef.current = setInterval(() => {
+      if (typingQueueRef.current.length > 0) {
+        // Take 1-3 characters at a time for variation
+        const charsToTake = Math.min(
+          Math.floor(Math.random() * 3) + 1,
+          typingQueueRef.current.length
+        );
+        const nextChars = typingQueueRef.current.slice(0, charsToTake);
+        typingQueueRef.current = typingQueueRef.current.slice(charsToTake);
+
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg && lastMsg.role === 'assistant') {
+            updated[updated.length - 1] = {
+              ...lastMsg,
+              content: lastMsg.content + nextChars
+            };
+          }
+          return updated;
+        });
+      } else if (streamDoneRef.current) {
+        // Stream is done and queue is empty - stop typing
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+        setIsTyping(false);
+        setIsLoading(false);
+      }
+    }, getRandomTypingSpeed());
+  }, []);
+
   const streamChat = async (userMessage: string) => {
     const userMsg: Message = { role: 'user', content: userMessage };
     const allMessages = [...messages, userMsg];
     
     setMessages(allMessages);
     setIsLoading(true);
+    setIsTyping(true);
     setInput('');
-
-    let assistantContent = '';
+    
+    // Reset typing state
+    typingQueueRef.current = '';
+    streamDoneRef.current = false;
 
     try {
       const resp = await fetch(CHAT_URL, {
@@ -224,8 +288,13 @@ export function ChatAssistente() {
 
       // Add empty assistant message
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+      
+      // Start processing the typing queue
+      processTypingQueue();
 
-      while (true) {
+      let streamDone = false;
+      
+      while (!streamDone) {
         const { done, value } = await reader.read();
         if (done) break;
         
@@ -241,18 +310,17 @@ export function ChatAssistente() {
           if (!line.startsWith('data: ')) continue;
 
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
+          if (jsonStr === '[DONE]') {
+            streamDone = true;
+            break;
+          }
 
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              assistantContent += content;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
-                return updated;
-              });
+              // Add to typing queue instead of directly updating
+              typingQueueRef.current += content;
             }
           } catch {
             // Incomplete JSON, put back and wait
@@ -275,19 +343,32 @@ export function ChatAssistente() {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              assistantContent += content;
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
-                return updated;
-              });
+              typingQueueRef.current += content;
             }
           } catch { /* ignore */ }
         }
       }
 
+      // Mark stream as done - typing will finish when queue is empty
+      streamDoneRef.current = true;
+      
+      // Cancel reader to ensure connection closes
+      try {
+        await reader.cancel();
+      } catch { /* ignore */ }
+
     } catch (error) {
       console.error('Chat error:', error);
+      // Clear typing state on error
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+        typingIntervalRef.current = null;
+      }
+      typingQueueRef.current = '';
+      streamDoneRef.current = true;
+      setIsTyping(false);
+      setIsLoading(false);
+      
       setMessages(prev => [
         ...prev.filter(m => m.role !== 'assistant' || m.content !== ''),
         { 
@@ -295,8 +376,6 @@ export function ChatAssistente() {
           content: error instanceof Error ? error.message : 'Desculpe, ocorreu um erro. Tente novamente.' 
         }
       ]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -318,6 +397,9 @@ export function ChatAssistente() {
     }
     return currentPageInfo?.quickReplies || DEFAULT_QUICK_REPLIES_USER;
   }, [userContext.isLoggedIn, currentPageInfo]);
+
+  // Determine if we should show typing indicator
+  const showTypingIndicator = isTyping && messages[messages.length - 1]?.content === '';
 
   if (!isOpen) {
     return (
@@ -398,7 +480,7 @@ export function ChatAssistente() {
               </div>
             ))}
             
-            {isLoading && messages[messages.length - 1]?.content === '' && (
+            {showTypingIndicator && (
               <div className="flex justify-start animate-fade-in">
                 <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">
@@ -449,11 +531,7 @@ export function ChatAssistente() {
                 disabled={!input.trim() || isLoading}
                 className="h-10 w-10 rounded-full"
               >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
+                <Send className="h-4 w-4" />
               </Button>
             </div>
           </form>
