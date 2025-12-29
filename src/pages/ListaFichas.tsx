@@ -17,7 +17,8 @@ import {
   Loader2,
   Building2,
   MapPin,
-  Calendar
+  Calendar,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -167,6 +168,8 @@ export default function ListaFichas() {
             {filteredFichas.map((ficha) => {
               const status = statusConfig[ficha.status] || statusConfig.pendente;
               const StatusIcon = status.icon;
+              const isParceiro = ficha.corretor_parceiro_id === user?.id;
+              const temParceiro = !!ficha.corretor_parceiro_id && ficha.user_id === user?.id;
               
               return (
                 <Card 
@@ -178,9 +181,23 @@ export default function ListaFichas() {
                     {/* Mobile Layout */}
                     <div className="md:hidden space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-mono text-xs font-medium text-primary">
-                          #{ficha.protocolo}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-medium text-primary">
+                            #{ficha.protocolo}
+                          </span>
+                          {isParceiro && (
+                            <Badge variant="outline" className="gap-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30">
+                              <Users className="h-2.5 w-2.5" />
+                              Parceiro
+                            </Badge>
+                          )}
+                          {temParceiro && (
+                            <Badge variant="outline" className="gap-1 text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30">
+                              <Users className="h-2.5 w-2.5" />
+                              C/ Parceiro
+                            </Badge>
+                          )}
+                        </div>
                         <Badge variant={status.variant} className="gap-1 text-[10px] shrink-0">
                           <StatusIcon className="h-3 w-3" />
                           {status.label}
@@ -221,6 +238,18 @@ export default function ListaFichas() {
                               <StatusIcon className="h-3 w-3" />
                               {status.label}
                             </Badge>
+                            {isParceiro && (
+                              <Badge variant="outline" className="gap-1 text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                                <Users className="h-3 w-3" />
+                                Você é parceiro
+                              </Badge>
+                            )}
+                            {temParceiro && (
+                              <Badge variant="outline" className="gap-1 text-xs bg-purple-500/10 text-purple-600 border-purple-500/30">
+                                <Users className="h-3 w-3" />
+                                Com parceiro
+                              </Badge>
+                            )}
                           </div>
                           <p className="font-medium truncate">{ficha.imovel_endereco}</p>
                           <p className="text-sm text-muted-foreground">
