@@ -80,24 +80,32 @@ serve(async (req) => {
       );
     }
 
-    // Search for partner broker by phone
-    const { data: parceiroPerfil, error: perfilError } = await supabase
+    // Search for partner broker by phone (normalize both sides to handle different formats)
+    const { data: perfis, error: perfilError } = await supabase
       .from('profiles')
       .select('user_id, nome, telefone')
-      .eq('telefone', telefoneLimpo)
-      .maybeSingle();
+      .not('telefone', 'is', null);
 
     let parceiroEncontrado = false;
     let parceiroId: string | null = null;
     let parceiroNome = 'Corretor';
 
-    if (parceiroPerfil) {
-      parceiroEncontrado = true;
-      parceiroId = parceiroPerfil.user_id;
-      parceiroNome = parceiroPerfil.nome;
-      console.log(`Parceiro encontrado: ${parceiroNome} (${parceiroId})`);
+    if (perfis && !perfilError) {
+      // Find partner by comparing normalized phone numbers
+      const parceiroPerfil = perfis.find(p => 
+        p.telefone?.replace(/\D/g, '') === telefoneLimpo
+      );
+
+      if (parceiroPerfil) {
+        parceiroEncontrado = true;
+        parceiroId = parceiroPerfil.user_id;
+        parceiroNome = parceiroPerfil.nome;
+        console.log(`Parceiro encontrado: ${parceiroNome} (${parceiroId})`);
+      } else {
+        console.log('Parceiro não encontrado no sistema');
+      }
     } else {
-      console.log('Parceiro não encontrado no sistema');
+      console.log('Erro ao buscar perfis:', perfilError);
     }
 
     // Check for existing pending invite
