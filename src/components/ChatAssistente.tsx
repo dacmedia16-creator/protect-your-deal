@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
@@ -105,6 +106,7 @@ const QUICK_REPLIES_VISITOR = [
 export function ChatAssistente() {
   const { user } = useAuth();
   const { role, imobiliaria, assinatura, loading: roleLoading } = useUserRole();
+  const { playNotificationSound } = useNotificationSound();
   const location = useLocation();
   const [profileName, setProfileName] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -286,8 +288,9 @@ export function ChatAssistente() {
       const decoder = new TextDecoder();
       let textBuffer = '';
 
-      // Add empty assistant message
+      // Add empty assistant message and play notification sound
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+      playNotificationSound('info');
       
       // Start processing the typing queue
       processTypingQueue();
