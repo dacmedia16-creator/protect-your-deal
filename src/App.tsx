@@ -228,7 +228,7 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 <Route path="/fichas/:id" element={
-                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin']}>
                     <DetalhesFicha />
                   </ProtectedRoute>
                 } />
