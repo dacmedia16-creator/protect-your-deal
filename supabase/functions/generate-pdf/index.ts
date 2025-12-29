@@ -207,7 +207,7 @@ serve(async (req) => {
         height: 25,
         color: rgb(1, 0.95, 0.9),
       });
-      page.drawText('⚠ ATENÇÃO: Este comprovante foi gerado com apenas uma assinatura.', {
+      page.drawText('[!] ATENCAO: Este comprovante foi gerado com apenas uma assinatura.', {
         x: 55,
         y: yPosition + 3,
         size: 10,
