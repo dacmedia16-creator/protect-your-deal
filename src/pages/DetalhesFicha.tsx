@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +64,8 @@ export default function DetalhesFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { playNotificationSound } = useNotificationSound();
+  const previousStatusRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
   
   const [sendingOtp, setSendingOtp] = useState<'proprietario' | 'comprador' | null>(null);
@@ -119,6 +122,48 @@ export default function DetalhesFicha() {
     },
     enabled: !!user && !!id,
   });
+
+  // Realtime subscription para notificação sonora quando OTP é confirmado
+  useEffect(() => {
+    if (!id || !user) return;
+
+    const channel = supabase
+      .channel(`ficha-otp-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'fichas_visita',
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          const newData = payload.new as { status: string; proprietario_confirmado_em: string | null; comprador_confirmado_em: string | null };
+          const oldData = payload.old as { proprietario_confirmado_em: string | null; comprador_confirmado_em: string | null };
+          
+          // Verificar se houve nova confirmação
+          const novaConfirmacaoProprietario = newData.proprietario_confirmado_em && !oldData.proprietario_confirmado_em;
+          const novaConfirmacaoComprador = newData.comprador_confirmado_em && !oldData.comprador_confirmado_em;
+          
+          if (novaConfirmacaoProprietario || novaConfirmacaoComprador) {
+            playNotificationSound('success');
+            toast({
+              title: '🎉 Confirmação recebida!',
+              description: novaConfirmacaoProprietario 
+                ? 'O proprietário confirmou a visita.' 
+                : 'O comprador confirmou a visita.',
+            });
+            // Atualizar dados da ficha
+            refetch();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, user, playNotificationSound, toast, refetch]);
 
   // Fetch legal acceptance data
   const { data: confirmacoes } = useQuery({
