@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save, User } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
-import { formatPhone, unformatPhone } from '@/lib/phone';
+import { formatPhone, unformatPhone, isValidPhone } from '@/lib/phone';
 
 interface Profile {
   id: string;
@@ -252,13 +252,28 @@ export default function Perfil() {
 
             <div className="space-y-2">
               <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                type="tel"
-                value={telefone}
-                onChange={handleTelefoneChange}
-                placeholder="(00) 00000-0000"
-              />
+              <div className="relative">
+                <Input
+                  id="telefone"
+                  type="tel"
+                  value={telefone}
+                  onChange={handleTelefoneChange}
+                  placeholder="(00) 00000-0000"
+                  className={telefone.length > 0 ? (isValidPhone(telefone) ? 'border-green-500 pr-10' : 'border-destructive pr-10') : ''}
+                />
+                {telefone.length > 0 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {isValidPhone(telefone) ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {telefone.length > 0 && !isValidPhone(telefone) && (
+                <p className="text-xs text-destructive">Mínimo 10 dígitos</p>
+              )}
             </div>
 
             <div className="space-y-2">
