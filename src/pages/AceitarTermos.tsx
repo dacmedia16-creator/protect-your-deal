@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useTermosAceitos } from '@/hooks/useTermosAceitos';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,6 +20,7 @@ const AceitarTermos = () => {
   const [showSkeleton, setShowSkeleton] = useState(false);
   const { user } = useAuth();
   const { role } = useUserRole();
+  const { refetch: refetchTermos } = useTermosAceitos();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -47,6 +49,9 @@ const AceitarTermos = () => {
         title: "Termos aceitos",
         description: "Obrigado por aceitar os Termos de Uso.",
       });
+
+      // IMPORTANTE: Atualizar o cache do hook antes de navegar
+      await refetchTermos();
 
       // Start fade-out transition
       setTransitioning(true);
