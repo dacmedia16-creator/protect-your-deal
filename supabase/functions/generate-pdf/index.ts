@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { ficha_id, app_url } = await req.json();
+    const { ficha_id, app_url, force_partial } = await req.json();
 
     if (!ficha_id) {
       return new Response(
@@ -42,10 +42,23 @@ serve(async (req) => {
       );
     }
 
-    // Check if both parties confirmed
-    if (!ficha.proprietario_confirmado_em || !ficha.comprador_confirmado_em) {
+    // Check confirmations
+    const proprietarioConfirmado = !!ficha.proprietario_confirmado_em;
+    const compradorConfirmado = !!ficha.comprador_confirmado_em;
+    const isPartial = force_partial === true;
+
+    // If not forcing partial, require both confirmations
+    if (!isPartial && (!proprietarioConfirmado || !compradorConfirmado)) {
       return new Response(
         JSON.stringify({ error: 'Ambas as partes precisam confirmar antes de gerar o comprovante' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // For partial, require at least one confirmation
+    if (isPartial && !proprietarioConfirmado && !compradorConfirmado) {
+      return new Response(
+        JSON.stringify({ error: 'Pelo menos uma parte precisa confirmar para gerar o comprovante parcial' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -83,6 +96,7 @@ serve(async (req) => {
     const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://visitasegura.lovable.app';
     const verificationUrl = `${baseUrl}/verificar/${ficha.protocolo}`;
     console.log('Generated verification URL:', verificationUrl);
+    console.log('Generating PDF - isPartial:', isPartial, 'proprietarioConfirmado:', proprietarioConfirmado, 'compradorConfirmado:', compradorConfirmado);
 
     // Create PDF
     const pdfDoc = await PDFDocument.create();
@@ -95,6 +109,7 @@ serve(async (req) => {
     const primaryColor = rgb(0.118, 0.227, 0.373); // #1e3a5f
     const textColor = rgb(0.2, 0.2, 0.2);
     const lightGray = rgb(0.6, 0.6, 0.6);
+    const warningColor = rgb(0.8, 0.4, 0.0); // Orange for warnings
 
     let yPosition = height - 50;
     let logoHeight = 0;
@@ -160,12 +175,17 @@ serve(async (req) => {
       yPosition -= 20;
     }
 
-    page.drawText('COMPROVANTE DE VISITA IMOBILIÁRIA', {
+    // Document title - indicate if partial
+    const docTitle = isPartial 
+      ? 'COMPROVANTE DE VISITA IMOBILIÁRIA (PARCIAL)'
+      : 'COMPROVANTE DE VISITA IMOBILIÁRIA';
+
+    page.drawText(docTitle, {
       x: headerTextX,
       y: yPosition,
-      size: 16,
+      size: isPartial ? 14 : 16,
       font: helveticaBold,
-      color: primaryColor,
+      color: isPartial ? warningColor : primaryColor,
     });
 
     yPosition -= 22;
@@ -176,6 +196,26 @@ serve(async (req) => {
       font: helveticaBold,
       color: primaryColor,
     });
+
+    // Partial warning banner
+    if (isPartial) {
+      yPosition -= 25;
+      page.drawRectangle({
+        x: 50,
+        y: yPosition - 5,
+        width: width - 100,
+        height: 25,
+        color: rgb(1, 0.95, 0.9),
+      });
+      page.drawText('⚠ ATENÇÃO: Este comprovante foi gerado com apenas uma assinatura.', {
+        x: 55,
+        y: yPosition + 3,
+        size: 10,
+        font: helveticaBold,
+        color: warningColor,
+      });
+      yPosition -= 10;
+    }
 
     // Draw line
     yPosition -= 15;
@@ -272,7 +312,8 @@ serve(async (req) => {
       });
     };
 
-    const formatPhone = (phone: string) => {
+    const formatPhone = (phone: string | null) => {
+      if (!phone) return '-';
       const cleaned = phone.replace(/\D/g, '');
       if (cleaned.length === 11) {
         return `(${cleaned.slice(0,2)}) ${cleaned.slice(2,7)}-${cleaned.slice(7)}`;
@@ -303,52 +344,100 @@ serve(async (req) => {
 
     // Owner Section with Legal Data
     yPosition -= 15;
-    yPosition = drawSection('PROPRIETÁRIO - DADOS E ACEITE JURÍDICO', yPosition);
-    yPosition = drawField('Nome', ficha.proprietario_nome || confirmacaoProprietario?.aceite_nome || '-', yPosition);
-    yPosition = drawField('CPF', formatCPF(ficha.proprietario_cpf || confirmacaoProprietario?.aceite_cpf), yPosition);
-    yPosition = drawField('Telefone', formatPhone(ficha.proprietario_telefone), yPosition);
-    yPosition = drawField('Confirmado em', formatDate(ficha.proprietario_confirmado_em), yPosition);
-    
-    if (confirmacaoProprietario) {
-      yPosition -= 5;
-      page.drawText('Dados da Assinatura Digital:', {
+    if (proprietarioConfirmado) {
+      yPosition = drawSection('PROPRIETÁRIO - DADOS E ACEITE JURÍDICO', yPosition);
+      yPosition = drawField('Nome', ficha.proprietario_nome || confirmacaoProprietario?.aceite_nome || '-', yPosition);
+      yPosition = drawField('CPF', formatCPF(ficha.proprietario_cpf || confirmacaoProprietario?.aceite_cpf), yPosition);
+      yPosition = drawField('Telefone', formatPhone(ficha.proprietario_telefone), yPosition);
+      yPosition = drawField('Confirmado em', formatDate(ficha.proprietario_confirmado_em), yPosition);
+      
+      if (confirmacaoProprietario) {
+        yPosition -= 5;
+        page.drawText('Dados da Assinatura Digital:', {
+          x: 50,
+          y: yPosition,
+          size: 9,
+          font: helveticaBold,
+          color: lightGray,
+        });
+        yPosition -= 15;
+        yPosition = drawField('Assinatura', confirmacaoProprietario.aceite_nome || '-', yPosition);
+        yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoProprietario.aceite_cpf), yPosition);
+        yPosition = drawField('IP', confirmacaoProprietario.aceite_ip || 'Não capturado', yPosition);
+        yPosition = drawField('Geolocalização', formatCoords(confirmacaoProprietario.aceite_latitude, confirmacaoProprietario.aceite_longitude), yPosition);
+        yPosition = drawField('Aceite em', confirmacaoProprietario.aceite_em ? formatDate(confirmacaoProprietario.aceite_em) : '-', yPosition);
+      }
+    } else {
+      // Owner did not confirm
+      yPosition = drawSection('PROPRIETÁRIO - NÃO CONFIRMOU', yPosition);
+      page.drawRectangle({
         x: 50,
-        y: yPosition,
-        size: 9,
-        font: helveticaBold,
-        color: lightGray,
+        y: yPosition - 5,
+        width: width - 100,
+        height: 30,
+        color: rgb(1, 0.95, 0.9),
       });
+      page.drawText('O proprietário não confirmou esta visita.', {
+        x: 55,
+        y: yPosition + 5,
+        size: 10,
+        font: helvetica,
+        color: warningColor,
+      });
+      if (ficha.proprietario_telefone) {
+        yPosition -= 20;
+        yPosition = drawField('Telefone', formatPhone(ficha.proprietario_telefone), yPosition);
+      }
       yPosition -= 15;
-      yPosition = drawField('Assinatura', confirmacaoProprietario.aceite_nome || '-', yPosition);
-      yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoProprietario.aceite_cpf), yPosition);
-      yPosition = drawField('IP', confirmacaoProprietario.aceite_ip || 'Não capturado', yPosition);
-      yPosition = drawField('Geolocalização', formatCoords(confirmacaoProprietario.aceite_latitude, confirmacaoProprietario.aceite_longitude), yPosition);
-      yPosition = drawField('Aceite em', confirmacaoProprietario.aceite_em ? formatDate(confirmacaoProprietario.aceite_em) : '-', yPosition);
     }
 
     // Buyer Section with Legal Data
     yPosition -= 15;
-    yPosition = drawSection('COMPRADOR/INTERESSADO - DADOS E ACEITE JURÍDICO', yPosition);
-    yPosition = drawField('Nome', ficha.comprador_nome || confirmacaoComprador?.aceite_nome || '-', yPosition);
-    yPosition = drawField('CPF', formatCPF(ficha.comprador_cpf || confirmacaoComprador?.aceite_cpf), yPosition);
-    yPosition = drawField('Telefone', formatPhone(ficha.comprador_telefone), yPosition);
-    yPosition = drawField('Confirmado em', formatDate(ficha.comprador_confirmado_em), yPosition);
-    
-    if (confirmacaoComprador) {
-      yPosition -= 5;
-      page.drawText('Dados da Assinatura Digital:', {
+    if (compradorConfirmado) {
+      yPosition = drawSection('COMPRADOR/INTERESSADO - DADOS E ACEITE JURÍDICO', yPosition);
+      yPosition = drawField('Nome', ficha.comprador_nome || confirmacaoComprador?.aceite_nome || '-', yPosition);
+      yPosition = drawField('CPF', formatCPF(ficha.comprador_cpf || confirmacaoComprador?.aceite_cpf), yPosition);
+      yPosition = drawField('Telefone', formatPhone(ficha.comprador_telefone), yPosition);
+      yPosition = drawField('Confirmado em', formatDate(ficha.comprador_confirmado_em), yPosition);
+      
+      if (confirmacaoComprador) {
+        yPosition -= 5;
+        page.drawText('Dados da Assinatura Digital:', {
+          x: 50,
+          y: yPosition,
+          size: 9,
+          font: helveticaBold,
+          color: lightGray,
+        });
+        yPosition -= 15;
+        yPosition = drawField('Assinatura', confirmacaoComprador.aceite_nome || '-', yPosition);
+        yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoComprador.aceite_cpf), yPosition);
+        yPosition = drawField('IP', confirmacaoComprador.aceite_ip || 'Não capturado', yPosition);
+        yPosition = drawField('Geolocalização', formatCoords(confirmacaoComprador.aceite_latitude, confirmacaoComprador.aceite_longitude), yPosition);
+        yPosition = drawField('Aceite em', confirmacaoComprador.aceite_em ? formatDate(confirmacaoComprador.aceite_em) : '-', yPosition);
+      }
+    } else {
+      // Buyer did not confirm
+      yPosition = drawSection('COMPRADOR/INTERESSADO - NÃO CONFIRMOU', yPosition);
+      page.drawRectangle({
         x: 50,
-        y: yPosition,
-        size: 9,
-        font: helveticaBold,
-        color: lightGray,
+        y: yPosition - 5,
+        width: width - 100,
+        height: 30,
+        color: rgb(1, 0.95, 0.9),
       });
+      page.drawText('O comprador/interessado não confirmou esta visita.', {
+        x: 55,
+        y: yPosition + 5,
+        size: 10,
+        font: helvetica,
+        color: warningColor,
+      });
+      if (ficha.comprador_telefone) {
+        yPosition -= 20;
+        yPosition = drawField('Telefone', formatPhone(ficha.comprador_telefone), yPosition);
+      }
       yPosition -= 15;
-      yPosition = drawField('Assinatura', confirmacaoComprador.aceite_nome || '-', yPosition);
-      yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoComprador.aceite_cpf), yPosition);
-      yPosition = drawField('IP', confirmacaoComprador.aceite_ip || 'Não capturado', yPosition);
-      yPosition = drawField('Geolocalização', formatCoords(confirmacaoComprador.aceite_latitude, confirmacaoComprador.aceite_longitude), yPosition);
-      yPosition = drawField('Aceite em', confirmacaoComprador.aceite_em ? formatDate(confirmacaoComprador.aceite_em) : '-', yPosition);
     }
 
     // Visit Section
@@ -433,12 +522,16 @@ serve(async (req) => {
         color: lightGray,
       });
 
-      page2.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
+      const footerText = isPartial 
+        ? 'Este documento comprova parcialmente a intermediação do corretor na visita ao imóvel.'
+        : 'Este documento comprova a intermediação do corretor na visita ao imóvel.';
+
+      page2.drawText(footerText, {
         x: 50,
         y: 60,
         size: 9,
         font: helvetica,
-        color: lightGray,
+        color: isPartial ? warningColor : lightGray,
       });
 
       page2.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
@@ -495,12 +588,16 @@ serve(async (req) => {
         color: lightGray,
       });
 
-      page.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
+      const footerText = isPartial 
+        ? 'Este documento comprova parcialmente a intermediação do corretor na visita ao imóvel.'
+        : 'Este documento comprova a intermediação do corretor na visita ao imóvel.';
+
+      page.drawText(footerText, {
         x: 50,
         y: 60,
         size: 9,
         font: helvetica,
-        color: lightGray,
+        color: isPartial ? warningColor : lightGray,
       });
 
       page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
