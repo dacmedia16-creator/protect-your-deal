@@ -26,7 +26,8 @@ import {
   Smartphone,
   Menu,
   MapPin,
-  Phone
+  Phone,
+  Headphones
 } from 'lucide-react';
 
 interface Plano {
@@ -175,6 +176,13 @@ const Index = () => {
               <Smartphone className="h-4 w-4" />
               Baixar App
             </Link>
+            <Link 
+              to="/tour-audio" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <Headphones className="h-4 w-4" />
+              Tour em Áudio
+            </Link>
           </nav>
           
           <div className="flex items-center gap-3">
@@ -233,6 +241,14 @@ const Index = () => {
                     >
                       <Smartphone className="h-4 w-4" />
                       Baixar App
+                    </Link>
+                    <Link 
+                      to="/tour-audio" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2"
+                    >
+                      <Headphones className="h-4 w-4" />
+                      Tour em Áudio
                     </Link>
                   </nav>
                   
