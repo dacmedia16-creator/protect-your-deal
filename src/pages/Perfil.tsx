@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotificationSettings } from '@/hooks/useNotificationSettings';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
 import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
@@ -26,6 +29,8 @@ interface Profile {
 export default function Perfil() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { soundEnabled, toggleSound } = useNotificationSettings();
+  const { playNotificationSound } = useNotificationSound();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -283,6 +288,43 @@ export default function Perfil() {
                 value={imobiliaria}
                 onChange={(e) => setImobiliaria(e.target.value)}
                 placeholder="Nome da imobiliária"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notificações
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {soundEnabled ? (
+                  <Volume2 className="h-5 w-5 text-primary" />
+                ) : (
+                  <VolumeX className="h-5 w-5 text-muted-foreground" />
+                )}
+                <div>
+                  <p className="font-medium">Som de notificação</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tocar som ao receber confirmações
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={soundEnabled}
+                onCheckedChange={() => {
+                  toggleSound();
+                  if (!soundEnabled) {
+                    // Play a test sound when enabling
+                    setTimeout(() => playNotificationSound('success'), 100);
+                  }
+                }}
               />
             </div>
           </CardContent>

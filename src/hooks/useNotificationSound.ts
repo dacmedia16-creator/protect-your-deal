@@ -1,9 +1,16 @@
 import { useCallback, useRef } from 'react';
+import { useNotificationSettings } from './useNotificationSettings';
 
 export function useNotificationSound() {
   const audioContextRef = useRef<AudioContext | null>(null);
+  const { soundEnabled } = useNotificationSettings();
 
   const playNotificationSound = useCallback((type: 'warning' | 'info' | 'success' = 'info') => {
+    // Check if sound is enabled
+    if (!soundEnabled) {
+      return;
+    }
+
     try {
       // Create or reuse AudioContext
       if (!audioContextRef.current) {
@@ -39,7 +46,6 @@ export function useNotificationSound() {
       // Play the notes
       freqs.forEach((freq, index) => {
         const startTime = now + index * 0.12;
-        const endTime = startTime + 0.15;
         
         if (index === 0) {
           oscillator.frequency.setValueAtTime(freq, startTime);
@@ -58,7 +64,7 @@ export function useNotificationSound() {
     } catch (error) {
       console.error('Error playing notification sound:', error);
     }
-  }, []);
+  }, [soundEnabled]);
 
   return { playNotificationSound };
 }
