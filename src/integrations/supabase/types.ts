@@ -310,7 +310,7 @@ export type Database = {
           comprador_confirmado_em: string | null
           comprador_cpf: string | null
           comprador_nome: string | null
-          comprador_telefone: string
+          comprador_telefone: string | null
           created_at: string
           data_visita: string
           id: string
@@ -322,7 +322,7 @@ export type Database = {
           proprietario_confirmado_em: string | null
           proprietario_cpf: string | null
           proprietario_nome: string | null
-          proprietario_telefone: string
+          proprietario_telefone: string | null
           protocolo: string
           status: string
           updated_at: string
@@ -333,7 +333,7 @@ export type Database = {
           comprador_confirmado_em?: string | null
           comprador_cpf?: string | null
           comprador_nome?: string | null
-          comprador_telefone: string
+          comprador_telefone?: string | null
           created_at?: string
           data_visita: string
           id?: string
@@ -345,7 +345,7 @@ export type Database = {
           proprietario_confirmado_em?: string | null
           proprietario_cpf?: string | null
           proprietario_nome?: string | null
-          proprietario_telefone: string
+          proprietario_telefone?: string | null
           protocolo: string
           status?: string
           updated_at?: string
@@ -356,7 +356,7 @@ export type Database = {
           comprador_confirmado_em?: string | null
           comprador_cpf?: string | null
           comprador_nome?: string | null
-          comprador_telefone?: string
+          comprador_telefone?: string | null
           created_at?: string
           data_visita?: string
           id?: string
@@ -368,7 +368,7 @@ export type Database = {
           proprietario_confirmado_em?: string | null
           proprietario_cpf?: string | null
           proprietario_nome?: string | null
-          proprietario_telefone?: string
+          proprietario_telefone?: string | null
           protocolo?: string
           status?: string
           updated_at?: string

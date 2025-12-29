@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,17 +38,21 @@ import {
   Shield,
   MapPin,
   Fingerprint,
-  Trash2
+  Trash2,
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { validateCPF, formatCPF as formatCPFLib } from '@/lib/cpf';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
   aguardando_comprador: { label: 'Aguardando Comprador', variant: 'outline', icon: Clock },
   aguardando_proprietario: { label: 'Aguardando Proprietário', variant: 'outline', icon: Clock },
   completo: { label: 'Confirmado', variant: 'default', icon: CheckCircle },
+  finalizado_parcial: { label: 'Finalizado (Parcial)', variant: 'outline', icon: CheckCircle },
   expirado: { label: 'Expirado', variant: 'destructive', icon: Clock },
 };
 
@@ -59,12 +66,30 @@ export default function DetalhesFicha() {
   const [sendingOtp, setSendingOtp] = useState<'proprietario' | 'comprador' | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [finalizingPartial, setFinalizingPartial] = useState(false);
   const [lastOtpResult, setLastOtpResult] = useState<{
     tipo: string;
     simulation: boolean;
     codigo?: string;
     verification_url?: string;
   } | null>(null);
+
+  // State for completing missing party data
+  const [showCompletarProprietario, setShowCompletarProprietario] = useState(false);
+  const [showCompletarComprador, setShowCompletarComprador] = useState(false);
+  const [completarProprietarioData, setCompletarProprietarioData] = useState({
+    nome: '',
+    cpf: '',
+    telefone: '',
+    autopreenchimento: false,
+  });
+  const [completarCompradorData, setCompletarCompradorData] = useState({
+    nome: '',
+    cpf: '',
+    telefone: '',
+    autopreenchimento: false,
+  });
+  const [savingCompletarData, setSavingCompletarData] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -102,11 +127,15 @@ export default function DetalhesFicha() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && !!id && ficha?.status === 'completo',
+    enabled: !!user && !!id && (ficha?.status === 'completo' || ficha?.status === 'finalizado_parcial'),
   });
 
   const confirmacaoProprietario = confirmacoes?.find(c => c.tipo === 'proprietario');
   const confirmacaoComprador = confirmacoes?.find(c => c.tipo === 'comprador');
+
+  // Check if party data is missing
+  const proprietarioFaltando = !ficha?.proprietario_telefone;
+  const compradorFaltando = !ficha?.comprador_telefone;
 
   const formatPhone = (phone: string) => {
     const numbers = phone.replace(/\D/g, '');
@@ -114,6 +143,14 @@ export default function DetalhesFicha() {
       return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
     }
     return phone;
+  };
+
+  const formatPhoneInput = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
   };
 
   const formatCPF = (cpf: string | null) => {
@@ -199,18 +236,20 @@ export default function DetalhesFicha() {
     const phone = tipo === 'proprietario' ? ficha.proprietario_telefone : ficha.comprador_telefone;
     const nome = tipo === 'proprietario' ? ficha.proprietario_nome : ficha.comprador_nome;
     
+    if (!phone) return;
+    
     const message = `🏠 *VisitaSegura*\n\nOlá ${nome}!\n\nVocê está confirmando uma visita ao imóvel:\n📍 ${ficha.imovel_endereco}\n\nSeu código de confirmação é:\n\n🔐 *${lastOtpResult.codigo}*\n\nOu acesse o link:\n${lastOtpResult.verification_url}\n\n⏰ Este código expira em 30 minutos.`;
     
     openWhatsApp(phone, message);
   };
 
-  const downloadPdf = async () => {
+  const downloadPdf = async (forcePartial = false) => {
     if (!ficha) return;
     
     setDownloadingPdf(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-pdf', {
-        body: { ficha_id: ficha.id, app_url: window.location.origin },
+        body: { ficha_id: ficha.id, app_url: window.location.origin, force_partial: forcePartial },
       });
 
       if (error) {
@@ -235,7 +274,7 @@ export default function DetalhesFicha() {
 
       toast({
         title: 'PDF gerado com sucesso!',
-        description: 'O comprovante foi baixado.',
+        description: forcePartial ? 'O comprovante parcial foi baixado.' : 'O comprovante foi baixado.',
       });
     } catch (err) {
       toast({
@@ -245,6 +284,132 @@ export default function DetalhesFicha() {
       });
     } finally {
       setDownloadingPdf(false);
+    }
+  };
+
+  const handleFinalizarParcial = async () => {
+    if (!ficha) return;
+    
+    setFinalizingPartial(true);
+    try {
+      // Update status to finalizado_parcial
+      const { error } = await supabase
+        .from('fichas_visita')
+        .update({ status: 'finalizado_parcial' })
+        .eq('id', ficha.id);
+
+      if (error) throw error;
+
+      // Generate and download PDF
+      await downloadPdf(true);
+      
+      // Refresh data
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['fichas'] });
+
+      toast({
+        title: 'Ficha finalizada',
+        description: 'A ficha foi finalizada com assinatura parcial.',
+      });
+    } catch (err) {
+      console.error('Erro ao finalizar parcialmente:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao finalizar a ficha',
+      });
+    } finally {
+      setFinalizingPartial(false);
+    }
+  };
+
+  const handleSaveCompletarData = async (tipo: 'proprietario' | 'comprador') => {
+    if (!ficha) return;
+
+    const data = tipo === 'proprietario' ? completarProprietarioData : completarCompradorData;
+    
+    // Validate
+    if (!data.telefone || data.telefone.replace(/\D/g, '').length < 10) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Telefone é obrigatório',
+      });
+      return;
+    }
+
+    if (!data.autopreenchimento && (!data.nome || data.nome.length < 2)) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Nome é obrigatório',
+      });
+      return;
+    }
+
+    if (data.cpf && !validateCPF(data.cpf)) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'CPF inválido',
+      });
+      return;
+    }
+
+    setSavingCompletarData(true);
+    try {
+      const updateData = tipo === 'proprietario' 
+        ? {
+            proprietario_telefone: data.telefone.replace(/\D/g, ''),
+            proprietario_nome: data.autopreenchimento ? null : data.nome,
+            proprietario_cpf: data.cpf || null,
+            proprietario_autopreenchimento: data.autopreenchimento,
+          }
+        : {
+            comprador_telefone: data.telefone.replace(/\D/g, ''),
+            comprador_nome: data.autopreenchimento ? null : data.nome,
+            comprador_cpf: data.cpf || null,
+            comprador_autopreenchimento: data.autopreenchimento,
+          };
+
+      const { error } = await supabase
+        .from('fichas_visita')
+        .update(updateData)
+        .eq('id', ficha.id);
+
+      if (error) throw error;
+
+      // Refresh data
+      await refetch();
+
+      // Close form
+      if (tipo === 'proprietario') {
+        setShowCompletarProprietario(false);
+        setCompletarProprietarioData({ nome: '', cpf: '', telefone: '', autopreenchimento: false });
+      } else {
+        setShowCompletarComprador(false);
+        setCompletarCompradorData({ nome: '', cpf: '', telefone: '', autopreenchimento: false });
+      }
+
+      toast({
+        title: 'Dados salvos!',
+        description: `Dados do ${tipo === 'proprietario' ? 'proprietário' : 'comprador'} foram adicionados.`,
+      });
+
+      // Ask if user wants to send OTP now
+      setTimeout(() => {
+        sendOtp(tipo);
+      }, 500);
+
+    } catch (err) {
+      console.error('Erro ao salvar dados:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao salvar os dados',
+      });
+    } finally {
+      setSavingCompletarData(false);
     }
   };
 
@@ -299,6 +464,11 @@ export default function DetalhesFicha() {
   const status = statusConfig[ficha.status] || statusConfig.pendente;
   const StatusIcon = status.icon;
 
+  // Check if can finalize partially (at least one confirmation)
+  const temAlgumaConfirmacao = ficha.proprietario_confirmado_em || ficha.comprador_confirmado_em;
+  const ambasConfirmadas = ficha.proprietario_confirmado_em && ficha.comprador_confirmado_em;
+  const podeFinalizarParcial = temAlgumaConfirmacao && !ambasConfirmadas && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial';
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -326,7 +496,7 @@ export default function DetalhesFicha() {
                 <StatusIcon className="h-3 w-3" />
                 {status.label}
               </Badge>
-              {ficha.status !== 'completo' && (
+              {ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -362,7 +532,7 @@ export default function DetalhesFicha() {
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="space-y-6">
           {/* Status Card */}
-          <Card className={ficha.status === 'completo' ? 'border-success/50 bg-success/5' : ''}>
+          <Card className={(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') ? 'border-success/50 bg-success/5' : ''}>
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <div className="flex items-center gap-3">
@@ -370,6 +540,11 @@ export default function DetalhesFicha() {
                     <div className="flex items-center gap-2 text-success">
                       <CheckCircle className="h-5 w-5" />
                       <span className="text-sm font-medium">Proprietário confirmou</span>
+                    </div>
+                  ) : proprietarioFaltando ? (
+                    <div className="flex items-center gap-2 text-amber-500">
+                      <AlertTriangle className="h-5 w-5" />
+                      <span className="text-sm">Proprietário não preenchido</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -384,6 +559,11 @@ export default function DetalhesFicha() {
                       <CheckCircle className="h-5 w-5" />
                       <span className="text-sm font-medium">Comprador confirmou</span>
                     </div>
+                  ) : compradorFaltando ? (
+                    <div className="flex items-center gap-2 text-amber-500">
+                      <AlertTriangle className="h-5 w-5" />
+                      <span className="text-sm">Comprador não preenchido</span>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Clock className="h-5 w-5" />
@@ -395,19 +575,21 @@ export default function DetalhesFicha() {
             </CardContent>
           </Card>
 
-          {/* Download PDF - only when complete */}
-          {ficha.status === 'completo' && (
+          {/* Download PDF - when complete or finalized partial */}
+          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div>
                     <h3 className="font-semibold text-foreground">Comprovante Disponível</h3>
                     <p className="text-sm text-muted-foreground">
-                      Ambas as partes confirmaram. Baixe o comprovante com QR code de verificação.
+                      {ficha.status === 'finalizado_parcial' 
+                        ? 'Ficha finalizada com assinatura parcial. Baixe o comprovante.'
+                        : 'Ambas as partes confirmaram. Baixe o comprovante com QR code de verificação.'}
                     </p>
                   </div>
                   <Button 
-                    onClick={downloadPdf}
+                    onClick={() => downloadPdf(ficha.status === 'finalizado_parcial')}
                     disabled={downloadingPdf}
                     className="gap-2 min-w-[180px]"
                   >
@@ -418,6 +600,57 @@ export default function DetalhesFicha() {
                     )}
                     Baixar Comprovante PDF
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Finalizar Parcialmente */}
+          {podeFinalizarParcial && (
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      Finalizar com assinatura parcial
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Apenas {ficha.proprietario_confirmado_em ? 'o proprietário' : 'o comprador'} confirmou. 
+                      Você pode gerar o comprovante mesmo assim.
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline"
+                        className="gap-2 min-w-[180px] border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+                        disabled={finalizingPartial}
+                      >
+                        {finalizingPartial ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                        Finalizar Parcialmente
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Finalizar com assinatura parcial?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          O comprovante será gerado apenas com a confirmação de {ficha.proprietario_confirmado_em ? 'o proprietário' : 'o comprador'}. 
+                          O PDF indicará claramente que apenas uma parte confirmou.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleFinalizarParcial}>
+                          Finalizar e Baixar PDF
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
@@ -449,8 +682,220 @@ export default function DetalhesFicha() {
             </Alert>
           )}
 
-          {/* Ações */}
-          {ficha.status !== 'completo' && (
+          {/* Completar dados do Proprietário */}
+          {proprietarioFaltando && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && (
+            <Card className="border-amber-500/30">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Dados do Proprietário</CardTitle>
+                      <CardDescription>Preencha os dados para enviar o código de confirmação</CardDescription>
+                    </div>
+                  </div>
+                  {!showCompletarProprietario && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowCompletarProprietario(true)}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              {showCompletarProprietario && (
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                    <Checkbox 
+                      id="prop_autopreenchimento"
+                      checked={completarProprietarioData.autopreenchimento}
+                      onCheckedChange={(checked) => setCompletarProprietarioData({ 
+                        ...completarProprietarioData, 
+                        autopreenchimento: checked === true,
+                        nome: checked ? '' : completarProprietarioData.nome,
+                        cpf: checked ? '' : completarProprietarioData.cpf
+                      })}
+                    />
+                    <label htmlFor="prop_autopreenchimento" className="text-sm cursor-pointer">
+                      <span className="font-medium">Deixar o proprietário preencher</span>
+                      <p className="text-xs text-muted-foreground">O proprietário preencherá nome e CPF ao confirmar</p>
+                    </label>
+                  </div>
+
+                  {!completarProprietarioData.autopreenchimento && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Nome completo *</Label>
+                        <Input
+                          placeholder="Nome do proprietário"
+                          value={completarProprietarioData.nome}
+                          onChange={(e) => setCompletarProprietarioData({ ...completarProprietarioData, nome: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>CPF</Label>
+                        <Input
+                          placeholder="000.000.000-00"
+                          value={completarProprietarioData.cpf}
+                          onChange={(e) => setCompletarProprietarioData({ ...completarProprietarioData, cpf: formatCPFLib(e.target.value) })}
+                          maxLength={14}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>Telefone (WhatsApp) *</Label>
+                    <Input
+                      placeholder="(00) 00000-0000"
+                      value={completarProprietarioData.telefone}
+                      onChange={(e) => setCompletarProprietarioData({ ...completarProprietarioData, telefone: formatPhoneInput(e.target.value) })}
+                      maxLength={15}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowCompletarProprietario(false);
+                        setCompletarProprietarioData({ nome: '', cpf: '', telefone: '', autopreenchimento: false });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={() => handleSaveCompletarData('proprietario')}
+                      disabled={savingCompletarData}
+                      className="gap-2"
+                    >
+                      {savingCompletarData ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      Salvar e Enviar OTP
+                    </Button>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          )}
+
+          {/* Completar dados do Comprador */}
+          {compradorFaltando && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && (
+            <Card className="border-amber-500/30">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Dados do Comprador</CardTitle>
+                      <CardDescription>Preencha os dados para enviar o código de confirmação</CardDescription>
+                    </div>
+                  </div>
+                  {!showCompletarComprador && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowCompletarComprador(true)}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              {showCompletarComprador && (
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                    <Checkbox 
+                      id="comp_autopreenchimento"
+                      checked={completarCompradorData.autopreenchimento}
+                      onCheckedChange={(checked) => setCompletarCompradorData({ 
+                        ...completarCompradorData, 
+                        autopreenchimento: checked === true,
+                        nome: checked ? '' : completarCompradorData.nome,
+                        cpf: checked ? '' : completarCompradorData.cpf
+                      })}
+                    />
+                    <label htmlFor="comp_autopreenchimento" className="text-sm cursor-pointer">
+                      <span className="font-medium">Deixar o comprador preencher</span>
+                      <p className="text-xs text-muted-foreground">O comprador preencherá nome e CPF ao confirmar</p>
+                    </label>
+                  </div>
+
+                  {!completarCompradorData.autopreenchimento && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Nome completo *</Label>
+                        <Input
+                          placeholder="Nome do comprador"
+                          value={completarCompradorData.nome}
+                          onChange={(e) => setCompletarCompradorData({ ...completarCompradorData, nome: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>CPF</Label>
+                        <Input
+                          placeholder="000.000.000-00"
+                          value={completarCompradorData.cpf}
+                          onChange={(e) => setCompletarCompradorData({ ...completarCompradorData, cpf: formatCPFLib(e.target.value) })}
+                          maxLength={14}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>Telefone (WhatsApp) *</Label>
+                    <Input
+                      placeholder="(00) 00000-0000"
+                      value={completarCompradorData.telefone}
+                      onChange={(e) => setCompletarCompradorData({ ...completarCompradorData, telefone: formatPhoneInput(e.target.value) })}
+                      maxLength={15}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowCompletarComprador(false);
+                        setCompletarCompradorData({ nome: '', cpf: '', telefone: '', autopreenchimento: false });
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      onClick={() => handleSaveCompletarData('comprador')}
+                      disabled={savingCompletarData}
+                      className="gap-2"
+                    >
+                      {savingCompletarData ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      Salvar e Enviar OTP
+                    </Button>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          )}
+
+          {/* Ações - Enviar OTP */}
+          {ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && (!proprietarioFaltando || !compradorFaltando) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Enviar para Confirmação</CardTitle>
@@ -459,7 +904,7 @@ export default function DetalhesFicha() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-3">
-                {!ficha.proprietario_confirmado_em && (
+                {!ficha.proprietario_confirmado_em && !proprietarioFaltando && (
                   <Button 
                     className="gap-2 flex-1"
                     onClick={() => sendOtp('proprietario')}
@@ -473,7 +918,7 @@ export default function DetalhesFicha() {
                     Enviar para Proprietário
                   </Button>
                 )}
-                {!ficha.comprador_confirmado_em && (
+                {!ficha.comprador_confirmado_em && !compradorFaltando && (
                   <Button 
                     variant={ficha.proprietario_confirmado_em ? 'default' : 'outline'}
                     className="gap-2 flex-1"
@@ -516,65 +961,69 @@ export default function DetalhesFicha() {
             </CardContent>
           </Card>
 
-          {/* Dados do Proprietário */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <User className="h-5 w-5 text-secondary-foreground" />
+          {/* Dados do Proprietário - se preenchido */}
+          {!proprietarioFaltando && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <User className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Proprietário</CardTitle>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Proprietário</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nome</p>
+                    <p className="font-medium">{ficha.proprietario_nome || (ficha.proprietario_autopreenchimento ? '(autopreenchimento)' : '-')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">CPF</p>
+                    <p className="font-medium">{formatCPF(ficha.proprietario_cpf)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Telefone</p>
+                    <p className="font-medium">{formatPhone(ficha.proprietario_telefone)}</p>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <p className="text-sm text-muted-foreground">Nome</p>
-                  <p className="font-medium">{ficha.proprietario_nome}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">CPF</p>
-                  <p className="font-medium">{formatCPF(ficha.proprietario_cpf)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Telefone</p>
-                  <p className="font-medium">{formatPhone(ficha.proprietario_telefone)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Dados do Comprador */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <Users className="h-5 w-5 text-secondary-foreground" />
+          {/* Dados do Comprador - se preenchido */}
+          {!compradorFaltando && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <Users className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Comprador/Visitante</CardTitle>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Comprador/Visitante</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nome</p>
+                    <p className="font-medium">{ficha.comprador_nome || (ficha.comprador_autopreenchimento ? '(autopreenchimento)' : '-')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">CPF</p>
+                    <p className="font-medium">{formatCPF(ficha.comprador_cpf)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Telefone</p>
+                    <p className="font-medium">{formatPhone(ficha.comprador_telefone)}</p>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div>
-                  <p className="text-sm text-muted-foreground">Nome</p>
-                  <p className="font-medium">{ficha.comprador_nome}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">CPF</p>
-                  <p className="font-medium">{formatCPF(ficha.comprador_cpf)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Telefone</p>
-                  <p className="font-medium">{formatPhone(ficha.comprador_telefone)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Data e Observações */}
           <Card>
@@ -604,8 +1053,8 @@ export default function DetalhesFicha() {
             </CardContent>
           </Card>
 
-          {/* Dados Jurídicos - Only when complete */}
-          {ficha.status === 'completo' && (confirmacaoProprietario || confirmacaoComprador) && (
+          {/* Dados Jurídicos - Only when complete or finalized partial */}
+          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (confirmacaoProprietario || confirmacaoComprador) && (
             <Card className="border-primary/20">
               <CardHeader>
                 <div className="flex items-center gap-3">
@@ -708,6 +1157,30 @@ export default function DetalhesFicha() {
                         </p>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {!confirmacaoProprietario && ficha.status === 'finalizado_parcial' && (
+                  <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="font-medium text-sm">Proprietário não confirmou</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Esta ficha foi finalizada sem a confirmação do proprietário.
+                    </p>
+                  </div>
+                )}
+
+                {!confirmacaoComprador && ficha.status === 'finalizado_parcial' && (
+                  <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="font-medium text-sm">Comprador não confirmou</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Esta ficha foi finalizada sem a confirmação do comprador.
+                    </p>
                   </div>
                 )}
 

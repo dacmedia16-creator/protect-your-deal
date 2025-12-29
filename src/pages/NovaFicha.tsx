@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle } from 'lucide-react';
 import { z } from 'zod';
@@ -17,31 +18,64 @@ import { validateCPF, formatCPF } from '@/lib/cpf';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 
-const fichaSchema = z.object({
-  imovel_endereco: z.string().min(5, 'Endereço deve ter no mínimo 5 caracteres'),
-  imovel_tipo: z.string().min(1, 'Selecione o tipo do imóvel'),
-  proprietario_autopreenchimento: z.boolean().default(false),
-  proprietario_nome: z.string().optional(),
-  proprietario_cpf: z.string().optional(),
-  proprietario_telefone: z.string().min(10, 'Telefone do proprietário é obrigatório'),
-  comprador_autopreenchimento: z.boolean().default(false),
-  comprador_nome: z.string().optional(),
-  comprador_cpf: z.string().optional(),
-  comprador_telefone: z.string().min(10, 'Telefone do comprador é obrigatório'),
-  data_visita: z.string().min(1, 'Data da visita é obrigatória'),
-  observacoes: z.string().optional(),
-}).refine((data) => {
-  if (!data.proprietario_autopreenchimento && (!data.proprietario_nome || data.proprietario_nome.length < 2)) {
-    return false;
-  }
-  return true;
-}, { message: 'Nome do proprietário é obrigatório', path: ['proprietario_nome'] })
-.refine((data) => {
-  if (!data.comprador_autopreenchimento && (!data.comprador_nome || data.comprador_nome.length < 2)) {
-    return false;
-  }
-  return true;
-}, { message: 'Nome do comprador é obrigatório', path: ['comprador_nome'] });
+type ModoCriacao = 'completo' | 'proprietario' | 'comprador';
+
+// Schema dinâmico baseado no modo de criação
+const createFichaSchema = (modo: ModoCriacao) => {
+  const baseSchema = z.object({
+    imovel_endereco: z.string().min(5, 'Endereço deve ter no mínimo 5 caracteres'),
+    imovel_tipo: z.string().min(1, 'Selecione o tipo do imóvel'),
+    proprietario_autopreenchimento: z.boolean().default(false),
+    proprietario_nome: z.string().optional(),
+    proprietario_cpf: z.string().optional(),
+    proprietario_telefone: z.string().optional(),
+    comprador_autopreenchimento: z.boolean().default(false),
+    comprador_nome: z.string().optional(),
+    comprador_cpf: z.string().optional(),
+    comprador_telefone: z.string().optional(),
+    data_visita: z.string().min(1, 'Data da visita é obrigatória'),
+    observacoes: z.string().optional(),
+  });
+
+  // Adiciona validações condicionais baseadas no modo
+  return baseSchema.superRefine((data, ctx) => {
+    // Validar proprietário se modo for 'completo' ou 'proprietario'
+    if (modo === 'completo' || modo === 'proprietario') {
+      if (!data.proprietario_telefone || data.proprietario_telefone.replace(/\D/g, '').length < 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Telefone do proprietário é obrigatório',
+          path: ['proprietario_telefone'],
+        });
+      }
+      if (!data.proprietario_autopreenchimento && (!data.proprietario_nome || data.proprietario_nome.length < 2)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Nome do proprietário é obrigatório',
+          path: ['proprietario_nome'],
+        });
+      }
+    }
+
+    // Validar comprador se modo for 'completo' ou 'comprador'
+    if (modo === 'completo' || modo === 'comprador') {
+      if (!data.comprador_telefone || data.comprador_telefone.replace(/\D/g, '').length < 10) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Telefone do comprador é obrigatório',
+          path: ['comprador_telefone'],
+        });
+      }
+      if (!data.comprador_autopreenchimento && (!data.comprador_nome || data.comprador_nome.length < 2)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Nome do comprador é obrigatório',
+          path: ['comprador_nome'],
+        });
+      }
+    }
+  });
+};
 
 type FichaFormData = {
   imovel_endereco: string;
@@ -78,7 +112,7 @@ export default function NovaFicha() {
   const { imobiliariaId, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [enviarWhatsApp, setEnviarWhatsApp] = useState(true);
+  const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   
   const [formData, setFormData] = useState<FichaFormData>({
     imovel_endereco: '',
@@ -136,6 +170,7 @@ export default function NovaFicha() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const fichaSchema = createFichaSchema(modoCriacao);
     const result = fichaSchema.safeParse(formData);
     if (!result.success) {
       toast({
@@ -183,22 +218,26 @@ export default function NovaFicha() {
 
       const protocolo = await generateProtocolo();
       
+      // Preparar dados conforme o modo
+      const incluiProprietario = modoCriacao === 'completo' || modoCriacao === 'proprietario';
+      const incluiComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
+
       const { data, error } = await supabase
         .from('fichas_visita')
         .insert({
           user_id: user.id,
-          imobiliaria_id: dbImobiliariaId || null, // null para corretor autônomo
+          imobiliaria_id: dbImobiliariaId || null,
           protocolo,
           imovel_endereco: formData.imovel_endereco,
           imovel_tipo: formData.imovel_tipo,
-          proprietario_autopreenchimento: formData.proprietario_autopreenchimento,
-          proprietario_nome: formData.proprietario_autopreenchimento ? null : formData.proprietario_nome,
-          proprietario_cpf: formData.proprietario_cpf || null,
-          proprietario_telefone: formData.proprietario_telefone.replace(/\D/g, ''),
-          comprador_autopreenchimento: formData.comprador_autopreenchimento,
-          comprador_nome: formData.comprador_autopreenchimento ? null : formData.comprador_nome,
-          comprador_cpf: formData.comprador_cpf || null,
-          comprador_telefone: formData.comprador_telefone.replace(/\D/g, ''),
+          proprietario_autopreenchimento: incluiProprietario ? formData.proprietario_autopreenchimento : false,
+          proprietario_nome: incluiProprietario && !formData.proprietario_autopreenchimento ? formData.proprietario_nome : null,
+          proprietario_cpf: incluiProprietario ? formData.proprietario_cpf || null : null,
+          proprietario_telefone: incluiProprietario ? formData.proprietario_telefone.replace(/\D/g, '') : null,
+          comprador_autopreenchimento: incluiComprador ? formData.comprador_autopreenchimento : false,
+          comprador_nome: incluiComprador && !formData.comprador_autopreenchimento ? formData.comprador_nome : null,
+          comprador_cpf: incluiComprador ? formData.comprador_cpf || null : null,
+          comprador_telefone: incluiComprador ? formData.comprador_telefone.replace(/\D/g, '') : null,
           data_visita: formData.data_visita,
           observacoes: formData.observacoes || null,
           status: 'pendente',
@@ -208,14 +247,11 @@ export default function NovaFicha() {
 
       if (error) throw error;
 
-      // Send WhatsApp OTP to both parties if enabled
-      if (enviarWhatsApp) {
-        const sendOtpPromises = [];
-        
-        // Get current app URL for the verification link
-        const currentAppUrl = window.location.origin;
+      // Enviar OTP apenas para o lado preenchido
+      const currentAppUrl = window.location.origin;
+      const sendOtpPromises = [];
 
-        // Send to owner
+      if (incluiProprietario) {
         sendOtpPromises.push(
           supabase.functions.invoke('send-otp', {
             body: { ficha_id: data.id, tipo: 'proprietario', app_url: currentAppUrl }
@@ -227,8 +263,9 @@ export default function NovaFicha() {
             return { tipo: 'proprietario', success: true, ...otpData };
           })
         );
-        
-        // Send to buyer
+      }
+
+      if (incluiComprador) {
         sendOtpPromises.push(
           supabase.functions.invoke('send-otp', {
             body: { ficha_id: data.id, tipo: 'comprador', app_url: currentAppUrl }
@@ -240,32 +277,39 @@ export default function NovaFicha() {
             return { tipo: 'comprador', success: true, ...otpData };
           })
         );
+      }
 
+      if (sendOtpPromises.length > 0) {
         const otpResults = await Promise.all(sendOtpPromises);
-        
         const successCount = otpResults.filter(r => r.success).length;
         const simulationMode = otpResults.some(r => r.simulation);
 
-        if (successCount === 2) {
-          toast({
-            title: 'Ficha criada com sucesso!',
-            description: simulationMode 
-              ? `Protocolo: ${protocolo}. OTPs gerados em modo simulação.`
-              : `Protocolo: ${protocolo}. WhatsApp enviado ao proprietário e comprador.`,
-          });
-        } else if (successCount === 1) {
-          toast({
-            title: 'Ficha criada com aviso',
-            description: `Protocolo: ${protocolo}. Apenas um WhatsApp foi enviado.`,
-            variant: 'default',
-          });
+        let toastMessage = '';
+        if (modoCriacao === 'completo') {
+          if (successCount === 2) {
+            toastMessage = simulationMode 
+              ? `OTPs gerados em modo simulação.`
+              : `WhatsApp enviado ao proprietário e comprador.`;
+          } else if (successCount === 1) {
+            toastMessage = `Apenas um WhatsApp foi enviado.`;
+          } else {
+            toastMessage = `Envio de WhatsApp falhou, envie manualmente.`;
+          }
         } else {
-          toast({
-            title: 'Ficha criada',
-            description: `Protocolo: ${protocolo}. Envio de WhatsApp falhou, envie manualmente.`,
-            variant: 'default',
-          });
+          const tipoParte = modoCriacao === 'proprietario' ? 'proprietário' : 'comprador';
+          if (successCount === 1) {
+            toastMessage = simulationMode
+              ? `OTP gerado para ${tipoParte} em modo simulação.`
+              : `WhatsApp enviado para o ${tipoParte}.`;
+          } else {
+            toastMessage = `Falha ao enviar WhatsApp para ${tipoParte}.`;
+          }
         }
+
+        toast({
+          title: 'Ficha criada com sucesso!',
+          description: `Protocolo: ${protocolo}. ${toastMessage}`,
+        });
       } else {
         toast({
           title: 'Ficha criada com sucesso!',
@@ -293,6 +337,9 @@ export default function NovaFicha() {
     );
   }
 
+  const showProprietario = modoCriacao === 'completo' || modoCriacao === 'proprietario';
+  const showComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
@@ -304,6 +351,50 @@ export default function NovaFicha() {
 
       <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Modo de Criação */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Como deseja criar esta ficha?</CardTitle>
+                  <CardDescription>Escolha se quer preencher todos os dados agora ou começar por uma das partes</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={modoCriacao}
+                onValueChange={(value) => setModoCriacao(value as ModoCriacao)}
+                className="grid gap-3"
+              >
+                <div className="flex items-center space-x-3 p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="completo" id="completo" />
+                  <label htmlFor="completo" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Preencher todos os dados agora</span>
+                    <p className="text-sm text-muted-foreground">Proprietário e comprador de uma vez</p>
+                  </label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="proprietario" id="proprietario" />
+                  <label htmlFor="proprietario" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Apenas Proprietário primeiro</span>
+                    <p className="text-sm text-muted-foreground">Preencha o comprador depois na ficha</p>
+                  </label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="comprador" id="comprador" />
+                  <label htmlFor="comprador" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Apenas Comprador primeiro</span>
+                    <p className="text-sm text-muted-foreground">Preencha o proprietário depois na ficha</p>
+                  </label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
           {/* Dados do Imóvel */}
           <Card>
             <CardHeader>
@@ -350,158 +441,162 @@ export default function NovaFicha() {
           </Card>
 
           {/* Dados do Proprietário */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <User className="h-5 w-5 text-secondary-foreground" />
+          {showProprietario && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <User className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Dados do Proprietário</CardTitle>
+                    <CardDescription>Informações do dono do imóvel</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Dados do Proprietário</CardTitle>
-                  <CardDescription>Informações do dono do imóvel</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Toggle de autopreenchimento */}
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Checkbox 
+                    id="proprietario_autopreenchimento"
+                    checked={formData.proprietario_autopreenchimento}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      proprietario_autopreenchimento: checked === true,
+                      proprietario_nome: checked ? '' : formData.proprietario_nome,
+                      proprietario_cpf: checked ? '' : formData.proprietario_cpf
+                    })}
+                  />
+                  <label htmlFor="proprietario_autopreenchimento" className="text-sm cursor-pointer">
+                    <span className="font-medium">Deixar o proprietário preencher</span>
+                    <p className="text-xs text-muted-foreground">O proprietário preencherá nome e CPF ao confirmar a visita</p>
+                  </label>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Toggle de autopreenchimento */}
-              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                <Checkbox 
-                  id="proprietario_autopreenchimento"
-                  checked={formData.proprietario_autopreenchimento}
-                  onCheckedChange={(checked) => setFormData({ 
-                    ...formData, 
-                    proprietario_autopreenchimento: checked === true,
-                    proprietario_nome: checked ? '' : formData.proprietario_nome,
-                    proprietario_cpf: checked ? '' : formData.proprietario_cpf
-                  })}
-                />
-                <label htmlFor="proprietario_autopreenchimento" className="text-sm cursor-pointer">
-                  <span className="font-medium">Deixar o proprietário preencher</span>
-                  <p className="text-xs text-muted-foreground">O proprietário preencherá nome e CPF ao confirmar a visita</p>
-                </label>
-              </div>
 
-              {!formData.proprietario_autopreenchimento && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="proprietario_nome">Nome completo *</Label>
-                    <Input
-                      id="proprietario_nome"
-                      placeholder="Nome do proprietário"
-                      value={formData.proprietario_nome}
-                      onChange={(e) => setFormData({ ...formData, proprietario_nome: e.target.value })}
-                      required={!formData.proprietario_autopreenchimento}
-                    />
+                {!formData.proprietario_autopreenchimento && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="proprietario_nome">Nome completo *</Label>
+                      <Input
+                        id="proprietario_nome"
+                        placeholder="Nome do proprietário"
+                        value={formData.proprietario_nome}
+                        onChange={(e) => setFormData({ ...formData, proprietario_nome: e.target.value })}
+                        required={!formData.proprietario_autopreenchimento}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="proprietario_cpf">CPF</Label>
+                      <Input
+                        id="proprietario_cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.proprietario_cpf}
+                        onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
+                        maxLength={14}
+                        className={!proprietarioCpfValid ? 'border-destructive' : ''}
+                      />
+                      {!proprietarioCpfValid && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          CPF inválido. Verifique os dígitos.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="proprietario_cpf">CPF</Label>
-                    <Input
-                      id="proprietario_cpf"
-                      placeholder="000.000.000-00"
-                      value={formData.proprietario_cpf}
-                      onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
-                      maxLength={14}
-                      className={!proprietarioCpfValid ? 'border-destructive' : ''}
-                    />
-                    {!proprietarioCpfValid && (
-                      <p className="text-xs text-destructive flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        CPF inválido. Verifique os dígitos.
-                      </p>
-                    )}
-                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="proprietario_telefone">Telefone (WhatsApp) *</Label>
+                  <Input
+                    id="proprietario_telefone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.proprietario_telefone}
+                    onChange={(e) => handlePhoneChange('proprietario_telefone', e.target.value)}
+                    maxLength={15}
+                    required
+                  />
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="proprietario_telefone">Telefone (WhatsApp) *</Label>
-                <Input
-                  id="proprietario_telefone"
-                  placeholder="(00) 00000-0000"
-                  value={formData.proprietario_telefone}
-                  onChange={(e) => handlePhoneChange('proprietario_telefone', e.target.value)}
-                  maxLength={15}
-                  required
-                />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Dados do Comprador */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <Users className="h-5 w-5 text-secondary-foreground" />
+          {showComprador && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <Users className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Dados do Comprador/Visitante</CardTitle>
+                    <CardDescription>Informações do interessado no imóvel</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Dados do Comprador/Visitante</CardTitle>
-                  <CardDescription>Informações do interessado no imóvel</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Toggle de autopreenchimento */}
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Checkbox 
+                    id="comprador_autopreenchimento"
+                    checked={formData.comprador_autopreenchimento}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      comprador_autopreenchimento: checked === true,
+                      comprador_nome: checked ? '' : formData.comprador_nome,
+                      comprador_cpf: checked ? '' : formData.comprador_cpf
+                    })}
+                  />
+                  <label htmlFor="comprador_autopreenchimento" className="text-sm cursor-pointer">
+                    <span className="font-medium">Deixar o comprador preencher</span>
+                    <p className="text-xs text-muted-foreground">O comprador preencherá nome e CPF ao confirmar a visita</p>
+                  </label>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Toggle de autopreenchimento */}
-              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                <Checkbox 
-                  id="comprador_autopreenchimento"
-                  checked={formData.comprador_autopreenchimento}
-                  onCheckedChange={(checked) => setFormData({ 
-                    ...formData, 
-                    comprador_autopreenchimento: checked === true,
-                    comprador_nome: checked ? '' : formData.comprador_nome,
-                    comprador_cpf: checked ? '' : formData.comprador_cpf
-                  })}
-                />
-                <label htmlFor="comprador_autopreenchimento" className="text-sm cursor-pointer">
-                  <span className="font-medium">Deixar o comprador preencher</span>
-                  <p className="text-xs text-muted-foreground">O comprador preencherá nome e CPF ao confirmar a visita</p>
-                </label>
-              </div>
 
-              {!formData.comprador_autopreenchimento && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="comprador_nome">Nome completo *</Label>
-                    <Input
-                      id="comprador_nome"
-                      placeholder="Nome do comprador"
-                      value={formData.comprador_nome}
-                      onChange={(e) => setFormData({ ...formData, comprador_nome: e.target.value })}
-                      required={!formData.comprador_autopreenchimento}
-                    />
+                {!formData.comprador_autopreenchimento && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="comprador_nome">Nome completo *</Label>
+                      <Input
+                        id="comprador_nome"
+                        placeholder="Nome do comprador"
+                        value={formData.comprador_nome}
+                        onChange={(e) => setFormData({ ...formData, comprador_nome: e.target.value })}
+                        required={!formData.comprador_autopreenchimento}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="comprador_cpf">CPF</Label>
+                      <Input
+                        id="comprador_cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.comprador_cpf}
+                        onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
+                        maxLength={14}
+                        className={!compradorCpfValid ? 'border-destructive' : ''}
+                      />
+                      {!compradorCpfValid && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          CPF inválido. Verifique os dígitos.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="comprador_cpf">CPF</Label>
-                    <Input
-                      id="comprador_cpf"
-                      placeholder="000.000.000-00"
-                      value={formData.comprador_cpf}
-                      onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
-                      maxLength={14}
-                      className={!compradorCpfValid ? 'border-destructive' : ''}
-                    />
-                    {!compradorCpfValid && (
-                      <p className="text-xs text-destructive flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        CPF inválido. Verifique os dígitos.
-                      </p>
-                    )}
-                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="comprador_telefone">Telefone (WhatsApp) *</Label>
+                  <Input
+                    id="comprador_telefone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.comprador_telefone}
+                    onChange={(e) => handlePhoneChange('comprador_telefone', e.target.value)}
+                    maxLength={15}
+                    required
+                  />
                 </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="comprador_telefone">Telefone (WhatsApp) *</Label>
-                <Input
-                  id="comprador_telefone"
-                  placeholder="(00) 00000-0000"
-                  value={formData.comprador_telefone}
-                  onChange={(e) => handlePhoneChange('comprador_telefone', e.target.value)}
-                  maxLength={15}
-                  required
-                />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Data e Observações */}
           <Card>
@@ -540,25 +635,19 @@ export default function NovaFicha() {
             </CardContent>
           </Card>
 
-          {/* WhatsApp Option */}
+          {/* Info sobre envio automático */}
           <Card className="border-green-500/30 bg-green-500/5">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <Checkbox 
-                  id="enviarWhatsApp" 
-                  checked={enviarWhatsApp}
-                  onCheckedChange={(checked) => setEnviarWhatsApp(checked === true)}
-                />
+                <MessageCircle className="h-5 w-5 text-green-500 mt-0.5" />
                 <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="enviarWhatsApp"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
-                  >
-                    <MessageCircle className="h-4 w-4 text-green-500" />
-                    Enviar WhatsApp automaticamente
-                  </label>
+                  <span className="text-sm font-medium">Envio automático via WhatsApp</span>
                   <p className="text-sm text-muted-foreground">
-                    Ao criar a ficha, enviar código de confirmação via WhatsApp para o proprietário e o comprador.
+                    {modoCriacao === 'completo' 
+                      ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário e o comprador.'
+                      : modoCriacao === 'proprietario'
+                        ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário.'
+                        : 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o comprador.'}
                   </p>
                 </div>
               </div>
@@ -584,7 +673,7 @@ export default function NovaFicha() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="hidden sm:inline">{enviarWhatsApp ? 'Criando e enviando...' : 'Criando...'}</span>
+                    <span className="hidden sm:inline">Criando e enviando...</span>
                     <span className="sm:hidden">Criando...</span>
                   </>
                 ) : (
