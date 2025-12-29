@@ -31,6 +31,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   aguardando_comprador: { label: 'Aguard. Comprador', variant: 'outline', icon: Clock },
   aguardando_proprietario: { label: 'Aguard. Proprietário', variant: 'outline', icon: Clock },
   completo: { label: 'Confirmado', variant: 'default', icon: CheckCircle },
+  finalizado_parcial: { label: 'Finalizado', variant: 'default', icon: CheckCircle },
   expirado: { label: 'Expirado', variant: 'destructive', icon: Clock },
 };
 
@@ -66,8 +67,8 @@ export default function ListaFichas() {
 
   const filteredFichas = fichas?.filter(ficha => {
     if (statusFilter) {
-      if (statusFilter === 'pendente' && ficha.status === 'completo') return false;
-      if (statusFilter === 'completo' && ficha.status !== 'completo') return false;
+      if (statusFilter === 'pendente' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial')) return false;
+      if (statusFilter === 'completo' && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial') return false;
     }
     
     const term = searchTerm.toLowerCase();
@@ -80,8 +81,8 @@ export default function ListaFichas() {
   });
 
   const allCount = fichas?.length || 0;
-  const pendingCount = fichas?.filter(f => f.status !== 'completo').length || 0;
-  const confirmedCount = fichas?.filter(f => f.status === 'completo').length || 0;
+  const pendingCount = fichas?.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length || 0;
+  const confirmedCount = fichas?.filter(f => f.status === 'completo' || f.status === 'finalizado_parcial').length || 0;
 
   const handleTabChange = (value: string) => {
     if (value === 'todas') {

@@ -303,14 +303,15 @@ export default function DetalhesFicha() {
       // Generate and download PDF
       await downloadPdf(true);
       
-      // Refresh data
-      refetch();
       queryClient.invalidateQueries({ queryKey: ['fichas'] });
 
       toast({
         title: 'Ficha finalizada',
         description: 'A ficha foi finalizada com assinatura parcial.',
       });
+
+      // Redirecionar para lista de finalizados
+      navigate('/fichas?status=completo');
     } catch (err) {
       console.error('Erro ao finalizar parcialmente:', err);
       toast({
