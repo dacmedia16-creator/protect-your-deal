@@ -653,6 +653,15 @@ const Index = () => {
                 <Phone className="h-4 w-4 text-primary" />
                 (15) 98178-8214
               </a>
+              <a 
+                href="https://wa.me/5515981788214" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors"
+              >
+                <MessageSquare className="h-4 w-4 text-green-500" />
+                WhatsApp
+              </a>
             </div>
             
             {/* Links */}
