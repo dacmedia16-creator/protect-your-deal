@@ -40,7 +40,9 @@ import {
   Fingerprint,
   Trash2,
   Plus,
-  AlertTriangle
+  AlertTriangle,
+  UserPlus,
+  Share2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -90,6 +92,11 @@ export default function DetalhesFicha() {
     autopreenchimento: false,
   });
   const [savingCompletarData, setSavingCompletarData] = useState(false);
+
+  // State for partner invite
+  const [showConvidarParceiro, setShowConvidarParceiro] = useState(false);
+  const [telefoneParceiro, setTelefoneParceiro] = useState('');
+  const [enviandoConvite, setEnviandoConvite] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -445,6 +452,51 @@ export default function DetalhesFicha() {
     }
   };
 
+  const handleEnviarConviteParceiro = async () => {
+    if (!ficha || !telefoneParceiro) return;
+
+    const parteFaltante = proprietarioFaltando ? 'proprietario' : 'comprador';
+    
+    setEnviandoConvite(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enviar-convite-parceiro', {
+        body: {
+          ficha_id: ficha.id,
+          telefone_parceiro: telefoneParceiro.replace(/\D/g, ''),
+          parte_faltante: parteFaltante,
+          app_url: window.location.origin,
+        },
+      });
+
+      if (error || data.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: data?.error || error?.message || 'Erro ao enviar convite',
+        });
+        return;
+      }
+
+      toast({
+        title: data.parceiro_encontrado ? 'Convite enviado!' : 'Convite criado',
+        description: data.message,
+      });
+
+      setShowConvidarParceiro(false);
+      setTelefoneParceiro('');
+      refetch();
+    } catch (err) {
+      console.error('Erro ao enviar convite:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao enviar convite',
+      });
+    } finally {
+      setEnviandoConvite(false);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -652,6 +704,82 @@ export default function DetalhesFicha() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Enviar para Corretor Parceiro */}
+          {(proprietarioFaltando || compradorFaltando) && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && !ficha.corretor_parceiro_id && (
+            <Card className="border-blue-500/30 bg-blue-500/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Share2 className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Enviar para Corretor Parceiro</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Convide outro corretor para preencher os dados do {proprietarioFaltando ? 'proprietário' : 'comprador'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {!showConvidarParceiro ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowConvidarParceiro(true)}
+                      className="gap-2 border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Convidar Parceiro
+                    </Button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>Telefone do corretor parceiro</Label>
+                        <Input
+                          placeholder="(00) 00000-0000"
+                          value={telefoneParceiro}
+                          onChange={(e) => {
+                            const numbers = e.target.value.replace(/\D/g, '');
+                            if (numbers.length <= 2) setTelefoneParceiro(numbers);
+                            else if (numbers.length <= 7) setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2)}`);
+                            else if (numbers.length <= 11) setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`);
+                            else setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`);
+                          }}
+                          maxLength={15}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          O corretor precisa estar cadastrado no sistema com este telefone
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowConvidarParceiro(false);
+                            setTelefoneParceiro('');
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          onClick={handleEnviarConviteParceiro}
+                          disabled={enviandoConvite || telefoneParceiro.replace(/\D/g, '').length < 10}
+                          className="gap-2"
+                        >
+                          {enviandoConvite ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                          Enviar Convite
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

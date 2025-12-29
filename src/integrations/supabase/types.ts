@@ -304,6 +304,56 @@ export type Database = {
           },
         ]
       }
+      convites_parceiro: {
+        Row: {
+          corretor_origem_id: string
+          corretor_parceiro_id: string | null
+          corretor_parceiro_telefone: string
+          created_at: string
+          expira_em: string
+          ficha_id: string
+          id: string
+          parte_faltante: string
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          corretor_origem_id: string
+          corretor_parceiro_id?: string | null
+          corretor_parceiro_telefone: string
+          created_at?: string
+          expira_em?: string
+          ficha_id: string
+          id?: string
+          parte_faltante: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          corretor_origem_id?: string
+          corretor_parceiro_id?: string | null
+          corretor_parceiro_telefone?: string
+          created_at?: string
+          expira_em?: string
+          ficha_id?: string
+          id?: string
+          parte_faltante?: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_parceiro_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_visita"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fichas_visita: {
         Row: {
           comprador_autopreenchimento: boolean | null
@@ -311,6 +361,7 @@ export type Database = {
           comprador_cpf: string | null
           comprador_nome: string | null
           comprador_telefone: string | null
+          corretor_parceiro_id: string | null
           created_at: string
           data_visita: string
           id: string
@@ -318,6 +369,7 @@ export type Database = {
           imovel_endereco: string
           imovel_tipo: string
           observacoes: string | null
+          parte_preenchida_parceiro: string | null
           proprietario_autopreenchimento: boolean | null
           proprietario_confirmado_em: string | null
           proprietario_cpf: string | null
@@ -334,6 +386,7 @@ export type Database = {
           comprador_cpf?: string | null
           comprador_nome?: string | null
           comprador_telefone?: string | null
+          corretor_parceiro_id?: string | null
           created_at?: string
           data_visita: string
           id?: string
@@ -341,6 +394,7 @@ export type Database = {
           imovel_endereco: string
           imovel_tipo: string
           observacoes?: string | null
+          parte_preenchida_parceiro?: string | null
           proprietario_autopreenchimento?: boolean | null
           proprietario_confirmado_em?: string | null
           proprietario_cpf?: string | null
@@ -357,6 +411,7 @@ export type Database = {
           comprador_cpf?: string | null
           comprador_nome?: string | null
           comprador_telefone?: string | null
+          corretor_parceiro_id?: string | null
           created_at?: string
           data_visita?: string
           id?: string
@@ -364,6 +419,7 @@ export type Database = {
           imovel_endereco?: string
           imovel_tipo?: string
           observacoes?: string | null
+          parte_preenchida_parceiro?: string | null
           proprietario_autopreenchimento?: boolean | null
           proprietario_confirmado_em?: string | null
           proprietario_cpf?: string | null

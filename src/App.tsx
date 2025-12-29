@@ -26,6 +26,7 @@ import RegistroCorretorAutonomo from "./pages/auth/RegistroCorretorAutonomo";
 import RegistroTipo from "./pages/auth/RegistroTipo";
 import AceitarConvite from "./pages/auth/AceitarConvite";
 import CadastroConcluido from "./pages/auth/CadastroConcluido";
+import ConviteParceiro from "./pages/ConviteParceiro";
 
 // Corretor pages
 import Dashboard from "./pages/Dashboard";
@@ -96,6 +97,7 @@ const App = () => (
                 <Route path="/sem-permissao" element={<SemPermissao />} />
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
+                <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
 
                 {/* Super Admin routes */}
                 <Route path="/admin" element={
