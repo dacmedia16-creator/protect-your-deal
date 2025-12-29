@@ -15,7 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 const AceitarTermos = () => {
   const [aceito, setAceito] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const { user } = useAuth();
   const { role } = useUserRole();
   const { toast } = useToast();
@@ -47,12 +48,16 @@ const AceitarTermos = () => {
         description: "Obrigado por aceitar os Termos de Uso.",
       });
 
-      // Show loading skeleton before redirect
-      setRedirecting(true);
+      // Start fade-out transition
+      setTransitioning(true);
       setSubmitting(false);
 
-      // Small delay to show the skeleton transition
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for fade-out, then show skeleton
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setShowSkeleton(true);
+
+      // Wait for skeleton to appear, then redirect
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       // Redirect based on user role
       const redirectPath = getRedirectPathByRole(role);
@@ -68,28 +73,31 @@ const AceitarTermos = () => {
     }
   };
 
-  // Show loading skeleton while redirecting
-  if (redirecting) {
+  // Show loading skeleton while transitioning
+  if (showSkeleton) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-lg">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 animate-fade-in">
+        <Card className="w-full max-w-lg animate-scale-in">
           <CardHeader className="text-center pb-4 sm:pb-6">
             <div className="flex justify-center mb-3 sm:mb-4">
-              <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 text-primary animate-spin" />
+              <div className="relative">
+                <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 text-primary animate-spin" />
+                <div className="absolute inset-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/20 animate-ping" />
+              </div>
             </div>
             <CardTitle className="text-xl sm:text-2xl font-heading">Carregando...</CardTitle>
             <CardDescription className="text-sm">Preparando sua área de trabalho</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6">
             <div className="space-y-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-full animate-pulse" />
+              <Skeleton className="h-4 w-3/4 animate-pulse [animation-delay:100ms]" />
+              <Skeleton className="h-4 w-5/6 animate-pulse [animation-delay:200ms]" />
             </div>
             <div className="space-y-3">
-              <Skeleton className="h-10 w-full rounded-lg" />
-              <Skeleton className="h-10 w-full rounded-lg" />
-              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg animate-pulse [animation-delay:300ms]" />
+              <Skeleton className="h-12 w-full rounded-lg animate-pulse [animation-delay:400ms]" />
+              <Skeleton className="h-12 w-full rounded-lg animate-pulse [animation-delay:500ms]" />
             </div>
           </CardContent>
         </Card>
@@ -98,7 +106,11 @@ const AceitarTermos = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div 
+      className={`min-h-screen bg-background flex items-center justify-center p-4 transition-all duration-300 ${
+        transitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+      }`}
+    >
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center pb-4 sm:pb-6">
           <div className="flex justify-center mb-3 sm:mb-4">
