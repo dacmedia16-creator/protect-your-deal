@@ -27,7 +27,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Building2, Settings, Bell, Link as LinkIcon, Save, Upload, Image, Trash2 } from 'lucide-react';
+import { Loader2, Building2, Settings, Bell, Link as LinkIcon, Save, Upload, Image, Trash2, Copy, Check } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 
 const estadosBrasileiros = [
@@ -54,6 +54,7 @@ export default function EmpresaConfiguracoes() {
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [codigoCopied, setCodigoCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
@@ -255,6 +256,55 @@ export default function EmpresaConfiguracoes() {
           </TabsList>
 
           <TabsContent value="dados" className="space-y-6">
+            {/* Código da Imobiliária Card */}
+            {imobiliaria?.codigo && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    <div>
+                      <CardTitle>Código da sua Imobiliária</CardTitle>
+                      <CardDescription>Compartilhe este código com corretores para que eles se vinculem à sua imobiliária</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <div className="px-6 py-3 bg-background rounded-lg border-2 border-primary">
+                      <span className="text-3xl font-mono font-bold text-primary">{imobiliaria.codigo}</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(String(imobiliaria.codigo));
+                        setCodigoCopied(true);
+                        toast.success('Código copiado!');
+                        setTimeout(() => setCodigoCopied(false), 2000);
+                      }}
+                    >
+                      {codigoCopied ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Copiado
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Corretores podem usar este código ao se cadastrarem em{' '}
+                    <span className="font-medium">visitasegura.com.br/registro-autonomo</span>{' '}
+                    para se vincular automaticamente à sua imobiliária.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Logo Upload Card */}
             <Card>
               <CardHeader>

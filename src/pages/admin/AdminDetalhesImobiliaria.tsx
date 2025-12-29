@@ -176,7 +176,7 @@ export default function AdminDetalhesImobiliaria() {
         // Fetch imobiliaria
         const { data: imobiliaria, error: imobError } = await supabase
           .from('imobiliarias')
-          .select('*')
+          .select('*, codigo')
           .eq('id', id)
           .maybeSingle();
 
@@ -196,6 +196,8 @@ export default function AdminDetalhesImobiliaria() {
           cidade: imobiliaria.cidade || '',
           estado: imobiliaria.estado || '',
           status: imobiliaria.status,
+          // @ts-ignore - codigo vem da query
+          codigo: imobiliaria.codigo,
         });
 
         // Fetch planos
@@ -463,9 +465,17 @@ export default function AdminDetalhesImobiliaria() {
           <div className="p-2 rounded-lg bg-primary/10">
             <Building2 className="h-6 w-6 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-display font-bold">{form.getValues('nome')}</h1>
             <p className="text-muted-foreground">Detalhes da imobiliária</p>
+          </div>
+          {/* Mostrar código da imobiliária */}
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Código</p>
+            <p className="text-2xl font-mono font-bold text-primary">
+              {/* @ts-ignore - codigo vem da query */}
+              {form.getValues('codigo') || '-'}
+            </p>
           </div>
         </div>
 

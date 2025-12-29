@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Shield, Loader2, ArrowLeft, Check, User } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Shield, Loader2, ArrowLeft, Check, User, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
 
@@ -42,6 +43,13 @@ export default function RegistroCorretorAutonomo() {
     senha: '',
     confirmarSenha: '',
   });
+  
+  // Vinculação à imobiliária
+  const [vincularImobiliaria, setVincularImobiliaria] = useState(false);
+  const [codigoImobiliaria, setCodigoImobiliaria] = useState('');
+  const [validatingCodigo, setValidatingCodigo] = useState(false);
+  const [imobiliariaEncontrada, setImobiliariaEncontrada] = useState<{ id: string; nome: string } | null>(null);
+  const [codigoError, setCodigoError] = useState('');
 
   // Redirect if already logged in
   useEffect(() => {
@@ -88,6 +96,57 @@ export default function RegistroCorretorAutonomo() {
     fetchPlanos();
   }, [planoParam]);
 
+  // Validar código da imobiliária
+  useEffect(() => {
+    async function validarCodigo() {
+      if (!vincularImobiliaria || !codigoImobiliaria || codigoImobiliaria.length < 2) {
+        setImobiliariaEncontrada(null);
+        setCodigoError('');
+        return;
+      }
+
+      setValidatingCodigo(true);
+      setCodigoError('');
+
+      try {
+        const codigo = parseInt(codigoImobiliaria, 10);
+        if (isNaN(codigo)) {
+          setCodigoError('Código deve ser um número');
+          setImobiliariaEncontrada(null);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('imobiliarias')
+          .select('id, nome, status')
+          .eq('codigo', codigo)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+          setCodigoError('Código não encontrado');
+          setImobiliariaEncontrada(null);
+        } else if (data.status !== 'ativo') {
+          setCodigoError('Esta imobiliária não está ativa');
+          setImobiliariaEncontrada(null);
+        } else {
+          setImobiliariaEncontrada({ id: data.id, nome: data.nome });
+          setCodigoError('');
+        }
+      } catch (error) {
+        console.error('Error validating codigo:', error);
+        setCodigoError('Erro ao validar código');
+        setImobiliariaEncontrada(null);
+      } finally {
+        setValidatingCodigo(false);
+      }
+    }
+
+    const debounce = setTimeout(validarCodigo, 500);
+    return () => clearTimeout(debounce);
+  }, [codigoImobiliaria, vincularImobiliaria]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
@@ -98,6 +157,12 @@ export default function RegistroCorretorAutonomo() {
 
     if (corretorForm.senha.length < 6) {
       toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    // Validar código da imobiliária se marcado
+    if (vincularImobiliaria && !imobiliariaEncontrada) {
+      toast.error('Código da imobiliária inválido');
       return;
     }
 
@@ -114,6 +179,7 @@ export default function RegistroCorretorAutonomo() {
             senha: corretorForm.senha,
           },
           plano_id: selectedPlano,
+          codigo_imobiliaria: vincularImobiliaria && codigoImobiliaria ? parseInt(codigoImobiliaria, 10) : null,
         },
       });
 
@@ -324,6 +390,60 @@ export default function RegistroCorretorAutonomo() {
                       required
                     />
                   </div>
+                </div>
+
+                {/* Vinculação à imobiliária */}
+                <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="vincularImobiliaria"
+                      checked={vincularImobiliaria}
+                      onCheckedChange={(checked) => {
+                        setVincularImobiliaria(!!checked);
+                        if (!checked) {
+                          setCodigoImobiliaria('');
+                          setImobiliariaEncontrada(null);
+                          setCodigoError('');
+                        }
+                      }}
+                    />
+                    <Label htmlFor="vincularImobiliaria" className="cursor-pointer">
+                      Desejo me vincular a uma imobiliária
+                    </Label>
+                  </div>
+
+                  {vincularImobiliaria && (
+                    <div className="space-y-2">
+                      <Label htmlFor="codigoImobiliaria">Código da Imobiliária</Label>
+                      <div className="relative">
+                        <Input
+                          id="codigoImobiliaria"
+                          type="text"
+                          inputMode="numeric"
+                          value={codigoImobiliaria}
+                          onChange={(e) => setCodigoImobiliaria(e.target.value.replace(/\D/g, ''))}
+                          placeholder="Ex: 100"
+                          className={codigoError ? 'border-destructive' : imobiliariaEncontrada ? 'border-success' : ''}
+                        />
+                        {validatingCodigo && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      {codigoError && (
+                        <p className="text-sm text-destructive">{codigoError}</p>
+                      )}
+                      {imobiliariaEncontrada && (
+                        <div className="flex items-center gap-2 text-sm text-success">
+                          <Building2 className="h-4 w-4" />
+                          <span>{imobiliariaEncontrada.nome}</span>
+                          <Check className="h-4 w-4" />
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Peça o código para o administrador da imobiliária
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
