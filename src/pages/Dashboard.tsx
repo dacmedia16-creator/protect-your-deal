@@ -13,17 +13,20 @@ import {
   Plus,
   CheckCircle,
   Clock,
+  Handshake,
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
+import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { imobiliaria } = useUserRole();
+  const { data: convitesPendentes = 0 } = useConvitesPendentes();
   
 
   useEffect(() => {
@@ -104,6 +107,28 @@ export default function Dashboard() {
 
         {/* Upgrade Banner for free plan users */}
         <UpgradeBanner className="mb-4" />
+
+        {/* Convites Pendentes Alert */}
+        {convitesPendentes > 0 && (
+          <Card 
+            className="mb-4 border-warning/30 bg-warning/5 cursor-pointer hover:shadow-medium transition-shadow animate-fade-in"
+            onClick={() => navigate('/convites-recebidos')}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-warning/20 flex items-center justify-center shrink-0">
+                <Handshake className="h-6 w-6 text-warning" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-warning">
+                  {convitesPendentes} {convitesPendentes === 1 ? 'convite de parceria pendente' : 'convites de parceria pendentes'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Clique para ver e aceitar os convites recebidos
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Welcome Section */}
         <div className="mb-4 md:mb-8">

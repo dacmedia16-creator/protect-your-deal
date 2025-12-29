@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -15,11 +15,13 @@ import { RoleBadge } from '@/components/RoleBadge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
+import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
   { path: '/fichas', label: 'Fichas', icon: FileText },
-  { path: '/clientes', label: 'Clientes', icon: Users },
+  { path: '/convites-recebidos', label: 'Convites', icon: Handshake },
 ];
 
 export function MobileNav() {
@@ -51,26 +53,36 @@ export function MobileNav() {
 
   const isProfileActive = location.pathname === '/perfil';
 
+  const { data: convitesPendentes = 0 } = useConvitesPendentes();
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-sm sm:hidden safe-area-bottom">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+          const showBadge = item.path === '/convites-recebidos' && convitesPendentes > 0;
           
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors",
+                "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative",
                 "active:bg-muted/50 touch-action-manipulation",
                 isActive 
                   ? "text-primary" 
                   : "text-muted-foreground"
               )}
             >
-              <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
+              <div className="relative">
+                <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
+                {showBadge && (
+                  <Badge className="absolute -top-1.5 -right-2.5 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center">
+                    {convitesPendentes}
+                  </Badge>
+                )}
+              </div>
               <span className="text-[10px] font-medium">{item.label}</span>
             </button>
           );

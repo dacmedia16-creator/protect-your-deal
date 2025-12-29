@@ -12,7 +12,8 @@ import {
   LogOut, 
   User,
   ChevronDown,
-  CreditCard
+  CreditCard,
+  Handshake
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,10 +26,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
+import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/fichas', label: 'Fichas', icon: FileText },
+  { to: '/convites-recebidos', label: 'Convites', icon: Handshake },
   { to: '/clientes', label: 'Clientes', icon: Users },
 ];
 
@@ -38,6 +42,8 @@ export function DesktopNav() {
   const { role, imobiliaria, imobiliariaId } = useUserRole();
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
+  
+  const { data: convitesPendentes = 0 } = useConvitesPendentes();
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -86,17 +92,26 @@ export function DesktopNav() {
           </NavLink>
           
           <div className="flex items-center gap-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                activeClassName="text-foreground bg-muted"
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            ))}
+            {navItems.map((item) => {
+              const showBadge = item.to === '/convites-recebidos' && convitesPendentes > 0;
+              
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors relative"
+                  activeClassName="text-foreground bg-muted"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                  {showBadge && (
+                    <Badge className="ml-1 h-5 min-w-5 px-1.5 text-[10px]">
+                      {convitesPendentes}
+                    </Badge>
+                  )}
+                </NavLink>
+              );
+            })}
           </div>
         </div>
 
