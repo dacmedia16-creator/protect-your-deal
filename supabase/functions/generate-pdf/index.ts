@@ -480,16 +480,12 @@ serve(async (req) => {
         color: lightGray,
       });
 
-      const footerText = isPartial 
-        ? 'Este documento comprova parcialmente a intermediação do corretor na visita ao imóvel.'
-        : 'Este documento comprova a intermediação do corretor na visita ao imóvel.';
-
-      page2.drawText(footerText, {
+      page2.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
         x: 50,
         y: 60,
         size: 9,
         font: helvetica,
-        color: isPartial ? warningColor : lightGray,
+        color: lightGray,
       });
 
       page2.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
@@ -546,16 +542,12 @@ serve(async (req) => {
         color: lightGray,
       });
 
-      const footerText = isPartial 
-        ? 'Este documento comprova parcialmente a intermediação do corretor na visita ao imóvel.'
-        : 'Este documento comprova a intermediação do corretor na visita ao imóvel.';
-
-      page.drawText(footerText, {
+      page.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
         x: 50,
         y: 60,
         size: 9,
         font: helvetica,
-        color: isPartial ? warningColor : lightGray,
+        color: lightGray,
       });
 
       page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
