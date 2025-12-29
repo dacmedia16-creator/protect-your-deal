@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { useToast } from '@/hooks/use-toast';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -26,6 +28,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { imobiliaria } = useUserRole();
+  const { playNotificationSound } = useNotificationSound();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
   
 
@@ -34,6 +39,51 @@ export default function Dashboard() {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Realtime subscription para notificação sonora quando fichas são confirmadas
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('dashboard-fichas-confirmadas')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'fichas_visita',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newData = payload.new as { status: string; proprietario_confirmado_em: string | null; comprador_confirmado_em: string | null };
+          const oldData = payload.old as { status: string; proprietario_confirmado_em: string | null; comprador_confirmado_em: string | null };
+          
+          // Verificar se houve nova confirmação
+          const novaConfirmacaoProprietario = newData.proprietario_confirmado_em && !oldData.proprietario_confirmado_em;
+          const novaConfirmacaoComprador = newData.comprador_confirmado_em && !oldData.comprador_confirmado_em;
+          const fichaCompleta = newData.status === 'completo' && oldData.status !== 'completo';
+          
+          if (novaConfirmacaoProprietario || novaConfirmacaoComprador) {
+            playNotificationSound('success');
+            toast({
+              title: '🎉 Confirmação recebida!',
+              description: fichaCompleta 
+                ? 'Uma ficha foi totalmente confirmada!'
+                : novaConfirmacaoProprietario 
+                  ? 'O proprietário confirmou uma visita.' 
+                  : 'O comprador confirmou uma visita.',
+            });
+            // Atualizar stats do dashboard
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, playNotificationSound, toast, queryClient]);
 
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats', user?.id],
