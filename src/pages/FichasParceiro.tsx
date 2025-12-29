@@ -190,7 +190,7 @@ export default function FichasParceiro() {
                         variant="outline"
                         className="w-full" 
                         size="sm"
-                        onClick={() => navigate(`/ficha/${ficha.id}`)}
+                        onClick={() => navigate(`/fichas/${ficha.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Ver Detalhes
