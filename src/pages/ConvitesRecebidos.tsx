@@ -14,7 +14,8 @@ import {
   CheckCircle,
   XCircle,
   ArrowLeft,
-  Inbox
+  Inbox,
+  Send
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -195,12 +196,36 @@ export default function ConvitesRecebidos() {
 
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="mb-6">
-          <h1 className="font-display text-2xl md:text-3xl font-bold mb-2 hidden sm:block">
-            Convites de Parceria
-          </h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="font-display text-2xl md:text-3xl font-bold hidden sm:block">
+              Convites de Parceria
+            </h1>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/convites-enviados')}
+              className="hidden sm:flex"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Ver Enviados
+            </Button>
+          </div>
           <p className="text-muted-foreground">
             Gerencie os convites de parceria recebidos de outros corretores
           </p>
+
+          {/* Mobile Tab Navigation */}
+          <div className="sm:hidden mt-4">
+            <div className="flex gap-2">
+              <Button variant="default" className="flex-1" size="sm">
+                <Inbox className="h-4 w-4 mr-2" />
+                Recebidos
+              </Button>
+              <Button variant="outline" className="flex-1" size="sm" onClick={() => navigate('/convites-enviados')}>
+                <Send className="h-4 w-4 mr-2" />
+                Enviados
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Convites Pendentes */}
