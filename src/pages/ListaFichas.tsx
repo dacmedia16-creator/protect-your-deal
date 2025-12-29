@@ -53,10 +53,11 @@ export default function ListaFichas() {
     queryKey: ['fichas', user?.id],
     queryFn: async () => {
       if (!user) return [];
+      // Fetch fichas where user is owner OR partner
       const { data, error } = await supabase
         .from('fichas_visita')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},corretor_parceiro_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
