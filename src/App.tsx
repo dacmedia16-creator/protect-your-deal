@@ -19,6 +19,7 @@ import AssinaturaSuspensa from "./pages/AssinaturaSuspensa";
 import SemPermissao from "./pages/SemPermissao";
 import InstalarApp from "./pages/InstalarApp";
 import Funcionalidades from "./pages/Funcionalidades";
+import TourAudio from "./pages/TourAudio";
 
 // Auth pages
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="/sem-permissao" element={<SemPermissao />} />
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
+                <Route path="/tour-audio" element={<TourAudio />} />
                 <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
                 <Route path="/termos-de-uso" element={<TermosDeUso />} />
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
