@@ -601,6 +601,7 @@ export type Database = {
           imobiliaria_id: string | null
           nome: string
           telefone: string | null
+          termos_aceitos_em: string | null
           updated_at: string
           user_id: string
         }
@@ -614,6 +615,7 @@ export type Database = {
           imobiliaria_id?: string | null
           nome: string
           telefone?: string | null
+          termos_aceitos_em?: string | null
           updated_at?: string
           user_id: string
         }
@@ -627,6 +629,7 @@ export type Database = {
           imobiliaria_id?: string | null
           nome?: string
           telefone?: string | null
+          termos_aceitos_em?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -27,6 +27,8 @@ import RegistroTipo from "./pages/auth/RegistroTipo";
 import AceitarConvite from "./pages/auth/AceitarConvite";
 import CadastroConcluido from "./pages/auth/CadastroConcluido";
 import ConviteParceiro from "./pages/ConviteParceiro";
+import TermosDeUso from "./pages/TermosDeUso";
+import AceitarTermos from "./pages/AceitarTermos";
 
 // Corretor pages
 import Dashboard from "./pages/Dashboard";
@@ -101,6 +103,14 @@ const App = () => (
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
+                <Route path="/termos-de-uso" element={<TermosDeUso />} />
+                
+                {/* Protected route for terms acceptance */}
+                <Route path="/aceitar-termos" element={
+                  <ProtectedRoute skipTermsCheck>
+                    <AceitarTermos />
+                  </ProtectedRoute>
+                } />
 
                 {/* Super Admin routes */}
                 <Route path="/admin" element={

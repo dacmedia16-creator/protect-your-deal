@@ -627,6 +627,14 @@ const Index = () => {
               <Shield className="h-6 w-6 text-primary" />
               <span className="font-heading font-bold">VisitaSegura</span>
             </div>
+            <div className="flex gap-4 text-sm">
+              <Link to="/termos-de-uso" className="text-muted-foreground hover:text-primary transition-colors">
+                Termos de Uso
+              </Link>
+              <Link to="/politica-privacidade" className="text-muted-foreground hover:text-primary transition-colors">
+                Política de Privacidade
+              </Link>
+            </div>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} VisitaSegura. Todos os direitos reservados.
             </p>
