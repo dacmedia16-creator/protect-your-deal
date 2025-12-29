@@ -81,14 +81,44 @@ serve(async (req) => {
 
     // Check if already accepted
     if (convite.status === 'aceito') {
-      // If already accepted by this user, just return success
+      // If already accepted by this user, check if ficha needs correction
       if (convite.corretor_parceiro_id === user.id) {
-        console.log(`[aceitar-convite] Convite já aceito por este usuário, retornando sucesso`);
+        console.log(`[aceitar-convite] Convite já aceito por este usuário, verificando ficha...`);
         const { data: ficha } = await supabase
           .from('fichas_visita')
           .select('*')
           .eq('id', convite.ficha_id)
           .single();
+
+        // Check if ficha needs to be corrected (wasn't properly linked)
+        if (ficha && ficha.corretor_parceiro_id !== user.id) {
+          console.log(`[aceitar-convite] Ficha não vinculada corretamente, corrigindo... ficha.corretor_parceiro_id=${ficha.corretor_parceiro_id}`);
+          const { data: fichaCorrigida, error: updateError } = await supabase
+            .from('fichas_visita')
+            .update({
+              corretor_parceiro_id: user.id,
+              parte_preenchida_parceiro: convite.parte_faltante,
+            })
+            .eq('id', convite.ficha_id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error('[aceitar-convite] Erro ao corrigir ficha:', updateError);
+          } else {
+            console.log(`[aceitar-convite] Ficha corrigida com sucesso: corretor_parceiro_id=${fichaCorrigida.corretor_parceiro_id}`);
+            return new Response(
+              JSON.stringify({
+                success: true,
+                already_accepted: true,
+                ficha: fichaCorrigida,
+                parte_faltante: convite.parte_faltante,
+                corrected: true,
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
 
         return new Response(
           JSON.stringify({
