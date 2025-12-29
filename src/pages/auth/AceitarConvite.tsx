@@ -276,9 +276,9 @@ export default function AceitarConvite() {
 
               <p className="text-xs text-center text-muted-foreground">
                 Ao criar sua conta, você concorda com nossos{' '}
-                <a href="#" className="text-primary hover:underline">Termos de Uso</a>
+                <Link to="/termos-de-uso" target="_blank" className="text-primary hover:underline">Termos de Uso</Link>
                 {' '}e{' '}
-                <a href="#" className="text-primary hover:underline">Política de Privacidade</a>.
+                <Link to="/politica-privacidade" target="_blank" className="text-primary hover:underline">Política de Privacidade</Link>.
               </p>
             </form>
           ) : null}

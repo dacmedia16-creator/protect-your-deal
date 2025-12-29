@@ -2,24 +2,28 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole, AppRole } from '@/hooks/useUserRole';
+import { useTermosAceitos } from '@/hooks/useTermosAceitos';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: AppRole[];
   requireSubscription?: boolean;
+  skipTermsCheck?: boolean;
 }
 
 export function ProtectedRoute({ 
   children, 
   allowedRoles,
-  requireSubscription = false 
+  requireSubscription = false,
+  skipTermsCheck = false 
 }: ProtectedRouteProps) {
   const { user, loading: authLoading } = useAuth();
   const { role, assinatura, loading: roleLoading } = useUserRole();
+  const { termosAceitos, loading: termosLoading } = useTermosAceitos();
   const location = useLocation();
 
-  if (authLoading || roleLoading) {
+  if (authLoading || roleLoading || termosLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -35,6 +39,11 @@ export function ProtectedRoute({
   // No role assigned - redirect to pending page or auth
   if (!role) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Check if user has accepted terms (skip for the terms acceptance page itself)
+  if (!skipTermsCheck && termosAceitos === false && location.pathname !== '/aceitar-termos') {
+    return <Navigate to="/aceitar-termos" replace />;
   }
 
   // Check if user has required role
