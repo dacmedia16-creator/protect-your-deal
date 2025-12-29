@@ -29,6 +29,7 @@ import CadastroConcluido from "./pages/auth/CadastroConcluido";
 import ConviteParceiro from "./pages/ConviteParceiro";
 import TermosDeUso from "./pages/TermosDeUso";
 import AceitarTermos from "./pages/AceitarTermos";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 
 // Corretor pages
 import Dashboard from "./pages/Dashboard";
@@ -104,6 +105,7 @@ const App = () => (
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
                 <Route path="/termos-de-uso" element={<TermosDeUso />} />
+                <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
                 
                 {/* Protected route for terms acceptance */}
                 <Route path="/aceitar-termos" element={
