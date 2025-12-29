@@ -729,6 +729,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      cleanup_expired_otps: { Args: never; Returns: undefined }
       generate_protocolo: { Args: never; Returns: string }
       get_user_imobiliaria: { Args: { _user_id: string }; Returns: string }
       get_user_subscription: {
