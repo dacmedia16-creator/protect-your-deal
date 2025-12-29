@@ -30,8 +30,10 @@ interface FichaParceiro {
   status: string;
   parte_preenchida_parceiro: string | null;
   proprietario_nome: string | null;
+  proprietario_telefone: string | null;
   proprietario_confirmado_em: string | null;
   comprador_nome: string | null;
+  comprador_telefone: string | null;
   comprador_confirmado_em: string | null;
   user_id: string;
   created_at: string;
@@ -94,9 +96,10 @@ export default function FichasParceiro() {
       return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="h-3 w-3" />Parte confirmada</Badge>;
     }
     
+    // Verificar telefone OU nome (autopreenchimento pode ter só telefone)
     const temDados = parte === 'proprietario' 
-      ? ficha.proprietario_nome 
-      : ficha.comprador_nome;
+      ? (ficha.proprietario_nome || ficha.proprietario_telefone)
+      : (ficha.comprador_nome || ficha.comprador_telefone);
     
     if (temDados) {
       return <Badge variant="default" className="flex items-center gap-1"><Clock className="h-3 w-3" />Aguardando confirmação</Badge>;
