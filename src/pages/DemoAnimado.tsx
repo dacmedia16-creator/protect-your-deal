@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { 
   Play, 
   Pause, 
@@ -15,91 +17,103 @@ import {
   Users,
   Smartphone,
   Check,
-  Send,
-  ArrowRight
+  ArrowRight,
+  Volume2,
+  VolumeX,
+  Loader2
 } from 'lucide-react';
 
-// Demo steps with timing and content
+// Demo steps with timing, content and narration text
 const DEMO_STEPS = [
   {
     id: 'intro',
     title: 'Bem-vindo ao VisitaSegura',
     subtitle: 'Segurança jurídica em cada visita imobiliária',
-    duration: 3000,
+    duration: 4000,
     icon: Shield,
     content: 'intro',
+    narration: 'Bem-vindo ao VisitaSegura! A plataforma que revoluciona a segurança nas visitas imobiliárias.',
   },
   {
     id: 'criar-ficha',
     title: 'Criando uma Ficha de Visita',
     subtitle: 'Preencha os dados do imóvel e das partes envolvidas',
-    duration: 4000,
+    duration: 4500,
     icon: FileCheck,
     content: 'form',
+    narration: 'Criar uma ficha de visita é simples e rápido. Basta preencher os dados do imóvel e das partes envolvidas.',
   },
   {
     id: 'dados-imovel',
     title: 'Dados do Imóvel',
     subtitle: 'Informe endereço, tipo e data da visita',
-    duration: 3500,
+    duration: 5000,
     icon: FileCheck,
     content: 'form-imovel',
+    narration: 'Informe o endereço completo, o tipo de imóvel e a data da visita. Tudo é preenchido de forma intuitiva.',
   },
   {
     id: 'dados-partes',
     title: 'Proprietário e Comprador',
     subtitle: 'Cadastre os dados das partes envolvidas',
-    duration: 3500,
+    duration: 5000,
     icon: Users,
     content: 'form-partes',
+    narration: 'Cadastre os dados do proprietário e do comprador. Nome, telefone e CPF para garantir a identificação de todos.',
   },
   {
     id: 'enviar-otp',
     title: 'Enviando Confirmação via WhatsApp',
     subtitle: 'Código OTP enviado para ambas as partes',
-    duration: 4000,
+    duration: 5500,
     icon: MessageSquare,
     content: 'whatsapp',
+    narration: 'Enviamos um código de confirmação via WhatsApp para ambas as partes. Segurança e praticidade na palma da mão.',
   },
   {
     id: 'confirmar-otp',
     title: 'Confirmação Recebida',
     subtitle: 'Ambas as partes confirmaram via código OTP',
-    duration: 3000,
+    duration: 4000,
     icon: Check,
     content: 'confirmado',
+    narration: 'Pronto! Ambas as partes confirmaram sua participação. A visita agora está validada.',
   },
   {
     id: 'qrcode',
     title: 'QR Code de Verificação',
     subtitle: 'Documento verificável a qualquer momento',
-    duration: 3500,
+    duration: 4500,
     icon: QrCode,
     content: 'qrcode',
+    narration: 'Cada ficha possui um QR Code exclusivo para verificação de autenticidade. Proteção contra fraudes.',
   },
   {
     id: 'pdf',
     title: 'Comprovante em PDF',
     subtitle: 'Baixe o comprovante com validade jurídica',
-    duration: 3500,
+    duration: 4500,
     icon: Download,
     content: 'pdf',
+    narration: 'Gere comprovantes profissionais em PDF, prontos para download. Documentação com validade jurídica.',
   },
   {
     id: 'crm',
     title: 'Gestão de Clientes',
     subtitle: 'Todos os seus clientes organizados em um só lugar',
-    duration: 3500,
+    duration: 4500,
     icon: Users,
     content: 'crm',
+    narration: 'Organize todos os seus clientes em um só lugar. Proprietários, compradores, histórico completo de cada relacionamento.',
   },
   {
     id: 'pwa',
     title: 'App no seu Celular',
     subtitle: 'Instale como aplicativo e use offline',
-    duration: 3500,
+    duration: 4500,
     icon: Smartphone,
     content: 'pwa',
+    narration: 'Instale o VisitaSegura como aplicativo no seu celular. Funciona offline e envia notificações.',
   },
   {
     id: 'fim',
@@ -108,6 +122,7 @@ const DEMO_STEPS = [
     duration: 4000,
     icon: Shield,
     content: 'cta',
+    narration: 'Comece agora gratuitamente e descubra como transformar sua rotina imobiliária. VisitaSegura, segurança em cada visita.',
   },
 ];
 
@@ -136,6 +151,13 @@ export default function DemoAnimado() {
   const [stepProgress, setStepProgress] = useState(0);
   const [typingIndex, setTypingIndex] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
+  
+  // Audio states
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [audioCache, setAudioCache] = useState<Record<string, string>>({});
+  const [audioReady, setAudioReady] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentStep = DEMO_STEPS[currentStepIndex];
   const totalDuration = DEMO_STEPS.reduce((acc, step) => acc + step.duration, 0);
@@ -150,6 +172,72 @@ export default function DemoAnimado() {
     }, 500);
     return () => clearInterval(interval);
   }, []);
+
+  // Generate all audio on mount or when requested
+  const generateAllAudio = useCallback(async () => {
+    setIsGeneratingAudio(true);
+    const cache: Record<string, string> = {};
+    
+    try {
+      for (const step of DEMO_STEPS) {
+        toast.info(`Gerando áudio: ${step.title}...`);
+        
+        const { data, error } = await supabase.functions.invoke('text-to-speech', {
+          body: { text: step.narration, voice: 'nova' }
+        });
+
+        if (error) throw error;
+
+        if (data?.audioContent) {
+          cache[step.id] = `data:audio/mpeg;base64,${data.audioContent}`;
+        }
+      }
+      
+      setAudioCache(cache);
+      setAudioReady(true);
+      toast.success('Áudios gerados com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar áudios:', error);
+      toast.error('Erro ao gerar áudios. O demo funcionará sem narração.');
+      setAudioEnabled(false);
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  }, []);
+
+  // Play audio for current step
+  useEffect(() => {
+    if (!isPlaying || !audioEnabled || !audioReady) return;
+    
+    const audioUrl = audioCache[currentStep.id];
+    if (!audioUrl) return;
+
+    // Stop previous audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    // Play new audio
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    audio.play().catch(console.error);
+
+    return () => {
+      audio.pause();
+    };
+  }, [currentStepIndex, isPlaying, audioEnabled, audioReady, audioCache, currentStep.id]);
+
+  // Pause/resume audio with demo
+  useEffect(() => {
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.play().catch(console.error);
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
 
   // Main animation loop
   useEffect(() => {
@@ -193,15 +281,33 @@ export default function DemoAnimado() {
   }, [isPlaying, currentStep.content]);
 
   const togglePlay = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
+    if (!audioReady && audioEnabled && !isGeneratingAudio) {
+      // First time playing - generate audio first
+      generateAllAudio().then(() => {
+        setIsPlaying(true);
+      });
+    } else {
+      setIsPlaying(prev => !prev);
+    }
+  }, [audioReady, audioEnabled, isGeneratingAudio, generateAllAudio]);
 
   const restart = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     setCurrentStepIndex(0);
     setStepProgress(0);
     setTypingIndex(0);
     setIsPlaying(true);
   }, []);
+
+  const toggleAudio = useCallback(() => {
+    if (audioRef.current && audioEnabled) {
+      audioRef.current.pause();
+    }
+    setAudioEnabled(prev => !prev);
+  }, [audioEnabled]);
 
   const renderContent = () => {
     switch (currentStep.content) {
@@ -539,17 +645,20 @@ export default function DemoAnimado() {
         {/* Title */}
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Demo Animado
+            Demo Animado com Narração
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Veja como o VisitaSegura funciona na prática. Ideal para gravar a tela e criar vídeos promocionais.
+            Veja como o VisitaSegura funciona na prática com narração em áudio sincronizada.
           </p>
         </div>
 
         {/* Progress */}
         <div className="mb-4">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-            <span>{currentStep.title}</span>
+            <span className="flex items-center gap-2">
+              {audioEnabled && audioReady && <Volume2 className="h-4 w-4 text-primary" />}
+              {currentStep.title}
+            </span>
             <span>{currentStepIndex + 1}/{DEMO_STEPS.length}</span>
           </div>
           <Progress value={overallProgress} className="h-2" />
@@ -597,21 +706,48 @@ export default function DemoAnimado() {
             variant="outline"
             size="icon"
             onClick={restart}
+            disabled={isGeneratingAudio}
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleAudio}
+          >
+            {audioEnabled ? (
+              <Volume2 className="h-4 w-4" />
+            ) : (
+              <VolumeX className="h-4 w-4" />
+            )}
+          </Button>
+          
           <Button
             size="lg"
             className="h-14 w-14 rounded-full"
             onClick={togglePlay}
+            disabled={isGeneratingAudio}
           >
-            {isPlaying ? (
+            {isGeneratingAudio ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : isPlaying ? (
               <Pause className="h-6 w-6" />
             ) : (
               <Play className="h-6 w-6 ml-1" />
             )}
           </Button>
         </div>
+
+        {/* Audio status */}
+        {isGeneratingAudio && (
+          <div className="mt-4 text-center">
+            <p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Gerando narrações... Aguarde.
+            </p>
+          </div>
+        )}
 
         {/* Instructions */}
         <div className="mt-8 text-center">
@@ -624,7 +760,7 @@ export default function DemoAnimado() {
             <a href="https://obsproject.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               OBS
             </a>
-            {' '}para capturar esta demonstração.
+            {' '}para capturar esta demonstração com áudio.
           </p>
         </div>
 
@@ -634,6 +770,9 @@ export default function DemoAnimado() {
             <button
               key={step.id}
               onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                }
                 setCurrentStepIndex(index);
                 setStepProgress(0);
                 setTypingIndex(0);
