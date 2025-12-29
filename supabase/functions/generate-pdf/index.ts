@@ -175,17 +175,13 @@ serve(async (req) => {
       yPosition -= 20;
     }
 
-    // Document title - indicate if partial
-    const docTitle = isPartial 
-      ? 'COMPROVANTE DE VISITA IMOBILIÁRIA (PARCIAL)'
-      : 'COMPROVANTE DE VISITA IMOBILIÁRIA';
-
-    page.drawText(docTitle, {
+    // Document title - always use standard title
+    page.drawText('COMPROVANTE DE VISITA IMOBILIÁRIA', {
       x: headerTextX,
       y: yPosition,
-      size: isPartial ? 14 : 16,
+      size: 16,
       font: helveticaBold,
-      color: isPartial ? warningColor : primaryColor,
+      color: primaryColor,
     });
 
     yPosition -= 22;
@@ -350,27 +346,17 @@ serve(async (req) => {
         yPosition = drawField('Aceite em', confirmacaoProprietario.aceite_em ? formatDate(confirmacaoProprietario.aceite_em) : '-', yPosition);
       }
     } else {
-      // Owner did not confirm
-      yPosition = drawSection('PROPRIETÁRIO - NÃO CONFIRMOU', yPosition);
-      page.drawRectangle({
-        x: 50,
-        y: yPosition - 5,
-        width: width - 100,
-        height: 30,
-        color: rgb(1, 0.95, 0.9),
-      });
-      page.drawText('O proprietário não confirmou esta visita.', {
-        x: 55,
-        y: yPosition + 5,
-        size: 10,
-        font: helvetica,
-        color: warningColor,
-      });
+      // Owner did not confirm - show basic info only
+      yPosition = drawSection('PROPRIETÁRIO', yPosition);
+      if (ficha.proprietario_nome) {
+        yPosition = drawField('Nome', ficha.proprietario_nome, yPosition);
+      }
       if (ficha.proprietario_telefone) {
-        yPosition -= 20;
         yPosition = drawField('Telefone', formatPhone(ficha.proprietario_telefone), yPosition);
       }
-      yPosition -= 15;
+      if (ficha.proprietario_cpf) {
+        yPosition = drawField('CPF', formatCPF(ficha.proprietario_cpf), yPosition);
+      }
     }
 
     // Buyer Section with Legal Data
@@ -399,27 +385,17 @@ serve(async (req) => {
         yPosition = drawField('Aceite em', confirmacaoComprador.aceite_em ? formatDate(confirmacaoComprador.aceite_em) : '-', yPosition);
       }
     } else {
-      // Buyer did not confirm
-      yPosition = drawSection('COMPRADOR/INTERESSADO - NÃO CONFIRMOU', yPosition);
-      page.drawRectangle({
-        x: 50,
-        y: yPosition - 5,
-        width: width - 100,
-        height: 30,
-        color: rgb(1, 0.95, 0.9),
-      });
-      page.drawText('O comprador/interessado não confirmou esta visita.', {
-        x: 55,
-        y: yPosition + 5,
-        size: 10,
-        font: helvetica,
-        color: warningColor,
-      });
+      // Buyer did not confirm - show basic info only
+      yPosition = drawSection('COMPRADOR/INTERESSADO', yPosition);
+      if (ficha.comprador_nome) {
+        yPosition = drawField('Nome', ficha.comprador_nome, yPosition);
+      }
       if (ficha.comprador_telefone) {
-        yPosition -= 20;
         yPosition = drawField('Telefone', formatPhone(ficha.comprador_telefone), yPosition);
       }
-      yPosition -= 15;
+      if (ficha.comprador_cpf) {
+        yPosition = drawField('CPF', formatCPF(ficha.comprador_cpf), yPosition);
+      }
     }
 
     // Visit Section
