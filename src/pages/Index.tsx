@@ -24,7 +24,9 @@ import {
   Sparkles,
   HelpCircle,
   Smartphone,
-  Menu
+  Menu,
+  MapPin,
+  Phone
 } from 'lucide-react';
 
 interface Plano {
@@ -622,19 +624,51 @@ const Index = () => {
       {/* Footer */}
       <footer className="py-12 border-t border-border">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-primary" />
-              <span className="font-heading font-bold">VisitaSegura</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Logo e nome */}
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <div className="flex items-center gap-2">
+                <Shield className="h-6 w-6 text-primary" />
+                <span className="font-heading font-bold">VisitaSegura</span>
+              </div>
+              <p className="text-sm text-muted-foreground text-center md:text-left">
+                Segurança e praticidade para corretores de imóveis
+              </p>
             </div>
-            <div className="flex gap-4 text-sm">
-              <Link to="/termos-de-uso" className="text-muted-foreground hover:text-primary transition-colors">
+            
+            {/* Contato */}
+            <div className="flex flex-col items-center md:items-start gap-3">
+              <h3 className="font-semibold text-sm">Contato</h3>
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                <span className="text-center md:text-left">
+                  Rua Horacio Cenci, 9 - Parque Campolim<br/>
+                  Sorocaba - SP, 18047-800
+                </span>
+              </div>
+              <a 
+                href="tel:+5515981788214" 
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Phone className="h-4 w-4 text-primary" />
+                (15) 98178-8214
+              </a>
+            </div>
+            
+            {/* Links */}
+            <div className="flex flex-col items-center md:items-start gap-3">
+              <h3 className="font-semibold text-sm">Links</h3>
+              <Link to="/termos-de-uso" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Termos de Uso
               </Link>
-              <Link to="/politica-privacidade" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/politica-privacidade" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Política de Privacidade
               </Link>
             </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="pt-8 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} VisitaSegura. Todos os direitos reservados.
             </p>
