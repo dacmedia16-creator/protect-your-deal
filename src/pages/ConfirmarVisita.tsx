@@ -10,6 +10,7 @@ import { Shield, Building2, Calendar, CheckCircle, AlertCircle, Loader2, XCircle
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { validateCPF, formatCPF } from '@/lib/cpf';
+import { invokeWithRetry } from '@/lib/invokeWithRetry';
 
 interface FichaInfo {
   protocolo: string;
@@ -62,11 +63,19 @@ export default function ConfirmarVisita() {
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke('get-otp-info', {
+        // Use retry for initial load
+        const { data, error } = await invokeWithRetry<{
+          valid: boolean;
+          error?: string;
+          already_confirmed?: boolean;
+          expired?: boolean;
+          ficha?: FichaInfo;
+          otp?: OtpInfo;
+        }>('get-otp-info', {
           body: { token },
         });
 
-        if (error || !data.valid) {
+        if (error || !data?.valid) {
           setError(data?.error || 'Link inválido ou expirado');
           setLoading(false);
           return;
@@ -80,10 +89,10 @@ export default function ConfirmarVisita() {
           setExpired(true);
         }
 
-        setFicha(data.ficha);
-        setOtpInfo(data.otp);
+        setFicha(data.ficha || null);
+        setOtpInfo(data.otp || null);
       } catch (err) {
-        setError('Erro ao carregar informações');
+        setError('Erro ao carregar informações. Tente recarregar a página.');
       } finally {
         setLoading(false);
       }
@@ -162,7 +171,13 @@ export default function ConfirmarVisita() {
     setCaptandoLocalizacao(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke('verify-otp', {
+      // Use retry for verify-otp
+      const { data, error } = await invokeWithRetry<{
+        error?: string;
+        already_confirmed?: boolean;
+        expired?: boolean;
+        success?: boolean;
+      }>('verify-otp', {
         body: { 
           token, 
           codigo,
@@ -175,17 +190,38 @@ export default function ConfirmarVisita() {
         },
       });
 
-      if (error || data.error) {
+      if (error) {
         toast({
           variant: 'destructive',
-          title: 'Erro',
-          description: data?.error || 'Erro ao verificar código',
+          title: 'Erro de conexão',
+          description: 'Não foi possível conectar ao servidor. Tente novamente.',
         });
+        setVerifying(false);
+        return;
+      }
 
-        if (data?.already_confirmed) {
+      if (data?.error) {
+        // Handle specific error states
+        if (data.already_confirmed) {
           setAlreadyConfirmed(true);
+          toast({
+            title: 'Já confirmado',
+            description: 'Esta visita já foi confirmada anteriormente.',
+          });
+        } else if (data.expired) {
+          setExpired(true);
+          toast({
+            variant: 'destructive',
+            title: 'Código expirado',
+            description: 'O código expirou. Solicite um novo código.',
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: data.error,
+          });
         }
-
         setVerifying(false);
         return;
       }
@@ -199,7 +235,7 @@ export default function ConfirmarVisita() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Erro ao verificar código',
+        description: 'Erro ao verificar código. Tente novamente.',
       });
     } finally {
       setVerifying(false);
@@ -219,7 +255,11 @@ export default function ConfirmarVisita() {
     setResending(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-otp', {
+      // Use retry for resend
+      const { data, error } = await invokeWithRetry<{
+        error?: string;
+        success?: boolean;
+      }>('send-otp', {
         body: { 
           ficha_id: otpInfo.ficha_id, 
           tipo: otpInfo.tipo,
@@ -231,7 +271,7 @@ export default function ConfirmarVisita() {
         toast({
           variant: 'destructive',
           title: 'Erro',
-          description: data?.error || 'Erro ao reenviar código',
+          description: data?.error || 'Erro ao reenviar código. Tente novamente.',
         });
         return;
       }
@@ -247,7 +287,7 @@ export default function ConfirmarVisita() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Erro ao reenviar código',
+        description: 'Erro ao reenviar código. Tente novamente.',
       });
     } finally {
       setResending(false);
