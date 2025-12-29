@@ -236,30 +236,46 @@ export default function ConviteParceiro() {
             comprador_autopreenchimento: formData.autopreenchimento,
           };
 
-      const { error } = await supabase
+      console.log('[ConviteParceiro] Salvando dados da ficha:', { fichaId: ficha.id, updateData });
+
+      const { data: updatedFicha, error } = await supabase
         .from('fichas_visita')
         .update(updateData)
-        .eq('id', ficha.id);
+        .eq('id', ficha.id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ConviteParceiro] Erro ao salvar dados:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao salvar',
+          description: error.code === '42501' 
+            ? 'Você não tem permissão para editar esta ficha. O convite pode não ter sido aceito corretamente.'
+            : 'Erro ao salvar os dados. Tente novamente.',
+        });
+        return;
+      }
+
+      console.log('[ConviteParceiro] Dados salvos com sucesso:', updatedFicha);
 
       // Update local ficha state
-      setFicha(prev => prev ? { ...prev, ...updateData } : null);
+      setFicha(updatedFicha as Ficha);
 
       toast({
         title: 'Dados salvos!',
-        description: 'Agora você pode enviar o código de confirmação.',
+        description: 'Enviando código de confirmação...',
       });
 
-      // Auto-send OTP after saving
-      setTimeout(() => handleSendOtp(), 500);
+      // Send OTP after confirming save was successful
+      await handleSendOtp();
 
     } catch (err) {
-      console.error('Erro ao salvar dados:', err);
+      console.error('[ConviteParceiro] Erro inesperado ao salvar dados:', err);
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Erro ao salvar os dados',
+        description: 'Erro inesperado ao salvar os dados',
       });
     } finally {
       setSavingData(false);
