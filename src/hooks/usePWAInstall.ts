@@ -15,6 +15,7 @@ interface PWAInstallState {
   isIOS: boolean;
   isAndroid: boolean;
   isDesktop: boolean;
+  canShowManualInstall: boolean;
   install: () => Promise<boolean>;
 }
 
@@ -22,6 +23,7 @@ export function usePWAInstall(): PWAInstallState {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [canShowManualInstall, setCanShowManualInstall] = useState(false);
 
   // Detect platform
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
@@ -48,6 +50,7 @@ export function usePWAInstall(): PWAInstallState {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
+      setCanShowManualInstall(false);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -57,6 +60,7 @@ export function usePWAInstall(): PWAInstallState {
       setIsInstalled(true);
       setIsInstallable(false);
       setDeferredPrompt(null);
+      setCanShowManualInstall(false);
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -67,6 +71,18 @@ export function usePWAInstall(): PWAInstallState {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
+
+  // For Android: if beforeinstallprompt doesn't fire after 3 seconds, show manual install option
+  useEffect(() => {
+    if (isAndroid && !isInstalled && !isInstallable) {
+      const timer = setTimeout(() => {
+        if (!deferredPrompt) {
+          setCanShowManualInstall(true);
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAndroid, isInstalled, isInstallable, deferredPrompt]);
 
   const install = useCallback(async (): Promise<boolean> => {
     if (!deferredPrompt) {
@@ -96,6 +112,7 @@ export function usePWAInstall(): PWAInstallState {
     isIOS,
     isAndroid,
     isDesktop,
+    canShowManualInstall,
     install
   };
 }

@@ -9,7 +9,7 @@ const BANNER_DISMISSED_KEY = 'pwa-install-banner-dismissed';
 const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function PWAInstallBanner() {
-  const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
+  const { isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, install } = usePWAInstall();
   const [isDismissed, setIsDismissed] = useState(true);
   const navigate = useNavigate();
 
@@ -31,7 +31,8 @@ export function PWAInstallBanner() {
   };
 
   const handleInstall = async () => {
-    if (isIOS) {
+    // iOS or Android without automatic prompt: show instructions
+    if (isIOS || (isAndroid && !isInstallable)) {
       navigate('/instalar');
     } else {
       const success = await install();
@@ -46,10 +47,15 @@ export function PWAInstallBanner() {
     return null;
   }
 
-  // Only show if installable (Android/Desktop) or iOS
-  if (!isInstallable && !isIOS) {
+  // Show if: installable (automatic prompt available), iOS, or Android with manual install option
+  const shouldShow = isInstallable || isIOS || (isAndroid && canShowManualInstall);
+  
+  if (!shouldShow) {
     return null;
   }
+
+  // Determine if we need to show manual instructions
+  const showManualInstructions = isIOS || (isAndroid && !isInstallable);
 
   return (
     <Card className="mb-4 md:mb-6 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 animate-fade-in overflow-hidden">
@@ -64,8 +70,10 @@ export function PWAInstallBanner() {
               Instale o VisitaSegura
             </h3>
             <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">
-              {isIOS 
-                ? 'Toque em Compartilhar e depois "Adicionar à Tela de Início"'
+              {showManualInstructions 
+                ? isIOS 
+                  ? 'Toque em Compartilhar e depois "Adicionar à Tela de Início"'
+                  : 'Toque no menu do navegador e "Instalar app"'
                 : 'Acesse suas fichas rapidamente direto da tela inicial'
               }
             </p>
@@ -76,7 +84,7 @@ export function PWAInstallBanner() {
                 onClick={handleInstall}
                 className="h-8 text-xs md:text-sm gap-1.5"
               >
-                {isIOS ? (
+                {showManualInstructions ? (
                   <>
                     <Share className="h-3.5 w-3.5" />
                     Ver instruções
