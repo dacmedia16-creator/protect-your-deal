@@ -9,3 +9,8 @@ export const formatPhone = (value: string): string => {
 export const unformatPhone = (value: string): string => {
   return value.replace(/\D/g, '');
 };
+
+export const isValidPhone = (value: string): boolean => {
+  const digits = value.replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 11;
+};

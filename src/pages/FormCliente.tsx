@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, User, Building2, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, User, Building2, Loader2, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
+import { formatPhone, unformatPhone, isValidPhone } from '@/lib/phone';
 
 const clienteSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -79,13 +80,9 @@ export default function FormCliente() {
     }
   }, [cliente]);
 
-  const formatPhone = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length <= 2) return numbers;
-    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-  };
+  const phoneDigits = unformatPhone(formData.telefone);
+  const phoneIsValid = isValidPhone(formData.telefone);
+  const showPhoneValidation = phoneDigits.length > 0;
 
   const formatCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -265,14 +262,29 @@ export default function FormCliente() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telefone">Telefone (WhatsApp) *</Label>
-                  <Input
-                    id="telefone"
-                    placeholder="(00) 00000-0000"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
-                    maxLength={15}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="telefone"
+                      placeholder="(00) 00000-0000"
+                      value={formData.telefone}
+                      onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
+                      maxLength={15}
+                      required
+                      className={showPhoneValidation ? (phoneIsValid ? 'border-green-500 pr-10' : 'border-destructive pr-10') : ''}
+                    />
+                    {showPhoneValidation && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {phoneIsValid ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {showPhoneValidation && !phoneIsValid && (
+                    <p className="text-xs text-destructive">Mínimo 10 dígitos</p>
+                  )}
                 </div>
               </div>
 
