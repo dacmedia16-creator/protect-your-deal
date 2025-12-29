@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -14,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 const AceitarTermos = () => {
   const [aceito, setAceito] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const { user } = useAuth();
   const { role } = useUserRole();
   const { toast } = useToast();
@@ -45,6 +47,13 @@ const AceitarTermos = () => {
         description: "Obrigado por aceitar os Termos de Uso.",
       });
 
+      // Show loading skeleton before redirect
+      setRedirecting(true);
+      setSubmitting(false);
+
+      // Small delay to show the skeleton transition
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Redirect based on user role
       const redirectPath = getRedirectPathByRole(role);
       navigate(redirectPath, { replace: true });
@@ -55,10 +64,38 @@ const AceitarTermos = () => {
         description: "Não foi possível registrar o aceite. Tente novamente.",
         variant: "destructive",
       });
-    } finally {
       setSubmitting(false);
     }
   };
+
+  // Show loading skeleton while redirecting
+  if (redirecting) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader className="text-center pb-4 sm:pb-6">
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 text-primary animate-spin" />
+            </div>
+            <CardTitle className="text-xl sm:text-2xl font-heading">Carregando...</CardTitle>
+            <CardDescription className="text-sm">Preparando sua área de trabalho</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 sm:space-y-6">
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
