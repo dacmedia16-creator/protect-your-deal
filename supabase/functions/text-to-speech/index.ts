@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,11 +47,9 @@ serve(async (req) => {
       throw new Error(`Falha ao gerar áudio: ${response.status}`);
     }
 
-    // Convert audio buffer to base64
+    // Convert audio buffer to base64 using Deno's encoding library (avoids stack overflow)
     const arrayBuffer = await response.arrayBuffer();
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    );
+    const base64Audio = base64Encode(arrayBuffer);
 
     console.log('Áudio gerado com sucesso');
 
