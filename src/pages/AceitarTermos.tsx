@@ -96,12 +96,19 @@ const AceitarTermos = () => {
             </ul>
           </div>
 
-          {/* Link to full terms */}
-          <div className="text-center">
+          {/* Links to full terms */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
             <Button variant="link" asChild className="text-primary">
               <Link to="/termos-de-uso" target="_blank">
                 <FileText className="h-4 w-4 mr-2" />
-                Ler os Termos de Uso completos
+                Termos de Uso
+              </Link>
+            </Button>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <Button variant="link" asChild className="text-primary">
+              <Link to="/politica-privacidade" target="_blank">
+                <FileText className="h-4 w-4 mr-2" />
+                Política de Responsabilidade
               </Link>
             </Button>
           </div>
@@ -121,6 +128,14 @@ const AceitarTermos = () => {
                 className="text-primary hover:underline"
               >
                 Termos de Uso
+              </Link>{' '}
+              e a{' '}
+              <Link 
+                to="/politica-privacidade" 
+                target="_blank" 
+                className="text-primary hover:underline"
+              >
+                Política de Responsabilidade
               </Link>{' '}
               da plataforma VisitaSegura
             </Label>
