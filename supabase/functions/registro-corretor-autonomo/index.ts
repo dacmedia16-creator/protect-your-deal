@@ -14,6 +14,7 @@ interface RegistroCorretorRequest {
     senha: string;
   };
   plano_id: string;
+  codigo_imobiliaria?: number | null;
 }
 
 Deno.serve(async (req) => {
@@ -30,9 +31,46 @@ Deno.serve(async (req) => {
     );
 
     const body: RegistroCorretorRequest = await req.json();
-    const { corretor, plano_id } = body;
+    const { corretor, plano_id, codigo_imobiliaria } = body;
 
     console.log("Starting autonomous broker registration for:", corretor.email);
+    console.log("Codigo imobiliaria:", codigo_imobiliaria);
+
+    // Validate codigo_imobiliaria if provided
+    let imobiliariaId: string | null = null;
+    if (codigo_imobiliaria) {
+      console.log("Validating imobiliaria code:", codigo_imobiliaria);
+      const { data: imobiliariaData, error: imobError } = await supabaseAdmin
+        .from("imobiliarias")
+        .select("id, nome, status")
+        .eq("codigo", codigo_imobiliaria)
+        .maybeSingle();
+
+      if (imobError) {
+        console.error("Error finding imobiliaria:", imobError);
+        return new Response(
+          JSON.stringify({ error: "Erro ao buscar imobiliária" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!imobiliariaData) {
+        return new Response(
+          JSON.stringify({ error: "Código de imobiliária inválido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (imobiliariaData.status !== "ativo") {
+        return new Response(
+          JSON.stringify({ error: "Esta imobiliária não está ativa" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      imobiliariaId = imobiliariaData.id;
+      console.log("Found imobiliaria:", imobiliariaData.nome);
+    }
 
     // Validate required fields
     if (!corretor.nome || !corretor.email || !corretor.senha) {
@@ -82,14 +120,14 @@ Deno.serve(async (req) => {
     const userId = authData.user.id;
     console.log("User created:", userId);
 
-    // 2. Create the user_role (corretor autônomo - imobiliaria_id = null)
+    // 2. Create the user_role (corretor autônomo ou vinculado à imobiliária)
     console.log("Creating user role...");
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
         user_id: userId,
         role: "corretor",
-        imobiliaria_id: null, // Corretor autônomo não tem imobiliária
+        imobiliaria_id: imobiliariaId, // null se autônomo, ID se vinculado
       });
 
     if (roleError) {
@@ -112,7 +150,7 @@ Deno.serve(async (req) => {
         nome: corretor.nome,
         telefone: corretor.telefone || null,
         creci: corretor.creci || null,
-        imobiliaria_id: null, // Corretor autônomo
+        imobiliaria_id: imobiliariaId, // null se autônomo, ID se vinculado
       })
       .eq("user_id", userId);
 
@@ -121,9 +159,10 @@ Deno.serve(async (req) => {
       // Non-critical, continue
     }
 
-    // 4. Create subscription linked to user_id (not imobiliaria_id)
-    if (plano_id) {
-      console.log("Creating subscription...");
+    // 4. Create subscription linked to user_id (only for autonomous brokers without imobiliaria)
+    // If linked to imobiliaria, the subscription is managed by the imobiliaria
+    if (plano_id && !imobiliariaId) {
+      console.log("Creating subscription for autonomous broker...");
       const { error: assinError } = await supabaseAdmin
         .from("assinaturas")
         .insert({
@@ -142,13 +181,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log("Autonomous broker registration completed successfully");
+    console.log("Broker registration completed successfully", imobiliariaId ? "(linked to imobiliaria)" : "(autonomous)");
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Cadastro realizado com sucesso!",
+        message: imobiliariaId 
+          ? "Cadastro realizado com sucesso! Você foi vinculado à imobiliária."
+          : "Cadastro realizado com sucesso!",
         user_id: userId,
+        linked_to_imobiliaria: !!imobiliariaId,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

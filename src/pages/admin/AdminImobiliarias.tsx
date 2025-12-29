@@ -51,6 +51,7 @@ interface Imobiliaria {
   estado: string | null;
   status: string;
   created_at: string;
+  codigo?: number | null;
   corretores_count?: number;
   assinatura_status?: string;
   assinatura_id?: string;
@@ -341,6 +342,7 @@ export default function AdminImobiliarias() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[70px]">Código</TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead className="hidden md:table-cell">CNPJ</TableHead>
                       <TableHead className="hidden lg:table-cell">Localização</TableHead>
@@ -354,6 +356,11 @@ export default function AdminImobiliarias() {
                   <TableBody>
                     {filteredImobiliarias.map((imob) => (
                       <TableRow key={imob.id}>
+                        <TableCell>
+                          <span className="font-mono font-semibold text-primary">
+                            {imob.codigo || '-'}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{imob.nome}</p>

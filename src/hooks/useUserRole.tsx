@@ -24,6 +24,7 @@ interface Imobiliaria {
   estado: string | null;
   logo_url: string | null;
   status: string;
+  codigo: number | null;
 }
 
 interface Assinatura {
