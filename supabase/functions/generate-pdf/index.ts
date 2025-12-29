@@ -197,25 +197,7 @@ serve(async (req) => {
       color: primaryColor,
     });
 
-    // Partial warning banner
-    if (isPartial) {
-      yPosition -= 25;
-      page.drawRectangle({
-        x: 50,
-        y: yPosition - 5,
-        width: width - 100,
-        height: 25,
-        color: rgb(1, 0.95, 0.9),
-      });
-      page.drawText('[!] ATENCAO: Este comprovante foi gerado com apenas uma assinatura.', {
-        x: 55,
-        y: yPosition + 3,
-        size: 10,
-        font: helveticaBold,
-        color: warningColor,
-      });
-      yPosition -= 10;
-    }
+    // Partial warning banner removed per user request
 
     // Draw line
     yPosition -= 15;
