@@ -1,26 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-interface UseTermosAceitosResult {
-  termosAceitos: boolean | null;
-  loading: boolean;
-  refetch: () => Promise<void>;
-}
+const TERMOS_QUERY_KEY = 'termos-aceitos';
 
-export function useTermosAceitos(): UseTermosAceitosResult {
+export function useTermosAceitos() {
   const { user, loading: authLoading } = useAuth();
-  const [termosAceitos, setTermosAceitos] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchTermosStatus = async () => {
-    if (!user) {
-      setTermosAceitos(null);
-      setLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: [TERMOS_QUERY_KEY, user?.id],
+    queryFn: async (): Promise<boolean> => {
+      if (!user) return false;
 
-    try {
       const { data, error } = await supabase
         .from('profiles')
         .select('termos_aceitos_em')
@@ -29,27 +21,33 @@ export function useTermosAceitos(): UseTermosAceitosResult {
 
       if (error) {
         console.error('Erro ao buscar status dos termos:', error);
-        setTermosAceitos(null);
-      } else {
-        setTermosAceitos(data?.termos_aceitos_em !== null);
+        return false;
       }
-    } catch (error) {
-      console.error('Erro ao verificar termos:', error);
-      setTermosAceitos(null);
-    } finally {
-      setLoading(false);
+
+      return data?.termos_aceitos_em !== null;
+    },
+    enabled: !!user && !authLoading,
+    staleTime: 0, // Always refetch when needed
+    refetchOnWindowFocus: true,
+  });
+
+  const setTermosAceitos = (accepted: boolean) => {
+    if (user) {
+      queryClient.setQueryData([TERMOS_QUERY_KEY, user.id], accepted);
     }
   };
 
-  useEffect(() => {
-    if (!authLoading) {
-      fetchTermosStatus();
+  const invalidateTermos = () => {
+    if (user) {
+      queryClient.invalidateQueries({ queryKey: [TERMOS_QUERY_KEY, user.id] });
     }
-  }, [user, authLoading]);
+  };
 
   return {
-    termosAceitos,
-    loading: authLoading || loading,
-    refetch: fetchTermosStatus,
+    termosAceitos: query.data ?? null,
+    loading: authLoading || query.isLoading,
+    refetch: query.refetch,
+    setTermosAceitos,
+    invalidateTermos,
   };
 }

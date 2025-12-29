@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Shield, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,18 @@ const AceitarTermos = () => {
   const [transitioning, setTransitioning] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const { user } = useAuth();
-  const { role } = useUserRole();
-  const { refetch: refetchTermos } = useTermosAceitos();
+  const { role, loading: roleLoading } = useUserRole();
+  const { termosAceitos, setTermosAceitos, loading: termosLoading } = useTermosAceitos();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Auto-redirect if terms already accepted
+  useEffect(() => {
+    if (!termosLoading && !roleLoading && termosAceitos === true && role) {
+      const redirectPath = getRedirectPathByRole(role);
+      navigate(redirectPath, { replace: true });
+    }
+  }, [termosAceitos, termosLoading, role, roleLoading, navigate]);
 
   const handleAceitar = async () => {
     if (!aceito) {
@@ -38,10 +46,20 @@ const AceitarTermos = () => {
 
     setSubmitting(true);
     try {
+      // Use upsert to handle cases where profile might not exist
       const { error } = await supabase
         .from('profiles')
-        .update({ termos_aceitos_em: new Date().toISOString() })
-        .eq('user_id', user.id);
+        .upsert(
+          { 
+            user_id: user.id, 
+            termos_aceitos_em: new Date().toISOString(),
+            nome: user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário'
+          },
+          { 
+            onConflict: 'user_id',
+            ignoreDuplicates: false 
+          }
+        );
 
       if (error) throw error;
 
@@ -50,8 +68,8 @@ const AceitarTermos = () => {
         description: "Obrigado por aceitar os Termos de Uso.",
       });
 
-      // IMPORTANTE: Atualizar o cache do hook antes de navegar
-      await refetchTermos();
+      // Update cache immediately to prevent ProtectedRoute from redirecting back
+      setTermosAceitos(true);
 
       // Start fade-out transition
       setTransitioning(true);
@@ -62,7 +80,7 @@ const AceitarTermos = () => {
       setShowSkeleton(true);
 
       // Wait for skeleton to appear, then redirect
-      await new Promise(resolve => setTimeout(resolve, 600));
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       // Redirect based on user role
       const redirectPath = getRedirectPathByRole(role);
@@ -77,6 +95,15 @@ const AceitarTermos = () => {
       setSubmitting(false);
     }
   };
+
+  // Show loading while checking terms status
+  if (termosLoading || roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Show loading skeleton while transitioning
   if (showSkeleton) {

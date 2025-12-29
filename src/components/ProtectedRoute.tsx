@@ -23,7 +23,8 @@ export function ProtectedRoute({
   const { termosAceitos, loading: termosLoading } = useTermosAceitos();
   const location = useLocation();
 
-  if (authLoading || roleLoading || termosLoading) {
+  // Show loader while any critical data is loading
+  if (authLoading || roleLoading || (!skipTermsCheck && termosLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -42,6 +43,7 @@ export function ProtectedRoute({
   }
 
   // Check if user has accepted terms (skip for the terms acceptance page itself)
+  // Only redirect if termosAceitos is explicitly false (not null/undefined while loading)
   if (!skipTermsCheck && termosAceitos === false && location.pathname !== '/aceitar-termos') {
     return <Navigate to="/aceitar-termos" replace />;
   }
