@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
+import { formatPhone, unformatPhone } from '@/lib/phone';
 
 interface Profile {
   id: string;
@@ -35,12 +36,6 @@ export default function Perfil() {
   const [telefone, setTelefone] = useState('');
   const [imobiliaria, setImobiliaria] = useState('');
 
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 11);
-    if (digits.length <= 2) return digits.length ? `(${digits}` : '';
-    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTelefone(formatPhone(e.target.value));
@@ -149,7 +144,7 @@ export default function Perfil() {
         .update({
           nome: nome.trim(),
           creci: creci.trim() || null,
-          telefone: telefone.trim() || null,
+          telefone: unformatPhone(telefone) || null,
           imobiliaria: imobiliaria.trim() || null,
         })
         .eq('user_id', user.id);
