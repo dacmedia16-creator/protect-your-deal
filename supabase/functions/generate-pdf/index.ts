@@ -80,6 +80,18 @@ serve(async (req) => {
       .eq('user_id', ficha.user_id)
       .single();
 
+    // Get partner broker profile if exists
+    let partnerProfile = null;
+    if (ficha.corretor_parceiro_id) {
+      const { data: partnerData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', ficha.corretor_parceiro_id)
+        .single();
+      partnerProfile = partnerData;
+      console.log('Partner broker found:', partnerProfile?.nome);
+    }
+
     // Get imobiliaria data if exists
     let imobiliaria = null;
     if (ficha.imobiliaria_id) {
@@ -459,7 +471,20 @@ serve(async (req) => {
       
       // Broker Section on page 2
       if (profile) {
-        yPosition = drawSectionOnPage(page2, 'CORRETOR RESPONSÁVEL', yPosition, helveticaBold, primaryColor);
+        const hasPartner = !!partnerProfile;
+        yPosition = drawSectionOnPage(page2, hasPartner ? 'CORRETORES RESPONSÁVEIS' : 'CORRETOR RESPONSÁVEL', yPosition, helveticaBold, primaryColor);
+        
+        // Original broker
+        if (hasPartner) {
+          page2.drawText('Corretor Principal:', {
+            x: 50,
+            y: yPosition,
+            size: 9,
+            font: helveticaBold,
+            color: lightGray,
+          });
+          yPosition -= 15;
+        }
         yPosition = drawFieldOnPage(page2, 'Nome', profile.nome, yPosition, helveticaBold, helvetica, textColor);
         if (profile.creci) {
           yPosition = drawFieldOnPage(page2, 'CRECI', profile.creci, yPosition, helveticaBold, helvetica, textColor);
@@ -469,6 +494,33 @@ serve(async (req) => {
         }
         if (profile.telefone) {
           yPosition = drawFieldOnPage(page2, 'Telefone', formatPhone(profile.telefone), yPosition, helveticaBold, helvetica, textColor);
+        }
+
+        // Partner broker on page 2
+        if (partnerProfile) {
+          yPosition -= 10;
+          page2.drawText('Corretor Parceiro:', {
+            x: 50,
+            y: yPosition,
+            size: 9,
+            font: helveticaBold,
+            color: lightGray,
+          });
+          yPosition -= 15;
+          yPosition = drawFieldOnPage(page2, 'Nome', partnerProfile.nome, yPosition, helveticaBold, helvetica, textColor);
+          if (partnerProfile.creci) {
+            yPosition = drawFieldOnPage(page2, 'CRECI', partnerProfile.creci, yPosition, helveticaBold, helvetica, textColor);
+          }
+          if (partnerProfile.imobiliaria) {
+            yPosition = drawFieldOnPage(page2, 'Imobiliária', partnerProfile.imobiliaria, yPosition, helveticaBold, helvetica, textColor);
+          }
+          if (partnerProfile.telefone) {
+            yPosition = drawFieldOnPage(page2, 'Telefone', formatPhone(partnerProfile.telefone), yPosition, helveticaBold, helvetica, textColor);
+          }
+          if (ficha.parte_preenchida_parceiro) {
+            const parteLabel = ficha.parte_preenchida_parceiro === 'proprietario' ? 'Proprietário' : 'Comprador';
+            yPosition = drawFieldOnPage(page2, 'Responsável por', `Dados do ${parteLabel}`, yPosition, helveticaBold, helvetica, textColor);
+          }
         }
       }
 
@@ -521,7 +573,20 @@ serve(async (req) => {
       // Broker Section on same page
       if (profile) {
         yPosition -= 15;
-        yPosition = drawSection('CORRETOR RESPONSÁVEL', yPosition);
+        const hasPartner = !!partnerProfile;
+        yPosition = drawSection(hasPartner ? 'CORRETORES RESPONSÁVEIS' : 'CORRETOR RESPONSÁVEL', yPosition);
+        
+        // Original broker
+        if (hasPartner) {
+          page.drawText('Corretor Principal:', {
+            x: 50,
+            y: yPosition,
+            size: 9,
+            font: helveticaBold,
+            color: lightGray,
+          });
+          yPosition -= 15;
+        }
         yPosition = drawField('Nome', profile.nome, yPosition);
         if (profile.creci) {
           yPosition = drawField('CRECI', profile.creci, yPosition);
@@ -531,6 +596,34 @@ serve(async (req) => {
         }
         if (profile.telefone) {
           yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
+        }
+
+        // Partner broker
+        if (partnerProfile) {
+          yPosition -= 10;
+          page.drawText('Corretor Parceiro:', {
+            x: 50,
+            y: yPosition,
+            size: 9,
+            font: helveticaBold,
+            color: lightGray,
+          });
+          yPosition -= 15;
+          yPosition = drawField('Nome', partnerProfile.nome, yPosition);
+          if (partnerProfile.creci) {
+            yPosition = drawField('CRECI', partnerProfile.creci, yPosition);
+          }
+          if (partnerProfile.imobiliaria) {
+            yPosition = drawField('Imobiliária', partnerProfile.imobiliaria, yPosition);
+          }
+          if (partnerProfile.telefone) {
+            yPosition = drawField('Telefone', formatPhone(partnerProfile.telefone), yPosition);
+          }
+          // Show which part the partner filled
+          if (ficha.parte_preenchida_parceiro) {
+            const parteLabel = ficha.parte_preenchida_parceiro === 'proprietario' ? 'Proprietário' : 'Comprador';
+            yPosition = drawField('Responsável por', `Dados do ${parteLabel}`, yPosition);
+          }
         }
       }
 
