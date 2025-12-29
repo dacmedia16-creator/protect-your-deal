@@ -446,8 +446,10 @@ export default function ConfirmarVisita() {
                     onCheckedChange={(checked) => setAceiteLegal(checked === true)}
                     className="mt-0.5"
                   />
-                  <label htmlFor="aceite-legal" className="text-sm leading-relaxed cursor-pointer">
-                    Declaro que fui apresentado ao imóvel por intermédio do corretor acima identificado.
+                <label htmlFor="aceite-legal" className="text-sm leading-relaxed cursor-pointer">
+                    {otpInfo?.tipo === 'proprietario' 
+                      ? 'Declaro que autorizei a visita ao meu imóvel por intermédio do corretor acima identificado.'
+                      : 'Declaro que fui apresentado ao imóvel por intermédio do corretor acima identificado.'}
                   </label>
                 </div>
 
