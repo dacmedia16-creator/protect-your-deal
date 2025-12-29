@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
-
+import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 interface Ficha {
   id: string;
   protocolo: string;
@@ -36,50 +36,51 @@ export default function EmpresaFichas() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    async function fetchFichas() {
-      if (!imobiliariaId) return;
+  const fetchFichas = useCallback(async () => {
+    if (!imobiliariaId) return;
 
-      try {
-        const { data, error } = await supabase
-          .from('fichas_visita')
-          .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id')
-          .eq('imobiliaria_id', imobiliariaId)
-          .order('created_at', { ascending: false });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('fichas_visita')
+        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id')
+        .eq('imobiliaria_id', imobiliariaId)
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Fetch corretor names
-        const userIds = [...new Set((data || []).map(f => f.user_id))];
-        
-        let corretorMap: Record<string, string> = {};
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('user_id, nome')
-            .in('user_id', userIds);
+      // Fetch corretor names
+      const userIds = [...new Set((data || []).map(f => f.user_id))];
+      
+      let corretorMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
 
-          corretorMap = (profiles || []).reduce((acc, p) => {
-            acc[p.user_id] = p.nome;
-            return acc;
-          }, {} as Record<string, string>);
-        }
-
-        const enrichedFichas = (data || []).map(f => ({
-          ...f,
-          corretor_nome: corretorMap[f.user_id] || 'Desconhecido'
-        }));
-
-        setFichas(enrichedFichas);
-      } catch (error) {
-        console.error('Error fetching fichas:', error);
-      } finally {
-        setLoading(false);
+        corretorMap = (profiles || []).reduce((acc, p) => {
+          acc[p.user_id] = p.nome;
+          return acc;
+        }, {} as Record<string, string>);
       }
-    }
 
-    fetchFichas();
+      const enrichedFichas = (data || []).map(f => ({
+        ...f,
+        corretor_nome: corretorMap[f.user_id] || 'Desconhecido'
+      }));
+
+      setFichas(enrichedFichas);
+    } catch (error) {
+      console.error('Error fetching fichas:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [imobiliariaId]);
+
+  useEffect(() => {
+    fetchFichas();
+  }, [fetchFichas]);
 
   const filteredFichas = fichas.filter(f =>
     f.protocolo.toLowerCase().includes(search.toLowerCase()) ||
@@ -156,7 +157,7 @@ export default function EmpresaFichas() {
                       <TableHead className="hidden lg:table-cell">Comprador</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
+                      <TableHead className="w-[100px] text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -181,12 +182,19 @@ export default function EmpresaFichas() {
                             {statusLabels[ficha.status] || ficha.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Link to={`/fichas/${ficha.id}`}>
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Link to={`/fichas/${ficha.id}`}>
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <DeleteFichaDialog 
+                              fichaId={ficha.id} 
+                              protocolo={ficha.protocolo}
+                              onDeleted={fetchFichas}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +26,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
+import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -40,6 +41,7 @@ export default function ListaFichas() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   
   const statusFilter = searchParams.get('status');
@@ -92,6 +94,10 @@ export default function ListaFichas() {
     } else {
       setSearchParams({ status: value });
     }
+  };
+
+  const handleFichaDeleted = () => {
+    queryClient.invalidateQueries({ queryKey: ['fichas', user?.id] });
   };
 
   const currentTab = statusFilter || 'todas';
@@ -218,8 +224,13 @@ export default function ListaFichas() {
                       </div>
                       
                       <div className="flex gap-3 text-xs text-muted-foreground pt-1 border-t">
-                        <span className="truncate">Prop: {ficha.proprietario_nome || 'A preencher'}</span>
-                        <span className="truncate">Comp: {ficha.comprador_nome || 'A preencher'}</span>
+                        <span className="truncate flex-1">Prop: {ficha.proprietario_nome || 'A preencher'}</span>
+                        <span className="truncate flex-1">Comp: {ficha.comprador_nome || 'A preencher'}</span>
+                        <DeleteFichaDialog 
+                          fichaId={ficha.id} 
+                          protocolo={ficha.protocolo}
+                          onDeleted={handleFichaDeleted}
+                        />
                       </div>
                     </div>
 
@@ -255,9 +266,16 @@ export default function ListaFichas() {
                           <p className="text-sm text-muted-foreground">
                             {ficha.imovel_tipo} • Visita em {format(new Date(ficha.data_visita), "dd/MM/yyyy 'às' HH:mm")}
                           </p>
-                          <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                          <div className="flex gap-4 mt-2 text-sm text-muted-foreground items-center">
                             <span>Proprietário: {ficha.proprietario_nome || 'A preencher'}</span>
                             <span>Comprador: {ficha.comprador_nome || 'A preencher'}</span>
+                            <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
+                              <DeleteFichaDialog 
+                                fichaId={ficha.id} 
+                                protocolo={ficha.protocolo}
+                                onDeleted={handleFichaDeleted}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
