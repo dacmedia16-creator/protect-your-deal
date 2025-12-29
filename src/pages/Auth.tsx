@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, FileCheck, Users, Loader2, Building2 } from 'lucide-react';
+import { Shield, FileCheck, Users, Loader2, Building2, Check } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,6 +28,11 @@ interface ImobiliariaData {
   logo_url: string | null;
 }
 
+interface ImobiliariaEncontrada {
+  id: string;
+  nome: string;
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signUp, signIn, loading } = useAuth();
@@ -37,10 +43,17 @@ export default function Auth() {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ email: '', password: '', nome: '' });
   
-  // Estado para dados da imobiliária
+  // Estado para dados da imobiliária (login)
   const [imobiliariaData, setImobiliariaData] = useState<ImobiliariaData | null>(null);
   const [loadingImobiliaria, setLoadingImobiliaria] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Estado para vinculação à imobiliária (signup)
+  const [vincularImobiliaria, setVincularImobiliaria] = useState(false);
+  const [codigoImobiliaria, setCodigoImobiliaria] = useState('');
+  const [validatingCodigo, setValidatingCodigo] = useState(false);
+  const [imobiliariaEncontrada, setImobiliariaEncontrada] = useState<ImobiliariaEncontrada | null>(null);
+  const [codigoError, setCodigoError] = useState('');
 
   useEffect(() => {
     // Quando terminar de carregar e o usuário estiver logado
@@ -97,6 +110,57 @@ export default function Auth() {
     };
   }, [loginData.email]);
 
+  // Validar código da imobiliária no signup (com debounce)
+  useEffect(() => {
+    if (!vincularImobiliaria || !codigoImobiliaria || codigoImobiliaria.length < 2) {
+      setImobiliariaEncontrada(null);
+      setCodigoError('');
+      return;
+    }
+
+    const debounce = setTimeout(async () => {
+      setValidatingCodigo(true);
+      setCodigoError('');
+
+      try {
+        const codigo = parseInt(codigoImobiliaria, 10);
+        if (isNaN(codigo)) {
+          setCodigoError('Código deve ser um número');
+          setImobiliariaEncontrada(null);
+          setValidatingCodigo(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('imobiliarias')
+          .select('id, nome, status')
+          .eq('codigo', codigo)
+          .maybeSingle();
+
+        if (error) {
+          setCodigoError('Erro ao validar código');
+          setImobiliariaEncontrada(null);
+        } else if (!data) {
+          setCodigoError('Código não encontrado');
+          setImobiliariaEncontrada(null);
+        } else if (data.status !== 'ativo') {
+          setCodigoError('Esta imobiliária não está ativa');
+          setImobiliariaEncontrada(null);
+        } else {
+          setImobiliariaEncontrada({ id: data.id, nome: data.nome });
+          setCodigoError('');
+        }
+      } catch (error) {
+        setCodigoError('Erro ao validar código');
+        setImobiliariaEncontrada(null);
+      } finally {
+        setValidatingCodigo(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounce);
+  }, [codigoImobiliaria, vincularImobiliaria]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -138,29 +202,91 @@ export default function Auth() {
       return;
     }
 
-    setIsLoading(true);
-    const { error } = await signUp(signupData.email, signupData.password, signupData.nome);
-    setIsLoading(false);
-
-    if (error) {
-      if (error.message.includes('already registered')) {
+    // Validar código da imobiliária se marcado
+    if (vincularImobiliaria) {
+      if (!codigoImobiliaria) {
         toast({
           variant: 'destructive',
-          title: 'Email já cadastrado',
-          description: 'Este email já está em uso. Tente fazer login.',
+          title: 'Código obrigatório',
+          description: 'Informe o código da imobiliária ou desmarque a opção.',
         });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao criar conta',
-          description: error.message,
-        });
+        return;
       }
-    } else {
+      if (!imobiliariaEncontrada) {
+        toast({
+          variant: 'destructive',
+          title: 'Imobiliária não encontrada',
+          description: 'Verifique o código da imobiliária.',
+        });
+        return;
+      }
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // Se vinculando à imobiliária, usar a edge function
+      if (vincularImobiliaria && imobiliariaEncontrada) {
+        const { data, error } = await supabase.functions.invoke('registro-corretor-autonomo', {
+          body: {
+            nome: signupData.nome,
+            email: signupData.email,
+            senha: signupData.password,
+            codigo_imobiliaria: codigoImobiliaria,
+          },
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Erro ao criar conta');
+        }
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        toast({
+          title: 'Conta criada com sucesso!',
+          description: `Você foi vinculado à ${imobiliariaEncontrada.nome}. Faça login para continuar.`,
+        });
+        
+        // Limpar formulário e mudar para aba de login
+        setSignupData({ email: '', password: '', nome: '' });
+        setVincularImobiliaria(false);
+        setCodigoImobiliaria('');
+        setImobiliariaEncontrada(null);
+      } else {
+        // Cadastro normal sem vinculação
+        const { error } = await signUp(signupData.email, signupData.password, signupData.nome);
+
+        if (error) {
+          if (error.message.includes('already registered')) {
+            toast({
+              variant: 'destructive',
+              title: 'Email já cadastrado',
+              description: 'Este email já está em uso. Tente fazer login.',
+            });
+          } else {
+            toast({
+              variant: 'destructive',
+              title: 'Erro ao criar conta',
+              description: error.message,
+            });
+          }
+        } else {
+          toast({
+            title: 'Conta criada com sucesso!',
+            description: 'Você será redirecionado automaticamente.',
+          });
+        }
+      }
+    } catch (error: any) {
       toast({
-        title: 'Conta criada com sucesso!',
-        description: 'Você será redirecionado automaticamente.',
+        variant: 'destructive',
+        title: 'Erro ao criar conta',
+        description: error.message || 'Ocorreu um erro inesperado.',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -357,6 +483,58 @@ export default function Auth() {
                         onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                         required
                       />
+                    </div>
+                    
+                    {/* Vinculação à imobiliária */}
+                    <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="vincularImobiliaria"
+                          checked={vincularImobiliaria}
+                          onCheckedChange={(checked) => {
+                            setVincularImobiliaria(!!checked);
+                            if (!checked) {
+                              setCodigoImobiliaria('');
+                              setImobiliariaEncontrada(null);
+                              setCodigoError('');
+                            }
+                          }}
+                        />
+                        <Label htmlFor="vincularImobiliaria" className="cursor-pointer text-sm">
+                          Desejo me vincular a uma imobiliária
+                        </Label>
+                      </div>
+
+                      {vincularImobiliaria && (
+                        <div className="space-y-2">
+                          <Label htmlFor="codigoImobiliaria">Código da Imobiliária</Label>
+                          <div className="relative">
+                            <Input
+                              id="codigoImobiliaria"
+                              type="text"
+                              inputMode="numeric"
+                              value={codigoImobiliaria}
+                              onChange={(e) => setCodigoImobiliaria(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Ex: 100"
+                              className={codigoError ? 'border-destructive' : imobiliariaEncontrada ? 'border-green-500' : ''}
+                            />
+                            {validatingCodigo && (
+                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                            )}
+                          </div>
+                          {codigoError && <p className="text-sm text-destructive">{codigoError}</p>}
+                          {imobiliariaEncontrada && (
+                            <div className="flex items-center gap-2 text-sm text-green-600">
+                              <Building2 className="h-4 w-4" />
+                              <span>{imobiliariaEncontrada.nome}</span>
+                              <Check className="h-4 w-4" />
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Peça o código para o administrador da imobiliária
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading}>
                       {isLoading ? 'Criando conta...' : 'Criar conta'}
