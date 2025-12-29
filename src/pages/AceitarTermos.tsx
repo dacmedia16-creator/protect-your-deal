@@ -7,12 +7,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { supabase } from '@/integrations/supabase/client';
 
 const AceitarTermos = () => {
   const [aceito, setAceito] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
+  const { role } = useUserRole();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -42,8 +45,9 @@ const AceitarTermos = () => {
         description: "Obrigado por aceitar os Termos de Uso.",
       });
 
-      // Redirect to dashboard
-      navigate('/dashboard', { replace: true });
+      // Redirect based on user role
+      const redirectPath = getRedirectPathByRole(role);
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       console.error('Erro ao aceitar termos:', error);
       toast({
