@@ -43,7 +43,10 @@ import {
   Plus,
   AlertTriangle,
   UserPlus,
-  Share2
+  Share2,
+  Pencil,
+  X,
+  Save
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -100,6 +103,21 @@ export default function DetalhesFicha() {
   const [showConvidarParceiro, setShowConvidarParceiro] = useState(false);
   const [telefoneParceiro, setTelefoneParceiro] = useState('');
   const [enviandoConvite, setEnviandoConvite] = useState(false);
+
+  // State for editing existing phone numbers
+  const [editandoProprietario, setEditandoProprietario] = useState(false);
+  const [editandoComprador, setEditandoComprador] = useState(false);
+  const [editProprietarioData, setEditProprietarioData] = useState({
+    nome: '',
+    cpf: '',
+    telefone: '',
+  });
+  const [editCompradorData, setEditCompradorData] = useState({
+    nome: '',
+    cpf: '',
+    telefone: '',
+  });
+  const [savingEditData, setSavingEditData] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -463,6 +481,113 @@ export default function DetalhesFicha() {
       });
     } finally {
       setSavingCompletarData(false);
+    }
+  };
+
+  const handleStartEdit = (tipo: 'proprietario' | 'comprador') => {
+    if (!ficha) return;
+    
+    if (tipo === 'proprietario') {
+      setEditProprietarioData({
+        nome: ficha.proprietario_nome || '',
+        cpf: ficha.proprietario_cpf || '',
+        telefone: formatPhoneInput(ficha.proprietario_telefone || ''),
+      });
+      setEditandoProprietario(true);
+    } else {
+      setEditCompradorData({
+        nome: ficha.comprador_nome || '',
+        cpf: ficha.comprador_cpf || '',
+        telefone: formatPhoneInput(ficha.comprador_telefone || ''),
+      });
+      setEditandoComprador(true);
+    }
+  };
+
+  const handleCancelEdit = (tipo: 'proprietario' | 'comprador') => {
+    if (tipo === 'proprietario') {
+      setEditandoProprietario(false);
+      setEditProprietarioData({ nome: '', cpf: '', telefone: '' });
+    } else {
+      setEditandoComprador(false);
+      setEditCompradorData({ nome: '', cpf: '', telefone: '' });
+    }
+  };
+
+  const handleSaveEditData = async (tipo: 'proprietario' | 'comprador') => {
+    if (!ficha) return;
+
+    const data = tipo === 'proprietario' ? editProprietarioData : editCompradorData;
+    
+    // Validate phone
+    if (!data.telefone || data.telefone.replace(/\D/g, '').length < 10) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Telefone é obrigatório e deve ter pelo menos 10 dígitos',
+      });
+      return;
+    }
+
+    if (data.cpf && !validateCPF(data.cpf)) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'CPF inválido',
+      });
+      return;
+    }
+
+    setSavingEditData(true);
+    try {
+      const updateData = tipo === 'proprietario' 
+        ? {
+            proprietario_telefone: data.telefone.replace(/\D/g, ''),
+            proprietario_nome: data.nome || null,
+            proprietario_cpf: data.cpf || null,
+          }
+        : {
+            comprador_telefone: data.telefone.replace(/\D/g, ''),
+            comprador_nome: data.nome || null,
+            comprador_cpf: data.cpf || null,
+          };
+
+      const { error } = await supabase
+        .from('fichas_visita')
+        .update(updateData)
+        .eq('id', ficha.id);
+
+      if (error) throw error;
+
+      // Refresh data
+      await refetch();
+
+      // Close edit mode
+      handleCancelEdit(tipo);
+
+      toast({
+        title: 'Dados atualizados!',
+        description: `Dados do ${tipo === 'proprietario' ? 'proprietário' : 'comprador'} foram atualizados. Deseja reenviar o código de confirmação?`,
+        action: (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => sendOtp(tipo)}
+          >
+            Reenviar OTP
+          </Button>
+        ),
+      });
+
+    } catch (err) {
+      console.error('Erro ao salvar dados:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao salvar os dados',
+      });
+    } finally {
+      setSavingEditData(false);
     }
   };
 
@@ -1139,30 +1264,101 @@ export default function DetalhesFicha() {
           {!proprietarioFaltando && (
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                    <User className="h-5 w-5 text-secondary-foreground" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                      <User className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Proprietário</CardTitle>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">Proprietário</CardTitle>
-                  </div>
+                  {/* Botão de editar - só aparece se não confirmou ainda */}
+                  {!ficha.proprietario_confirmado_em && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && !editandoProprietario && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStartEdit('proprietario')}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nome</p>
-                    <p className="font-medium">{ficha.proprietario_nome || (ficha.proprietario_autopreenchimento ? '(autopreenchimento)' : '-')}</p>
+                {editandoProprietario ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-prop-nome">Nome</Label>
+                        <Input
+                          id="edit-prop-nome"
+                          value={editProprietarioData.nome}
+                          onChange={(e) => setEditProprietarioData(prev => ({ ...prev, nome: e.target.value }))}
+                          placeholder="Nome do proprietário"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-prop-cpf">CPF</Label>
+                        <Input
+                          id="edit-prop-cpf"
+                          value={editProprietarioData.cpf}
+                          onChange={(e) => setEditProprietarioData(prev => ({ ...prev, cpf: formatCPFLib(e.target.value) }))}
+                          placeholder="000.000.000-00"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-prop-telefone">Telefone *</Label>
+                        <Input
+                          id="edit-prop-telefone"
+                          value={editProprietarioData.telefone}
+                          onChange={(e) => setEditProprietarioData(prev => ({ ...prev, telefone: formatPhoneInput(e.target.value) }))}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelEdit('proprietario')}
+                        disabled={savingEditData}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveEditData('proprietario')}
+                        disabled={savingEditData}
+                      >
+                        {savingEditData ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4 mr-1" />
+                        )}
+                        Salvar
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">CPF</p>
-                    <p className="font-medium">{formatCPF(ficha.proprietario_cpf)}</p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nome</p>
+                      <p className="font-medium">{ficha.proprietario_nome || (ficha.proprietario_autopreenchimento ? '(autopreenchimento)' : '-')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">CPF</p>
+                      <p className="font-medium">{formatCPF(ficha.proprietario_cpf)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Telefone</p>
+                      <p className="font-medium">{formatPhone(ficha.proprietario_telefone)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Telefone</p>
-                    <p className="font-medium">{formatPhone(ficha.proprietario_telefone)}</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1171,30 +1367,101 @@ export default function DetalhesFicha() {
           {!compradorFaltando && (
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                    <Users className="h-5 w-5 text-secondary-foreground" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                      <Users className="h-5 w-5 text-secondary-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Comprador/Visitante</CardTitle>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">Comprador/Visitante</CardTitle>
-                  </div>
+                  {/* Botão de editar - só aparece se não confirmou ainda */}
+                  {!ficha.comprador_confirmado_em && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial' && !editandoComprador && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleStartEdit('comprador')}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nome</p>
-                    <p className="font-medium">{ficha.comprador_nome || (ficha.comprador_autopreenchimento ? '(autopreenchimento)' : '-')}</p>
+                {editandoComprador ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-comp-nome">Nome</Label>
+                        <Input
+                          id="edit-comp-nome"
+                          value={editCompradorData.nome}
+                          onChange={(e) => setEditCompradorData(prev => ({ ...prev, nome: e.target.value }))}
+                          placeholder="Nome do comprador"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-comp-cpf">CPF</Label>
+                        <Input
+                          id="edit-comp-cpf"
+                          value={editCompradorData.cpf}
+                          onChange={(e) => setEditCompradorData(prev => ({ ...prev, cpf: formatCPFLib(e.target.value) }))}
+                          placeholder="000.000.000-00"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-comp-telefone">Telefone *</Label>
+                        <Input
+                          id="edit-comp-telefone"
+                          value={editCompradorData.telefone}
+                          onChange={(e) => setEditCompradorData(prev => ({ ...prev, telefone: formatPhoneInput(e.target.value) }))}
+                          placeholder="(00) 00000-0000"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelEdit('comprador')}
+                        disabled={savingEditData}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleSaveEditData('comprador')}
+                        disabled={savingEditData}
+                      >
+                        {savingEditData ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="h-4 w-4 mr-1" />
+                        )}
+                        Salvar
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">CPF</p>
-                    <p className="font-medium">{formatCPF(ficha.comprador_cpf)}</p>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nome</p>
+                      <p className="font-medium">{ficha.comprador_nome || (ficha.comprador_autopreenchimento ? '(autopreenchimento)' : '-')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">CPF</p>
+                      <p className="font-medium">{formatCPF(ficha.comprador_cpf)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Telefone</p>
+                      <p className="font-medium">{formatPhone(ficha.comprador_telefone)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Telefone</p>
-                    <p className="font-medium">{formatPhone(ficha.comprador_telefone)}</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
