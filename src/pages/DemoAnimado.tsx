@@ -20,7 +20,15 @@ import {
   ArrowRight,
   Volume2,
   VolumeX,
-  Loader2
+  Loader2,
+  BarChart3,
+  Bell,
+  Handshake,
+  MessageCircle,
+  CreditCard,
+  Home,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 
 // Demo steps with timing, content and narration text
@@ -29,16 +37,25 @@ const DEMO_STEPS = [
     id: 'intro',
     title: 'Bem-vindo ao VisitaSegura',
     subtitle: 'Segurança jurídica em cada visita imobiliária',
-    duration: 4000,
+    duration: 6000,
     icon: Shield,
     content: 'intro',
-    narration: 'Bem-vindo ao VisitaSegura! A plataforma que revoluciona a segurança nas visitas imobiliárias.',
+    narration: 'Bem-vindo ao VisitaSegura! A plataforma que revoluciona a segurança nas visitas imobiliárias. Acompanhe este demo e descubra como proteger suas transações.',
+  },
+  {
+    id: 'dashboard',
+    title: 'Dashboard Inicial',
+    subtitle: 'Visão geral das suas atividades',
+    duration: 6000,
+    icon: Home,
+    content: 'dashboard',
+    narration: 'No painel inicial você tem uma visão completa das suas atividades. Fichas do mês, confirmações pendentes e muito mais em um só lugar.',
   },
   {
     id: 'criar-ficha',
     title: 'Criando uma Ficha de Visita',
     subtitle: 'Preencha os dados do imóvel e das partes envolvidas',
-    duration: 4500,
+    duration: 5500,
     icon: FileCheck,
     content: 'form',
     narration: 'Criar uma ficha de visita é simples e rápido. Basta preencher os dados do imóvel e das partes envolvidas.',
@@ -47,25 +64,34 @@ const DEMO_STEPS = [
     id: 'dados-imovel',
     title: 'Dados do Imóvel',
     subtitle: 'Informe endereço, tipo e data da visita',
-    duration: 5000,
+    duration: 6000,
     icon: FileCheck,
     content: 'form-imovel',
-    narration: 'Informe o endereço completo, o tipo de imóvel e a data da visita. Tudo é preenchido de forma intuitiva.',
+    narration: 'Informe o endereço completo, o tipo de imóvel e a data da visita. Tudo é preenchido de forma intuitiva e organizada.',
   },
   {
     id: 'dados-partes',
     title: 'Proprietário e Comprador',
     subtitle: 'Cadastre os dados das partes envolvidas',
-    duration: 5000,
+    duration: 6000,
     icon: Users,
     content: 'form-partes',
-    narration: 'Cadastre os dados do proprietário e do comprador. Nome, telefone e CPF para garantir a identificação de todos.',
+    narration: 'Cadastre os dados do proprietário e do comprador. Nome, telefone e CPF para garantir a identificação segura de todos.',
+  },
+  {
+    id: 'lista-imoveis',
+    title: 'Lista de Imóveis',
+    subtitle: 'Catálogo de propriedades cadastradas',
+    duration: 5500,
+    icon: Home,
+    content: 'lista-imoveis',
+    narration: 'Mantenha todos os seus imóveis organizados em um catálogo. Endereço, tipo e proprietário vinculado para cada propriedade.',
   },
   {
     id: 'enviar-otp',
     title: 'Enviando Confirmação via WhatsApp',
     subtitle: 'Código OTP enviado para ambas as partes',
-    duration: 5500,
+    duration: 6000,
     icon: MessageSquare,
     content: 'whatsapp',
     narration: 'Enviamos um código de confirmação via WhatsApp para ambas as partes. Segurança e praticidade na palma da mão.',
@@ -74,25 +100,52 @@ const DEMO_STEPS = [
     id: 'confirmar-otp',
     title: 'Confirmação Recebida',
     subtitle: 'Ambas as partes confirmaram via código OTP',
-    duration: 4000,
+    duration: 5000,
     icon: Check,
     content: 'confirmado',
-    narration: 'Pronto! Ambas as partes confirmaram sua participação. A visita agora está validada.',
+    narration: 'Pronto! Ambas as partes confirmaram sua participação. A visita agora está validada juridicamente.',
+  },
+  {
+    id: 'historico',
+    title: 'Histórico de Visitas',
+    subtitle: 'Timeline completa de todas as visitas',
+    duration: 5500,
+    icon: Clock,
+    content: 'historico',
+    narration: 'Acompanhe o histórico completo de todas as visitas realizadas. Status, datas e detalhes de cada ficha.',
   },
   {
     id: 'qrcode',
     title: 'QR Code de Verificação',
     subtitle: 'Documento verificável a qualquer momento',
-    duration: 4500,
+    duration: 5000,
     icon: QrCode,
     content: 'qrcode',
     narration: 'Cada ficha possui um QR Code exclusivo para verificação de autenticidade. Proteção contra fraudes.',
   },
   {
+    id: 'relatorios',
+    title: 'Relatórios e Métricas',
+    subtitle: 'Análise de desempenho e estatísticas',
+    duration: 6000,
+    icon: BarChart3,
+    content: 'relatorios',
+    narration: 'Acompanhe relatórios detalhados com taxa de confirmação, visitas por período e métricas de desempenho da sua equipe.',
+  },
+  {
+    id: 'notificacoes',
+    title: 'Notificações em Tempo Real',
+    subtitle: 'Alertas e lembretes automáticos',
+    duration: 5500,
+    icon: Bell,
+    content: 'notificacoes',
+    narration: 'Receba notificações em tempo real sobre novas confirmações, lembretes de visitas e alertas importantes.',
+  },
+  {
     id: 'pdf',
     title: 'Comprovante em PDF',
     subtitle: 'Baixe o comprovante com validade jurídica',
-    duration: 4500,
+    duration: 5000,
     icon: Download,
     content: 'pdf',
     narration: 'Gere comprovantes profissionais em PDF, prontos para download. Documentação com validade jurídica.',
@@ -101,28 +154,55 @@ const DEMO_STEPS = [
     id: 'crm',
     title: 'Gestão de Clientes',
     subtitle: 'Todos os seus clientes organizados em um só lugar',
-    duration: 4500,
+    duration: 5500,
     icon: Users,
     content: 'crm',
     narration: 'Organize todos os seus clientes em um só lugar. Proprietários, compradores, histórico completo de cada relacionamento.',
   },
   {
+    id: 'parceiros',
+    title: 'Gestão de Parceiros',
+    subtitle: 'Compartilhe fichas entre imobiliárias',
+    duration: 5500,
+    icon: Handshake,
+    content: 'parceiros',
+    narration: 'Trabalhe em parceria com outras imobiliárias. Envie convites e compartilhe fichas de forma segura.',
+  },
+  {
+    id: 'templates',
+    title: 'Templates de Mensagem',
+    subtitle: 'Personalize suas comunicações',
+    duration: 5500,
+    icon: MessageCircle,
+    content: 'templates',
+    narration: 'Personalize as mensagens enviadas aos seus clientes. Templates prontos para cada situação.',
+  },
+  {
     id: 'pwa',
     title: 'App no seu Celular',
     subtitle: 'Instale como aplicativo e use offline',
-    duration: 4500,
+    duration: 5000,
     icon: Smartphone,
     content: 'pwa',
     narration: 'Instale o VisitaSegura como aplicativo no seu celular. Funciona offline e envia notificações.',
   },
   {
+    id: 'planos',
+    title: 'Planos e Assinatura',
+    subtitle: 'Escolha o plano ideal para você',
+    duration: 5500,
+    icon: CreditCard,
+    content: 'planos',
+    narration: 'Escolha entre o plano gratuito ou premium. Funcionalidades para corretores autônomos e imobiliárias de todos os tamanhos.',
+  },
+  {
     id: 'fim',
     title: 'Comece Agora Gratuitamente',
     subtitle: 'Proteja suas visitas imobiliárias',
-    duration: 4000,
+    duration: 6000,
     icon: Shield,
     content: 'cta',
-    narration: 'Comece agora gratuitamente e descubra como transformar sua rotina imobiliária. VisitaSegura, segurança em cada visita.',
+    narration: 'Comece agora gratuitamente e descubra como transformar sua rotina imobiliária. VisitaSegura, segurança em cada visita!',
   },
 ];
 
@@ -324,6 +404,45 @@ export default function DemoAnimado() {
           </div>
         );
 
+      case 'dashboard':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Home className="h-5 w-5 text-primary" />
+                Dashboard
+              </h3>
+              <span className="text-sm text-muted-foreground">Janeiro 2025</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { label: 'Fichas do Mês', value: '24', icon: FileCheck, color: 'text-primary' },
+                { label: 'Pendentes', value: '5', icon: Clock, color: 'text-orange-500' },
+                { label: 'Confirmadas', value: '19', icon: Check, color: 'text-green-500' },
+              ].map((stat, index) => (
+                <div 
+                  key={stat.label}
+                  className="bg-muted/50 p-4 rounded-lg text-center transition-all duration-500"
+                  style={{ 
+                    opacity: stepProgress > (index * 20) ? 1 : 0,
+                    transform: stepProgress > (index * 20) ? 'translateY(0)' : 'translateY(10px)'
+                  }}
+                >
+                  <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className={`bg-primary/5 border border-primary/20 rounded-lg p-4 transition-all duration-500 ${stepProgress > 70 ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="flex items-center gap-2 text-sm">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span><strong>+15%</strong> de confirmações este mês</span>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'form':
         return (
           <div className="p-6 animate-fade-in">
@@ -421,6 +540,43 @@ export default function DemoAnimado() {
           </div>
         );
 
+      case 'lista-imoveis':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Home className="h-5 w-5 text-primary" />
+                Meus Imóveis
+              </h3>
+              <span className="text-sm text-muted-foreground">8 imóveis</span>
+            </div>
+            <div className="space-y-3">
+              {[
+                { endereco: 'Rua das Palmeiras, 123', tipo: 'Apartamento', bairro: 'Centro' },
+                { endereco: 'Av. Brasil, 456', tipo: 'Casa', bairro: 'Jardim Europa' },
+                { endereco: 'Rua São Paulo, 789', tipo: 'Sala Comercial', bairro: 'Centro' },
+              ].map((imovel, index) => (
+                <div 
+                  key={imovel.endereco}
+                  className="p-3 bg-muted/50 rounded-lg flex items-center gap-3 transition-all duration-500"
+                  style={{ 
+                    opacity: stepProgress > (index * 25) ? 1 : 0,
+                    transform: stepProgress > (index * 25) ? 'translateX(0)' : 'translateX(-20px)'
+                  }}
+                >
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Home className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{imovel.endereco}</p>
+                    <p className="text-xs text-muted-foreground">{imovel.tipo} • {imovel.bairro}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       case 'whatsapp':
         return (
           <div className="p-6 animate-fade-in">
@@ -479,6 +635,46 @@ export default function DemoAnimado() {
           </div>
         );
 
+      case 'historico':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Histórico de Visitas
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {[
+                { data: '15/01/2025', endereco: 'Rua das Palmeiras, 123', status: 'Confirmada', statusColor: 'text-green-600 bg-green-100' },
+                { data: '12/01/2025', endereco: 'Av. Brasil, 456', status: 'Confirmada', statusColor: 'text-green-600 bg-green-100' },
+                { data: '10/01/2025', endereco: 'Rua São Paulo, 789', status: 'Pendente', statusColor: 'text-orange-600 bg-orange-100' },
+              ].map((visita, index) => (
+                <div 
+                  key={`${visita.data}-${visita.endereco}`}
+                  className="p-3 bg-muted/50 rounded-lg flex items-center justify-between transition-all duration-500"
+                  style={{ 
+                    opacity: stepProgress > (index * 25) ? 1 : 0,
+                    transform: stepProgress > (index * 25) ? 'translateX(0)' : 'translateX(-20px)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">{visita.data}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{visita.endereco}</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded ${visita.statusColor}`}>
+                    {visita.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       case 'qrcode':
         return (
           <div className="flex flex-col items-center justify-center h-full p-8 animate-fade-in">
@@ -497,6 +693,89 @@ export default function DemoAnimado() {
             <div className={`flex items-center gap-2 mt-4 transition-all duration-500 ${stepProgress > 60 ? 'opacity-100' : 'opacity-0'}`}>
               <QrCode className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium">Verificação instantânea</span>
+            </div>
+          </div>
+        );
+
+      case 'relatorios':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Relatórios
+              </h3>
+              <span className="text-sm text-muted-foreground">Janeiro 2025</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div 
+                className="bg-muted/50 p-4 rounded-lg transition-all duration-500"
+                style={{ opacity: stepProgress > 20 ? 1 : 0 }}
+              >
+                <p className="text-sm text-muted-foreground">Taxa de Confirmação</p>
+                <p className="text-2xl font-bold text-green-600">92%</p>
+              </div>
+              <div 
+                className="bg-muted/50 p-4 rounded-lg transition-all duration-500"
+                style={{ opacity: stepProgress > 40 ? 1 : 0 }}
+              >
+                <p className="text-sm text-muted-foreground">Total de Visitas</p>
+                <p className="text-2xl font-bold">156</p>
+              </div>
+            </div>
+            <div 
+              className="bg-muted/50 p-4 rounded-lg transition-all duration-500"
+              style={{ opacity: stepProgress > 60 ? 1 : 0 }}
+            >
+              <p className="text-sm text-muted-foreground mb-2">Visitas por Semana</p>
+              <div className="flex items-end gap-2 h-16">
+                {[60, 80, 45, 90, 75].map((height, i) => (
+                  <div 
+                    key={i}
+                    className="flex-1 bg-primary rounded-t transition-all duration-500"
+                    style={{ 
+                      height: stepProgress > (70 + i * 5) ? `${height}%` : '0%',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'notificacoes':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                Notificações
+              </h3>
+              <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">3 novas</span>
+            </div>
+            <div className="space-y-3">
+              {[
+                { icon: Check, text: 'Maria Silva confirmou a visita', tempo: 'Agora', color: 'text-green-500' },
+                { icon: Clock, text: 'Lembrete: Visita às 14:00', tempo: '5 min', color: 'text-orange-500' },
+                { icon: FileCheck, text: 'Nova ficha criada por João', tempo: '1h', color: 'text-primary' },
+              ].map((notif, index) => (
+                <div 
+                  key={notif.text}
+                  className="p-3 bg-muted/50 rounded-lg flex items-center gap-3 transition-all duration-500"
+                  style={{ 
+                    opacity: stepProgress > (index * 25) ? 1 : 0,
+                    transform: stepProgress > (index * 25) ? 'translateX(0)' : 'translateX(-20px)'
+                  }}
+                >
+                  <div className={`p-2 rounded-full bg-muted ${notif.color}`}>
+                    <notif.icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm">{notif.text}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{notif.tempo}</span>
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -572,6 +851,96 @@ export default function DemoAnimado() {
           </div>
         );
 
+      case 'parceiros':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Handshake className="h-5 w-5 text-primary" />
+                Parceiros
+              </h3>
+              <Button size="sm" variant="outline" className="gap-1 text-xs">
+                <Users className="h-3 w-3" />
+                Convidar
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {[
+                { nome: 'Imobiliária Centro', status: 'Parceiro', fichas: 12 },
+                { nome: 'Corretor Carlos', status: 'Pendente', fichas: 0 },
+                { nome: 'Imob Prime', status: 'Parceiro', fichas: 8 },
+              ].map((parceiro, index) => (
+                <div 
+                  key={parceiro.nome}
+                  className="p-3 bg-muted/50 rounded-lg flex items-center justify-between transition-all duration-500"
+                  style={{ 
+                    opacity: stepProgress > (index * 25) ? 1 : 0,
+                    transform: stepProgress > (index * 25) ? 'translateX(0)' : 'translateX(-20px)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Handshake className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{parceiro.nome}</p>
+                      <p className="text-xs text-muted-foreground">{parceiro.fichas} fichas compartilhadas</p>
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    parceiro.status === 'Parceiro' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
+                  }`}>
+                    {parceiro.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'templates':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Templates
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {[
+                { nome: 'Confirmação de Visita', tipo: 'WhatsApp', ativo: true },
+                { nome: 'Lembrete 24h', tipo: 'WhatsApp', ativo: true },
+                { nome: 'Agradecimento', tipo: 'WhatsApp', ativo: false },
+              ].map((template, index) => (
+                <div 
+                  key={template.nome}
+                  className="p-3 bg-muted/50 rounded-lg flex items-center justify-between transition-all duration-500"
+                  style={{ 
+                    opacity: stepProgress > (index * 25) ? 1 : 0,
+                    transform: stepProgress > (index * 25) ? 'translateX(0)' : 'translateX(-20px)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <MessageCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{template.nome}</p>
+                      <p className="text-xs text-muted-foreground">{template.tipo}</p>
+                    </div>
+                  </div>
+                  <div className={`w-8 h-5 rounded-full flex items-center px-0.5 ${
+                    template.ativo ? 'bg-green-500 justify-end' : 'bg-muted justify-start'
+                  }`}>
+                    <div className="w-4 h-4 bg-white rounded-full shadow" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       case 'pwa':
         return (
           <div className="flex flex-col items-center justify-center h-full p-8 animate-fade-in">
@@ -601,6 +970,51 @@ export default function DemoAnimado() {
                 </li>
               ))}
             </ul>
+          </div>
+        );
+
+      case 'planos':
+        return (
+          <div className="p-6 animate-fade-in">
+            <div className="flex items-center justify-center mb-6">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Escolha seu Plano
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div 
+                className="p-4 border rounded-lg transition-all duration-500"
+                style={{ 
+                  opacity: stepProgress > 20 ? 1 : 0,
+                  transform: stepProgress > 20 ? 'translateY(0)' : 'translateY(10px)'
+                }}
+              >
+                <h4 className="font-semibold mb-2">Gratuito</h4>
+                <p className="text-2xl font-bold mb-2">R$ 0</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>✓ 10 fichas/mês</li>
+                  <li>✓ 50 clientes</li>
+                  <li>✓ 1 corretor</li>
+                </ul>
+              </div>
+              <div 
+                className="p-4 border-2 border-primary rounded-lg relative transition-all duration-500"
+                style={{ 
+                  opacity: stepProgress > 40 ? 1 : 0,
+                  transform: stepProgress > 40 ? 'translateY(0)' : 'translateY(10px)'
+                }}
+              >
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded">Popular</span>
+                <h4 className="font-semibold mb-2">Premium</h4>
+                <p className="text-2xl font-bold mb-2">R$ 49<span className="text-sm font-normal">/mês</span></p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>✓ Fichas ilimitadas</li>
+                  <li>✓ Clientes ilimitados</li>
+                  <li>✓ Equipe completa</li>
+                </ul>
+              </div>
+            </div>
           </div>
         );
 
