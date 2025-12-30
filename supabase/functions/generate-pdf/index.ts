@@ -290,6 +290,71 @@ serve(async (req) => {
       return startY - 18;
     };
 
+    // Helper function to draw field with word wrap for long texts
+    const drawFieldWithWrap = (label: string, value: string, startY: number, maxWidth: number): number => {
+      page.drawText(`${label}:`, {
+        x: 50,
+        y: startY,
+        size: 10,
+        font: helveticaBold,
+        color: textColor,
+      });
+      
+      const valueText = value || '-';
+      const valueX = 160;
+      const availableWidth = maxWidth - valueX;
+      
+      const textWidth = helvetica.widthOfTextAtSize(valueText, 10);
+      
+      if (textWidth <= availableWidth) {
+        page.drawText(valueText, {
+          x: valueX,
+          y: startY,
+          size: 10,
+          font: helvetica,
+          color: textColor,
+        });
+        return startY - 18;
+      }
+      
+      // Text needs wrapping
+      const words = valueText.split(' ');
+      let line = '';
+      let currentY = startY;
+      
+      for (const word of words) {
+        const testLine = line + (line ? ' ' : '') + word;
+        const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
+        
+        if (testWidth > availableWidth && line) {
+          page.drawText(line, {
+            x: valueX,
+            y: currentY,
+            size: 10,
+            font: helvetica,
+            color: textColor,
+          });
+          currentY -= 14;
+          line = word;
+        } else {
+          line = testLine;
+        }
+      }
+      
+      if (line) {
+        page.drawText(line, {
+          x: valueX,
+          y: currentY,
+          size: 10,
+          font: helvetica,
+          color: textColor,
+        });
+        currentY -= 18;
+      }
+      
+      return currentY;
+    };
+
     // Format functions
     const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
@@ -329,8 +394,10 @@ serve(async (req) => {
     // Property Section
     yPosition -= 40;
     yPosition = drawSection('DADOS DO IMÓVEL', yPosition);
+    // Use wrap function for address with max width to avoid QR code overlap
+    const maxTextWidth = qrX - 20; // Leave margin before QR code
+    yPosition = drawFieldWithWrap('Endereço', ficha.imovel_endereco, yPosition, maxTextWidth);
     yPosition = drawField('Tipo', ficha.imovel_tipo, yPosition);
-    yPosition = drawField('Endereço', ficha.imovel_endereco, yPosition);
 
     // Owner Section with Legal Data
     yPosition -= 15;
