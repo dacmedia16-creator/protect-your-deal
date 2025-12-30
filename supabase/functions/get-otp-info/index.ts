@@ -76,16 +76,22 @@ serve(async (req) => {
 
     // Check if expired
     const expired = new Date(otp.expira_em) < new Date();
+    
+    // Check if max attempts exceeded
+    const maxAttemptsExceeded = (otp.tentativas || 0) >= 5;
 
     return new Response(
       JSON.stringify({ 
-        valid: !expired,
+        valid: !expired && !maxAttemptsExceeded,
         expired,
+        max_attempts_exceeded: maxAttemptsExceeded,
         otp: {
           tipo: otp.tipo,
           confirmado: false,
           expira_em: otp.expira_em,
           ficha_id: otp.ficha_id,
+          tentativas: otp.tentativas || 0,
+          max_tentativas: 5,
         },
         ficha: ficha ? {
           protocolo: ficha.protocolo,

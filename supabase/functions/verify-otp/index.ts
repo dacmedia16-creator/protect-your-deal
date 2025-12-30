@@ -152,15 +152,17 @@ serve(async (req) => {
     // Verify code
     if (otp.codigo !== codigo) {
       // Increment attempts
+      const newAttempts = otp.tentativas + 1;
       await supabase
         .from('confirmacoes_otp')
-        .update({ tentativas: otp.tentativas + 1 })
+        .update({ tentativas: newAttempts })
         .eq('id', otp.id);
 
-      const remainingAttempts = 4 - otp.tentativas;
+      const remainingAttempts = 5 - newAttempts;
       return new Response(
         JSON.stringify({ 
-          error: `Código incorreto. ${remainingAttempts > 0 ? `Você tem mais ${remainingAttempts} tentativa(s).` : 'Última tentativa!'}` 
+          error: `Código incorreto. ${remainingAttempts > 0 ? `Você tem mais ${remainingAttempts} tentativa(s).` : 'Tentativas esgotadas!'}`,
+          tentativas_restantes: remainingAttempts
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
