@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import AnimatedSection from '@/components/AnimatedSection';
 import { 
   ArrowLeft, 
   ArrowRight,
@@ -60,17 +61,17 @@ const ComoFunciona = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         {/* Title */}
-        <div className="text-center mb-12">
+        <AnimatedSection className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-4">
             Como Funciona o <span className="text-primary">VisitaSegura</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Veja na prática como é simples garantir a segurança jurídica das suas visitas.
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* Video Demo */}
-        <div className="max-w-4xl mx-auto mb-16">
+        <AnimatedSection delay={150} className="max-w-4xl mx-auto mb-16">
           <video
             className="w-full rounded-xl shadow-lg border border-border"
             controls
@@ -81,40 +82,48 @@ const ComoFunciona = () => {
             <source src="/videos/demo.mp4" type="video/mp4" />
             Seu navegador não suporta vídeo.
           </video>
-        </div>
+        </AnimatedSection>
 
         {/* Steps */}
         <div className="max-w-5xl mx-auto mb-16">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-center mb-10">
-            4 Passos Simples
-          </h2>
+          <AnimatedSection delay={300} className="mb-10">
+            <h2 className="text-2xl md:text-3xl font-heading font-bold text-center">
+              4 Passos Simples
+            </h2>
+          </AnimatedSection>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) => (
-              <div key={index} className="relative">
-                <div className="text-6xl font-heading font-bold text-primary/10 absolute -top-4 -left-2">
-                  {step.number}
-                </div>
-                <div className="relative pt-8">
-                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <step.icon className="h-7 w-7 text-primary" />
+              <AnimatedSection 
+                key={index} 
+                delay={400 + index * 100}
+                direction={index % 2 === 0 ? 'left' : 'right'}
+              >
+                <div className="relative">
+                  <div className="text-6xl font-heading font-bold text-primary/10 absolute -top-4 -left-2">
+                    {step.number}
                   </div>
-                  <h3 className="font-heading font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm">{step.description}</p>
+                  <div className="relative pt-8">
+                    <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <step.icon className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="font-heading font-semibold text-lg mb-2">{step.title}</h3>
+                    <p className="text-muted-foreground text-sm">{step.description}</p>
+                  </div>
                 </div>
-              </div>
+              </AnimatedSection>
             ))}
           </div>
         </div>
 
         {/* CTA */}
-        <div className="text-center">
+        <AnimatedSection delay={800} className="text-center">
           <Button size="lg" className="text-base" asChild>
             <Link to="/registro-autonomo?plano=gratuito">
               Começar Agora Grátis
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
-        </div>
+        </AnimatedSection>
       </main>
     </div>
   );
