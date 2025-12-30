@@ -77,7 +77,6 @@ const ComoFunciona = () => {
             className="w-full rounded-xl shadow-lg border border-border"
             controls
             preload="metadata"
-            autoPlay
             muted
             poster={videoThumbnail}
           >
