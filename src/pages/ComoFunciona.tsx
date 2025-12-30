@@ -71,7 +71,7 @@ const ComoFunciona = () => {
         </AnimatedSection>
 
         {/* Video Demo */}
-        <AnimatedSection delay={150} className="max-w-2xl mx-auto mb-16">
+        <AnimatedSection delay={150} className="max-w-xl mx-auto mb-16">
           <video
             className="w-full rounded-xl shadow-lg border border-border"
             controls
