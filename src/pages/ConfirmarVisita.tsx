@@ -30,6 +30,8 @@ interface OtpInfo {
   confirmado: boolean;
   expira_em?: string;
   ficha_id?: string;
+  tentativas?: number;
+  max_tentativas?: number;
 }
 
 export default function ConfirmarVisita() {
@@ -47,6 +49,7 @@ export default function ConfirmarVisita() {
   const [ficha, setFicha] = useState<FichaInfo | null>(null);
   const [otpInfo, setOtpInfo] = useState<OtpInfo | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [tentativasRestantes, setTentativasRestantes] = useState<number>(5);
 
   // Legal acceptance fields
   const [aceiteLegal, setAceiteLegal] = useState(false);
@@ -69,6 +72,7 @@ export default function ConfirmarVisita() {
           error?: string;
           already_confirmed?: boolean;
           expired?: boolean;
+          max_attempts_exceeded?: boolean;
           ficha?: FichaInfo;
           otp?: OtpInfo;
         }>('get-otp-info', {
@@ -76,7 +80,12 @@ export default function ConfirmarVisita() {
         });
 
         if (error || !data?.valid) {
-          setError(data?.error || 'Link inválido ou expirado');
+          // Check if it's max attempts exceeded
+          if (data?.max_attempts_exceeded) {
+            setExpired(true); // Reuse expired state to show resend option
+          } else {
+            setError(data?.error || 'Link inválido ou expirado');
+          }
           setLoading(false);
           return;
         }
@@ -91,6 +100,11 @@ export default function ConfirmarVisita() {
 
         setFicha(data.ficha || null);
         setOtpInfo(data.otp || null);
+        
+        // Set initial remaining attempts
+        if (data.otp?.tentativas !== undefined && data.otp?.max_tentativas !== undefined) {
+          setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
+        }
       } catch (err) {
         setError('Erro ao carregar informações. Tente recarregar a página.');
       } finally {
@@ -203,10 +217,16 @@ export default function ConfirmarVisita() {
 
       // Erro retornado pelo servidor (conseguiu conectar, mas houve erro de validação)
       if (data?.error) {
+        // Update remaining attempts if returned
+        if (typeof (data as any).tentativas_restantes === 'number') {
+          setTentativasRestantes((data as any).tentativas_restantes);
+        }
+        
         // Verificar se é erro de tentativas excedidas
         const errorLower = data.error.toLowerCase();
-        if (errorLower.includes('tentativas') || errorLower.includes('attempts') || errorLower.includes('máximo')) {
+        if (errorLower.includes('tentativas') && (errorLower.includes('esgotadas') || errorLower.includes('excedido') || errorLower.includes('máximo'))) {
           setExpired(true); // Reutiliza expired para mostrar opção de reenvio
+          setTentativasRestantes(0);
           toast({
             variant: 'destructive',
             title: 'Tentativas esgotadas',
@@ -289,6 +309,7 @@ export default function ConfirmarVisita() {
       setResendSuccess(true);
       setExpired(false);
       setCodigo('');
+      setTentativasRestantes(5); // Reset attempt counter
       toast({
         title: 'Código reenviado!',
         description: 'Um novo código foi enviado para seu WhatsApp',
@@ -437,7 +458,20 @@ export default function ConfirmarVisita() {
               <form onSubmit={handleVerify} className="space-y-6">
                 {/* OTP Code */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Digite o código de 6 dígitos</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Digite o código de 6 dígitos</label>
+                    {tentativasRestantes < 5 && (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        tentativasRestantes <= 1 
+                          ? 'bg-destructive/10 text-destructive' 
+                          : tentativasRestantes <= 2 
+                            ? 'bg-warning/10 text-warning' 
+                            : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {tentativasRestantes} {tentativasRestantes === 1 ? 'tentativa restante' : 'tentativas restantes'}
+                      </span>
+                    )}
+                  </div>
                   <Input
                     type="text"
                     inputMode="numeric"
@@ -446,7 +480,9 @@ export default function ConfirmarVisita() {
                     placeholder="000000"
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
-                    className="text-center text-2xl tracking-widest font-mono"
+                    className={`text-center text-2xl tracking-widest font-mono ${
+                      tentativasRestantes <= 1 ? 'border-destructive focus-visible:ring-destructive' : ''
+                    }`}
                     autoFocus
                   />
                   <p className="text-xs text-muted-foreground text-center">
