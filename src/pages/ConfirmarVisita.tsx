@@ -190,19 +190,29 @@ export default function ConfirmarVisita() {
         },
       });
 
-      if (error) {
+      // Erro de rede real (não conseguiu conectar ao servidor)
+      if (error && !data) {
         toast({
           variant: 'destructive',
           title: 'Erro de conexão',
-          description: 'Não foi possível conectar ao servidor. Tente novamente.',
+          description: 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.',
         });
         setVerifying(false);
         return;
       }
 
+      // Erro retornado pelo servidor (conseguiu conectar, mas houve erro de validação)
       if (data?.error) {
-        // Handle specific error states
-        if (data.already_confirmed) {
+        // Verificar se é erro de tentativas excedidas
+        const errorLower = data.error.toLowerCase();
+        if (errorLower.includes('tentativas') || errorLower.includes('attempts') || errorLower.includes('máximo')) {
+          setExpired(true); // Reutiliza expired para mostrar opção de reenvio
+          toast({
+            variant: 'destructive',
+            title: 'Tentativas esgotadas',
+            description: 'Você excedeu o número de tentativas. Solicite um novo código.',
+          });
+        } else if (data.already_confirmed) {
           setAlreadyConfirmed(true);
           toast({
             title: 'Já confirmado',
@@ -218,7 +228,7 @@ export default function ConfirmarVisita() {
         } else {
           toast({
             variant: 'destructive',
-            title: 'Erro',
+            title: 'Código incorreto',
             description: data.error,
           });
         }
