@@ -339,6 +339,18 @@ const Index = () => {
               Em 4 passos simples, você garante a segurança jurídica das suas visitas.
             </p>
           </div>
+          
+          {/* Video Demo */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <video
+              className="w-full rounded-xl shadow-lg border border-border"
+              controls
+              preload="metadata"
+            >
+              <source src="/videos/demo.mp4" type="video/mp4" />
+              Seu navegador não suporta vídeo.
+            </video>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) => (
               <div key={index} className="relative">
