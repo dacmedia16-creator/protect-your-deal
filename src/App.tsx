@@ -19,6 +19,7 @@ import AssinaturaSuspensa from "./pages/AssinaturaSuspensa";
 import SemPermissao from "./pages/SemPermissao";
 import InstalarApp from "./pages/InstalarApp";
 import Funcionalidades from "./pages/Funcionalidades";
+import ComoFunciona from "./pages/ComoFunciona";
 // Disabled: Tour and Demo pages
 // import TourAudio from "./pages/TourAudio";
 // import DemoAnimado from "./pages/DemoAnimado";
@@ -107,6 +108,7 @@ const App = () => (
                 <Route path="/sem-permissao" element={<SemPermissao />} />
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
+                <Route path="/como-funciona" element={<ComoFunciona />} />
                 {/* Disabled: Tour and Demo routes */}
                 {/* <Route path="/tour-audio" element={<TourAudio />} /> */}
                 {/* <Route path="/demo" element={<DemoAnimado />} /> */}

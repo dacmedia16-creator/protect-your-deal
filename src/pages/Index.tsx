@@ -156,12 +156,12 @@ const Index = () => {
             >
               Funcionalidades
             </Link>
-            <a 
-              href="#como-funciona" 
+            <Link 
+              to="/como-funciona" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Como Funciona
-            </a>
+            </Link>
             <a 
               href="#planos" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -212,13 +212,13 @@ const Index = () => {
                     >
                       Funcionalidades
                     </Link>
-                    <a 
-                      href="#como-funciona" 
+                    <Link 
+                      to="/como-funciona" 
                       onClick={() => setMobileMenuOpen(false)}
                       className="text-base font-medium text-foreground hover:text-primary transition-colors"
                     >
                       Como Funciona
-                    </a>
+                    </Link>
                     <a 
                       href="#planos" 
                       onClick={() => setMobileMenuOpen(false)}
@@ -293,7 +293,7 @@ const Index = () => {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base" asChild>
-                <a href="#como-funciona">Como Funciona</a>
+                <Link to="/como-funciona">Como Funciona</Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base" asChild>
                 <Link to="/funcionalidades">Funcionalidades</Link>
@@ -343,17 +343,6 @@ const Index = () => {
             </p>
           </div>
           
-          {/* Video Demo */}
-          <div className="max-w-2xl lg:max-w-3xl mx-auto mb-12">
-            <video
-              className="w-full rounded-xl shadow-lg border border-border"
-              controls
-              preload="metadata"
-            >
-              <source src="/videos/demo.mp4" type="video/mp4" />
-              Seu navegador não suporta vídeo.
-            </video>
-          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) => (
               <div key={index} className="relative">
