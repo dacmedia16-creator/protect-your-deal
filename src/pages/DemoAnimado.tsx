@@ -259,12 +259,15 @@ export default function DemoAnimado() {
     setIsGeneratingAudio(true);
     const cache: Record<string, string> = {};
     
+    // ElevenLabs voice ID - Sarah (feminina, clara, profissional)
+    const voiceId = 'EXAVITQu4vr4xnSDxMaL';
+    
     try {
       for (const step of DEMO_STEPS) {
         toast.info(`Gerando áudio: ${step.title}...`);
         
-        const { data, error } = await supabase.functions.invoke('text-to-speech', {
-          body: { text: step.narration, voice: 'nova' }
+        const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
+          body: { text: step.narration, voiceId }
         });
 
         if (error) throw error;
