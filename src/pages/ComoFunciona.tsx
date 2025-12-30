@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AnimatedSection from '@/components/AnimatedSection';
+import videoThumbnail from '@/assets/video-thumbnail.jpg';
 import { 
   ArrowLeft, 
   ArrowRight,
@@ -78,6 +79,7 @@ const ComoFunciona = () => {
             preload="metadata"
             autoPlay
             muted
+            poster={videoThumbnail}
           >
             <source src="/videos/demo.mp4" type="video/mp4" />
             Seu navegador não suporta vídeo.
