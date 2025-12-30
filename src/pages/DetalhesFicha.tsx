@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
@@ -66,7 +67,18 @@ export default function DetalhesFicha() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { role } = useUserRole();
   const { toast } = useToast();
+  
+  // Dynamic return URL based on user role
+  const getFichasListUrl = (params?: string) => {
+    const baseUrl = role === 'super_admin' 
+      ? '/admin/fichas'
+      : role === 'imobiliaria_admin'
+        ? '/empresa/fichas'
+        : '/fichas';
+    return params ? `${baseUrl}?${params}` : baseUrl;
+  };
   const { playNotificationSound } = useNotificationSound();
   const previousStatusRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
@@ -381,7 +393,7 @@ export default function DetalhesFicha() {
       });
 
       // Redirecionar para lista de finalizados
-      navigate('/fichas?status=completo');
+      navigate(getFichasListUrl('status=completo'));
     } catch (err) {
       console.error('Erro ao finalizar parcialmente:', err);
       toast({
@@ -609,7 +621,7 @@ export default function DetalhesFicha() {
       });
 
       queryClient.invalidateQueries({ queryKey: ['fichas'] });
-      navigate('/fichas');
+      navigate(getFichasListUrl());
     } catch (err) {
       console.error('Erro ao excluir:', err);
       toast({
@@ -699,7 +711,7 @@ export default function DetalhesFicha() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/fichas')}>
+              <Button variant="ghost" size="icon" onClick={() => navigate(getFichasListUrl())}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
