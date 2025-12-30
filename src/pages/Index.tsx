@@ -295,6 +295,9 @@ const Index = () => {
               <Button size="lg" variant="outline" className="text-base" asChild>
                 <a href="#como-funciona">Como Funciona</a>
               </Button>
+              <Button size="lg" variant="outline" className="text-base" asChild>
+                <Link to="/funcionalidades">Funcionalidades</Link>
+              </Button>
             </div>
           </div>
         </div>
