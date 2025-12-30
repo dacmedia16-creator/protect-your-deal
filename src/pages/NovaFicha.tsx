@@ -20,6 +20,18 @@ import { MobileNav } from '@/components/MobileNav';
 
 type ModoCriacao = 'completo' | 'proprietario' | 'comprador';
 
+// Helper para formatar data/hora local (evita conversão UTC do toISOString)
+const getLocalDateTime = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${mins}`;
+};
+
 // Schema dinâmico baseado no modo de criação
 const createFichaSchema = (modo: ModoCriacao) => {
   const baseSchema = z.object({
@@ -125,7 +137,7 @@ export default function NovaFicha() {
     comprador_nome: '',
     comprador_cpf: '',
     comprador_telefone: '',
-    data_visita: new Date().toISOString().slice(0, 16),
+    data_visita: getLocalDateTime(),
     observacoes: '',
   });
 
