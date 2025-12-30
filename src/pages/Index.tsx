@@ -344,7 +344,7 @@ const Index = () => {
           </div>
           
           {/* Video Demo */}
-          <div className="max-w-4xl mx-auto mb-12">
+          <div className="max-w-2xl lg:max-w-3xl mx-auto mb-12">
             <video
               className="w-full rounded-xl shadow-lg border border-border"
               controls
