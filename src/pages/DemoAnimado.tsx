@@ -393,6 +393,26 @@ export default function DemoAnimado() {
     setAudioEnabled(prev => !prev);
   }, [audioEnabled]);
 
+  // Limpar cache e regenerar áudios
+  const clearCacheAndRegenerate = useCallback(async () => {
+    // Parar qualquer áudio em execução
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    
+    // Limpar cache
+    setAudioCache({});
+    setAudioReady(false);
+    setIsPlaying(false);
+    setCurrentStepIndex(0);
+    setStepProgress(0);
+    
+    // Gerar novos áudios
+    toast.info('Limpando cache e gerando novos áudios...');
+    await generateAllAudio();
+  }, [generateAllAudio]);
+
 
   const renderContent = () => {
     switch (currentStep.content) {
@@ -1131,6 +1151,7 @@ export default function DemoAnimado() {
             size="icon"
             onClick={restart}
             disabled={isGeneratingAudio}
+            title="Reiniciar demo"
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
@@ -1139,12 +1160,29 @@ export default function DemoAnimado() {
             variant="outline"
             size="icon"
             onClick={toggleAudio}
+            title={audioEnabled ? 'Desativar áudio' : 'Ativar áudio'}
           >
             {audioEnabled ? (
               <Volume2 className="h-4 w-4" />
             ) : (
               <VolumeX className="h-4 w-4" />
             )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearCacheAndRegenerate}
+            disabled={isGeneratingAudio}
+            title="Limpar cache e regenerar áudios"
+            className="text-xs"
+          >
+            {isGeneratingAudio ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+            ) : (
+              <Volume2 className="h-4 w-4 mr-1" />
+            )}
+            Regenerar Áudio
           </Button>
           
           <Button
