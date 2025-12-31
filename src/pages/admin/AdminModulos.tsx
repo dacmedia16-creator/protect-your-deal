@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -338,9 +339,28 @@ export default function AdminModulos() {
                             </Badge>
                           ))}
                           {modulo.recursos.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{modulo.recursos.length - 2}
-                            </Badge>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs cursor-pointer hover:bg-muted"
+                                >
+                                  +{modulo.recursos.length - 2}
+                                </Badge>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto max-w-xs">
+                                <div className="space-y-2">
+                                  <p className="font-medium text-sm">Todos os recursos</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {modulo.recursos.map((r) => (
+                                      <Badge key={r} variant="secondary" className="text-xs">
+                                        {r}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           )}
                         </div>
                       </TableCell>
