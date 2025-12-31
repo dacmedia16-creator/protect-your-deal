@@ -13,8 +13,7 @@ import {
   User,
   ChevronDown,
   CreditCard,
-  Handshake,
-  CalendarDays
+  Handshake
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +32,6 @@ import { Badge } from '@/components/ui/badge';
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/fichas', label: 'Fichas', icon: FileText },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays },
   { to: '/convites-recebidos', label: 'Convites', icon: Handshake },
   { to: '/clientes', label: 'Clientes', icon: Users },
 ];

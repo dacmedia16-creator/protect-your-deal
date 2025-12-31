@@ -15,8 +15,7 @@ import {
   CreditCard,
   Menu,
   X,
-  UserCircle,
-  Sparkles
+  UserCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +31,6 @@ const navItems = [
   { href: '/empresa/fichas', icon: FileText, label: 'Fichas de Visita' },
   { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
   { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
-  { href: '/empresa/modulo-avancado', icon: Sparkles, label: 'Módulo Avançado', highlight: true },
   { href: '/empresa/configuracoes', icon: Settings, label: 'Configurações' },
 ];
 
@@ -111,7 +109,6 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || 
                 (item.href !== '/empresa' && location.pathname.startsWith(item.href));
-              const isHighlight = 'highlight' in item && item.highlight;
               
               return (
                 <Link
@@ -122,9 +119,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     isActive 
                       ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                      : isHighlight
-                        ? "text-primary bg-primary/10 hover:bg-primary/20"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <item.icon className="h-5 w-5" />

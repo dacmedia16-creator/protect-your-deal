@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, CalendarDays } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge';
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
   { path: '/fichas', label: 'Fichas', icon: FileText },
-  { path: '/agenda', label: 'Agenda', icon: CalendarDays },
   { path: '/convites-recebidos', label: 'Convites', icon: Handshake },
 ];
 

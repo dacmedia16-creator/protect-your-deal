@@ -54,7 +54,6 @@ import CorretorAssinatura from "./pages/CorretorAssinatura";
 import ConvitesRecebidos from "./pages/ConvitesRecebidos";
 import ConvitesEnviados from "./pages/ConvitesEnviados";
 import FichasParceiro from "./pages/FichasParceiro";
-import AgendaPro from "./pages/AgendaPro";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -72,7 +71,6 @@ import AdminCorretoresAutonomos from "./pages/admin/AdminCorretoresAutonomos";
 import AdminDetalhesCorretorAutonomo from "./pages/admin/AdminDetalhesCorretorAutonomo";
 import AdminFichas from "./pages/admin/AdminFichas";
 import AdminRelatoriosFinanceiros from "./pages/admin/AdminRelatoriosFinanceiros";
-import AdminModulos from "./pages/admin/AdminModulos";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
@@ -81,7 +79,6 @@ import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
 import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
 import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
 import EmpresaFichas from "./pages/empresa/EmpresaFichas";
-import EmpresaModuloAvancado from "./pages/empresa/EmpresaModuloAvancado";
 
 const queryClient = new QueryClient();
 
@@ -150,11 +147,6 @@ const App = () => (
                 <Route path="/admin/planos" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminPlanos />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/modulos" element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <AdminModulos />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/usuarios" element={
@@ -237,11 +229,6 @@ const App = () => (
                 <Route path="/empresa/configuracoes" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaConfiguracoes />
-                  </ProtectedRoute>
-                } />
-                <Route path="/empresa/modulo-avancado" element={
-                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
-                    <EmpresaModuloAvancado />
                   </ProtectedRoute>
                 } />
 
@@ -344,11 +331,6 @@ const App = () => (
                 <Route path="/fichas-parceiro" element={
                   <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
                     <FichasParceiro />
-                  </ProtectedRoute>
-                } />
-                <Route path="/agenda" element={
-                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
-                    <AgendaPro />
                   </ProtectedRoute>
                 } />
 

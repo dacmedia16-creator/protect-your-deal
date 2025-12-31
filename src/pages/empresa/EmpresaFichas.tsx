@@ -19,7 +19,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
-import { DuplicateFichaButton } from '@/components/DuplicateFichaButton';
 interface Ficha {
   id: string;
   protocolo: string;
@@ -190,10 +189,6 @@ export default function EmpresaFichas() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
-                            <DuplicateFichaButton 
-                              fichaId={ficha.id} 
-                              onDuplicated={fetchFichas}
-                            />
                             <DeleteFichaDialog 
                               fichaId={ficha.id} 
                               protocolo={ficha.protocolo}

@@ -23,8 +23,7 @@ import {
   FileText,
   Mail,
   UserCircle,
-  TrendingUp,
-  Package
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -37,7 +36,6 @@ const navItems = [
   { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
   { href: '/admin/fichas', icon: FileText, label: 'Fichas' },
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
-  { href: '/admin/modulos', icon: Package, label: 'Módulos' },
   { href: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
   { href: '/admin/financeiro', icon: TrendingUp, label: 'Financeiro' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },

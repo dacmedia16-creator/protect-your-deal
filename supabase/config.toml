@@ -89,9 +89,3 @@ verify_jwt = false
 
 [functions.elevenlabs-tts]
 verify_jwt = false
-
-[functions.visit-reminders]
-verify_jwt = false
-
-[functions.asaas-modulo-subscription]
-verify_jwt = true
