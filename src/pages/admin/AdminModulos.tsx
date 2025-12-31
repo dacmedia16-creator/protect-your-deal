@@ -341,12 +341,14 @@ export default function AdminModulos() {
                           {modulo.recursos.length > 2 && (
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Badge 
-                                  variant="outline" 
-                                  className="text-xs cursor-pointer hover:bg-muted"
-                                >
-                                  +{modulo.recursos.length - 2}
-                                </Badge>
+                                <button type="button" className="inline-flex">
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs cursor-pointer hover:bg-muted"
+                                  >
+                                    +{modulo.recursos.length - 2}
+                                  </Badge>
+                                </button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto max-w-xs">
                                 <div className="space-y-2">
