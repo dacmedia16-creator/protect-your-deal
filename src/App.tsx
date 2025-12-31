@@ -79,6 +79,7 @@ import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
 import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
 import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
 import EmpresaFichas from "./pages/empresa/EmpresaFichas";
+import EmpresaModuloAvancado from "./pages/empresa/EmpresaModuloAvancado";
 
 const queryClient = new QueryClient();
 
@@ -229,6 +230,11 @@ const App = () => (
                 <Route path="/empresa/configuracoes" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaConfiguracoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/modulo-avancado" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaModuloAvancado />
                   </ProtectedRoute>
                 } />
 
