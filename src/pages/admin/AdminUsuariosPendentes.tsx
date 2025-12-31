@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { UserPlus, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -223,7 +224,7 @@ export default function AdminUsuariosPendentes() {
                           {user.email || 'N/A'}
                         </TableCell>
                         <TableCell>
-                          {user.profile?.telefone || 'N/A'}
+                          {user.profile?.telefone ? formatPhone(user.profile.telefone) : 'N/A'}
                         </TableCell>
                         <TableCell>
                           {format(new Date(user.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
