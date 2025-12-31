@@ -60,6 +60,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatPhone } from "@/lib/phone";
 
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -829,7 +830,7 @@ export default function AdminDetalhesCorretorAutonomo() {
                       clientes.map((cliente) => (
                         <TableRow key={cliente.id}>
                           <TableCell className="font-medium">{cliente.nome}</TableCell>
-                          <TableCell>{cliente.telefone}</TableCell>
+                          <TableCell>{formatPhone(cliente.telefone)}</TableCell>
                           <TableCell>{cliente.email || "-"}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={tipoColors[cliente.tipo] || ""}>

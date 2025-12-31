@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound } from 'lucide-react';
+import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -624,7 +625,7 @@ export default function EmpresaCorretores() {
                           {corretor.creci || '-'}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          {corretor.telefone || '-'}
+                          {corretor.telefone ? formatPhone(corretor.telefone) : '-'}
                         </TableCell>
                         <TableCell>{corretor.fichas_count}</TableCell>
                         <TableCell>

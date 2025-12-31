@@ -52,6 +52,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound, UserCircle, Home, FileText, Phone, Mail } from 'lucide-react';
+import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -820,7 +821,7 @@ export default function AdminDetalhesImobiliaria() {
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <Phone className="h-3 w-3 text-muted-foreground" />
-                                {cliente.telefone}
+                                {formatPhone(cliente.telefone)}
                               </div>
                             </TableCell>
                             <TableCell>
