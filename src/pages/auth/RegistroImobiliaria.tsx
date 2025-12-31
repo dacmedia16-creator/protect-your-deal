@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Shield, Loader2, Building2, ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
+import { formatCNPJ } from '@/lib/cnpj';
 
 interface Plano {
   id: string;
@@ -306,8 +307,10 @@ export default function RegistroImobiliaria() {
                     <Label htmlFor="cnpj">CNPJ</Label>
                     <Input
                       id="cnpj"
+                      placeholder="00.000.000/0000-00"
                       value={imobiliariaForm.cnpj}
-                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, cnpj: e.target.value })}
+                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, cnpj: formatCNPJ(e.target.value) })}
+                      maxLength={18}
                     />
                   </div>
                   <div className="space-y-2">

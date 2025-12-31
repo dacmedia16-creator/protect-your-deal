@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { formatCNPJ } from '@/lib/cnpj';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -521,7 +522,12 @@ export default function AdminDetalhesImobiliaria() {
                           <FormItem>
                             <FormLabel>CNPJ</FormLabel>
                             <FormControl>
-                              <Input placeholder="00.000.000/0000-00" {...field} />
+                              <Input 
+                                placeholder="00.000.000/0000-00" 
+                                {...field}
+                                onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
+                                maxLength={18}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

@@ -29,6 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Building2, Settings, Bell, Link as LinkIcon, Save, Upload, Image, Trash2, Copy, Check } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
+import { formatCNPJ } from '@/lib/cnpj';
 
 const estadosBrasileiros = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -414,7 +415,12 @@ export default function EmpresaConfiguracoes() {
                           <FormItem>
                             <FormLabel>CNPJ</FormLabel>
                             <FormControl>
-                              <Input placeholder="00.000.000/0000-00" {...field} />
+                              <Input 
+                                placeholder="00.000.000/0000-00" 
+                                {...field}
+                                onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
+                                maxLength={18}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
