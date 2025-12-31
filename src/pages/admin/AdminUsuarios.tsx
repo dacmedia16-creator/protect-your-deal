@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPhone } from "@/lib/phone";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
@@ -659,7 +660,9 @@ export default function AdminUsuarios() {
               <Label>Telefone</Label>
               <Input
                 value={editForm.telefone}
-                onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })}
+                onChange={(e) => setEditForm({ ...editForm, telefone: formatPhone(e.target.value) })}
+                placeholder="(00) 00000-0000"
+                maxLength={15}
               />
             </div>
             <div className="space-y-2">
@@ -748,7 +751,9 @@ export default function AdminUsuarios() {
               <Label>Telefone</Label>
               <Input
                 value={createForm.telefone}
-                onChange={(e) => setCreateForm({ ...createForm, telefone: e.target.value })}
+                onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
+                placeholder="(00) 00000-0000"
+                maxLength={15}
               />
             </div>
             <div className="space-y-2">

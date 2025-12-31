@@ -482,7 +482,9 @@ export default function EmpresaCorretores() {
                       <Input
                         id="create_telefone"
                         value={createForm.telefone}
-                        onChange={(e) => setCreateForm({ ...createForm, telefone: e.target.value })}
+                        onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
+                        placeholder="(00) 00000-0000"
+                        maxLength={15}
                       />
                     </div>
                     <div className="space-y-2">
@@ -718,7 +720,9 @@ export default function EmpresaCorretores() {
                 <Input
                   id="edit_telefone"
                   value={editForm.telefone}
-                  onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, telefone: formatPhone(e.target.value) })}
+                  placeholder="(00) 00000-0000"
+                  maxLength={15}
                 />
               </div>
               <div className="space-y-2">
