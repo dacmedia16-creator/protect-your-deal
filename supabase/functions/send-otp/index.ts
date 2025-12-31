@@ -291,6 +291,27 @@ serve(async (req) => {
       sent = await sendViaZAPI(telefone, message);
     }
 
+    // Send second message with just the code for easy copying
+    if (sent) {
+      // Small delay to ensure message order
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const codigoMessage = codigo;
+      
+      console.log('Sending second message with just the code...');
+      
+      // Try same providers in order
+      const sentCode = await sendViaZionTalk(telefone, codigoMessage) ||
+        await sendViaEvolutionAPI(telefone, codigoMessage) ||
+        await sendViaZAPI(telefone, codigoMessage);
+      
+      if (sentCode) {
+        console.log('Second message with code sent successfully');
+      } else {
+        console.log('Could not send second message with code');
+      }
+    }
+
     // Update ficha status
     const newStatus = tipo === 'proprietario' 
       ? 'aguardando_proprietario'
