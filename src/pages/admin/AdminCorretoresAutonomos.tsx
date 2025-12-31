@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPhone } from "@/lib/phone";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -891,8 +892,9 @@ export default function AdminCorretoresAutonomos() {
                 <Label>Telefone</Label>
                 <Input
                   value={newCorretor.telefone}
-                  onChange={(e) => setNewCorretor({ ...newCorretor, telefone: e.target.value })}
+                  onChange={(e) => setNewCorretor({ ...newCorretor, telefone: formatPhone(e.target.value) })}
                   placeholder="(00) 00000-0000"
+                  maxLength={15}
                 />
               </div>
               <div className="space-y-2">
