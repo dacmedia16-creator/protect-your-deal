@@ -27,6 +27,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
+import { DuplicateFichaButton } from '@/components/DuplicateFichaButton';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -226,11 +227,17 @@ export default function ListaFichas() {
                       <div className="flex gap-3 text-xs text-muted-foreground pt-1 border-t">
                         <span className="truncate flex-1">Prop: {ficha.proprietario_nome || 'A preencher'}</span>
                         <span className="truncate flex-1">Comp: {ficha.comprador_nome || 'A preencher'}</span>
-                        <DeleteFichaDialog 
-                          fichaId={ficha.id} 
-                          protocolo={ficha.protocolo}
-                          onDeleted={handleFichaDeleted}
-                        />
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <DuplicateFichaButton 
+                            fichaId={ficha.id} 
+                            onDuplicated={() => handleFichaDeleted()}
+                          />
+                          <DeleteFichaDialog 
+                            fichaId={ficha.id} 
+                            protocolo={ficha.protocolo}
+                            onDeleted={handleFichaDeleted}
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -269,7 +276,11 @@ export default function ListaFichas() {
                           <div className="flex gap-4 mt-2 text-sm text-muted-foreground items-center">
                             <span>Proprietário: {ficha.proprietario_nome || 'A preencher'}</span>
                             <span>Comprador: {ficha.comprador_nome || 'A preencher'}</span>
-                            <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
+                            <div className="ml-auto flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <DuplicateFichaButton 
+                                fichaId={ficha.id} 
+                                onDuplicated={() => handleFichaDeleted()}
+                              />
                               <DeleteFichaDialog 
                                 fichaId={ficha.id} 
                                 protocolo={ficha.protocolo}
