@@ -71,6 +71,7 @@ import AdminCorretoresAutonomos from "./pages/admin/AdminCorretoresAutonomos";
 import AdminDetalhesCorretorAutonomo from "./pages/admin/AdminDetalhesCorretorAutonomo";
 import AdminFichas from "./pages/admin/AdminFichas";
 import AdminRelatoriosFinanceiros from "./pages/admin/AdminRelatoriosFinanceiros";
+import AdminModulos from "./pages/admin/AdminModulos";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
@@ -148,6 +149,11 @@ const App = () => (
                 <Route path="/admin/planos" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminPlanos />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/modulos" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminModulos />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/usuarios" element={
