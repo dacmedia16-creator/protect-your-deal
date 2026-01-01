@@ -403,10 +403,7 @@ const Index = () => {
                   <CardContent className="space-y-4">
                     <div className={`text-3xl font-bold ${isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}`}>
                       {isFreePlan ? (
-                        <>
-                          Grátis
-                          <span className="text-sm font-normal text-muted-foreground ml-1">para sempre</span>
-                        </>
+                        'Grátis'
                       ) : plano.valor_mensal === 0 ? (
                         'Sob consulta'
                       ) : (
