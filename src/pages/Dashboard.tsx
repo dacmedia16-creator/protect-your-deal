@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useToast } from '@/hooks/use-toast';
+import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -86,38 +87,38 @@ export default function Dashboard() {
   }, [user, playNotificationSound, toast, queryClient]);
 
   // Query única para todas as stats do dashboard
+  // Busca fichas onde o usuário é dono OU parceiro (igual ListaFichas)
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard-stats', user?.id],
     queryFn: async () => {
       if (!user) return null;
       
-      // Buscar tudo em paralelo
-      const [fichasOwner, fichasParceiro, clientes] = await Promise.all([
+      // Buscar fichas (dono + parceiro) e clientes em paralelo
+      const [fichasResult, clientes] = await Promise.all([
         supabase
           .from('fichas_visita')
-          .select('status')
-          .eq('user_id', user.id),
-        supabase
-          .from('fichas_visita')
-          .select('status')
-          .eq('corretor_parceiro_id', user.id),
+          .select('status, corretor_parceiro_id, user_id')
+          .or(`user_id.eq.${user.id},corretor_parceiro_id.eq.${user.id}`),
         supabase
           .from('clientes')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id),
       ]);
 
-      const fichasData = fichasOwner.data || [];
-      const fichasParceiroData = fichasParceiro.data || [];
+      const todasFichas = fichasResult.data || [];
+      
+      // Separar fichas onde o usuário é parceiro
+      const fichasComoParceiro = todasFichas.filter(f => f.corretor_parceiro_id === user.id);
       
       return {
-        totalFichas: fichasData.length,
-        fichasCompletas: fichasData.filter(f => f.status === 'completo' || f.status === 'finalizado_parcial').length,
-        fichasPendentes: fichasData.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length,
+        // Total = todas (dono + parceiro) - igual ListaFichas
+        totalFichas: todasFichas.length,
+        fichasCompletas: todasFichas.filter(f => isFichaConfirmada(f.status)).length,
+        fichasPendentes: todasFichas.filter(f => isFichaPendente(f.status)).length,
         totalClientes: clientes.count || 0,
         fichasParceiro: {
-          total: fichasParceiroData.length,
-          pendentes: fichasParceiroData.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length,
+          total: fichasComoParceiro.length,
+          pendentes: fichasComoParceiro.filter(f => isFichaPendente(f.status)).length,
         },
       };
     },
