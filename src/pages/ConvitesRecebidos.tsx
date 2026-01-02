@@ -72,16 +72,37 @@ export default function ConvitesRecebidos() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Buscar convites recebidos
+  // Buscar convites recebidos (onde o usuário é o parceiro, NÃO o remetente)
   const { data: convites, isLoading } = useQuery({
     queryKey: ['convites-recebidos', user?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
+      // Buscar telefone do usuário para filtrar convites pendentes
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('telefone')
+        .eq('user_id', user.id)
+        .single();
+      
+      const telefoneNormalizado = profile?.telefone?.replace(/\D/g, '') || '';
+      
+      // Buscar convites onde o usuário é o parceiro (por id ou telefone)
+      // E NÃO é o corretor que enviou (corretor_origem)
+      let query = supabase
         .from('convites_parceiro')
         .select('*')
+        .neq('corretor_origem_id', user.id)
         .order('created_at', { ascending: false });
+      
+      // Filtrar por parceiro_id OU telefone do parceiro
+      if (telefoneNormalizado) {
+        query = query.or(`corretor_parceiro_id.eq.${user.id},corretor_parceiro_telefone.eq.${telefoneNormalizado}`);
+      } else {
+        query = query.eq('corretor_parceiro_id', user.id);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as ConviteParceiro[];
