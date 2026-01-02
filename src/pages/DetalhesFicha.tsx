@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,9 @@ import {
   Share2,
   Pencil,
   X,
-  Save
+  Save,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -985,36 +988,60 @@ export default function DetalhesFicha() {
                         </div>
                       )}
 
-                      {/* Modo selecionar - dropdown de corretores */}
+                      {/* Modo selecionar - combobox com busca */}
                       {modoConvite === 'selecionar' && corretoresImobiliaria && corretoresImobiliaria.length > 0 && (
                         <div className="space-y-2">
                           <Label>Selecione um corretor da equipe</Label>
-                          <Select
-                            value={corretorSelecionado || ''}
-                            onValueChange={(value) => {
-                              setCorretorSelecionado(value);
-                              const corretor = corretoresImobiliaria.find(c => c.user_id === value);
-                              if (corretor?.telefone) {
-                                setTelefoneParceiro(formatPhoneInput(corretor.telefone));
-                              }
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um corretor..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {corretoresImobiliaria.map((corretor) => (
-                                <SelectItem key={corretor.user_id} value={corretor.user_id}>
-                                  <div className="flex flex-col items-start">
-                                    <span className="font-medium">{corretor.nome}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {corretor.creci ? `CRECI: ${corretor.creci} | ` : ''}{formatPhone(corretor.telefone || '')}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-full justify-between font-normal"
+                              >
+                                {corretorSelecionado ? (
+                                  <span className="truncate">
+                                    {corretoresImobiliaria.find(c => c.user_id === corretorSelecionado)?.nome}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">Buscar corretor...</span>
+                                )}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                              <Command>
+                                <CommandInput placeholder="Buscar por nome, CRECI ou telefone..." />
+                                <CommandList>
+                                  <CommandEmpty>Nenhum corretor encontrado.</CommandEmpty>
+                                  <CommandGroup>
+                                    {corretoresImobiliaria.map((corretor) => (
+                                      <CommandItem
+                                        key={corretor.user_id}
+                                        value={`${corretor.nome} ${corretor.creci || ''} ${corretor.telefone || ''}`}
+                                        onSelect={() => {
+                                          setCorretorSelecionado(corretor.user_id);
+                                          if (corretor.telefone) {
+                                            setTelefoneParceiro(formatPhoneInput(corretor.telefone));
+                                          }
+                                        }}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${corretorSelecionado === corretor.user_id ? 'opacity-100' : 'opacity-0'}`}
+                                        />
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{corretor.nome}</span>
+                                          <span className="text-xs text-muted-foreground">
+                                            {corretor.creci ? `CRECI: ${corretor.creci} | ` : ''}{formatPhone(corretor.telefone || '')}
+                                          </span>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         </div>
                       )}
 
