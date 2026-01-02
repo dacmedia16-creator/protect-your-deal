@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -71,8 +72,8 @@ export default function ListaFichas() {
 
   const filteredFichas = fichas?.filter(ficha => {
     if (statusFilter) {
-      if (statusFilter === 'pendente' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial')) return false;
-      if (statusFilter === 'completo' && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial') return false;
+      if (statusFilter === 'pendente' && isFichaConfirmada(ficha.status)) return false;
+      if (statusFilter === 'completo' && !isFichaConfirmada(ficha.status)) return false;
       if (statusFilter === 'parceiro' && ficha.corretor_parceiro_id !== user?.id) return false;
     }
     
@@ -86,8 +87,8 @@ export default function ListaFichas() {
   });
 
   const allCount = fichas?.length || 0;
-  const pendingCount = fichas?.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length || 0;
-  const confirmedCount = fichas?.filter(f => f.status === 'completo' || f.status === 'finalizado_parcial').length || 0;
+  const pendingCount = fichas?.filter(f => isFichaPendente(f.status)).length || 0;
+  const confirmedCount = fichas?.filter(f => isFichaConfirmada(f.status)).length || 0;
   const parceiroCount = fichas?.filter(f => f.corretor_parceiro_id === user?.id).length || 0;
 
   const handleTabChange = (value: string) => {

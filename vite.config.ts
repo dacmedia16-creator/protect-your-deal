@@ -75,14 +75,14 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            // Other Supabase API calls
+            // Other Supabase API calls - short cache for dynamic data
             urlPattern: /^https:\/\/.*supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxAgeSeconds: 60 * 2 // 2 minutes - reduced to prevent stale data
               }
             }
           }
