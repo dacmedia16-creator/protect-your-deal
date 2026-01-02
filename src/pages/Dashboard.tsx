@@ -85,59 +85,50 @@ export default function Dashboard() {
     };
   }, [user, playNotificationSound, toast, queryClient]);
 
-  const { data: stats } = useQuery({
+  // Query única para todas as stats do dashboard
+  const { data: dashboardData } = useQuery({
     queryKey: ['dashboard-stats', user?.id],
     queryFn: async () => {
       if (!user) return null;
       
-      const [fichas, clientes] = await Promise.all([
+      // Buscar tudo em paralelo
+      const [fichasOwner, fichasParceiro, clientes] = await Promise.all([
         supabase
           .from('fichas_visita')
-          .select('status', { count: 'exact' })
+          .select('status')
           .eq('user_id', user.id),
         supabase
+          .from('fichas_visita')
+          .select('status')
+          .eq('corretor_parceiro_id', user.id),
+        supabase
           .from('clientes')
-          .select('*', { count: 'exact' })
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id),
       ]);
 
-      const fichasData = fichas.data || [];
-      const totalFichas = fichas.count || 0;
-      const fichasCompletas = fichasData.filter(f => f.status === 'completo').length;
-      const fichasPendentes = fichasData.filter(f => f.status !== 'completo').length;
+      const fichasData = fichasOwner.data || [];
+      const fichasParceiroData = fichasParceiro.data || [];
       
       return {
-        totalFichas,
-        fichasCompletas,
-        fichasPendentes,
+        totalFichas: fichasData.length,
+        fichasCompletas: fichasData.filter(f => f.status === 'completo').length,
+        fichasPendentes: fichasData.filter(f => f.status !== 'completo').length,
         totalClientes: clientes.count || 0,
+        fichasParceiro: {
+          total: fichasParceiroData.length,
+          pendentes: fichasParceiroData.filter(f => f.status !== 'completo').length,
+        },
       };
     },
     enabled: !!user,
+    staleTime: 30000, // 30 segundos antes de considerar stale
+    refetchOnWindowFocus: false,
   });
 
-  // Query para fichas como parceiro
-  const { data: fichasParceiro } = useQuery({
-    queryKey: ['fichas-parceiro-count', user?.id],
-    queryFn: async () => {
-      if (!user) return { total: 0, pendentes: 0 };
-      
-      const { data, error, count } = await supabase
-        .from('fichas_visita')
-        .select('status', { count: 'exact' })
-        .eq('corretor_parceiro_id', user.id);
-      
-      if (error) throw error;
-      
-      const pendentes = data?.filter(f => f.status !== 'completo').length || 0;
-      
-      return {
-        total: count || 0,
-        pendentes,
-      };
-    },
-    enabled: !!user,
-  });
+  // Extrair dados para uso no componente
+  const stats = dashboardData;
+  const fichasParceiro = dashboardData?.fichasParceiro;
 
   if (loading) {
     return (
