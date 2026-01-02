@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ export default function DetalhesFicha() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { role } = useUserRole();
+  const { role, imobiliariaId } = useUserRole();
   const { toast } = useToast();
   
   // Dynamic return URL based on user role
@@ -115,6 +116,8 @@ export default function DetalhesFicha() {
   const [showConvidarParceiro, setShowConvidarParceiro] = useState(false);
   const [telefoneParceiro, setTelefoneParceiro] = useState('');
   const [enviandoConvite, setEnviandoConvite] = useState(false);
+  const [modoConvite, setModoConvite] = useState<'selecionar' | 'digitar'>('selecionar');
+  const [corretorSelecionado, setCorretorSelecionado] = useState<string | null>(null);
 
   // State for editing existing phone numbers
   const [editandoProprietario, setEditandoProprietario] = useState(false);
@@ -214,6 +217,37 @@ export default function DetalhesFicha() {
 
   const confirmacaoProprietario = confirmacoes?.find(c => c.tipo === 'proprietario');
   const confirmacaoComprador = confirmacoes?.find(c => c.tipo === 'comprador');
+
+  // Fetch corretores da mesma imobiliária para seleção no convite de parceiro
+  const { data: corretoresImobiliaria } = useQuery({
+    queryKey: ['corretores-imobiliaria', imobiliariaId],
+    queryFn: async () => {
+      if (!imobiliariaId) return [];
+      
+      // Buscar user_ids dos corretores da mesma imobiliária
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('imobiliaria_id', imobiliariaId)
+        .neq('user_id', user?.id);
+      
+      if (rolesError) throw rolesError;
+      if (!rolesData || rolesData.length === 0) return [];
+
+      const userIds = rolesData.map(r => r.user_id);
+
+      // Buscar perfis desses usuários
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, nome, telefone, creci')
+        .in('user_id', userIds)
+        .eq('ativo', true);
+      
+      if (profilesError) throw profilesError;
+      return profilesData || [];
+    },
+    enabled: !!imobiliariaId && !!user,
+  });
 
   // Check if party data is missing
   const proprietarioFaltando = !ficha?.proprietario_telefone;
@@ -666,6 +700,8 @@ export default function DetalhesFicha() {
 
       setShowConvidarParceiro(false);
       setTelefoneParceiro('');
+      setModoConvite('selecionar');
+      setCorretorSelecionado(null);
       refetch();
     } catch (err) {
       console.error('Erro ao enviar convite:', err);
@@ -919,30 +955,99 @@ export default function DetalhesFicha() {
                     </Button>
                   ) : (
                     <div className="space-y-3">
-                      <div className="space-y-2">
-                        <Label>Telefone do corretor parceiro</Label>
-                        <Input
-                          placeholder="(00) 00000-0000"
-                          value={telefoneParceiro}
-                          onChange={(e) => {
-                            const numbers = e.target.value.replace(/\D/g, '');
-                            if (numbers.length <= 2) setTelefoneParceiro(numbers);
-                            else if (numbers.length <= 7) setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2)}`);
-                            else if (numbers.length <= 11) setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`);
-                            else setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`);
-                          }}
-                          maxLength={15}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          O corretor precisa estar cadastrado no sistema com este telefone
-                        </p>
-                      </div>
+                      {/* Seletor de modo - só mostra se houver corretores na imobiliária */}
+                      {corretoresImobiliaria && corretoresImobiliaria.length > 0 && (
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant={modoConvite === 'selecionar' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                              setModoConvite('selecionar');
+                              setTelefoneParceiro('');
+                              setCorretorSelecionado(null);
+                            }}
+                          >
+                            Selecionar da equipe
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={modoConvite === 'digitar' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                              setModoConvite('digitar');
+                              setTelefoneParceiro('');
+                              setCorretorSelecionado(null);
+                            }}
+                          >
+                            Digitar telefone
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Modo selecionar - dropdown de corretores */}
+                      {modoConvite === 'selecionar' && corretoresImobiliaria && corretoresImobiliaria.length > 0 && (
+                        <div className="space-y-2">
+                          <Label>Selecione um corretor da equipe</Label>
+                          <Select
+                            value={corretorSelecionado || ''}
+                            onValueChange={(value) => {
+                              setCorretorSelecionado(value);
+                              const corretor = corretoresImobiliaria.find(c => c.user_id === value);
+                              if (corretor?.telefone) {
+                                setTelefoneParceiro(formatPhoneInput(corretor.telefone));
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um corretor..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {corretoresImobiliaria.map((corretor) => (
+                                <SelectItem key={corretor.user_id} value={corretor.user_id}>
+                                  <div className="flex flex-col items-start">
+                                    <span className="font-medium">{corretor.nome}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {corretor.creci ? `CRECI: ${corretor.creci} | ` : ''}{formatPhone(corretor.telefone || '')}
+                                    </span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Modo digitar - input de telefone */}
+                      {(modoConvite === 'digitar' || !corretoresImobiliaria?.length) && (
+                        <div className="space-y-2">
+                          <Label>Telefone do corretor parceiro</Label>
+                          <Input
+                            placeholder="(00) 00000-0000"
+                            value={telefoneParceiro}
+                            onChange={(e) => {
+                              const numbers = e.target.value.replace(/\D/g, '');
+                              if (numbers.length <= 2) setTelefoneParceiro(numbers);
+                              else if (numbers.length <= 7) setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2)}`);
+                              else if (numbers.length <= 11) setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`);
+                              else setTelefoneParceiro(`(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`);
+                            }}
+                            maxLength={15}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            O corretor precisa estar cadastrado no sistema com este telefone
+                          </p>
+                        </div>
+                      )}
+
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           onClick={() => {
                             setShowConvidarParceiro(false);
                             setTelefoneParceiro('');
+                            setModoConvite('selecionar');
+                            setCorretorSelecionado(null);
                           }}
                         >
                           Cancelar
