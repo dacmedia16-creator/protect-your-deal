@@ -112,12 +112,12 @@ export default function Dashboard() {
       
       return {
         totalFichas: fichasData.length,
-        fichasCompletas: fichasData.filter(f => f.status === 'completo').length,
-        fichasPendentes: fichasData.filter(f => f.status !== 'completo').length,
+        fichasCompletas: fichasData.filter(f => f.status === 'completo' || f.status === 'finalizado_parcial').length,
+        fichasPendentes: fichasData.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length,
         totalClientes: clientes.count || 0,
         fichasParceiro: {
           total: fichasParceiroData.length,
-          pendentes: fichasParceiroData.filter(f => f.status !== 'completo').length,
+          pendentes: fichasParceiroData.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length,
         },
       };
     },
