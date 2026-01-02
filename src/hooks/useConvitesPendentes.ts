@@ -18,10 +18,30 @@ export function useConvitesPendentes() {
     queryFn: async () => {
       if (!user) return 0;
       
-      const { data, error } = await supabase
+      // Buscar telefone do usuário para filtrar convites pendentes
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('telefone')
+        .eq('user_id', user.id)
+        .single();
+      
+      const telefoneNormalizado = profile?.telefone?.replace(/\D/g, '') || '';
+      
+      // Buscar convites pendentes onde o usuário é o parceiro (NÃO o remetente)
+      let query = supabase
         .from('convites_parceiro')
         .select('id, status, expira_em')
-        .eq('status', 'pendente');
+        .eq('status', 'pendente')
+        .neq('corretor_origem_id', user.id);
+      
+      // Filtrar por parceiro_id OU telefone do parceiro
+      if (telefoneNormalizado) {
+        query = query.or(`corretor_parceiro_id.eq.${user.id},corretor_parceiro_telefone.eq.${telefoneNormalizado}`);
+      } else {
+        query = query.eq('corretor_parceiro_id', user.id);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Erro ao buscar convites pendentes:', error);
