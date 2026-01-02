@@ -149,6 +149,10 @@ export function DesktopNav() {
                 <User className="mr-2 h-4 w-4" />
                 Meu Perfil
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/fichas-parceiro')} className="cursor-pointer">
+                <Handshake className="mr-2 h-4 w-4" />
+                Fichas como Parceiro
+              </DropdownMenuItem>
               {isCorretorAutonomo && (
                 <DropdownMenuItem onClick={() => navigate('/minha-assinatura')} className="cursor-pointer">
                   <CreditCard className="mr-2 h-4 w-4" />
