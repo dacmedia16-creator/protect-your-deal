@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -9,6 +9,7 @@ import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
   FileText, 
   Users, 
@@ -17,7 +18,12 @@ import {
   CheckCircle,
   Clock,
   Handshake,
+  RefreshCw,
+  Bug,
 } from 'lucide-react';
+
+// Build timestamp para diagnóstico de cache PWA
+const BUILD_TIMESTAMP = new Date().toISOString();
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -28,11 +34,38 @@ import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { imobiliaria } = useUserRole();
+  const { imobiliaria, role } = useUserRole();
   const { playNotificationSound } = useNotificationSound();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
+  const [showDebug, setShowDebug] = useState(false);
+
+  // Função para forçar atualização (limpar cache e recarregar)
+  const handleForceUpdate = async () => {
+    try {
+      // Limpar cache do React Query
+      queryClient.clear();
+      
+      // Limpar caches do Service Worker
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+      
+      // Desregistrar Service Workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg => reg.unregister()));
+      }
+      
+      // Recarregar a página
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao forçar atualização:', error);
+      window.location.reload();
+    }
+  };
   
 
   useEffect(() => {
@@ -403,6 +436,49 @@ export default function Dashboard() {
 
       {/* Mobile Navigation */}
       <MobileNav />
+
+      {/* Debug Banner - clique 5x no título para mostrar */}
+      {showDebug && (
+        <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-card border rounded-lg shadow-lg p-4 z-50 animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-semibold text-sm flex items-center gap-2">
+              <Bug className="h-4 w-4" /> Diagnóstico PWA
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setShowDebug(false)}>✕</Button>
+          </div>
+          <div className="text-xs space-y-1 text-muted-foreground mb-3">
+            <p><strong>Build:</strong> {BUILD_TIMESTAMP}</p>
+            <p><strong>User:</strong> {user?.id?.slice(0, 8)}...</p>
+            <p><strong>Role:</strong> {role || 'carregando...'}</p>
+            <p><strong>Fichas:</strong> {stats?.totalFichas || 0} (parceiro: {fichasParceiro?.total || 0})</p>
+          </div>
+          <Button 
+            onClick={handleForceUpdate} 
+            size="sm" 
+            className="w-full"
+            variant="destructive"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Forçar Atualização
+          </Button>
+        </div>
+      )}
+
+      {/* Área clicável para ativar debug (toque 5x no canto inferior direito) */}
+      <div 
+        className="fixed bottom-24 sm:bottom-8 right-4 w-12 h-12 z-40"
+        onClick={() => {
+          // Contador de cliques usando sessionStorage
+          const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
+          sessionStorage.setItem('debug-clicks', String(clicks));
+          if (clicks >= 5) {
+            setShowDebug(true);
+            sessionStorage.setItem('debug-clicks', '0');
+          }
+          // Reset após 2 segundos
+          setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
+        }}
+      />
     </div>
   );
 }
