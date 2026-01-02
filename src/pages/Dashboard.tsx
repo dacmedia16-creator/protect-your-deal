@@ -116,6 +116,29 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
+  // Query para fichas como parceiro
+  const { data: fichasParceiro } = useQuery({
+    queryKey: ['fichas-parceiro-count', user?.id],
+    queryFn: async () => {
+      if (!user) return { total: 0, pendentes: 0 };
+      
+      const { data, error, count } = await supabase
+        .from('fichas_visita')
+        .select('status', { count: 'exact' })
+        .eq('corretor_parceiro_id', user.id);
+      
+      if (error) throw error;
+      
+      const pendentes = data?.filter(f => f.status !== 'completo').length || 0;
+      
+      return {
+        total: count || 0,
+        pendentes,
+      };
+    },
+    enabled: !!user,
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -253,6 +276,31 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Card de Fichas como Parceiro */}
+        {fichasParceiro && fichasParceiro.total > 0 && (
+          <Card 
+            className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-primary/20 bg-primary/5 mb-6"
+            style={{ animationDelay: '0.4s' }}
+            onClick={() => navigate('/fichas-parceiro')}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                <Handshake className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-primary">
+                  {fichasParceiro.total} {fichasParceiro.total === 1 ? 'ficha como parceiro' : 'fichas como parceiro'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {fichasParceiro.pendentes > 0 
+                    ? `${fichasParceiro.pendentes} pendente${fichasParceiro.pendentes > 1 ? 's' : ''} de confirmação`
+                    : 'Todas confirmadas'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

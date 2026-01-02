@@ -112,6 +112,10 @@ export function MobileNav() {
               <User className="h-4 w-4 mr-2" />
               Meu Perfil
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/fichas-parceiro')}>
+              <Handshake className="h-4 w-4 mr-2" />
+              Fichas como Parceiro
+            </DropdownMenuItem>
             {isCorretorAutonomo && (
               <DropdownMenuItem onClick={() => navigate('/minha-assinatura')}>
                 <CreditCard className="h-4 w-4 mr-2" />
