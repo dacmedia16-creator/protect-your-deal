@@ -73,6 +73,7 @@ export default function ListaFichas() {
     if (statusFilter) {
       if (statusFilter === 'pendente' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial')) return false;
       if (statusFilter === 'completo' && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial') return false;
+      if (statusFilter === 'parceiro' && ficha.corretor_parceiro_id !== user?.id) return false;
     }
     
     const term = searchTerm.toLowerCase();
@@ -87,6 +88,7 @@ export default function ListaFichas() {
   const allCount = fichas?.length || 0;
   const pendingCount = fichas?.filter(f => f.status !== 'completo' && f.status !== 'finalizado_parcial').length || 0;
   const confirmedCount = fichas?.filter(f => f.status === 'completo' || f.status === 'finalizado_parcial').length || 0;
+  const parceiroCount = fichas?.filter(f => f.corretor_parceiro_id === user?.id).length || 0;
 
   const handleTabChange = (value: string) => {
     if (value === 'todas') {
@@ -147,6 +149,15 @@ export default function ListaFichas() {
                   {confirmedCount}
                 </Badge>
               </TabsTrigger>
+              {parceiroCount > 0 && (
+                <TabsTrigger value="parceiro" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
+                  <Users className="h-3.5 w-3.5" />
+                  Parceiro
+                  <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
+                    {parceiroCount}
+                  </Badge>
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
         </div>
