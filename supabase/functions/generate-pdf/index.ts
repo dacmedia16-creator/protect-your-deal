@@ -385,10 +385,11 @@ serve(async (req) => {
       return cpf;
     };
 
-    // Helper to format coordinates
-    const formatCoords = (lat: number | null, lng: number | null): string => {
+    // Helper to format coordinates with location type
+    const formatCoords = (lat: number | null, lng: number | null, tipo: string | null): string => {
       if (lat === null || lng === null) return 'Não capturada';
-      return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      const tipoLabel = tipo === 'gps' ? '(GPS preciso)' : tipo === 'ip' ? '(Aprox. por IP)' : '';
+      return `${lat.toFixed(6)}, ${lng.toFixed(6)} ${tipoLabel}`.trim();
     };
 
     // Property Section
@@ -421,7 +422,7 @@ serve(async (req) => {
         yPosition = drawField('Assinatura', confirmacaoProprietario.aceite_nome || '-', yPosition);
         yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoProprietario.aceite_cpf), yPosition);
         yPosition = drawField('IP', confirmacaoProprietario.aceite_ip || 'Não capturado', yPosition);
-        yPosition = drawField('Geolocalização', formatCoords(confirmacaoProprietario.aceite_latitude, confirmacaoProprietario.aceite_longitude), yPosition);
+        yPosition = drawField('Geolocalização', formatCoords(confirmacaoProprietario.aceite_latitude, confirmacaoProprietario.aceite_longitude, confirmacaoProprietario.aceite_localizacao_tipo), yPosition);
         yPosition = drawField('Aceite em', confirmacaoProprietario.aceite_em ? formatDate(confirmacaoProprietario.aceite_em) : '-', yPosition);
       }
     } else {
@@ -460,7 +461,7 @@ serve(async (req) => {
         yPosition = drawField('Assinatura', confirmacaoComprador.aceite_nome || '-', yPosition);
         yPosition = drawField('CPF Assinatura', formatCPF(confirmacaoComprador.aceite_cpf), yPosition);
         yPosition = drawField('IP', confirmacaoComprador.aceite_ip || 'Não capturado', yPosition);
-        yPosition = drawField('Geolocalização', formatCoords(confirmacaoComprador.aceite_latitude, confirmacaoComprador.aceite_longitude), yPosition);
+        yPosition = drawField('Geolocalização', formatCoords(confirmacaoComprador.aceite_latitude, confirmacaoComprador.aceite_longitude, confirmacaoComprador.aceite_localizacao_tipo), yPosition);
         yPosition = drawField('Aceite em', confirmacaoComprador.aceite_em ? formatDate(confirmacaoComprador.aceite_em) : '-', yPosition);
       }
     } else {
