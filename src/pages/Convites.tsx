@@ -20,7 +20,8 @@ import {
   PlayCircle,
   FileEdit,
   FileText,
-  Phone
+  Phone,
+  RefreshCw
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -245,6 +246,30 @@ export default function Convites() {
       queryClient.invalidateQueries({ queryKey: ['convites-recebidos'] });
     },
     onError: () => toast.error('Erro ao recusar o convite'),
+  });
+
+  const reenviarMutation = useMutation({
+    mutationFn: async (convite: ConviteParceiro) => {
+      // Update existing invite with new expiration and reset status to pendente
+      const novaExpiracao = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      
+      const { error } = await supabase
+        .from('convites_parceiro')
+        .update({ 
+          status: 'pendente',
+          expira_em: novaExpiracao,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', convite.id);
+      
+      if (error) throw error;
+      return convite;
+    },
+    onSuccess: (convite) => {
+      toast.success(`Convite reenviado para ${formatPhone(convite.corretor_parceiro_telefone)}`);
+      queryClient.invalidateQueries({ queryKey: ['convites-enviados'] });
+    },
+    onError: () => toast.error('Erro ao reenviar o convite'),
   });
 
   // ========== HELPERS ==========
@@ -731,7 +756,7 @@ export default function Convites() {
                     const isExpired = isPast(new Date(convite.expira_em)) && convite.status === 'pendente';
                     
                     return (
-                      <Card key={convite.id} className={isExpired ? 'opacity-60' : ''}>
+                      <Card key={convite.id} className={isExpired ? 'opacity-80' : ''}>
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
                             <CardTitle className="text-base font-medium line-clamp-1">
@@ -753,6 +778,17 @@ export default function Convites() {
                           <div className="text-xs text-muted-foreground pt-1">
                             Enviado em: {format(new Date(convite.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                           </div>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full mt-2"
+                            onClick={() => reenviarMutation.mutate(convite)}
+                            disabled={reenviarMutation.isPending}
+                          >
+                            <RefreshCw className={`h-4 w-4 mr-1 ${reenviarMutation.isPending ? 'animate-spin' : ''}`} />
+                            Reenviar Convite
+                          </Button>
                         </CardContent>
                       </Card>
                     );
