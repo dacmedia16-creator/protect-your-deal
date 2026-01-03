@@ -51,8 +51,7 @@ import TemplatesMensagem from "./pages/TemplatesMensagem";
 import Perfil from "./pages/Perfil";
 import Relatorios from "./pages/Relatorios";
 import CorretorAssinatura from "./pages/CorretorAssinatura";
-import ConvitesRecebidos from "./pages/ConvitesRecebidos";
-import ConvitesEnviados from "./pages/ConvitesEnviados";
+import Convites from "./pages/Convites";
 import FichasParceiro from "./pages/FichasParceiro";
 
 // Admin pages
@@ -318,16 +317,13 @@ const App = () => (
                     <CorretorAssinatura />
                   </ProtectedRoute>
                 } />
-                <Route path="/convites-recebidos" element={
+                <Route path="/convites" element={
                   <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
-                    <ConvitesRecebidos />
+                    <Convites />
                   </ProtectedRoute>
                 } />
-                <Route path="/convites-enviados" element={
-                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
-                    <ConvitesEnviados />
-                  </ProtectedRoute>
-                } />
+                <Route path="/convites-recebidos" element={<Navigate to="/convites?tab=recebidos" replace />} />
+                <Route path="/convites-enviados" element={<Navigate to="/convites?tab=enviados" replace />} />
                 <Route path="/fichas-parceiro" element={
                   <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
                     <FichasParceiro />

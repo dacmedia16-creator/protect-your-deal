@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/fichas', label: 'Fichas', icon: FileText },
-  { to: '/convites-recebidos', label: 'Convites', icon: Handshake },
+  { to: '/convites', label: 'Convites', icon: Handshake },
   { to: '/clientes', label: 'Clientes', icon: Users },
 ];
 
@@ -93,7 +93,7 @@ export function DesktopNav() {
           
           <div className="flex items-center gap-1">
             {navItems.map((item) => {
-              const showBadge = item.to === '/convites-recebidos' && convitesPendentes > 0;
+              const showBadge = item.to === '/convites' && convitesPendentes > 0;
               
               return (
                 <NavLink

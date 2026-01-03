@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
   { path: '/fichas', label: 'Fichas', icon: FileText },
-  { path: '/convites-recebidos', label: 'Convites', icon: Handshake },
+  { path: '/convites', label: 'Convites', icon: Handshake },
 ];
 
 export function MobileNav() {
@@ -61,7 +61,7 @@ export function MobileNav() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
-          const showBadge = item.path === '/convites-recebidos' && convitesPendentes > 0;
+          const showBadge = item.path === '/convites' && convitesPendentes > 0;
           
           return (
             <button
