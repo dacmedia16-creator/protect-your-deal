@@ -6,6 +6,37 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Função para obter geolocalização por IP
+async function getLocationByIP(ip: string): Promise<{ latitude: number; longitude: number } | null> {
+  try {
+    // Ignora IPs locais/privados
+    if (ip === 'unknown' || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.') || ip === '127.0.0.1') {
+      console.log('IP privado ou desconhecido, não é possível obter geolocalização:', ip);
+      return null;
+    }
+
+    // Pega o primeiro IP se houver múltiplos (x-forwarded-for pode ter vários)
+    const firstIP = ip.split(',')[0].trim();
+    
+    console.log('Buscando geolocalização para IP:', firstIP);
+    
+    // Usa o serviço ip-api.com (gratuito, sem necessidade de API key)
+    const response = await fetch(`http://ip-api.com/json/${firstIP}?fields=status,lat,lon,message`);
+    const data = await response.json();
+    
+    if (data.status === 'success' && data.lat && data.lon) {
+      console.log('Geolocalização por IP obtida:', { lat: data.lat, lon: data.lon });
+      return { latitude: data.lat, longitude: data.lon };
+    }
+    
+    console.log('Falha ao obter geolocalização por IP:', data.message || 'Resposta inválida');
+    return null;
+  } catch (error) {
+    console.error('Erro ao buscar geolocalização por IP:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -33,6 +64,29 @@ serve(async (req) => {
       || req.headers.get('cf-connecting-ip') 
       || req.headers.get('x-real-ip')
       || 'unknown';
+    
+    // Determinar tipo de localização e coordenadas finais
+    let finalLatitude = aceite_latitude;
+    let finalLongitude = aceite_longitude;
+    let localizacaoTipo: string | null = null;
+    
+    if (aceite_latitude && aceite_longitude) {
+      // GPS fornecido pelo usuário
+      localizacaoTipo = 'gps';
+      console.log('Usando geolocalização GPS fornecida pelo usuário');
+    } else {
+      // Tentar fallback por IP
+      console.log('GPS não fornecido, tentando fallback por IP...');
+      const ipLocation = await getLocationByIP(clientIP);
+      if (ipLocation) {
+        finalLatitude = ipLocation.latitude;
+        finalLongitude = ipLocation.longitude;
+        localizacaoTipo = 'ip';
+        console.log('Usando geolocalização aproximada por IP');
+      } else {
+        console.log('Não foi possível obter geolocalização por nenhum método');
+      }
+    }
 
     console.log('Verify OTP request:', { token, codigo, aceite_legal, aceite_nome, aceite_cpf: aceite_cpf ? '***' : null, clientIP });
 
@@ -177,8 +231,9 @@ serve(async (req) => {
         aceite_nome: aceite_nome.trim(),
         aceite_cpf: aceite_cpf.replace(/\D/g, ''),
         aceite_ip: clientIP,
-        aceite_latitude: aceite_latitude || null,
-        aceite_longitude: aceite_longitude || null,
+        aceite_latitude: finalLatitude || null,
+        aceite_longitude: finalLongitude || null,
+        aceite_localizacao_tipo: localizacaoTipo,
         aceite_user_agent: aceite_user_agent || null,
         aceite_em: new Date().toISOString()
       })
@@ -197,8 +252,9 @@ serve(async (req) => {
       aceite_nome: aceite_nome.trim(),
       aceite_cpf: '***',
       aceite_ip: clientIP,
-      aceite_latitude,
-      aceite_longitude,
+      aceite_latitude: finalLatitude,
+      aceite_longitude: finalLongitude,
+      aceite_localizacao_tipo: localizacaoTipo,
       aceite_em: new Date().toISOString()
     });
 
