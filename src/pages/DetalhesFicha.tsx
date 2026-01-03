@@ -232,6 +232,7 @@ export default function DetalhesFicha() {
         .from('user_roles')
         .select('user_id')
         .eq('imobiliaria_id', imobiliariaId)
+        .eq('role', 'corretor')
         .neq('user_id', user?.id);
       
       if (rolesError) throw rolesError;
