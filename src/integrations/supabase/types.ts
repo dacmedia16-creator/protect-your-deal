@@ -190,6 +190,7 @@ export type Database = {
           aceite_ip: string | null
           aceite_latitude: number | null
           aceite_legal: boolean | null
+          aceite_localizacao_tipo: string | null
           aceite_longitude: number | null
           aceite_nome: string | null
           aceite_user_agent: string | null
@@ -210,6 +211,7 @@ export type Database = {
           aceite_ip?: string | null
           aceite_latitude?: number | null
           aceite_legal?: boolean | null
+          aceite_localizacao_tipo?: string | null
           aceite_longitude?: number | null
           aceite_nome?: string | null
           aceite_user_agent?: string | null
@@ -230,6 +232,7 @@ export type Database = {
           aceite_ip?: string | null
           aceite_latitude?: number | null
           aceite_legal?: boolean | null
+          aceite_localizacao_tipo?: string | null
           aceite_longitude?: number | null
           aceite_nome?: string | null
           aceite_user_agent?: string | null
