@@ -397,7 +397,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     return Math.floor(Math.random() * (TYPING_SPEED_MAX - TYPING_SPEED_MIN + 1)) + TYPING_SPEED_MIN;
   };
 
-  // Process typing queue - reveals text character by character
+  // Process typing queue - reveals text word by word to preserve spaces
   const processTypingQueue = useCallback(() => {
     if (typingIntervalRef.current) {
       clearInterval(typingIntervalRef.current);
@@ -405,24 +405,32 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
     typingIntervalRef.current = setInterval(() => {
       if (typingQueueRef.current.length > 0) {
-        // Take 1-3 characters at a time for variation
-        const charsToTake = Math.min(
-          Math.floor(Math.random() * 3) + 1,
-          typingQueueRef.current.length
-        );
-        const nextChars = typingQueueRef.current.slice(0, charsToTake);
-        typingQueueRef.current = typingQueueRef.current.slice(charsToTake);
+        // Find the next word boundary (space, newline, or end of text)
+        // This preserves spaces and formatting
+        const text = typingQueueRef.current;
+        
+        // Look for the next space or newline after the first character
+        const nextBoundary = text.slice(1).search(/[\s\n]/);
+        
+        // If found, take up to and including the boundary character
+        // Otherwise, take all remaining text
+        const charsToTake = nextBoundary === -1 
+          ? text.length 
+          : Math.min(nextBoundary + 2, text.length); // +2 because we sliced from position 1
+        
+        const nextChunk = text.slice(0, charsToTake);
+        typingQueueRef.current = text.slice(charsToTake);
 
         setMessages(prev => {
           const updated = [...prev];
           const lastMsg = updated[updated.length - 1];
           if (lastMsg && lastMsg.role === 'assistant') {
-            const newContent = lastMsg.content + nextChars;
+            const newContent = lastMsg.content + nextChunk;
             // Process for images when content is updated
-            const { text, images } = processMessageWithImages(newContent);
+            const { text: processedText, images } = processMessageWithImages(newContent);
             updated[updated.length - 1] = {
               ...lastMsg,
-              content: text,
+              content: processedText,
               images: images.length > 0 ? images : undefined
             };
           }
