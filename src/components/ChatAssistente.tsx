@@ -131,6 +131,9 @@ export function ChatAssistente() {
   const typingQueueRef = useRef<string>('');
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const streamDoneRef = useRef<boolean>(false);
+  
+  // Track previous user state to detect login
+  const previousUserRef = useRef<boolean>(false);
 
   // Get current page context
   const currentPageInfo = useMemo(() => {
@@ -211,6 +214,51 @@ Ou se preferir, me conta: **qual é a sua maior dificuldade hoje nas visitas?**`
       return () => clearTimeout(timer);
     }
   }, [isOpen, userContext.isLoggedIn, roleLoading, proactiveMessageSent, location.pathname]);
+
+  // Detect login transition and show welcome message
+  useEffect(() => {
+    const wasLoggedIn = previousUserRef.current;
+    const isLoggedIn = !!user;
+    
+    // Detect transition: not logged in -> logged in (and not already welcomed this session)
+    if (!wasLoggedIn && isLoggedIn && !sessionStorage.getItem('sofia_welcomed')) {
+      sessionStorage.setItem('sofia_welcomed', 'true');
+      
+      // Wait for profile name to load, then show welcome
+      const welcomeTimer = setTimeout(() => {
+        if (profileName) {
+          const firstName = profileName.split(' ')[0];
+          setIsOpen(true);
+          setMessages([
+            { 
+              role: 'assistant', 
+              content: `Bem-vindo de volta, ${firstName}! 🎉
+
+Você está no **VisitaSegura**. Posso te ajudar com alguma coisa?
+
+Por exemplo:
+• 📋 Criar uma nova ficha de visita
+• 📊 Ver suas métricas e relatórios
+• ❓ Tirar dúvidas sobre o sistema
+
+É só me dizer!` 
+            }
+          ]);
+        }
+      }, 2000);
+      
+      return () => clearTimeout(welcomeTimer);
+    }
+    
+    previousUserRef.current = isLoggedIn;
+  }, [user, profileName]);
+
+  // Clear session flag on logout
+  useEffect(() => {
+    if (!user) {
+      sessionStorage.removeItem('sofia_welcomed');
+    }
+  }, [user]);
   
   // Clear badge when chat opens
   useEffect(() => {
