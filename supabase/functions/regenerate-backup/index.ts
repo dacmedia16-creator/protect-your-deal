@@ -56,8 +56,7 @@ serve(async (req) => {
 
     console.log(`[regenerate-backup] Ficha encontrada: ${ficha.protocolo}, status: ${ficha.status}`);
 
-    // 2. Chamar generate-pdf para obter o PDF
-    const authHeader = req.headers.get('Authorization');
+    // 2. Chamar generate-pdf para obter o PDF (agora sem JWT)
     const generatePdfUrl = `${supabaseUrl}/functions/v1/generate-pdf`;
     
     console.log(`[regenerate-backup] Chamando generate-pdf...`);
@@ -66,7 +65,6 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader || `Bearer ${supabaseServiceKey}`,
         'apikey': supabaseAnonKey,
       },
       body: JSON.stringify({ 

@@ -10,7 +10,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-pdf]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-whatsapp]
 verify_jwt = true

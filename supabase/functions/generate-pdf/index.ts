@@ -20,7 +20,10 @@ serve(async (req) => {
 
     const { ficha_id, app_url, force_partial } = await req.json();
 
+    console.log('[generate-pdf] Requisição recebida:', { ficha_id, force_partial });
+
     if (!ficha_id) {
+      console.log('[generate-pdf] Erro: ficha_id não fornecido');
       return new Response(
         JSON.stringify({ error: 'ID da ficha é obrigatório' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -35,11 +38,25 @@ serve(async (req) => {
       .single();
 
     if (fichaError || !ficha) {
-      console.error('Error fetching ficha:', fichaError);
+      console.error('[generate-pdf] Ficha não encontrada:', fichaError);
       return new Response(
         JSON.stringify({ error: 'Ficha não encontrada' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    console.log('[generate-pdf] Ficha encontrada:', { protocolo: ficha.protocolo, status: ficha.status });
+
+    // Validar status da ficha para chamadas internas (sem JWT)
+    // Apenas fichas completas ou finalizadas parcialmente podem gerar PDF
+    const statusPermitidos = ['completo', 'finalizado_parcial'];
+    const isStatusValido = statusPermitidos.includes(ficha.status);
+    
+    // Se force_partial está ativo, permitir também fichas parcialmente confirmadas
+    const temConfirmacaoParcial = ficha.proprietario_confirmado_em || ficha.comprador_confirmado_em;
+    
+    if (!isStatusValido && !force_partial) {
+      console.log('[generate-pdf] Status não permitido para geração automática:', ficha.status);
     }
 
     // Check confirmations

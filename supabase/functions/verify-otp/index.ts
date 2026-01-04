@@ -7,54 +7,59 @@ const corsHeaders = {
 };
 
 // Função para gerar backup do PDF em background (reutiliza generate-pdf)
-async function generateBackupPDF(supabase: any, fichaId: string): Promise<void> {
+async function generateBackupPDF(supabase: any, fichaId: string, isPartial: boolean = false): Promise<void> {
   try {
-    console.log('Iniciando geração de backup PDF para ficha:', fichaId);
+    console.log('[verify-otp] Iniciando geração de backup PDF para ficha:', fichaId, 'isPartial:', isPartial);
     
     // Buscar protocolo da ficha
     const { data: ficha, error: fichaError } = await supabase
       .from('fichas_visita')
-      .select('protocolo')
+      .select('protocolo, status')
       .eq('id', fichaId)
       .single();
     
     if (fichaError || !ficha) {
-      console.error('Erro ao buscar ficha para backup:', fichaError);
+      console.error('[verify-otp] Erro ao buscar ficha para backup:', fichaError);
       return;
     }
     
-    // Chamar a função generate-pdf via HTTP
+    console.log('[verify-otp] Ficha encontrada para backup:', { protocolo: ficha.protocolo, status: ficha.status });
+    
+    // Chamar a função generate-pdf via HTTP (agora sem JWT)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
-    console.log('Chamando generate-pdf para ficha:', fichaId);
+    console.log('[verify-otp] Chamando generate-pdf para ficha:', fichaId);
     
     const response = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseServiceKey}`,
         'apikey': supabaseAnonKey,
       },
       body: JSON.stringify({ 
         ficha_id: fichaId,
-        app_url: 'https://visitasegura.lovable.app'
+        app_url: 'https://visitaseguras.com.br',
+        force_partial: isPartial
       }),
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Erro ao gerar PDF:', response.status, errorText);
+      console.error('[verify-otp] Erro ao gerar PDF:', response.status, errorText);
       return;
     }
     
     // Obter o PDF como bytes
     const pdfBytes = await response.arrayBuffer();
-    console.log('PDF gerado com sucesso, tamanho:', pdfBytes.byteLength, 'bytes');
+    console.log('[verify-otp] PDF gerado com sucesso, tamanho:', pdfBytes.byteLength, 'bytes');
     
     // Salvar no storage
-    const fileName = `${ficha.protocolo}-backup-${Date.now()}.pdf`;
+    const timestamp = Date.now();
+    const fileName = `${ficha.protocolo}-backup-${timestamp}.pdf`;
+    
+    console.log('[verify-otp] Salvando backup no storage:', fileName);
+    
     const { error: uploadError } = await supabase.storage
       .from('comprovantes-backup')
       .upload(fileName, pdfBytes, {
@@ -63,20 +68,24 @@ async function generateBackupPDF(supabase: any, fichaId: string): Promise<void> 
       });
     
     if (uploadError) {
-      console.error('Erro ao fazer upload do backup:', uploadError);
+      console.error('[verify-otp] Erro ao fazer upload do backup:', uploadError);
       return;
     }
     
     // Atualizar ficha com timestamp do backup
     const backupTimestamp = new Date().toISOString();
-    await supabase
+    const { error: updateError } = await supabase
       .from('fichas_visita')
       .update({ backup_gerado_em: backupTimestamp })
       .eq('id', fichaId);
     
-    console.log('Backup PDF gerado e salvo com sucesso:', fileName);
+    if (updateError) {
+      console.error('[verify-otp] Erro ao atualizar backup_gerado_em:', updateError);
+    }
+    
+    console.log('[verify-otp] ✅ Backup PDF gerado e salvo com sucesso:', fileName);
   } catch (error) {
-    console.error('Erro na geração do backup PDF:', error);
+    console.error('[verify-otp] ❌ Erro na geração do backup PDF:', error);
   }
 }
 
@@ -383,13 +392,16 @@ serve(async (req) => {
       .update({ status: newStatus })
       .eq('id', otp.ficha_id);
 
-    // Gerar backup do PDF automaticamente em background quando ficha estiver completa
+    // Gerar backup do PDF automaticamente quando ficha estiver completa
     if (newStatus === 'completo') {
-      console.log('Ficha completa - iniciando backup PDF em background');
-      // Executar de forma assíncrona sem bloquear a resposta
-      generateBackupPDF(supabase, otp.ficha_id).catch(err => 
-        console.error('Erro no backup em background:', err)
-      );
+      console.log('[verify-otp] Ficha completa - gerando backup PDF...');
+      try {
+        // Executar de forma síncrona para garantir que o backup seja gerado
+        await generateBackupPDF(supabase, otp.ficha_id, false);
+        console.log('[verify-otp] ✅ Backup gerado com sucesso após confirmação completa');
+      } catch (err) {
+        console.error('[verify-otp] ❌ Erro ao gerar backup após confirmação:', err);
+      }
     }
 
     // Cadastrar cliente automaticamente após confirmação
