@@ -488,8 +488,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           onClick={() => setIsOpen(true)}
           className={cn(
             "h-16 w-16 sm:h-14 sm:w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 relative border-2 border-primary-foreground/20",
-            "shadow-primary/30",
-            !userContext.isLoggedIn && "animate-pulse-soft"
+            !userContext.isLoggedIn && "animate-sofia-glow"
           )}
           size="icon"
         >
