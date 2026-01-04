@@ -371,21 +371,41 @@ export default function DetalhesFicha() {
     
     setDownloadingPdf(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-pdf', {
-        body: { ficha_id: ficha.id, app_url: window.location.origin, force_partial: forcePartial },
+      // Use fetch directly to get binary response (supabase.functions.invoke parses as JSON by default)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const session = await supabase.auth.getSession();
+      const accessToken = session.data.session?.access_token;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken || supabaseKey}`,
+          'apikey': supabaseKey,
+        },
+        body: JSON.stringify({ 
+          ficha_id: ficha.id, 
+          app_url: window.location.origin, 
+          force_partial: forcePartial 
+        }),
       });
 
-      if (error) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Erro ao gerar PDF' }));
         toast({
           variant: 'destructive',
           title: 'Erro ao gerar PDF',
-          description: error.message,
+          description: errorData.error || 'Erro desconhecido',
         });
         return;
       }
 
+      // Get as ArrayBuffer to preserve binary data
+      const arrayBuffer = await response.arrayBuffer();
+      
       // Create blob and download
-      const blob = new Blob([data], { type: 'application/pdf' });
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -400,6 +420,7 @@ export default function DetalhesFicha() {
         description: forcePartial ? 'O comprovante parcial foi baixado.' : 'O comprovante foi baixado.',
       });
     } catch (err) {
+      console.error('Erro ao baixar PDF:', err);
       toast({
         variant: 'destructive',
         title: 'Erro',
