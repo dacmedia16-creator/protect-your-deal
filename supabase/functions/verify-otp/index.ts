@@ -309,6 +309,49 @@ serve(async (req) => {
       .update({ status: newStatus })
       .eq('id', otp.ficha_id);
 
+    // Cadastrar cliente automaticamente após confirmação
+    try {
+      const clienteNome = aceite_nome.trim();
+      const clienteCpf = aceite_cpf.replace(/\D/g, '');
+      const clienteTelefone = otp.telefone;
+      const clienteTipo = otp.tipo; // 'proprietario' ou 'comprador'
+      const imobiliariaId = ficha.imobiliaria_id;
+      const corretorId = ficha.user_id;
+
+      // Verificar se já existe cliente com mesmo CPF ou telefone para este corretor/imobiliária
+      const { data: clienteExistente } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('user_id', corretorId)
+        .or(`cpf.eq.${clienteCpf},telefone.eq.${clienteTelefone}`)
+        .maybeSingle();
+
+      if (!clienteExistente) {
+        const { error: insertError } = await supabase
+          .from('clientes')
+          .insert({
+            user_id: corretorId,
+            imobiliaria_id: imobiliariaId,
+            nome: clienteNome,
+            cpf: clienteCpf,
+            telefone: clienteTelefone,
+            tipo: clienteTipo,
+            notas: `Cadastrado automaticamente via confirmação de visita - Protocolo: ${updatedFicha?.protocolo}`
+          });
+
+        if (insertError) {
+          console.error('Erro ao cadastrar cliente automaticamente:', insertError);
+        } else {
+          console.log('Cliente cadastrado automaticamente:', { nome: clienteNome, tipo: clienteTipo, protocolo: updatedFicha?.protocolo });
+        }
+      } else {
+        console.log('Cliente já existe, não será duplicado:', { cpf: '***', telefone: clienteTelefone });
+      }
+    } catch (clienteError) {
+      // Não bloquear a confirmação se o cadastro automático falhar
+      console.error('Erro ao tentar cadastrar cliente automaticamente:', clienteError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
