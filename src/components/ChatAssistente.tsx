@@ -63,25 +63,21 @@ const fixTextSpacing = (text: string): string => {
 };
 
 // Process message content to extract image markers
+// TEMPORARIAMENTE DESATIVADO: Imagens desativadas até que screenshots corretos sejam adicionados
 const processMessageWithImages = (content: string): { text: string; images: string[] } => {
-  // More tolerant regex: case-insensitive, allows spaces around the key
+  // Remove image markers from text but don't add images (temporarily disabled)
   const imagePattern = /\[\s*IMAGEM\s*:\s*([^\]]+?)\s*\]/gi;
-  const images: string[] = [];
   
-  let text = content.replace(imagePattern, (_, key) => {
-    const normalizedKey = key.trim().toLowerCase();
-    // Try exact match first, then lowercase match
-    const imageUrl = HELP_IMAGES[key.trim()] || HELP_IMAGES[normalizedKey];
-    if (imageUrl) {
-      images.push(imageUrl);
-    }
-    return ''; // Remove marker from text
+  let text = content.replace(imagePattern, () => {
+    // Images temporarily disabled - just remove the markers
+    return '';
   });
   
   // Apply spacing fix to the text
   text = fixTextSpacing(text);
   
-  return { text: text.trim(), images };
+  // Return empty images array - functionality temporarily disabled
+  return { text: text.trim(), images: [] };
 };
 
 interface UserContext {
