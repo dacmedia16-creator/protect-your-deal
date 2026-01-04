@@ -719,15 +719,34 @@ serve(async (req) => {
         color: lightGray,
       });
 
+      // Verification URL
+      const verificationUrl = `visitasegura.com.br/verificar/${ficha.protocolo}`;
+      
+      page.drawText(`Verifique a autenticidade deste documento:`, {
+        x: 50,
+        y: 60,
+        size: 8,
+        font: helveticaBold,
+        color: rgb(0.3, 0.3, 0.3),
+      });
+      
+      page.drawText(verificationUrl, {
+        x: 230,
+        y: 60,
+        size: 8,
+        font: helvetica,
+        color: primaryColor,
+      });
+
       page.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
         day: '2-digit', 
         month: '2-digit', 
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })} | Documento com hash SHA-256 para verificação de integridade`, {
+      })} | Protegido com hash SHA-256 - A integridade pode ser verificada online`, {
         x: 50,
-        y: 35,
+        y: 45,
         size: 8,
         font: helvetica,
         color: lightGray,
@@ -735,7 +754,7 @@ serve(async (req) => {
 
       page.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
         x: 50,
-        y: 22,
+        y: 30,
         size: 8,
         font: helveticaBold,
         color: primaryColor,
