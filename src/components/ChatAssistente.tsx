@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -459,16 +460,54 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     return () => stopTypingEffect();
   }, [stopTypingEffect]);
 
-  const streamChat = async (userMessage: string) => {
+  // Filter out error messages from history before sending to API
+  const cleanMessagesForApi = (msgs: Message[]): Message[] => {
+    return msgs.filter(m => {
+      if (m.role !== 'assistant') return true;
+      const content = m.content.toLowerCase().trim();
+      // Filter out known error messages
+      if (content === 'load failed') return false;
+      if (content === '') return false;
+      if (content.includes('ocorreu um erro')) return false;
+      if (content.includes('erro ao conectar')) return false;
+      if (content.includes('tente novamente')) return false;
+      return true;
+    });
+  };
+
+  // Check if error is a mobile streaming issue
+  const isMobileStreamingError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) return false;
+    const msg = error.message.toLowerCase();
+    return msg.includes('load failed') || 
+           msg.includes('failed to fetch') || 
+           msg.includes('network') ||
+           msg.includes('aborted');
+  };
+
+  const streamChat = async (userMessage: string, retryCount = 0) => {
+    const MAX_RETRIES = 2;
+    const MOBILE_TIMEOUT = 30000; // 30s timeout for mobile
+    
     const userMsg: Message = { role: 'user', content: userMessage };
     const allMessages = [...messages, userMsg];
     
-    setMessages(allMessages);
-    setIsLoading(true);
-    setIsTyping(true);
-    setInput('');
+    // Only update messages on first attempt
+    if (retryCount === 0) {
+      setMessages(allMessages);
+      setIsLoading(true);
+      setIsTyping(true);
+      setInput('');
+    }
+
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), MOBILE_TIMEOUT);
 
     try {
+      // Clean messages before sending to API (remove error messages from history)
+      const cleanedMessages = cleanMessagesForApi(allMessages);
+      
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
@@ -476,10 +515,13 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ 
-          messages: allMessages.map(m => ({ role: m.role, content: m.content })),
+          messages: cleanedMessages.map(m => ({ role: m.role, content: m.content })),
           userContext
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
@@ -497,9 +539,11 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       // Reset buffer for new message
       resetStreamBuffer();
 
-      // Add empty assistant message and play notification sound
-      setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-      playNotificationSound('info');
+      // Add empty assistant message and play notification sound (only on first attempt)
+      if (retryCount === 0) {
+        setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+        playNotificationSound('info');
+      }
 
       let streamDone = false;
       
@@ -568,17 +612,31 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       } catch { /* ignore */ }
 
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Chat error:', error);
+      
+      // Check if this is a mobile streaming error and we can retry
+      if (isMobileStreamingError(error) && retryCount < MAX_RETRIES) {
+        console.log(`Retrying... attempt ${retryCount + 1}/${MAX_RETRIES}`);
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return streamChat(userMessage, retryCount + 1);
+      }
+      
       setIsTyping(false);
       setIsLoading(false);
       
-      setMessages(prev => [
-        ...prev.filter(m => m.role !== 'assistant' || m.content !== ''),
-        { 
-          role: 'assistant', 
-          content: error instanceof Error ? error.message : 'Desculpe, ocorreu um erro. Tente novamente.' 
-        }
-      ]);
+      // Remove empty assistant message if exists
+      setMessages(prev => prev.filter(m => !(m.role === 'assistant' && m.content === '')));
+      
+      // Show toast instead of saving error as message
+      toast.error('Erro ao conectar com a Sofia. Toque para tentar novamente.', {
+        action: {
+          label: 'Tentar',
+          onClick: () => streamChat(userMessage, 0)
+        },
+        duration: 5000
+      });
     }
   };
 
