@@ -376,7 +376,10 @@ Você pode incluir imagens ilustrativas para ajudar nas explicações visuais. U
 - **[IMAGEM:dashboard]** - Dashboard principal
 - **[IMAGEM:clientes]** - Tela de clientes
 - **[IMAGEM:imoveis]** - Tela de imóveis
-- **[IMAGEM:perfil]** - Tela de perfil do usuário
+- **[IMAGEM:home]** - Página inicial do site
+- **[IMAGEM:funcionalidades]** - Página de funcionalidades
+- **[IMAGEM:como-funciona]** - Como funciona o sistema
+- **[IMAGEM:login]** - Tela de login do sistema
 
 ## Quando usar imagens:
 - Quando alguém pergunta "onde fica...?" ou "como faço para...?"
