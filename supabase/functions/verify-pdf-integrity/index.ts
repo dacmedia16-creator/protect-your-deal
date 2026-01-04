@@ -97,18 +97,18 @@ serve(async (req) => {
 
     const integro = uploadedHash === ficha.documento_hash;
 
-    console.log('Resultado da verificação:', integro ? 'ÍNTEGRO' : 'ADULTERADO');
+    console.log('Resultado da verificação:', integro ? 'ÍNTEGRO' : 'INCONCLUSIVO');
 
     return new Response(
       JSON.stringify({
         integro,
         protocolo: ficha.protocolo,
-        hash_original: ficha.documento_hash.substring(0, 16) + '...',
-        hash_enviado: uploadedHash.substring(0, 16) + '...',
+        hash_original: ficha.documento_hash,
+        hash_enviado: uploadedHash,
         documento_gerado_em: ficha.documento_gerado_em,
         mensagem: integro 
           ? 'Documento íntegro - não foi alterado desde a geração original.' 
-          : 'ATENÇÃO: O documento foi modificado após a geração original. Este documento pode ter sido adulterado.',
+          : 'Não foi possível confirmar a integridade por upload. Use a verificação por protocolo/QR para validação.',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

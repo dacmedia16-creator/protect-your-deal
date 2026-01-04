@@ -715,30 +715,33 @@ serve(async (req) => {
 
     console.log('Generated document hash:', documentoHash);
 
-    // Função para desenhar rodapé técnico (formato original + hash completa)
+    // Função para desenhar rodapé técnico (formato original da imagem + hash completa)
     const drawTechnicalFooter = (targetPage: typeof page, hash: string) => {
       const pageWidth = targetPage.getWidth();
       
       // Linha separadora
       targetPage.drawLine({
-        start: { x: 50, y: 105 },
-        end: { x: pageWidth - 50, y: 105 },
+        start: { x: 50, y: 100 },
+        end: { x: pageWidth - 50, y: 100 },
         thickness: 1,
         color: lightGray,
       });
 
-      // Linha 1: Verificação (formato original)
+      // Linha 1: Verificação (formato original da imagem)
+      const verificationLabel = 'Verifique a autenticidade deste documento:';
       const verificationUrlFooter = `visitasegura.com.br/verificar/${ficha.protocolo}`;
-      targetPage.drawText('Verifique a autenticidade deste documento:', {
+      const labelWidth = helveticaBold.widthOfTextAtSize(verificationLabel, 8);
+      
+      targetPage.drawText(verificationLabel, {
         x: 50,
-        y: 90,
+        y: 85,
         size: 8,
         font: helveticaBold,
         color: darkGray,
       });
       targetPage.drawText(verificationUrlFooter, {
-        x: 248,
-        y: 90,
+        x: 50 + labelWidth + 6,
+        y: 85,
         size: 8,
         font: helvetica,
         color: primaryColor,
@@ -747,8 +750,8 @@ serve(async (req) => {
       // Linha 2: Validade jurídica (formato original)
       targetPage.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
         x: 50,
-        y: 75,
-        size: 7,
+        y: 70,
+        size: 8,
         font: helvetica,
         color: lightGray,
       });
@@ -763,16 +766,16 @@ serve(async (req) => {
       });
       targetPage.drawText(`Gerado em: ${dataGeracao} | Protegido com hash SHA-256 - A integridade pode ser verificada online`, {
         x: 50,
-        y: 58,
-        size: 7,
+        y: 55,
+        size: 8,
         font: helvetica,
         color: lightGray,
       });
 
-      // Linha 4: Hash completa (nova, técnica, monoespaçada)
+      // Linha 4: Hash completa (discreta, monoespaçada)
       targetPage.drawText(`Hash: ${hash}`, {
         x: 50,
-        y: 42,
+        y: 40,
         size: 7,
         font: courierFont,
         color: mediumGray,
@@ -781,7 +784,7 @@ serve(async (req) => {
       // Linha 5: Nome do sistema (formato original)
       targetPage.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
         x: 50,
-        y: 26,
+        y: 25,
         size: 8,
         font: helveticaBold,
         color: primaryColor,
