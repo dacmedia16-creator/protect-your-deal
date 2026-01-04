@@ -230,7 +230,20 @@ export default function Dashboard() {
 
         {/* Welcome Section */}
         <div className="mb-4 md:mb-8">
-          <h1 className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2">Dashboard</h1>
+          <h1 
+            className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2 cursor-default"
+            onClick={() => {
+              const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
+              sessionStorage.setItem('debug-clicks', String(clicks));
+              if (clicks >= 5) {
+                setShowDebug(true);
+                sessionStorage.setItem('debug-clicks', '0');
+              }
+              setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
+            }}
+          >
+            Dashboard
+          </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Gerencie suas fichas de visita e clientes
           </p>
@@ -464,21 +477,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Área clicável para ativar debug (toque 5x no canto inferior direito) */}
-      <div 
-        className="fixed bottom-24 sm:bottom-8 right-4 w-12 h-12 z-40"
-        onClick={() => {
-          // Contador de cliques usando sessionStorage
-          const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
-          sessionStorage.setItem('debug-clicks', String(clicks));
-          if (clicks >= 5) {
-            setShowDebug(true);
-            sessionStorage.setItem('debug-clicks', '0');
-          }
-          // Reset após 2 segundos
-          setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
-        }}
-      />
     </div>
   );
 }

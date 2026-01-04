@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { UserRoleProvider } from "@/hooks/useUserRole";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
+import { ChatAssistente } from "@/components/ChatAssistente";
 
 // Public pages
 import Index from "./pages/Index";
@@ -91,6 +92,7 @@ const App = () => (
             <Sonner />
             <PWAUpdatePrompt />
             <BrowserRouter>
+              <ChatAssistente />
               <Routes>
                 {/* Public routes */}
                 <Route path="/inicial" element={<Index />} />

@@ -26,6 +26,12 @@ interface UserContext {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistente`;
 
+// Routes where Sofia should be hidden
+const HIDDEN_ROUTES = ['/auth', '/registro', '/registro-autonomo', '/convite/', '/confirmar/', '/verificar/', '/aceitar-termos', '/cadastro-concluido'];
+
+// Home paths for proactive messaging
+const HOME_PATHS = ['/', '/inicial'];
+
 // Typing speed configuration (ms per character)
 const TYPING_SPEED_MIN = 15;
 const TYPING_SPEED_MAX = 35;
@@ -179,9 +185,10 @@ export function ChatAssistente() {
     }
   }, [isOpen, userContext.isLoggedIn, roleLoading, proactiveMessageSent]);
 
-  // Proactive message after 12 seconds for visitors who haven't interacted
+  // Proactive message after 12 seconds for visitors who haven't interacted (on home page)
   useEffect(() => {
-    if (!isOpen && !userContext.isLoggedIn && !roleLoading && !proactiveMessageSent && location.pathname === '/') {
+    const isHomePage = HOME_PATHS.includes(location.pathname);
+    if (!isOpen && !userContext.isLoggedIn && !roleLoading && !proactiveMessageSent && isHomePage) {
       const timer = setTimeout(() => {
         // Open chat and add proactive message
         setIsOpen(true);
@@ -229,6 +236,8 @@ Ou se preferir, me conta: **qual é a sua maior dificuldade hoje nas visitas?**`
 
   // Generate personalized greeting
   const getGreeting = () => {
+    const isHomePage = HOME_PATHS.includes(location.pathname);
+    
     // Logged-in user
     if (userContext.isLoggedIn && userContext.nome) {
       const firstName = userContext.nome.split(' ')[0];
@@ -237,7 +246,7 @@ Ou se preferir, me conta: **qual é a sua maior dificuldade hoje nas visitas?**`
     }
     
     // Visitor on home page - sales focused
-    if (location.pathname === '/') {
+    if (isHomePage) {
       return `Oi! 👋 Sou a Sofia, assistente do **VisitaSegura**.
 
 Nosso sistema protege corretores em visitas imobiliárias com:
@@ -481,9 +490,22 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
   // Determine if we should show typing indicator
   const showTypingIndicator = isTyping && messages[messages.length - 1]?.content === '';
 
+  // Hide on sensitive routes
+  const shouldHide = HIDDEN_ROUTES.some(route => location.pathname.startsWith(route));
+  if (shouldHide) return null;
+
+  // Adjust position based on user state - for logged-in users on mobile, position left to avoid FAB conflict
+  const buttonPositionClass = userContext.isLoggedIn
+    ? "fixed bottom-24 sm:bottom-6 left-4 sm:left-auto sm:right-6 z-[9999]"
+    : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
+
+  const chatPositionClass = userContext.isLoggedIn
+    ? "fixed bottom-24 sm:bottom-6 left-4 sm:left-auto sm:right-6 z-[9999]"
+    : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
+
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-4 sm:right-6 z-[9999]">
+      <div className={buttonPositionClass}>
         <Button
           onClick={() => setIsOpen(true)}
           className={cn(
@@ -514,7 +536,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
   return (
     <div
       className={cn(
-        "fixed bottom-6 right-4 sm:right-6 z-[9999] bg-background border rounded-2xl shadow-2xl animate-chat-slide-up",
+        chatPositionClass,
+        "bg-background border rounded-2xl shadow-2xl animate-chat-slide-up",
         isMinimized 
           ? "w-72 h-14" 
           : "w-[calc(100vw-2rem)] sm:w-[380px] h-[70vh] sm:h-[550px] max-h-[80vh] flex flex-col"

@@ -26,7 +26,6 @@ import {
   MobileAppMockup
 } from '@/components/mockups';
 import AnimatedSection from '@/components/AnimatedSection';
-import { ChatAssistente } from '@/components/ChatAssistente';
 
 const Funcionalidades = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -425,8 +424,6 @@ const Funcionalidades = () => {
         </div>
       </footer>
 
-      {/* Chat Assistente */}
-      <ChatAssistente />
     </div>
   );
 };
