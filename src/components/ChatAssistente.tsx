@@ -117,6 +117,7 @@ export function ChatAssistente() {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [hasNewSuggestion, setHasNewSuggestion] = useState(false);
+  const [proactiveMessageSent, setProactiveMessageSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -170,13 +171,39 @@ export function ChatAssistente() {
 
   // Show suggestion badge after delay for visitors
   useEffect(() => {
-    if (!isOpen && !userContext.isLoggedIn && !roleLoading) {
+    if (!isOpen && !userContext.isLoggedIn && !roleLoading && !proactiveMessageSent) {
       const timer = setTimeout(() => {
         setHasNewSuggestion(true);
-      }, 5000); // Show after 5 seconds
+      }, 5000); // Show badge after 5 seconds
       return () => clearTimeout(timer);
     }
-  }, [isOpen, userContext.isLoggedIn, roleLoading]);
+  }, [isOpen, userContext.isLoggedIn, roleLoading, proactiveMessageSent]);
+
+  // Proactive message after 12 seconds for visitors who haven't interacted
+  useEffect(() => {
+    if (!isOpen && !userContext.isLoggedIn && !roleLoading && !proactiveMessageSent && location.pathname === '/') {
+      const timer = setTimeout(() => {
+        // Open chat and add proactive message
+        setIsOpen(true);
+        setProactiveMessageSent(true);
+        setHasNewSuggestion(false);
+        
+        // Add a proactive follow-up message
+        setMessages(prev => [
+          ...prev,
+          { 
+            role: 'assistant', 
+            content: `Vi que você está conhecendo o VisitaSegura! 🏠
+
+Você é corretor de imóveis? Posso te mostrar como o sistema funciona na prática - é bem rapidinho!
+
+Ou se preferir, me conta: **qual é a sua maior dificuldade hoje nas visitas?**` 
+          }
+        ]);
+      }, 12000); // Open chat after 12 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, userContext.isLoggedIn, roleLoading, proactiveMessageSent, location.pathname]);
   
   // Clear badge when chat opens
   useEffect(() => {
