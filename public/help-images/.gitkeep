@@ -1,21 +1,23 @@
-# Imagens de ajuda da Sofia - geradas automaticamente
+# Imagens de ajuda da Sofia
 # 
-# Imagens básicas disponíveis:
+# Screenshots reais do sistema:
+# ✅ home.png - Página inicial (screenshot real)
+# ✅ funcionalidades.png - Página de funcionalidades (screenshot real)
+# ✅ como-funciona.png - Como funciona (screenshot real)
+# ✅ login.png - Tela de login (screenshot real)
+# ✅ instalar-app.png - Instalação do app PWA (screenshot real)
+#
+# Imagens geradas baseadas no design do sistema:
 # ✅ como-criar-ficha.png - Formulário de criação de ficha
 # ✅ como-enviar-otp.png - Tela de envio de OTP
 # ✅ como-convidar-parceiro.png - Formulário de convite de parceiro
 # ✅ menu-navegacao.png - Barra de navegação
 # ✅ confirmacao-whatsapp.png - Mensagem de confirmação WhatsApp
 # ✅ comprovante-pdf.png - Comprovante PDF
-# ✅ instalar-app.png - Instalação do app PWA
 # ✅ lista-fichas.png - Lista de fichas
 # ✅ dashboard.png - Dashboard principal
 # ✅ clientes.png - Lista de clientes
 # ✅ imoveis.png - Lista de imóveis
-# ✅ home.png - Página inicial
-# ✅ funcionalidades.png - Página de funcionalidades
-# ✅ como-funciona.png - Como funciona
-# ✅ login.png - Tela de login
 #
 # Passo-a-passo: Envio de OTP
 # ✅ otp-passo-1-enviar.png - Passo 1: Enviar código
