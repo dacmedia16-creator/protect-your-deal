@@ -91,22 +91,29 @@ export default function ConviteParceiroExterno() {
       }
 
       try {
-        // Query convite info - public query
-        const { data: conviteData, error: conviteError } = await supabase
-          .from('convites_parceiro')
-          .select('*')
-          .eq('token', token)
-          .maybeSingle();
+        // Fetch convite AND ficha through edge function (bypasses RLS)
+        const { data: result, error: fetchError } = await supabase.functions.invoke('get-ficha-externa', {
+          body: { token }
+        });
 
-        if (conviteError || !conviteData) {
-          setError('Convite não encontrado');
+        if (fetchError) {
+          console.error('Erro ao buscar convite:', fetchError);
+          setError('Erro ao carregar convite');
           setLoading(false);
           return;
         }
 
+        if (result?.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+
+        const conviteData = result.convite;
+        const fichaData = result.ficha;
+
         // Check if external access is allowed
         if (!conviteData.permite_externo) {
-          // Redirect to login-required page
           navigate(`/convite-parceiro/${token}`);
           return;
         }
@@ -122,27 +129,14 @@ export default function ConviteParceiroExterno() {
         }
 
         setConvite(conviteData as Convite);
-
-        // Fetch ficha through edge function (since external user can't query directly)
-        const { data: fichaResult, error: fichaError } = await supabase.functions.invoke('get-ficha-externa', {
-          body: { token }
-        });
-
-        if (fichaError || fichaResult?.error) {
-          console.error('Erro ao buscar ficha:', fichaError || fichaResult?.error);
-          setError('Erro ao carregar dados da ficha');
-          setLoading(false);
-          return;
-        }
-
-        setFicha(fichaResult.ficha as Ficha);
+        setFicha(fichaData as Ficha);
 
         // Check if data is already filled
         if (conviteData.status === 'aceito') {
           const parteFaltante = conviteData.parte_faltante as 'proprietario' | 'comprador';
           const telefonePreenchido = parteFaltante === 'proprietario' 
-            ? fichaResult.ficha.proprietario_telefone 
-            : fichaResult.ficha.comprador_telefone;
+            ? fichaData.proprietario_telefone 
+            : fichaData.comprador_telefone;
           
           if (telefonePreenchido) {
             setDadosSalvos(true);
