@@ -143,13 +143,38 @@ export default function ConviteParceiro() {
       }
     };
 
-    if (!authLoading) {
+    // First check if this is an external invite without requiring login
+    const checkExternalInvite = async () => {
+      if (!token) return;
+      
+      try {
+        const { data: convite } = await supabase
+          .from('convites_parceiro')
+          .select('permite_externo')
+          .eq('token', token)
+          .maybeSingle();
+
+        // If external invite is allowed and user is not logged in, redirect to external page
+        if (convite?.permite_externo && !user) {
+          navigate(`/convite-externo/${token}`, { replace: true });
+          return;
+        }
+      } catch (err) {
+        console.error('Erro ao verificar tipo de convite:', err);
+      }
+
+      // If user is not logged in and not external, redirect to login
       if (!user) {
-        // Redirect to login with return URL
         navigate(`/auth?returnUrl=/convite-parceiro/${token}`);
         return;
       }
+
+      // User is logged in, check the full convite
       checkConvite();
+    };
+
+    if (!authLoading) {
+      checkExternalInvite();
     }
   }, [token, user, authLoading, navigate]);
 

@@ -317,6 +317,7 @@ export type Database = {
           ficha_id: string
           id: string
           parte_faltante: string
+          permite_externo: boolean | null
           status: string
           token: string
           updated_at: string
@@ -330,6 +331,7 @@ export type Database = {
           ficha_id: string
           id?: string
           parte_faltante: string
+          permite_externo?: boolean | null
           status?: string
           token?: string
           updated_at?: string
@@ -343,6 +345,7 @@ export type Database = {
           ficha_id?: string
           id?: string
           parte_faltante?: string
+          permite_externo?: boolean | null
           status?: string
           token?: string
           updated_at?: string
