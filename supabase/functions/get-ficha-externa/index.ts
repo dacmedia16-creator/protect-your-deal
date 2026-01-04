@@ -79,8 +79,13 @@ serve(async (req) => {
         success: true,
         ficha: ficha,
         convite: {
+          id: convite.id,
+          ficha_id: convite.ficha_id,
+          token: convite.token,
           status: convite.status,
           parte_faltante: convite.parte_faltante,
+          expira_em: convite.expira_em,
+          permite_externo: convite.permite_externo,
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
