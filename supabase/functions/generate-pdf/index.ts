@@ -134,10 +134,13 @@ serve(async (req) => {
 
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const courierFont = await pdfDoc.embedFont(StandardFonts.Courier); // Fonte monoespaçada para hash
 
     const primaryColor = rgb(0.118, 0.227, 0.373); // #1e3a5f
     const textColor = rgb(0.2, 0.2, 0.2);
     const lightGray = rgb(0.6, 0.6, 0.6);
+    const darkGray = rgb(0.3, 0.3, 0.3); // Cinza escuro para texto técnico
+    const mediumGray = rgb(0.4, 0.4, 0.4); // Cinza médio para hash
     const warningColor = rgb(0.8, 0.4, 0.0); // Orange for warnings
 
     let yPosition = height - 50;
@@ -609,62 +612,7 @@ serve(async (req) => {
         }
       }
 
-      // Footer on page 2
-      page2.drawLine({
-        start: { x: 50, y: 90 },
-        end: { x: width - 50, y: 90 },
-        thickness: 1,
-        color: lightGray,
-      });
-
-      // Verification URL
-      const verificationUrlPage2 = `visitasegura.com.br/verificar/${ficha.protocolo}`;
-      
-      page2.drawText(`Verifique a autenticidade deste documento:`, {
-        x: 50,
-        y: 75,
-        size: 8,
-        font: helveticaBold,
-        color: rgb(0.3, 0.3, 0.3),
-      });
-      
-      page2.drawText(verificationUrlPage2, {
-        x: 230,
-        y: 75,
-        size: 8,
-        font: helvetica,
-        color: primaryColor,
-      });
-
-      page2.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
-        x: 50,
-        y: 60,
-        size: 8,
-        font: helvetica,
-        color: lightGray,
-      });
-
-      page2.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })} | Protegido com hash SHA-256 - A integridade pode ser verificada online`, {
-        x: 50,
-        y: 45,
-        size: 8,
-        font: helvetica,
-        color: lightGray,
-      });
-
-      page2.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
-        x: 50,
-        y: 30,
-        size: 8,
-        font: helveticaBold,
-        color: primaryColor,
-      });
+      // Footer on page 2 - será preenchido após calcular o hash
     } else {
       // Broker Section on same page
       if (profile) {
@@ -723,62 +671,7 @@ serve(async (req) => {
         }
       }
 
-      // Footer
-      page.drawLine({
-        start: { x: 50, y: 90 },
-        end: { x: width - 50, y: 90 },
-        thickness: 1,
-        color: lightGray,
-      });
-
-      // Verification URL
-      const verificationUrl = `visitasegura.com.br/verificar/${ficha.protocolo}`;
-      
-      page.drawText(`Verifique a autenticidade deste documento:`, {
-        x: 50,
-        y: 75,
-        size: 8,
-        font: helveticaBold,
-        color: rgb(0.3, 0.3, 0.3),
-      });
-      
-      page.drawText(verificationUrl, {
-        x: 230,
-        y: 75,
-        size: 8,
-        font: helvetica,
-        color: primaryColor,
-      });
-
-      page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020 e MP 2.200-2.', {
-        x: 50,
-        y: 60,
-        size: 8,
-        font: helvetica,
-        color: lightGray,
-      });
-
-      page.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })} | Protegido com hash SHA-256 - A integridade pode ser verificada online`, {
-        x: 50,
-        y: 45,
-        size: 8,
-        font: helvetica,
-        color: lightGray,
-      });
-
-      page.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
-        x: 50,
-        y: 30,
-        size: 8,
-        font: helveticaBold,
-        color: primaryColor,
-      });
+      // Footer será preenchido após calcular o hash
     }
 
     // Helper functions for second page
@@ -811,18 +704,109 @@ serve(async (req) => {
       return startY - 18;
     }
 
-    // Serialize PDF
-    const pdfBytes = await pdfDoc.save();
+    // Gerar PDF intermediário para calcular o hash
+    const pdfBytesForHash = await pdfDoc.save();
 
-    // Calculate SHA-256 hash for document integrity
-    const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(pdfBytes).buffer);
+    // Calcular SHA-256 hash para integridade do documento
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(pdfBytesForHash).buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const documentoHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const documentoGeradoEm = new Date().toISOString();
 
-    console.log('Generated document hash:', documentoHash.substring(0, 16) + '...');
+    console.log('Generated document hash:', documentoHash);
 
-    // Save hash to database
+    // Função para desenhar rodapé técnico com hash completo
+    const drawTechnicalFooter = (targetPage: typeof page, hash: string) => {
+      const pageWidth = targetPage.getWidth();
+      
+      // Linha separadora
+      targetPage.drawLine({
+        start: { x: 50, y: 100 },
+        end: { x: pageWidth - 50, y: 100 },
+        thickness: 1,
+        color: lightGray,
+      });
+
+      // Linha de verificação
+      const verificationUrlFooter = `visitasegura.com.br/verificar/${ficha.protocolo}`;
+      
+      targetPage.drawText(`Verifique a autenticidade:`, {
+        x: 50,
+        y: 85,
+        size: 8,
+        font: helveticaBold,
+        color: darkGray,
+      });
+      
+      targetPage.drawText(verificationUrlFooter, {
+        x: 160,
+        y: 85,
+        size: 8,
+        font: helvetica,
+        color: primaryColor,
+      });
+
+      // Validade jurídica
+      targetPage.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020 e MP 2.200-2.', {
+        x: 50,
+        y: 70,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      // Linha principal do hash (visível, simples)
+      targetPage.drawText('Integridade do Documento: Protegido por hash criptográfico SHA-256.', {
+        x: 50,
+        y: 52,
+        size: 9,
+        font: helvetica,
+        color: darkGray,
+      });
+
+      // Linha secundária com hash completo (técnica, fonte monoespaçada)
+      targetPage.drawText(`Hash SHA-256: ${hash}`, {
+        x: 50,
+        y: 38,
+        size: 7,
+        font: courierFont,
+        color: mediumGray,
+      });
+
+      // Data de geração
+      targetPage.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, {
+        x: 50,
+        y: 24,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
+      });
+
+      // Nome do sistema
+      targetPage.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
+        x: 250,
+        y: 24,
+        size: 8,
+        font: helveticaBold,
+        color: primaryColor,
+      });
+    };
+
+    // Determinar qual é a última página e adicionar o rodapé técnico
+    const pageCount = pdfDoc.getPageCount();
+    const lastPage = pdfDoc.getPage(pageCount - 1);
+    drawTechnicalFooter(lastPage, documentoHash);
+
+    // Serializar PDF final com o hash no rodapé
+    const pdfBytesFinal = await pdfDoc.save();
+
+    // Salvar hash no banco de dados
     const { error: updateError } = await supabase
       .from('fichas_visita')
       .update({
@@ -838,7 +822,7 @@ serve(async (req) => {
       console.log('Document hash saved successfully');
     }
 
-    return new Response(new Uint8Array(pdfBytes).buffer, {
+    return new Response(new Uint8Array(pdfBytesFinal).buffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/pdf',
