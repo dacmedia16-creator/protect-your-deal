@@ -50,33 +50,34 @@ export default function AdminBackups() {
       if (storageError) throw storageError;
       if (!files || files.length === 0) return [];
 
-      // Extract ficha IDs from filenames (format: {id}_backup.pdf)
-      const fichaIds = files
-        .filter(f => f.name.endsWith('_backup.pdf'))
-        .map(f => f.name.replace('_backup.pdf', ''));
+      // Filter backup files (format: {protocolo}-backup-{timestamp}.pdf)
+      const backupFiles = files.filter(f => f.name.includes('-backup-') && f.name.endsWith('.pdf'));
+      
+      if (backupFiles.length === 0) return [];
 
-      // Fetch fichas data
+      // Extract protocols from filenames
+      const protocolos = backupFiles.map(f => f.name.split('-backup-')[0]);
+
+      // Fetch fichas data by protocol
       const { data: fichas, error: fichasError } = await supabase
         .from('fichas_visita')
         .select('id, protocolo')
-        .in('id', fichaIds);
+        .in('protocolo', protocolos);
 
       if (fichasError) throw fichasError;
 
-      const fichasMap = new Map(fichas?.map(f => [f.id, f.protocolo]) || []);
+      const fichasMap = new Map(fichas?.map(f => [f.protocolo, f.id]) || []);
 
-      return files
-        .filter(f => f.name.endsWith('_backup.pdf'))
-        .map(f => {
-          const fichaId = f.name.replace('_backup.pdf', '');
-          return {
-            name: f.name,
-            visita_id: fichaId,
-            protocolo: fichasMap.get(fichaId) || 'N/A',
-            size: f.metadata?.size || 0,
-            created_at: f.created_at,
-          } as BackupFile;
-        });
+      return backupFiles.map(f => {
+        const protocolo = f.name.split('-backup-')[0];
+        return {
+          name: f.name,
+          visita_id: fichasMap.get(protocolo) || '',
+          protocolo: protocolo,
+          size: f.metadata?.size || 0,
+          created_at: f.created_at,
+        } as BackupFile;
+      });
     },
   });
 
