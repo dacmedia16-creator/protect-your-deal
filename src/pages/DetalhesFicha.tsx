@@ -415,20 +415,15 @@ export default function DetalhesFicha() {
     
     setRegeneratingBackup(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-pdf', {
-        body: { 
-          ficha_id: ficha.id, 
-          app_url: window.location.origin, 
-          force_partial: ficha.status === 'finalizado_parcial',
-          is_backup: true 
-        },
+      const { data, error } = await supabase.functions.invoke('regenerate-backup', {
+        body: { ficha_id: ficha.id },
       });
 
-      if (error) {
+      if (error || data?.error) {
         toast({
           variant: 'destructive',
           title: 'Erro ao regenerar backup',
-          description: error.message,
+          description: error?.message || data?.error || 'Erro desconhecido',
         });
         return;
       }
