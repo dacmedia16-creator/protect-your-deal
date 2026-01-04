@@ -355,13 +355,6 @@ export type Database = {
             referencedRelation: "fichas_visita"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_convites_parceiro_ficha"
-            columns: ["ficha_id"]
-            isOneToOne: false
-            referencedRelation: "fichas_visita"
-            referencedColumns: ["id"]
-          },
         ]
       }
       fichas_visita: {
