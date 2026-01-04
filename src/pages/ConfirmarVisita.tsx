@@ -79,31 +79,39 @@ export default function ConfirmarVisita() {
           body: { token },
         });
 
-        if (error || !data?.valid) {
-          // Check if it's max attempts exceeded
-          if (data?.max_attempts_exceeded) {
-            setExpired(true); // Reuse expired state to show resend option
-          } else {
-            setError(data?.error || 'Link inválido ou expirado');
-          }
+        // SEMPRE salvar os dados quando disponíveis (mesmo se expirado/inválido)
+        if (data?.ficha) setFicha(data.ficha);
+        if (data?.otp) setOtpInfo(data.otp);
+        
+        // Set initial remaining attempts
+        if (data?.otp?.tentativas !== undefined && data?.otp?.max_tentativas !== undefined) {
+          setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
+        }
+
+        // Erro de rede real (não conseguiu conectar ao servidor)
+        if (error && !data) {
+          setError('Erro ao carregar informações. Tente recarregar a página.');
           setLoading(false);
           return;
         }
 
-        if (data.already_confirmed) {
+        // Já confirmado anteriormente
+        if (data?.already_confirmed) {
           setAlreadyConfirmed(true);
+          // Não retorna - mantém dados para exibição
         }
 
-        if (data.expired) {
+        // Código expirado ou tentativas esgotadas
+        if (data?.expired || data?.max_attempts_exceeded) {
           setExpired(true);
+          // NÃO retorna - mantém dados disponíveis para reenvio
         }
 
-        setFicha(data.ficha || null);
-        setOtpInfo(data.otp || null);
-        
-        // Set initial remaining attempts
-        if (data.otp?.tentativas !== undefined && data.otp?.max_tentativas !== undefined) {
-          setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
+        // Link realmente inválido (sem dados úteis)
+        if (!data?.valid && !data?.expired && !data?.max_attempts_exceeded && !data?.already_confirmed) {
+          setError(data?.error || 'Link inválido');
+          setLoading(false);
+          return;
         }
       } catch (err) {
         setError('Erro ao carregar informações. Tente recarregar a página.');
