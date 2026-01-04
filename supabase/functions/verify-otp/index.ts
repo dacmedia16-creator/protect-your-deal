@@ -347,6 +347,55 @@ serve(async (req) => {
       } else {
         console.log('Cliente já existe, não será duplicado:', { cpf: '***', telefone: clienteTelefone });
       }
+
+      // Cadastrar imóvel automaticamente se for proprietário
+      if (clienteTipo === 'proprietario') {
+        try {
+          // Verificar se já existe imóvel com mesmo endereço para este corretor
+          const { data: imovelExistente } = await supabase
+            .from('imoveis')
+            .select('id')
+            .eq('user_id', corretorId)
+            .eq('endereco', ficha.imovel_endereco)
+            .maybeSingle();
+
+          if (!imovelExistente) {
+            // Buscar o ID do cliente (recém-cadastrado ou existente)
+            const { data: clienteProprietario } = await supabase
+              .from('clientes')
+              .select('id')
+              .eq('user_id', corretorId)
+              .or(`cpf.eq.${clienteCpf},telefone.eq.${clienteTelefone}`)
+              .maybeSingle();
+
+            const { error: insertImovelError } = await supabase
+              .from('imoveis')
+              .insert({
+                user_id: corretorId,
+                imobiliaria_id: imobiliariaId,
+                endereco: ficha.imovel_endereco,
+                tipo: ficha.imovel_tipo,
+                proprietario_id: clienteProprietario?.id || null,
+                notas: `Cadastrado automaticamente via confirmação de visita - Protocolo: ${updatedFicha?.protocolo}`
+              });
+
+            if (insertImovelError) {
+              console.error('Erro ao cadastrar imóvel automaticamente:', insertImovelError);
+            } else {
+              console.log('Imóvel cadastrado automaticamente:', { 
+                endereco: ficha.imovel_endereco, 
+                tipo: ficha.imovel_tipo,
+                proprietario_id: clienteProprietario?.id,
+                protocolo: updatedFicha?.protocolo 
+              });
+            }
+          } else {
+            console.log('Imóvel já existe, não será duplicado:', { endereco: ficha.imovel_endereco });
+          }
+        } catch (imovelError) {
+          console.error('Erro ao tentar cadastrar imóvel automaticamente:', imovelError);
+        }
+      }
     } catch (clienteError) {
       // Não bloquear a confirmação se o cadastro automático falhar
       console.error('Erro ao tentar cadastrar cliente automaticamente:', clienteError);
