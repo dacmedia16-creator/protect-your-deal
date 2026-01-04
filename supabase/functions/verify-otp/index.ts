@@ -26,6 +26,7 @@ async function generateBackupPDF(supabase: any, fichaId: string): Promise<void> 
     // Chamar a função generate-pdf via HTTP
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
     console.log('Chamando generate-pdf para ficha:', fichaId);
     
@@ -34,6 +35,7 @@ async function generateBackupPDF(supabase: any, fichaId: string): Promise<void> 
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseAnonKey,
       },
       body: JSON.stringify({ 
         ficha_id: fichaId,
