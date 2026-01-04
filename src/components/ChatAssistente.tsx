@@ -51,18 +51,35 @@ const HELP_IMAGES: Record<string, string> = {
   'ficha-passo-4': '/help-images/ficha-passo-4-sucesso.png',
 };
 
+// Fix spacing issues from AI model (sometimes returns "glued" text like "Olá,Denis!")
+const fixTextSpacing = (text: string): string => {
+  return text
+    // Add space after punctuation followed by letter (e.g., "Olá,Denis" -> "Olá, Denis")
+    .replace(/([.,!?:])([A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ])/g, '$1 $2')
+    // Add space between lowercase and uppercase (e.g., "tudoBem" -> "tudo Bem")
+    .replace(/([a-záàâãéèêíìîóòôõúùûç])([A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ])/g, '$1 $2')
+    // Normalize multiple spaces to single space
+    .replace(/  +/g, ' ');
+};
+
 // Process message content to extract image markers
 const processMessageWithImages = (content: string): { text: string; images: string[] } => {
-  const imagePattern = /\[IMAGEM:([^\]]+)\]/g;
+  // More tolerant regex: case-insensitive, allows spaces around the key
+  const imagePattern = /\[\s*IMAGEM\s*:\s*([^\]]+?)\s*\]/gi;
   const images: string[] = [];
   
-  const text = content.replace(imagePattern, (_, key) => {
-    const imageUrl = HELP_IMAGES[key.trim()];
+  let text = content.replace(imagePattern, (_, key) => {
+    const normalizedKey = key.trim().toLowerCase();
+    // Try exact match first, then lowercase match
+    const imageUrl = HELP_IMAGES[key.trim()] || HELP_IMAGES[normalizedKey];
     if (imageUrl) {
       images.push(imageUrl);
     }
     return ''; // Remove marker from text
   });
+  
+  // Apply spacing fix to the text
+  text = fixTextSpacing(text);
   
   return { text: text.trim(), images };
 };
