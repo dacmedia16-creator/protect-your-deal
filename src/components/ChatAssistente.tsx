@@ -391,25 +391,77 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     }
   }, [isOpen, isMinimized]);
 
-  // Update assistant message directly with new content (typing effect disabled for stability)
-  const updateAssistantMessage = useCallback((newContent: string) => {
-    setMessages(prev => {
-      const updated = [...prev];
-      const lastMsg = updated[updated.length - 1];
-      if (lastMsg && lastMsg.role === 'assistant') {
-        // Append new content to existing content
-        const fullContent = lastMsg.content + newContent;
-        // Process for images when content is updated
-        const { text: processedText, images } = processMessageWithImages(fullContent);
-        updated[updated.length - 1] = {
-          ...lastMsg,
-          content: processedText,
-          images: images.length > 0 ? images : undefined
-        };
+  // Buffer to accumulate streamed content before displaying with typing effect
+  const streamBufferRef = useRef<string>('');
+  const displayedContentRef = useRef<string>('');
+  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Typing effect: displays characters from buffer gradually
+  const startTypingEffect = useCallback(() => {
+    if (typingIntervalRef.current) return; // Already running
+    
+    typingIntervalRef.current = setInterval(() => {
+      const buffer = streamBufferRef.current;
+      const displayed = displayedContentRef.current;
+      
+      if (displayed.length < buffer.length) {
+        // Calculate how many characters to add (2-4 for speed, but stop at word boundaries when possible)
+        let charsToAdd = Math.min(3, buffer.length - displayed.length);
+        const nextChunk = buffer.slice(displayed.length, displayed.length + charsToAdd);
+        
+        displayedContentRef.current = displayed + nextChunk;
+        
+        // Apply spacing fix and update message
+        const fixedContent = fixTextSpacing(displayedContentRef.current);
+        const { text: processedText, images } = processMessageWithImages(fixedContent);
+        
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastMsg = updated[updated.length - 1];
+          if (lastMsg && lastMsg.role === 'assistant') {
+            updated[updated.length - 1] = {
+              ...lastMsg,
+              content: processedText,
+              images: images.length > 0 ? images : undefined
+            };
+          }
+          return updated;
+        });
+      } else if (!isTyping && displayed.length >= buffer.length) {
+        // Done typing, clear interval
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
       }
-      return updated;
-    });
+    }, 20); // 20ms per batch = smooth typing effect
+  }, [isTyping]);
+
+  // Stop typing effect
+  const stopTypingEffect = useCallback(() => {
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
   }, []);
+
+  // Add content to buffer (called when stream receives data)
+  const addToStreamBuffer = useCallback((newContent: string) => {
+    streamBufferRef.current += newContent;
+    startTypingEffect();
+  }, [startTypingEffect]);
+
+  // Reset buffer for new message
+  const resetStreamBuffer = useCallback(() => {
+    stopTypingEffect();
+    streamBufferRef.current = '';
+    displayedContentRef.current = '';
+  }, [stopTypingEffect]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => stopTypingEffect();
+  }, [stopTypingEffect]);
 
   const streamChat = async (userMessage: string) => {
     const userMsg: Message = { role: 'user', content: userMessage };
@@ -446,6 +498,9 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       const decoder = new TextDecoder();
       let textBuffer = '';
 
+      // Reset buffer for new message
+      resetStreamBuffer();
+
       // Add empty assistant message and play notification sound
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
       playNotificationSound('info');
@@ -477,8 +532,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              // Update message directly instead of using typing queue
-              updateAssistantMessage(content);
+              // Add to buffer for typing effect
+              addToStreamBuffer(content);
             }
           } catch {
             // Incomplete JSON, put back and wait
@@ -501,13 +556,13 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              updateAssistantMessage(content);
+              addToStreamBuffer(content);
             }
           } catch { /* ignore */ }
         }
       }
 
-      // Stream is done
+      // Stream is done - but keep typing effect running until buffer is fully displayed
       setIsTyping(false);
       setIsLoading(false);
       
