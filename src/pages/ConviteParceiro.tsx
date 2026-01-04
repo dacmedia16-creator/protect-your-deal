@@ -87,10 +87,10 @@ export default function ConviteParceiro() {
       }
 
       try {
-        // Query convite info (public access for checking)
+        // Query convite info
         const { data: convite, error: conviteError } = await supabase
           .from('convites_parceiro')
-          .select('*, fichas_visita(*)')
+          .select('*')
           .eq('token', token)
           .maybeSingle();
 
@@ -115,8 +115,19 @@ export default function ConviteParceiro() {
         setConviteValido(true);
         setParteFaltante(convite.parte_faltante as 'proprietario' | 'comprador');
         
-        if (convite.fichas_visita) {
-          setFicha(convite.fichas_visita as Ficha);
+        // Buscar ficha separadamente para garantir que temos os dados
+        if (convite.ficha_id) {
+          const { data: fichaData, error: fichaError } = await supabase
+            .from('fichas_visita')
+            .select('*')
+            .eq('id', convite.ficha_id)
+            .maybeSingle();
+
+          if (fichaError) {
+            console.error('[ConviteParceiro] Erro ao buscar ficha:', fichaError);
+          } else if (fichaData) {
+            setFicha(fichaData as Ficha);
+          }
         }
 
         // If already accepted by this user
@@ -190,7 +201,15 @@ export default function ConviteParceiro() {
   };
 
   const handleSaveData = async () => {
-    if (!ficha || !parteFaltante) return;
+    // Validação crítica: garantir que temos os dados necessários
+    if (!ficha?.id || !parteFaltante) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Dados da ficha não encontrados. Recarregue a página.',
+      });
+      return;
+    }
 
     // Validate
     if (!formData.telefone || formData.telefone.replace(/\D/g, '').length < 10) {
