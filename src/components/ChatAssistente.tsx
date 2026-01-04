@@ -116,6 +116,7 @@ export function ChatAssistente() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [hasNewSuggestion, setHasNewSuggestion] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -166,6 +167,23 @@ export function ChatAssistente() {
     currentPage: location.pathname,
     pageContext: currentPageInfo?.context || 'Navegação geral'
   }), [profileName, role, assinatura, imobiliaria, user, location.pathname, currentPageInfo]);
+
+  // Show suggestion badge after delay for visitors
+  useEffect(() => {
+    if (!isOpen && !userContext.isLoggedIn && !roleLoading) {
+      const timer = setTimeout(() => {
+        setHasNewSuggestion(true);
+      }, 5000); // Show after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, userContext.isLoggedIn, roleLoading]);
+  
+  // Clear badge when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      setHasNewSuggestion(false);
+    }
+  }, [isOpen]);
 
   // Get page-specific hint for logged-in users
   const getPageHint = (pathname: string): string => {
@@ -438,16 +456,31 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
   if (!isOpen) {
     return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "fixed bottom-6 left-4 sm:left-auto sm:right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90",
-          !userContext.isLoggedIn && "animate-pulse-soft"
+      <div className="fixed bottom-6 left-4 sm:left-auto sm:right-6 z-50">
+        <Button
+          onClick={() => setIsOpen(true)}
+          className={cn(
+            "h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 relative",
+            !userContext.isLoggedIn && "animate-pulse-soft"
+          )}
+          size="icon"
+        >
+          <MessageCircle className="h-6 w-6" />
+          {hasNewSuggestion && (
+            <span className="absolute -top-1 -right-1 flex h-5 w-5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-5 w-5 bg-destructive text-destructive-foreground text-xs font-bold items-center justify-center">
+                1
+              </span>
+            </span>
+          )}
+        </Button>
+        {hasNewSuggestion && (
+          <div className="absolute bottom-16 left-0 sm:left-auto sm:right-0 bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in">
+            <p className="text-xs text-muted-foreground">💬 Posso te ajudar?</p>
+          </div>
         )}
-        size="icon"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </Button>
+      </div>
     );
   }
 
