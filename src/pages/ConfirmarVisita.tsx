@@ -43,6 +43,8 @@ export default function ConfirmarVisita() {
   const [resending, setResending] = useState(false);
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [success, setSuccess] = useState(false);
   const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
   const [expired, setExpired] = useState(false);
@@ -57,69 +59,76 @@ export default function ConfirmarVisita() {
   const [aceiteCpf, setAceiteCpf] = useState('');
   const [captandoLocalizacao, setCaptandoLocalizacao] = useState(false);
 
-  useEffect(() => {
-    async function loadOtpInfo() {
-      if (!token) {
-        setError('Link inválido');
+  const loadOtpInfo = async () => {
+    if (!token) {
+      setError('Link inválido');
+      setLoading(false);
+      return;
+    }
+
+    setConnectionError(false);
+    setError(null);
+
+    try {
+      const { data, error } = await invokeWithRetry<{
+        valid: boolean;
+        error?: string;
+        already_confirmed?: boolean;
+        expired?: boolean;
+        max_attempts_exceeded?: boolean;
+        ficha?: FichaInfo;
+        otp?: OtpInfo;
+      }>('get-otp-info', {
+        body: { token },
+      });
+
+      // SEMPRE salvar os dados quando disponíveis (mesmo se expirado/inválido)
+      if (data?.ficha) setFicha(data.ficha);
+      if (data?.otp) setOtpInfo(data.otp);
+      
+      // Set initial remaining attempts
+      if (data?.otp?.tentativas !== undefined && data?.otp?.max_tentativas !== undefined) {
+        setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
+      }
+
+      // Erro de rede real (não conseguiu conectar ao servidor)
+      if (error && !data) {
+        setConnectionError(true);
         setLoading(false);
         return;
       }
 
-      try {
-        // Use retry for initial load
-        const { data, error } = await invokeWithRetry<{
-          valid: boolean;
-          error?: string;
-          already_confirmed?: boolean;
-          expired?: boolean;
-          max_attempts_exceeded?: boolean;
-          ficha?: FichaInfo;
-          otp?: OtpInfo;
-        }>('get-otp-info', {
-          body: { token },
-        });
-
-        // SEMPRE salvar os dados quando disponíveis (mesmo se expirado/inválido)
-        if (data?.ficha) setFicha(data.ficha);
-        if (data?.otp) setOtpInfo(data.otp);
-        
-        // Set initial remaining attempts
-        if (data?.otp?.tentativas !== undefined && data?.otp?.max_tentativas !== undefined) {
-          setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
-        }
-
-        // Erro de rede real (não conseguiu conectar ao servidor)
-        if (error && !data) {
-          setError('Erro ao carregar informações. Tente recarregar a página.');
-          setLoading(false);
-          return;
-        }
-
-        // Já confirmado anteriormente
-        if (data?.already_confirmed) {
-          setAlreadyConfirmed(true);
-          // Não retorna - mantém dados para exibição
-        }
-
-        // Código expirado ou tentativas esgotadas
-        if (data?.expired || data?.max_attempts_exceeded) {
-          setExpired(true);
-          // NÃO retorna - mantém dados disponíveis para reenvio
-        }
-
-        // Link realmente inválido (sem dados úteis)
-        if (!data?.valid && !data?.expired && !data?.max_attempts_exceeded && !data?.already_confirmed) {
-          setError(data?.error || 'Link inválido');
-          setLoading(false);
-          return;
-        }
-      } catch (err) {
-        setError('Erro ao carregar informações. Tente recarregar a página.');
-      } finally {
-        setLoading(false);
+      // Já confirmado anteriormente
+      if (data?.already_confirmed) {
+        setAlreadyConfirmed(true);
       }
-    }
 
+      // Código expirado ou tentativas esgotadas
+      if (data?.expired || data?.max_attempts_exceeded) {
+        setExpired(true);
+      }
+
+      // Link realmente inválido (sem dados úteis)
+      if (!data?.valid && !data?.expired && !data?.max_attempts_exceeded && !data?.already_confirmed) {
+        setError(data?.error || 'Link inválido');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setConnectionError(true);
+    } finally {
+      setLoading(false);
+      setRetrying(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    setLoading(true);
+    await loadOtpInfo();
+  };
+
+  useEffect(() => {
     loadOtpInfo();
   }, [token]);
 
@@ -357,7 +366,36 @@ export default function ConfirmarVisita() {
       </header>
 
       <main className="flex-1 container mx-auto px-4 py-8 max-w-md flex items-center justify-center">
-        {error ? (
+        {connectionError ? (
+          <Card className="w-full border-warning/50">
+            <CardContent className="pt-6 text-center">
+              <div className="h-16 w-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="h-8 w-8 text-warning" />
+              </div>
+              <h2 className="font-display text-xl font-bold mb-2">Erro de conexão</h2>
+              <p className="text-muted-foreground mb-4">
+                Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.
+              </p>
+              <Button 
+                onClick={handleRetry} 
+                disabled={retrying}
+                className="w-full"
+              >
+                {retrying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Tentando novamente...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Tentar novamente
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : error ? (
           <Card className="w-full border-destructive/50">
             <CardContent className="pt-6 text-center">
               <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
