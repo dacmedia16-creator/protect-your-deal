@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,12 @@ import {
   Calendar, 
   User,
   Shield,
-  Home
+  Home,
+  Upload,
+  FileText,
+  ShieldCheck,
+  ShieldAlert,
+  Info
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -29,6 +34,19 @@ interface VerificationData {
   corretor_creci?: string;
   proprietario_confirmado_em?: string;
   comprador_confirmado_em?: string;
+  integridade_verificavel?: boolean;
+  documento_hash?: string;
+  documento_gerado_em?: string;
+  error?: string;
+}
+
+interface IntegrityResult {
+  integro: boolean;
+  protocolo?: string;
+  hash_original?: string;
+  hash_enviado?: string;
+  documento_gerado_em?: string;
+  mensagem?: string;
   error?: string;
 }
 
@@ -36,6 +54,11 @@ export default function VerificarComprovante() {
   const { protocolo } = useParams<{ protocolo: string }>();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<VerificationData | null>(null);
+  
+  // Integrity verification state
+  const [integrityLoading, setIntegrityLoading] = useState(false);
+  const [integrityResult, setIntegrityResult] = useState<IntegrityResult | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     const verificar = async () => {
@@ -73,6 +96,71 @@ export default function VerificarComprovante() {
     }
     return parts[0] + ' ' + parts.slice(1).map(p => p.charAt(0) + '.').join(' ');
   };
+
+  const handleFileUpload = useCallback(async (file: File) => {
+    if (!protocolo) return;
+    
+    if (file.type !== 'application/pdf') {
+      setIntegrityResult({ integro: false, error: 'Por favor, envie um arquivo PDF.' });
+      return;
+    }
+
+    setIntegrityLoading(true);
+    setIntegrityResult(null);
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        
+        const { data: result, error } = await supabase.functions.invoke('verify-pdf-integrity', {
+          body: { protocolo, pdf_base64: base64 },
+        });
+
+        if (error) {
+          setIntegrityResult({ integro: false, error: 'Erro ao verificar integridade' });
+        } else {
+          setIntegrityResult(result);
+        }
+        setIntegrityLoading(false);
+      };
+      reader.onerror = () => {
+        setIntegrityResult({ integro: false, error: 'Erro ao ler o arquivo' });
+        setIntegrityLoading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setIntegrityResult({ integro: false, error: 'Erro de conexão' });
+      setIntegrityLoading(false);
+    }
+  }, [protocolo]);
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  }, [handleFileUpload]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0]);
+    }
+  }, [handleFileUpload]);
 
   if (loading) {
     return (
@@ -189,9 +277,137 @@ export default function VerificarComprovante() {
                       )}
                     </div>
                   )}
+
+                  {/* Integrity info */}
+                  {data.integridade_verificavel && (
+                    <div className="border-t pt-3">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <ShieldCheck className="h-3 w-3" />
+                        Integridade Criptográfica
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Hash SHA-256: <code className="bg-muted px-1 rounded">{data.documento_hash}</code>
+                      </p>
+                      {data.documento_gerado_em && (
+                        <p className="text-xs text-muted-foreground">
+                          Gerado em: {format(new Date(data.documento_gerado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
+
+            {/* Verificação de Integridade do PDF */}
+            {data.integridade_verificavel && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Verificar Integridade do Documento
+                  </CardTitle>
+                  <CardDescription>
+                    Envie o arquivo PDF para verificar se ele não foi alterado
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Upload Area */}
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      dragActive 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-muted-foreground/25 hover:border-primary/50'
+                    }`}
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                  >
+                    {integrityLoading ? (
+                      <div className="space-y-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                        <p className="text-sm text-muted-foreground">Verificando integridade...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Arraste o PDF aqui ou clique para selecionar
+                        </p>
+                        <label>
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={handleInputChange}
+                            className="hidden"
+                          />
+                          <Button variant="outline" size="sm" asChild>
+                            <span>Selecionar PDF</span>
+                          </Button>
+                        </label>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Integrity Result */}
+                  {integrityResult && (
+                    <div className={`rounded-lg p-4 ${
+                      integrityResult.integro 
+                        ? 'bg-success/10 border border-success/30' 
+                        : 'bg-destructive/10 border border-destructive/30'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {integrityResult.integro ? (
+                          <ShieldCheck className="h-6 w-6 text-success flex-shrink-0" />
+                        ) : (
+                          <ShieldAlert className="h-6 w-6 text-destructive flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-semibold ${
+                            integrityResult.integro ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {integrityResult.integro ? 'Documento Íntegro' : 'Documento Alterado'}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {integrityResult.mensagem || integrityResult.error}
+                          </p>
+                          
+                          {/* Technical details */}
+                          {integrityResult.hash_original && (
+                            <div className="mt-3 space-y-1 text-xs">
+                              <p className="text-muted-foreground">
+                                <span className="font-medium">Hash original:</span>{' '}
+                                <code className="bg-background/50 px-1 rounded">{integrityResult.hash_original}</code>
+                              </p>
+                              <p className="text-muted-foreground">
+                                <span className="font-medium">Hash enviado:</span>{' '}
+                                <code className="bg-background/50 px-1 rounded">{integrityResult.hash_enviado}</code>
+                              </p>
+                              {integrityResult.documento_gerado_em && (
+                                <p className="text-muted-foreground">
+                                  <span className="font-medium">Documento gerado em:</span>{' '}
+                                  {format(new Date(integrityResult.documento_gerado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Info about integrity */}
+                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                    <p>
+                      A verificação de integridade usa hash SHA-256 para garantir que o documento 
+                      não foi alterado desde sua geração original.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <p className="text-xs text-center text-muted-foreground">
               Verificação realizada em {format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}

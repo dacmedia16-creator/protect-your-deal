@@ -72,7 +72,7 @@ serve(async (req) => {
 
     console.log('Comprovante válido para protocolo:', protocolo);
 
-    // Return sanitized data (no CPF, no phone numbers)
+    // Return sanitized data (no CPF, no phone numbers) with integrity info
     return new Response(
       JSON.stringify({
         valid: true,
@@ -86,6 +86,10 @@ serve(async (req) => {
         comprador_confirmado_em: ficha.comprador_confirmado_em,
         corretor_nome: profile?.nome || null,
         corretor_creci: profile?.creci || null,
+        // Integrity verification data
+        integridade_verificavel: !!ficha.documento_hash,
+        documento_hash: ficha.documento_hash ? ficha.documento_hash.substring(0, 16) + '...' : null,
+        documento_gerado_em: ficha.documento_gerado_em || null,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

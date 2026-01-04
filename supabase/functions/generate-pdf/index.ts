@@ -711,7 +711,7 @@ serve(async (req) => {
         color: lightGray,
       });
 
-      page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
+      page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020 e MP 2.200-2.', {
         x: 50,
         y: 48,
         size: 8,
@@ -725,7 +725,7 @@ serve(async (req) => {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, {
+      })} | Documento com hash SHA-256 para verificação de integridade`, {
         x: 50,
         y: 35,
         size: 8,
@@ -774,6 +774,30 @@ serve(async (req) => {
 
     // Serialize PDF
     const pdfBytes = await pdfDoc.save();
+
+    // Calculate SHA-256 hash for document integrity
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(pdfBytes).buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const documentoHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const documentoGeradoEm = new Date().toISOString();
+
+    console.log('Generated document hash:', documentoHash.substring(0, 16) + '...');
+
+    // Save hash to database
+    const { error: updateError } = await supabase
+      .from('fichas_visita')
+      .update({
+        documento_hash: documentoHash,
+        documento_gerado_em: documentoGeradoEm,
+      })
+      .eq('id', ficha_id);
+
+    if (updateError) {
+      console.error('Error saving document hash:', updateError);
+      // Continue anyway - PDF was generated successfully
+    } else {
+      console.log('Document hash saved successfully');
+    }
 
     return new Response(new Uint8Array(pdfBytes).buffer, {
       headers: {

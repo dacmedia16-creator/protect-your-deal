@@ -370,6 +370,8 @@ export type Database = {
           corretor_parceiro_id: string | null
           created_at: string
           data_visita: string
+          documento_gerado_em: string | null
+          documento_hash: string | null
           id: string
           imobiliaria_id: string | null
           imovel_endereco: string
@@ -395,6 +397,8 @@ export type Database = {
           corretor_parceiro_id?: string | null
           created_at?: string
           data_visita: string
+          documento_gerado_em?: string | null
+          documento_hash?: string | null
           id?: string
           imobiliaria_id?: string | null
           imovel_endereco: string
@@ -420,6 +424,8 @@ export type Database = {
           corretor_parceiro_id?: string | null
           created_at?: string
           data_visita?: string
+          documento_gerado_em?: string | null
+          documento_hash?: string | null
           id?: string
           imobiliaria_id?: string | null
           imovel_endereco?: string
