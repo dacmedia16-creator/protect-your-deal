@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +17,7 @@ const AnimatedSection = ({
 }: AnimatedSectionProps) => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.15 });
 
-  const getTransform = () => {
+  const getTransform = useCallback(() => {
     switch (direction) {
       case 'left':
         return 'translate-x-[-40px]';
@@ -26,7 +26,7 @@ const AnimatedSection = ({
       default:
         return 'translate-y-[40px]';
     }
-  };
+  }, [direction]);
 
   return (
     <div
