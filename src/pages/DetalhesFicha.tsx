@@ -462,11 +462,27 @@ export default function DetalhesFicha() {
       // Generate and download PDF
       await downloadPdf(true);
       
+      // Gerar backup automático após finalização parcial
+      try {
+        console.log('Gerando backup automático após finalização parcial...');
+        const { error: backupError } = await supabase.functions.invoke('regenerate-backup', {
+          body: { ficha_id: ficha.id },
+        });
+        
+        if (backupError) {
+          console.error('Erro ao gerar backup automático:', backupError);
+        } else {
+          console.log('Backup automático gerado com sucesso');
+        }
+      } catch (backupErr) {
+        console.error('Erro ao chamar regenerate-backup:', backupErr);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['fichas'] });
 
       toast({
         title: 'Ficha finalizada',
-        description: 'A ficha foi finalizada com assinatura parcial.',
+        description: 'A ficha foi finalizada com assinatura parcial e o backup foi gerado.',
       });
 
       // Redirecionar para lista de finalizados
