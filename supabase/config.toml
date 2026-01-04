@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.get-ficha-externa]
 verify_jwt = false
+
+[functions.regenerate-backup]
+verify_jwt = true
