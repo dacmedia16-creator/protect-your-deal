@@ -1,10 +1,236 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1';
+import qrcode from 'https://esm.sh/qrcode-generator@1.4.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Função para gerar backup do PDF em background
+async function generateBackupPDF(supabase: any, fichaId: string): Promise<void> {
+  try {
+    console.log('Iniciando geração de backup PDF para ficha:', fichaId);
+    
+    // Buscar dados da ficha
+    const { data: ficha, error: fichaError } = await supabase
+      .from('fichas_visita')
+      .select('*')
+      .eq('id', fichaId)
+      .single();
+    
+    if (fichaError || !ficha) {
+      console.error('Erro ao buscar ficha para backup:', fichaError);
+      return;
+    }
+    
+    // Buscar confirmações OTP
+    const { data: confirmacoes } = await supabase
+      .from('confirmacoes_otp')
+      .select('*')
+      .eq('ficha_id', fichaId)
+      .eq('confirmado', true);
+    
+    const confirmacaoProprietario = confirmacoes?.find((c: any) => c.tipo === 'proprietario');
+    const confirmacaoComprador = confirmacoes?.find((c: any) => c.tipo === 'comprador');
+    
+    // Buscar perfil do corretor
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', ficha.user_id)
+      .single();
+    
+    // Buscar imobiliária
+    let imobiliaria = null;
+    if (ficha.imobiliaria_id) {
+      const { data: imobData } = await supabase
+        .from('imobiliarias')
+        .select('nome, logo_url')
+        .eq('id', ficha.imobiliaria_id)
+        .single();
+      imobiliaria = imobData;
+    }
+    
+    // Criar PDF
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595, 842]);
+    const { width, height } = page.getSize();
+    
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    
+    const primaryColor = rgb(0.118, 0.227, 0.373);
+    const textColor = rgb(0.2, 0.2, 0.2);
+    const lightGray = rgb(0.6, 0.6, 0.6);
+    
+    let yPosition = height - 50;
+    
+    // Header
+    page.drawText('BACKUP - COMPROVANTE DE VISITA IMOBILIÁRIA', {
+      x: 50,
+      y: yPosition,
+      size: 14,
+      font: helveticaBold,
+      color: primaryColor,
+    });
+    
+    yPosition -= 25;
+    page.drawText(`Protocolo: ${ficha.protocolo}`, {
+      x: 50,
+      y: yPosition,
+      size: 12,
+      font: helveticaBold,
+      color: primaryColor,
+    });
+    
+    yPosition -= 15;
+    page.drawLine({
+      start: { x: 50, y: yPosition },
+      end: { x: width - 50, y: yPosition },
+      thickness: 1,
+      color: primaryColor,
+    });
+    
+    // Funções auxiliares
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pt-BR', { 
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    };
+    
+    const formatCPF = (cpf: string | null) => {
+      if (!cpf) return '-';
+      const cleaned = cpf.replace(/\D/g, '');
+      if (cleaned.length === 11) {
+        return `${cleaned.slice(0,3)}.${cleaned.slice(3,6)}.${cleaned.slice(6,9)}-${cleaned.slice(9)}`;
+      }
+      return cpf;
+    };
+    
+    const formatPhone = (phone: string | null) => {
+      if (!phone) return '-';
+      const cleaned = phone.replace(/\D/g, '');
+      if (cleaned.length === 11) {
+        return `(${cleaned.slice(0,2)}) ${cleaned.slice(2,7)}-${cleaned.slice(7)}`;
+      }
+      return phone;
+    };
+    
+    const drawField = (label: string, value: string, y: number): number => {
+      page.drawText(`${label}:`, { x: 50, y, size: 10, font: helveticaBold, color: textColor });
+      page.drawText(value || '-', { x: 160, y, size: 10, font: helvetica, color: textColor });
+      return y - 16;
+    };
+    
+    // Dados do imóvel
+    yPosition -= 30;
+    page.drawText('DADOS DO IMÓVEL', { x: 50, y: yPosition, size: 11, font: helveticaBold, color: primaryColor });
+    yPosition -= 20;
+    yPosition = drawField('Endereço', ficha.imovel_endereco, yPosition);
+    yPosition = drawField('Tipo', ficha.imovel_tipo, yPosition);
+    
+    // Proprietário
+    yPosition -= 15;
+    page.drawText('PROPRIETÁRIO', { x: 50, y: yPosition, size: 11, font: helveticaBold, color: primaryColor });
+    yPosition -= 20;
+    yPosition = drawField('Nome', ficha.proprietario_nome || confirmacaoProprietario?.aceite_nome || '-', yPosition);
+    yPosition = drawField('CPF', formatCPF(ficha.proprietario_cpf || confirmacaoProprietario?.aceite_cpf), yPosition);
+    yPosition = drawField('Telefone', formatPhone(ficha.proprietario_telefone), yPosition);
+    if (ficha.proprietario_confirmado_em) {
+      yPosition = drawField('Confirmado em', formatDate(ficha.proprietario_confirmado_em), yPosition);
+    }
+    if (confirmacaoProprietario) {
+      yPosition = drawField('IP Confirmação', confirmacaoProprietario.aceite_ip || '-', yPosition);
+      if (confirmacaoProprietario.aceite_latitude && confirmacaoProprietario.aceite_longitude) {
+        yPosition = drawField('Geolocalização', `${confirmacaoProprietario.aceite_latitude}, ${confirmacaoProprietario.aceite_longitude}`, yPosition);
+      }
+    }
+    
+    // Comprador
+    yPosition -= 15;
+    page.drawText('COMPRADOR', { x: 50, y: yPosition, size: 11, font: helveticaBold, color: primaryColor });
+    yPosition -= 20;
+    yPosition = drawField('Nome', ficha.comprador_nome || confirmacaoComprador?.aceite_nome || '-', yPosition);
+    yPosition = drawField('CPF', formatCPF(ficha.comprador_cpf || confirmacaoComprador?.aceite_cpf), yPosition);
+    yPosition = drawField('Telefone', formatPhone(ficha.comprador_telefone), yPosition);
+    if (ficha.comprador_confirmado_em) {
+      yPosition = drawField('Confirmado em', formatDate(ficha.comprador_confirmado_em), yPosition);
+    }
+    if (confirmacaoComprador) {
+      yPosition = drawField('IP Confirmação', confirmacaoComprador.aceite_ip || '-', yPosition);
+      if (confirmacaoComprador.aceite_latitude && confirmacaoComprador.aceite_longitude) {
+        yPosition = drawField('Geolocalização', `${confirmacaoComprador.aceite_latitude}, ${confirmacaoComprador.aceite_longitude}`, yPosition);
+      }
+    }
+    
+    // Dados da visita
+    yPosition -= 15;
+    page.drawText('DADOS DA VISITA', { x: 50, y: yPosition, size: 11, font: helveticaBold, color: primaryColor });
+    yPosition -= 20;
+    yPosition = drawField('Data da Visita', formatDate(ficha.data_visita), yPosition);
+    yPosition = drawField('Criado em', formatDate(ficha.created_at), yPosition);
+    yPosition = drawField('Status', ficha.status, yPosition);
+    
+    // Corretor
+    if (profile) {
+      yPosition -= 15;
+      page.drawText('CORRETOR RESPONSÁVEL', { x: 50, y: yPosition, size: 11, font: helveticaBold, color: primaryColor });
+      yPosition -= 20;
+      yPosition = drawField('Nome', profile.nome || '-', yPosition);
+      yPosition = drawField('CRECI', profile.creci || '-', yPosition);
+      yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
+    }
+    
+    // Imobiliária
+    if (imobiliaria) {
+      yPosition -= 15;
+      page.drawText('IMOBILIÁRIA', { x: 50, y: yPosition, size: 11, font: helveticaBold, color: primaryColor });
+      yPosition -= 20;
+      yPosition = drawField('Nome', imobiliaria.nome || '-', yPosition);
+    }
+    
+    // Footer com timestamp do backup
+    const backupTimestamp = new Date().toISOString();
+    page.drawText(`Backup gerado automaticamente em: ${formatDate(backupTimestamp)}`, {
+      x: 50,
+      y: 40,
+      size: 8,
+      font: helvetica,
+      color: lightGray,
+    });
+    
+    // Gerar PDF
+    const pdfBytes = await pdfDoc.save();
+    
+    // Salvar no storage
+    const fileName = `${ficha.protocolo}-backup-${Date.now()}.pdf`;
+    const { error: uploadError } = await supabase.storage
+      .from('comprovantes-backup')
+      .upload(fileName, pdfBytes, {
+        contentType: 'application/pdf',
+        upsert: false
+      });
+    
+    if (uploadError) {
+      console.error('Erro ao fazer upload do backup:', uploadError);
+      return;
+    }
+    
+    // Atualizar ficha com timestamp do backup
+    await supabase
+      .from('fichas_visita')
+      .update({ backup_gerado_em: backupTimestamp })
+      .eq('id', fichaId);
+    
+    console.log('Backup PDF gerado e salvo com sucesso:', fileName);
+  } catch (error) {
+    console.error('Erro na geração do backup PDF:', error);
+  }
+}
 
 // Função para obter geolocalização por IP
 async function getLocationByIP(ip: string): Promise<{ latitude: number; longitude: number } | null> {
@@ -308,6 +534,15 @@ serve(async (req) => {
       .from('fichas_visita')
       .update({ status: newStatus })
       .eq('id', otp.ficha_id);
+
+    // Gerar backup do PDF automaticamente em background quando ficha estiver completa
+    if (newStatus === 'completo') {
+      console.log('Ficha completa - iniciando backup PDF em background');
+      // Executar de forma assíncrona sem bloquear a resposta
+      generateBackupPDF(supabase, otp.ficha_id).catch(err => 
+        console.error('Erro no backup em background:', err)
+      );
+    }
 
     // Cadastrar cliente automaticamente após confirmação
     try {

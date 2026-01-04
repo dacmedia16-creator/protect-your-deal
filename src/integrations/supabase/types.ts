@@ -362,6 +362,7 @@ export type Database = {
       }
       fichas_visita: {
         Row: {
+          backup_gerado_em: string | null
           comprador_autopreenchimento: boolean | null
           comprador_confirmado_em: string | null
           comprador_cpf: string | null
@@ -389,6 +390,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          backup_gerado_em?: string | null
           comprador_autopreenchimento?: boolean | null
           comprador_confirmado_em?: string | null
           comprador_cpf?: string | null
@@ -416,6 +418,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          backup_gerado_em?: string | null
           comprador_autopreenchimento?: boolean | null
           comprador_confirmado_em?: string | null
           comprador_cpf?: string | null
