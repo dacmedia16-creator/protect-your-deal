@@ -17,6 +17,7 @@ interface Message {
 
 // Help images mapping - Sofia can reference these by key
 const HELP_IMAGES: Record<string, string> = {
+  // Imagens básicas
   'criar-ficha': '/help-images/como-criar-ficha.png',
   'enviar-otp': '/help-images/como-enviar-otp.png',
   'convidar-parceiro': '/help-images/como-convidar-parceiro.png',
@@ -32,6 +33,22 @@ const HELP_IMAGES: Record<string, string> = {
   'funcionalidades': '/help-images/funcionalidades.png',
   'como-funciona': '/help-images/como-funciona.png',
   'login': '/help-images/login.png',
+  
+  // Passo-a-passo: Envio de OTP
+  'otp-passo-1': '/help-images/otp-passo-1-enviar.png',
+  'otp-passo-2': '/help-images/otp-passo-2-receber.png',
+  'otp-passo-3': '/help-images/otp-passo-3-confirmar.png',
+  
+  // Passo-a-passo: Parceria
+  'parceiro-passo-1': '/help-images/parceiro-passo-1-convidar.png',
+  'parceiro-passo-2': '/help-images/parceiro-passo-2-whatsapp.png',
+  'parceiro-passo-3': '/help-images/parceiro-passo-3-aceitar.png',
+  
+  // Passo-a-passo: Criar Ficha
+  'ficha-passo-1': '/help-images/ficha-passo-1-imovel.png',
+  'ficha-passo-2': '/help-images/ficha-passo-2-comprador.png',
+  'ficha-passo-3': '/help-images/ficha-passo-3-proprietario.png',
+  'ficha-passo-4': '/help-images/ficha-passo-4-sucesso.png',
 };
 
 // Process message content to extract image markers

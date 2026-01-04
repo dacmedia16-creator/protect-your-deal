@@ -1,6 +1,6 @@
 # Imagens de ajuda da Sofia - geradas automaticamente
 # 
-# Imagens disponíveis:
+# Imagens básicas disponíveis:
 # ✅ como-criar-ficha.png - Formulário de criação de ficha
 # ✅ como-enviar-otp.png - Tela de envio de OTP
 # ✅ como-convidar-parceiro.png - Formulário de convite de parceiro
@@ -16,3 +16,19 @@
 # ✅ funcionalidades.png - Página de funcionalidades
 # ✅ como-funciona.png - Como funciona
 # ✅ login.png - Tela de login
+#
+# Passo-a-passo: Envio de OTP
+# ✅ otp-passo-1-enviar.png - Passo 1: Enviar código
+# ✅ otp-passo-2-receber.png - Passo 2: Receber no WhatsApp
+# ✅ otp-passo-3-confirmar.png - Passo 3: Confirmar código
+#
+# Passo-a-passo: Parceria
+# ✅ parceiro-passo-1-convidar.png - Passo 1: Convidar parceiro
+# ✅ parceiro-passo-2-whatsapp.png - Passo 2: Receber convite
+# ✅ parceiro-passo-3-aceitar.png - Passo 3: Aceitar parceria
+#
+# Passo-a-passo: Criar Ficha
+# ✅ ficha-passo-1-imovel.png - Passo 1: Selecionar imóvel
+# ✅ ficha-passo-2-comprador.png - Passo 2: Dados do comprador
+# ✅ ficha-passo-3-proprietario.png - Passo 3: Dados do proprietário
+# ✅ ficha-passo-4-sucesso.png - Passo 4: Sucesso!
