@@ -121,6 +121,7 @@ export default function DetalhesFicha() {
   const [enviandoConvite, setEnviandoConvite] = useState(false);
   const [modoConvite, setModoConvite] = useState<'selecionar' | 'digitar'>('selecionar');
   const [corretorSelecionado, setCorretorSelecionado] = useState<string | null>(null);
+  const [parceiroExterno, setParceiroExterno] = useState(false);
 
   // State for editing existing phone numbers
   const [editandoProprietario, setEditandoProprietario] = useState(false);
@@ -685,6 +686,7 @@ export default function DetalhesFicha() {
           telefone_parceiro: telefoneParceiro.replace(/\D/g, ''),
           parte_faltante: parteFaltante,
           app_url: window.location.origin,
+          permite_externo: parceiroExterno,
         },
       });
 
@@ -706,6 +708,7 @@ export default function DetalhesFicha() {
       setTelefoneParceiro('');
       setModoConvite('selecionar');
       setCorretorSelecionado(null);
+      setParceiroExterno(false);
       refetch();
     } catch (err) {
       console.error('Erro ao enviar convite:', err);
@@ -1063,10 +1066,27 @@ export default function DetalhesFicha() {
                             maxLength={15}
                           />
                           <p className="text-xs text-muted-foreground">
-                            O corretor precisa estar cadastrado no sistema com este telefone
+                            {parceiroExterno 
+                              ? 'Qualquer pessoa com o link poderá preencher os dados'
+                              : 'O corretor precisa estar cadastrado no sistema com este telefone'}
                           </p>
                         </div>
                       )}
+
+                      {/* Checkbox para parceiro externo */}
+                      <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                        <Checkbox 
+                          id="parceiro_externo"
+                          checked={parceiroExterno}
+                          onCheckedChange={(checked) => setParceiroExterno(checked === true)}
+                        />
+                        <label htmlFor="parceiro_externo" className="text-sm cursor-pointer">
+                          <span className="font-medium">Parceiro externo (não tem conta)</span>
+                          <p className="text-xs text-muted-foreground">
+                            O parceiro poderá aceitar e preencher os dados sem precisar criar conta no sistema
+                          </p>
+                        </label>
+                      </div>
 
                       <div className="flex gap-2">
                         <Button
@@ -1076,6 +1096,7 @@ export default function DetalhesFicha() {
                             setTelefoneParceiro('');
                             setModoConvite('selecionar');
                             setCorretorSelecionado(null);
+                            setParceiroExterno(false);
                           }}
                         >
                           Cancelar

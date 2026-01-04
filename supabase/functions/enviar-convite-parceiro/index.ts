@@ -11,6 +11,7 @@ interface EnviarConviteRequest {
   telefone_parceiro: string;
   parte_faltante: 'proprietario' | 'comprador';
   app_url: string;
+  permite_externo?: boolean;
 }
 
 serve(async (req) => {
@@ -42,8 +43,8 @@ serve(async (req) => {
       );
     }
 
-    const { ficha_id, telefone_parceiro, parte_faltante, app_url }: EnviarConviteRequest = await req.json();
-    console.log(`Enviar convite parceiro: ficha=${ficha_id}, telefone=${telefone_parceiro}, parte=${parte_faltante}`);
+    const { ficha_id, telefone_parceiro, parte_faltante, app_url, permite_externo }: EnviarConviteRequest = await req.json();
+    console.log(`Enviar convite parceiro: ficha=${ficha_id}, telefone=${telefone_parceiro}, parte=${parte_faltante}, externo=${permite_externo}`);
 
     // Validate input
     if (!ficha_id || !telefone_parceiro || !parte_faltante) {
@@ -125,6 +126,7 @@ serve(async (req) => {
           corretor_parceiro_id: parceiroId,
           parte_faltante,
           expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          permite_externo: permite_externo || false,
         })
         .eq('id', existingInvite.id);
     }
@@ -140,6 +142,7 @@ serve(async (req) => {
           corretor_parceiro_telefone: telefoneLimpo,
           corretor_parceiro_id: parceiroId,
           parte_faltante,
+          permite_externo: permite_externo || false,
         })
         .select()
         .single();
@@ -155,8 +158,9 @@ serve(async (req) => {
       conviteToken = novoConvite.token;
     }
 
-    // Build the invite URL
-    const conviteUrl = `${app_url}/convite-parceiro/${conviteToken}`;
+    // Build the invite URL - use external route if permite_externo is true
+    const conviteRoute = permite_externo ? 'convite-externo' : 'convite-parceiro';
+    const conviteUrl = `${app_url}/${conviteRoute}/${conviteToken}`;
     console.log(`URL do convite: ${conviteUrl}`);
 
     // Get origin broker profile
@@ -175,7 +179,8 @@ serve(async (req) => {
     if (ziontalkKey) {
       try {
         const parteLabel = parte_faltante === 'proprietario' ? 'proprietário' : 'comprador';
-        const mensagem = `🏠 *VisitaSegura - Convite de Parceria*\n\nOlá!\n\n${origemNome} te convidou para completar uma ficha de visita.\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📝 Parte faltante: ${parteLabel}\n\nAcesse o link para aceitar:\n${conviteUrl}\n\n⏰ Este convite expira em 7 dias.`;
+        const externoInfo = permite_externo ? '\n\n✅ Você não precisa ter conta no sistema para preencher.' : '';
+        const mensagem = `🏠 *VisitaSegura - Convite de Parceria*\n\nOlá!\n\n${origemNome} te convidou para completar uma ficha de visita.\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📝 Parte faltante: ${parteLabel}${externoInfo}\n\nAcesse o link para aceitar:\n${conviteUrl}\n\n⏰ Este convite expira em 7 dias.`;
 
         const authHeader = btoa(`${ziontalkKey}:`);
         const formData = new FormData();

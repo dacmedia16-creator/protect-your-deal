@@ -32,6 +32,7 @@ import RegistroTipo from "./pages/auth/RegistroTipo";
 import AceitarConvite from "./pages/auth/AceitarConvite";
 import CadastroConcluido from "./pages/auth/CadastroConcluido";
 import ConviteParceiro from "./pages/ConviteParceiro";
+import ConviteParceiroExterno from "./pages/ConviteParceiroExterno";
 import TermosDeUso from "./pages/TermosDeUso";
 import AceitarTermos from "./pages/AceitarTermos";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
@@ -114,6 +115,7 @@ const App = () => (
                 {/* <Route path="/tour-audio" element={<TourAudio />} /> */}
                 {/* <Route path="/demo" element={<DemoAnimado />} /> */}
                 <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
+                <Route path="/convite-externo/:token" element={<ConviteParceiroExterno />} />
                 <Route path="/termos-de-uso" element={<TermosDeUso />} />
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
                 
