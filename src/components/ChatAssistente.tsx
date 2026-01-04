@@ -85,10 +85,6 @@ const HIDDEN_ROUTES = ['/auth', '/registro', '/registro-autonomo', '/convite/', 
 // Home paths for proactive messaging
 const HOME_PATHS = ['/', '/inicial'];
 
-// Typing speed configuration (ms per character)
-const TYPING_SPEED_MIN = 15;
-const TYPING_SPEED_MAX = 35;
-
 // Map routes to page context and quick replies
 const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[] }> = {
   '/dashboard': {
@@ -179,11 +175,6 @@ export function ChatAssistente() {
   const [proactiveMessageSent, setProactiveMessageSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Typing queue for human-like effect
-  const typingQueueRef = useRef<string>('');
-  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const streamDoneRef = useRef<boolean>(false);
   
   // Track previous user state to detect login
   const previousUserRef = useRef<boolean>(false);
@@ -383,69 +374,24 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     }
   }, [isOpen, isMinimized]);
 
-  // Cleanup typing interval on unmount
-  useEffect(() => {
-    return () => {
-      if (typingIntervalRef.current) {
-        clearInterval(typingIntervalRef.current);
+  // Update assistant message directly with new content (typing effect disabled for stability)
+  const updateAssistantMessage = useCallback((newContent: string) => {
+    setMessages(prev => {
+      const updated = [...prev];
+      const lastMsg = updated[updated.length - 1];
+      if (lastMsg && lastMsg.role === 'assistant') {
+        // Append new content to existing content
+        const fullContent = lastMsg.content + newContent;
+        // Process for images when content is updated
+        const { text: processedText, images } = processMessageWithImages(fullContent);
+        updated[updated.length - 1] = {
+          ...lastMsg,
+          content: processedText,
+          images: images.length > 0 ? images : undefined
+        };
       }
-    };
-  }, []);
-
-  // Get random typing speed for human-like variation
-  const getRandomTypingSpeed = () => {
-    return Math.floor(Math.random() * (TYPING_SPEED_MAX - TYPING_SPEED_MIN + 1)) + TYPING_SPEED_MIN;
-  };
-
-  // Process typing queue - reveals text word by word to preserve spaces
-  const processTypingQueue = useCallback(() => {
-    if (typingIntervalRef.current) {
-      clearInterval(typingIntervalRef.current);
-    }
-
-    typingIntervalRef.current = setInterval(() => {
-      if (typingQueueRef.current.length > 0) {
-        // Find the next word boundary (space, newline, or end of text)
-        // This preserves spaces and formatting
-        const text = typingQueueRef.current;
-        
-        // Look for the next space or newline after the first character
-        const nextBoundary = text.slice(1).search(/[\s\n]/);
-        
-        // If found, take up to and including the boundary character
-        // Otherwise, take all remaining text
-        const charsToTake = nextBoundary === -1 
-          ? text.length 
-          : Math.min(nextBoundary + 2, text.length); // +2 because we sliced from position 1
-        
-        const nextChunk = text.slice(0, charsToTake);
-        typingQueueRef.current = text.slice(charsToTake);
-
-        setMessages(prev => {
-          const updated = [...prev];
-          const lastMsg = updated[updated.length - 1];
-          if (lastMsg && lastMsg.role === 'assistant') {
-            const newContent = lastMsg.content + nextChunk;
-            // Process for images when content is updated
-            const { text: processedText, images } = processMessageWithImages(newContent);
-            updated[updated.length - 1] = {
-              ...lastMsg,
-              content: processedText,
-              images: images.length > 0 ? images : undefined
-            };
-          }
-          return updated;
-        });
-      } else if (streamDoneRef.current) {
-        // Stream is done and queue is empty - stop typing
-        if (typingIntervalRef.current) {
-          clearInterval(typingIntervalRef.current);
-          typingIntervalRef.current = null;
-        }
-        setIsTyping(false);
-        setIsLoading(false);
-      }
-    }, getRandomTypingSpeed());
+      return updated;
+    });
   }, []);
 
   const streamChat = async (userMessage: string) => {
@@ -456,10 +402,6 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     setIsLoading(true);
     setIsTyping(true);
     setInput('');
-    
-    // Reset typing state
-    typingQueueRef.current = '';
-    streamDoneRef.current = false;
 
     try {
       const resp = await fetch(CHAT_URL, {
@@ -490,9 +432,6 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       // Add empty assistant message and play notification sound
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
       playNotificationSound('info');
-      
-      // Start processing the typing queue
-      processTypingQueue();
 
       let streamDone = false;
       
@@ -521,8 +460,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              // Add to typing queue
-              typingQueueRef.current += content;
+              // Update message directly instead of using typing queue
+              updateAssistantMessage(content);
             }
           } catch {
             // Incomplete JSON, put back and wait
@@ -545,14 +484,15 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              typingQueueRef.current += content;
+              updateAssistantMessage(content);
             }
           } catch { /* ignore */ }
         }
       }
 
-      // Mark stream as done - typing will finish when queue is empty
-      streamDoneRef.current = true;
+      // Stream is done
+      setIsTyping(false);
+      setIsLoading(false);
       
       // Cancel reader to ensure connection closes
       try {
@@ -561,13 +501,6 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
     } catch (error) {
       console.error('Chat error:', error);
-      // Clear typing state on error
-      if (typingIntervalRef.current) {
-        clearInterval(typingIntervalRef.current);
-        typingIntervalRef.current = null;
-      }
-      typingQueueRef.current = '';
-      streamDoneRef.current = true;
       setIsTyping(false);
       setIsLoading(false);
       
