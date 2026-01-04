@@ -18,7 +18,6 @@ import { z } from 'zod';
 import { validateCPF, formatCPF } from '@/lib/cpf';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
-import { ClienteSelector } from '@/components/ClienteSelector';
 import { ImovelSelector } from '@/components/ImovelSelector';
 
 type ModoCriacao = 'completo' | 'proprietario' | 'comprador';
@@ -155,15 +154,11 @@ export default function NovaFicha() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   
-  // Modos de entrada: selecionar existente ou cadastrar novo
+  // Modos de entrada: selecionar existente ou cadastrar novo (apenas para imóvel)
   const [modoImovel, setModoImovel] = useState<'selecionar' | 'novo'>('selecionar');
-  const [modoProprietario, setModoProprietario] = useState<'selecionar' | 'novo'>('selecionar');
-  const [modoComprador, setModoComprador] = useState<'selecionar' | 'novo'>('selecionar');
   
-  // Entidades selecionadas
+  // Entidades selecionadas (apenas imóvel mantém seletor)
   const [imovelSelecionado, setImovelSelecionado] = useState<ImovelSelecionado | null>(null);
-  const [proprietarioSelecionado, setProprietarioSelecionado] = useState<ClienteSelecionado | null>(null);
-  const [compradorSelecionado, setCompradorSelecionado] = useState<ClienteSelecionado | null>(null);
   
   const [formData, setFormData] = useState<FichaFormData>({
     imovel_endereco: '',
@@ -491,14 +486,6 @@ export default function NovaFicha() {
                   onProprietarioVinculado={(proprietario) => {
                     // Preencher dados do proprietário automaticamente
                     if (showProprietario) {
-                      setProprietarioSelecionado({
-                        id: proprietario.id,
-                        nome: proprietario.nome,
-                        cpf: proprietario.cpf,
-                        telefone: proprietario.telefone,
-                        tipo: 'proprietario'
-                      });
-                      setModoProprietario('selecionar');
                       setFormData(prev => ({
                         ...prev,
                         proprietario_nome: proprietario.nome,
@@ -552,133 +539,77 @@ export default function NovaFicha() {
           {showProprietario && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                      <User className="h-5 w-5 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Dados do Proprietário</CardTitle>
-                      <CardDescription>Informações do dono do imóvel</CardDescription>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <User className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <Tabs value={modoProprietario} onValueChange={(v) => setModoProprietario(v as 'selecionar' | 'novo')}>
-                    <TabsList className="h-8">
-                      <TabsTrigger value="selecionar" className="text-xs px-2">Selecionar</TabsTrigger>
-                      <TabsTrigger value="novo" className="text-xs px-2">Novo</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <div>
+                    <CardTitle className="text-lg">Dados do Proprietário</CardTitle>
+                    <CardDescription>Informações do dono do imóvel</CardDescription>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {modoProprietario === 'selecionar' ? (
-                  <>
-                    <ClienteSelector
-                      tipo="proprietario"
-                      clienteSelecionado={proprietarioSelecionado}
-                      onSelect={(cliente) => {
-                        setProprietarioSelecionado(cliente);
-                        setFormData(prev => ({
-                          ...prev,
-                          proprietario_nome: cliente.nome,
-                          proprietario_cpf: cliente.cpf ? formatCPF(cliente.cpf) : '',
-                          proprietario_telefone: formatPhone(cliente.telefone),
-                          proprietario_autopreenchimento: false
-                        }));
-                      }}
-                      onClear={() => {
-                        setProprietarioSelecionado(null);
-                        setFormData(prev => ({
-                          ...prev,
-                          proprietario_nome: '',
-                          proprietario_cpf: '',
-                          proprietario_telefone: '',
-                          proprietario_autopreenchimento: false
-                        }));
-                      }}
-                      onModoChange={setModoProprietario}
-                    />
-                    {!proprietarioSelecionado && (
-                      <div className="space-y-2">
-                        <Label htmlFor="proprietario_telefone_selector">Telefone (WhatsApp) *</Label>
-                        <Input
-                          id="proprietario_telefone_selector"
-                          placeholder="(00) 00000-0000"
-                          value={formData.proprietario_telefone}
-                          onChange={(e) => handlePhoneChange('proprietario_telefone', e.target.value)}
-                          maxLength={15}
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Busque um proprietário existente acima ou digite o telefone para um novo
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Toggle de autopreenchimento */}
-                    <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                      <Checkbox 
-                        id="proprietario_autopreenchimento"
-                        checked={formData.proprietario_autopreenchimento}
-                        onCheckedChange={(checked) => setFormData({ 
-                          ...formData, 
-                          proprietario_autopreenchimento: checked === true,
-                          proprietario_nome: checked ? '' : formData.proprietario_nome,
-                          proprietario_cpf: checked ? '' : formData.proprietario_cpf
-                        })}
-                      />
-                      <label htmlFor="proprietario_autopreenchimento" className="text-sm cursor-pointer">
-                        <span className="font-medium">Deixar o proprietário preencher</span>
-                        <p className="text-xs text-muted-foreground">O proprietário preencherá nome e CPF ao confirmar a visita</p>
-                      </label>
-                    </div>
+                {/* Toggle de autopreenchimento */}
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Checkbox 
+                    id="proprietario_autopreenchimento"
+                    checked={formData.proprietario_autopreenchimento}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      proprietario_autopreenchimento: checked === true,
+                      proprietario_nome: checked ? '' : formData.proprietario_nome,
+                      proprietario_cpf: checked ? '' : formData.proprietario_cpf
+                    })}
+                  />
+                  <label htmlFor="proprietario_autopreenchimento" className="text-sm cursor-pointer">
+                    <span className="font-medium">Deixar o proprietário preencher</span>
+                    <p className="text-xs text-muted-foreground">O proprietário preencherá nome e CPF ao confirmar a visita</p>
+                  </label>
+                </div>
 
-                    {!formData.proprietario_autopreenchimento && (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="proprietario_nome">Nome completo *</Label>
-                          <Input
-                            id="proprietario_nome"
-                            placeholder="Nome do proprietário"
-                            value={formData.proprietario_nome}
-                            onChange={(e) => setFormData({ ...formData, proprietario_nome: e.target.value })}
-                            required={!formData.proprietario_autopreenchimento}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="proprietario_cpf">CPF</Label>
-                          <Input
-                            id="proprietario_cpf"
-                            placeholder="000.000.000-00"
-                            value={formData.proprietario_cpf}
-                            onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
-                            maxLength={14}
-                            className={!proprietarioCpfValid ? 'border-destructive' : ''}
-                          />
-                          {!proprietarioCpfValid && (
-                            <p className="text-xs text-destructive flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              CPF inválido. Verifique os dígitos.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                {!formData.proprietario_autopreenchimento && (
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="proprietario_telefone">Telefone (WhatsApp) *</Label>
+                      <Label htmlFor="proprietario_nome">Nome completo *</Label>
                       <Input
-                        id="proprietario_telefone"
-                        placeholder="(00) 00000-0000"
-                        value={formData.proprietario_telefone}
-                        onChange={(e) => handlePhoneChange('proprietario_telefone', e.target.value)}
-                        maxLength={15}
-                        required
+                        id="proprietario_nome"
+                        placeholder="Nome do proprietário"
+                        value={formData.proprietario_nome}
+                        onChange={(e) => setFormData({ ...formData, proprietario_nome: e.target.value })}
+                        required={!formData.proprietario_autopreenchimento}
                       />
                     </div>
-                  </>
+                    <div className="space-y-2">
+                      <Label htmlFor="proprietario_cpf">CPF</Label>
+                      <Input
+                        id="proprietario_cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.proprietario_cpf}
+                        onChange={(e) => handleCPFChange('proprietario_cpf', e.target.value)}
+                        maxLength={14}
+                        className={!proprietarioCpfValid ? 'border-destructive' : ''}
+                      />
+                      {!proprietarioCpfValid && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          CPF inválido. Verifique os dígitos.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 )}
+                <div className="space-y-2">
+                  <Label htmlFor="proprietario_telefone">Telefone (WhatsApp) *</Label>
+                  <Input
+                    id="proprietario_telefone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.proprietario_telefone}
+                    onChange={(e) => handlePhoneChange('proprietario_telefone', e.target.value)}
+                    maxLength={15}
+                    required
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
@@ -687,133 +618,77 @@ export default function NovaFicha() {
           {showComprador && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                      <Users className="h-5 w-5 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Dados do Comprador/Visitante</CardTitle>
-                      <CardDescription>Informações do interessado no imóvel</CardDescription>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <Users className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                  <Tabs value={modoComprador} onValueChange={(v) => setModoComprador(v as 'selecionar' | 'novo')}>
-                    <TabsList className="h-8">
-                      <TabsTrigger value="selecionar" className="text-xs px-2">Selecionar</TabsTrigger>
-                      <TabsTrigger value="novo" className="text-xs px-2">Novo</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <div>
+                    <CardTitle className="text-lg">Dados do Comprador/Visitante</CardTitle>
+                    <CardDescription>Informações do interessado no imóvel</CardDescription>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {modoComprador === 'selecionar' ? (
-                  <>
-                    <ClienteSelector
-                      tipo="comprador"
-                      clienteSelecionado={compradorSelecionado}
-                      onSelect={(cliente) => {
-                        setCompradorSelecionado(cliente);
-                        setFormData(prev => ({
-                          ...prev,
-                          comprador_nome: cliente.nome,
-                          comprador_cpf: cliente.cpf ? formatCPF(cliente.cpf) : '',
-                          comprador_telefone: formatPhone(cliente.telefone),
-                          comprador_autopreenchimento: false
-                        }));
-                      }}
-                      onClear={() => {
-                        setCompradorSelecionado(null);
-                        setFormData(prev => ({
-                          ...prev,
-                          comprador_nome: '',
-                          comprador_cpf: '',
-                          comprador_telefone: '',
-                          comprador_autopreenchimento: false
-                        }));
-                      }}
-                      onModoChange={setModoComprador}
-                    />
-                    {!compradorSelecionado && (
-                      <div className="space-y-2">
-                        <Label htmlFor="comprador_telefone_selector">Telefone (WhatsApp) *</Label>
-                        <Input
-                          id="comprador_telefone_selector"
-                          placeholder="(00) 00000-0000"
-                          value={formData.comprador_telefone}
-                          onChange={(e) => handlePhoneChange('comprador_telefone', e.target.value)}
-                          maxLength={15}
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Busque um comprador existente acima ou digite o telefone para um novo
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Toggle de autopreenchimento */}
-                    <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                      <Checkbox 
-                        id="comprador_autopreenchimento"
-                        checked={formData.comprador_autopreenchimento}
-                        onCheckedChange={(checked) => setFormData({ 
-                          ...formData, 
-                          comprador_autopreenchimento: checked === true,
-                          comprador_nome: checked ? '' : formData.comprador_nome,
-                          comprador_cpf: checked ? '' : formData.comprador_cpf
-                        })}
-                      />
-                      <label htmlFor="comprador_autopreenchimento" className="text-sm cursor-pointer">
-                        <span className="font-medium">Deixar o comprador preencher</span>
-                        <p className="text-xs text-muted-foreground">O comprador preencherá nome e CPF ao confirmar a visita</p>
-                      </label>
-                    </div>
+                {/* Toggle de autopreenchimento */}
+                <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                  <Checkbox 
+                    id="comprador_autopreenchimento"
+                    checked={formData.comprador_autopreenchimento}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      comprador_autopreenchimento: checked === true,
+                      comprador_nome: checked ? '' : formData.comprador_nome,
+                      comprador_cpf: checked ? '' : formData.comprador_cpf
+                    })}
+                  />
+                  <label htmlFor="comprador_autopreenchimento" className="text-sm cursor-pointer">
+                    <span className="font-medium">Deixar o comprador preencher</span>
+                    <p className="text-xs text-muted-foreground">O comprador preencherá nome e CPF ao confirmar a visita</p>
+                  </label>
+                </div>
 
-                    {!formData.comprador_autopreenchimento && (
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="comprador_nome">Nome completo *</Label>
-                          <Input
-                            id="comprador_nome"
-                            placeholder="Nome do comprador"
-                            value={formData.comprador_nome}
-                            onChange={(e) => setFormData({ ...formData, comprador_nome: e.target.value })}
-                            required={!formData.comprador_autopreenchimento}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="comprador_cpf">CPF</Label>
-                          <Input
-                            id="comprador_cpf"
-                            placeholder="000.000.000-00"
-                            value={formData.comprador_cpf}
-                            onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
-                            maxLength={14}
-                            className={!compradorCpfValid ? 'border-destructive' : ''}
-                          />
-                          {!compradorCpfValid && (
-                            <p className="text-xs text-destructive flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              CPF inválido. Verifique os dígitos.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                {!formData.comprador_autopreenchimento && (
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="comprador_telefone">Telefone (WhatsApp) *</Label>
+                      <Label htmlFor="comprador_nome">Nome completo *</Label>
                       <Input
-                        id="comprador_telefone"
-                        placeholder="(00) 00000-0000"
-                        value={formData.comprador_telefone}
-                        onChange={(e) => handlePhoneChange('comprador_telefone', e.target.value)}
-                        maxLength={15}
-                        required
+                        id="comprador_nome"
+                        placeholder="Nome do comprador"
+                        value={formData.comprador_nome}
+                        onChange={(e) => setFormData({ ...formData, comprador_nome: e.target.value })}
+                        required={!formData.comprador_autopreenchimento}
                       />
                     </div>
-                  </>
+                    <div className="space-y-2">
+                      <Label htmlFor="comprador_cpf">CPF</Label>
+                      <Input
+                        id="comprador_cpf"
+                        placeholder="000.000.000-00"
+                        value={formData.comprador_cpf}
+                        onChange={(e) => handleCPFChange('comprador_cpf', e.target.value)}
+                        maxLength={14}
+                        className={!compradorCpfValid ? 'border-destructive' : ''}
+                      />
+                      {!compradorCpfValid && (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          CPF inválido. Verifique os dígitos.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 )}
+                <div className="space-y-2">
+                  <Label htmlFor="comprador_telefone">Telefone (WhatsApp) *</Label>
+                  <Input
+                    id="comprador_telefone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.comprador_telefone}
+                    onChange={(e) => handlePhoneChange('comprador_telefone', e.target.value)}
+                    maxLength={15}
+                    required
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
