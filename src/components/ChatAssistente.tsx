@@ -483,16 +483,17 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 left-4 sm:left-auto sm:right-6 z-50">
+      <div className="fixed bottom-6 right-4 sm:right-6 z-[9999]">
         <Button
           onClick={() => setIsOpen(true)}
           className={cn(
-            "h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 relative",
+            "h-16 w-16 sm:h-14 sm:w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 relative border-2 border-primary-foreground/20",
+            "shadow-primary/30",
             !userContext.isLoggedIn && "animate-pulse-soft"
           )}
           size="icon"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-7 w-7 sm:h-6 sm:w-6" />
           {hasNewSuggestion && (
             <span className="absolute -top-1 -right-1 flex h-5 w-5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
@@ -503,7 +504,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           )}
         </Button>
         {hasNewSuggestion && (
-          <div className="absolute bottom-16 left-0 sm:left-auto sm:right-0 bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in">
+          <div className="absolute bottom-20 sm:bottom-16 right-0 bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in">
             <p className="text-xs text-muted-foreground">💬 Posso te ajudar?</p>
           </div>
         )}
@@ -514,10 +515,10 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
   return (
     <div
       className={cn(
-        "fixed bottom-6 left-4 sm:left-auto sm:right-6 z-50 bg-background border rounded-2xl shadow-2xl animate-chat-slide-up",
+        "fixed bottom-6 right-4 sm:right-6 z-[9999] bg-background border rounded-2xl shadow-2xl animate-chat-slide-up",
         isMinimized 
           ? "w-72 h-14" 
-          : "w-[380px] h-[550px] max-h-[80vh] flex flex-col"
+          : "w-[calc(100vw-2rem)] sm:w-[380px] h-[70vh] sm:h-[550px] max-h-[80vh] flex flex-col"
       )}
     >
       {/* Header */}
