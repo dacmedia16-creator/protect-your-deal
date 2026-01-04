@@ -594,23 +594,34 @@ serve(async (req) => {
 
       // Footer on page 2
       page2.drawLine({
-        start: { x: 50, y: 80 },
-        end: { x: width - 50, y: 80 },
+        start: { x: 50, y: 90 },
+        end: { x: width - 50, y: 90 },
         thickness: 1,
         color: lightGray,
       });
 
-      page2.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
+      // Verification URL
+      const verificationUrlPage2 = `visitasegura.com.br/verificar/${ficha.protocolo}`;
+      
+      page2.drawText(`Verifique a autenticidade deste documento:`, {
         x: 50,
-        y: 60,
-        size: 9,
+        y: 75,
+        size: 8,
+        font: helveticaBold,
+        color: rgb(0.3, 0.3, 0.3),
+      });
+      
+      page2.drawText(verificationUrlPage2, {
+        x: 230,
+        y: 75,
+        size: 8,
         font: helvetica,
-        color: lightGray,
+        color: primaryColor,
       });
 
       page2.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
         x: 50,
-        y: 48,
+        y: 60,
         size: 8,
         font: helvetica,
         color: lightGray,
@@ -622,9 +633,9 @@ serve(async (req) => {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, {
+      })} | Protegido com hash SHA-256 - A integridade pode ser verificada online`, {
         x: 50,
-        y: 35,
+        y: 45,
         size: 8,
         font: helvetica,
         color: lightGray,
@@ -632,7 +643,7 @@ serve(async (req) => {
 
       page2.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
         x: 50,
-        y: 22,
+        y: 30,
         size: 8,
         font: helveticaBold,
         color: primaryColor,
@@ -697,25 +708,9 @@ serve(async (req) => {
 
       // Footer
       page.drawLine({
-        start: { x: 50, y: 80 },
-        end: { x: width - 50, y: 80 },
+        start: { x: 50, y: 90 },
+        end: { x: width - 50, y: 90 },
         thickness: 1,
-        color: lightGray,
-      });
-
-      page.drawText('Este documento comprova a intermediação do corretor na visita ao imóvel.', {
-        x: 50,
-        y: 60,
-        size: 9,
-        font: helvetica,
-        color: lightGray,
-      });
-
-      page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020 e MP 2.200-2.', {
-        x: 50,
-        y: 48,
-        size: 8,
-        font: helvetica,
         color: lightGray,
       });
 
@@ -724,7 +719,7 @@ serve(async (req) => {
       
       page.drawText(`Verifique a autenticidade deste documento:`, {
         x: 50,
-        y: 60,
+        y: 75,
         size: 8,
         font: helveticaBold,
         color: rgb(0.3, 0.3, 0.3),
@@ -732,10 +727,18 @@ serve(async (req) => {
       
       page.drawText(verificationUrl, {
         x: 230,
-        y: 60,
+        y: 75,
         size: 8,
         font: helvetica,
         color: primaryColor,
+      });
+
+      page.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020 e MP 2.200-2.', {
+        x: 50,
+        y: 60,
+        size: 8,
+        font: helvetica,
+        color: lightGray,
       });
 
       page.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
