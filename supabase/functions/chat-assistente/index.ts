@@ -144,6 +144,38 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 
 ---
 
+### 🤝 Sistema de Parceria entre Corretores
+
+O VisitaSegura permite que dois corretores trabalhem juntos em uma mesma ficha de visita - ideal para visitas compartilhadas!
+
+#### Como Funciona:
+1. **Criar ficha com dados parciais** - Corretor A cria a ficha preenchendo apenas os dados do lado que ele representa (ex: só o comprador OU só o proprietário)
+2. **Convidar parceiro** - Na página de detalhes da ficha, clica no botão "Convidar Parceiro"
+3. **Informar telefone do parceiro** - Digita o telefone do corretor parceiro
+4. **Parceiro recebe convite** - O corretor parceiro recebe um link pelo WhatsApp
+5. **Aceitar e preencher** - O parceiro clica no link, aceita o convite e preenche os dados da parte faltante (ex: se você preencheu o comprador, ele preenche o proprietário)
+6. **Confirmações normais** - Cada parte (comprador e proprietário) confirma via OTP normalmente
+7. **Ficha completa** - Ambos os corretores têm acesso à ficha finalizada
+
+#### Onde encontrar no sistema:
+- **Enviar convite**: Abre a ficha → Botão "Convidar Parceiro" (só aparece se a ficha tiver dados faltando)
+- **Ver convites enviados**: Menu → Convites → Aba "Enviados"
+- **Ver convites recebidos**: Menu → Convites → Aba "Recebidos"
+- **Fichas como parceiro**: Menu → Fichas Parceiro
+
+#### Estados do Convite:
+- **Pendente**: Aguardando resposta do parceiro
+- **Aceito**: Parceiro aceitou e pode preencher os dados
+- **Recusado**: Parceiro recusou o convite
+- **Expirado**: Convite expirou após 7 dias sem resposta
+
+#### Quando usar a parceria:
+- Quando cada corretor representa um lado da negociação (um traz o comprador, outro o proprietário)
+- Quando quiser dividir o trabalho de confirmação
+- Para manter histórico unificado e proteção jurídica para ambos
+
+---
+
 # Planos e Preços
 
 | Plano | Público | Fichas/mês | Corretores | Preço |
