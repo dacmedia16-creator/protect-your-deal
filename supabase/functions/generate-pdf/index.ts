@@ -715,83 +715,73 @@ serve(async (req) => {
 
     console.log('Generated document hash:', documentoHash);
 
-    // Função para desenhar rodapé técnico com hash completo
+    // Função para desenhar rodapé técnico (formato original + hash completa)
     const drawTechnicalFooter = (targetPage: typeof page, hash: string) => {
       const pageWidth = targetPage.getWidth();
       
       // Linha separadora
       targetPage.drawLine({
-        start: { x: 50, y: 100 },
-        end: { x: pageWidth - 50, y: 100 },
+        start: { x: 50, y: 105 },
+        end: { x: pageWidth - 50, y: 105 },
         thickness: 1,
         color: lightGray,
       });
 
-      // Linha de verificação
+      // Linha 1: Verificação (formato original)
       const verificationUrlFooter = `visitasegura.com.br/verificar/${ficha.protocolo}`;
-      
-      targetPage.drawText(`Verifique a autenticidade:`, {
+      targetPage.drawText('Verifique a autenticidade deste documento:', {
         x: 50,
-        y: 85,
+        y: 90,
         size: 8,
         font: helveticaBold,
         color: darkGray,
       });
-      
       targetPage.drawText(verificationUrlFooter, {
-        x: 160,
-        y: 85,
+        x: 248,
+        y: 90,
         size: 8,
         font: helvetica,
         color: primaryColor,
       });
 
-      // Validade jurídica
-      targetPage.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020 e MP 2.200-2.', {
+      // Linha 2: Validade jurídica (formato original)
+      targetPage.drawText('As assinaturas digitais acima possuem validade jurídica conforme Lei 14.063/2020.', {
         x: 50,
-        y: 70,
-        size: 8,
+        y: 75,
+        size: 7,
         font: helvetica,
         color: lightGray,
       });
 
-      // Linha principal do hash (visível, simples)
-      targetPage.drawText('Integridade do Documento: Protegido por hash criptográfico SHA-256.', {
-        x: 50,
-        y: 52,
-        size: 9,
-        font: helvetica,
-        color: darkGray,
-      });
-
-      // Linha secundária com hash completo (técnica, fonte monoespaçada)
-      targetPage.drawText(`Hash SHA-256: ${hash}`, {
-        x: 50,
-        y: 38,
-        size: 7,
-        font: courierFont,
-        color: mediumGray,
-      });
-
-      // Data de geração
-      targetPage.drawText(`Gerado em: ${new Date().toLocaleDateString('pt-BR', { 
+      // Linha 3: Gerado em + Protegido com hash (formato original)
+      const dataGeracao = new Date().toLocaleDateString('pt-BR', { 
         day: '2-digit', 
         month: '2-digit', 
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, {
+      });
+      targetPage.drawText(`Gerado em: ${dataGeracao} | Protegido com hash SHA-256 - A integridade pode ser verificada online`, {
         x: 50,
-        y: 24,
-        size: 8,
+        y: 58,
+        size: 7,
         font: helvetica,
         color: lightGray,
       });
 
-      // Nome do sistema
+      // Linha 4: Hash completa (nova, técnica, monoespaçada)
+      targetPage.drawText(`Hash: ${hash}`, {
+        x: 50,
+        y: 42,
+        size: 7,
+        font: courierFont,
+        color: mediumGray,
+      });
+
+      // Linha 5: Nome do sistema (formato original)
       targetPage.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
-        x: 250,
-        y: 24,
+        x: 50,
+        y: 26,
         size: 8,
         font: helveticaBold,
         color: primaryColor,
