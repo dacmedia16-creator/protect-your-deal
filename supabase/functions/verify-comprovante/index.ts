@@ -86,9 +86,9 @@ serve(async (req) => {
         comprador_confirmado_em: ficha.comprador_confirmado_em,
         corretor_nome: profile?.nome || null,
         corretor_creci: profile?.creci || null,
-        // Integrity verification data
+        // Integrity verification data (hash completa para verificação)
         integridade_verificavel: !!ficha.documento_hash,
-        documento_hash: ficha.documento_hash ? ficha.documento_hash.substring(0, 16) + '...' : null,
+        documento_hash: ficha.documento_hash || null,
         documento_gerado_em: ficha.documento_gerado_em || null,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

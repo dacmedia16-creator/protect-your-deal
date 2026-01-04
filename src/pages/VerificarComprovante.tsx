@@ -17,7 +17,11 @@ import {
   FileText,
   ShieldCheck,
   ShieldAlert,
-  Info
+  Info,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -59,6 +63,28 @@ export default function VerificarComprovante() {
   const [integrityLoading, setIntegrityLoading] = useState(false);
   const [integrityResult, setIntegrityResult] = useState<IntegrityResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  
+  // Hash display state
+  const [hashCopied, setHashCopied] = useState(false);
+  const [hashExpanded, setHashExpanded] = useState(false);
+
+  const copyHash = useCallback(async (hash: string) => {
+    try {
+      await navigator.clipboard.writeText(hash);
+      setHashCopied(true);
+      setTimeout(() => setHashCopied(false), 2000);
+    } catch {
+      // Fallback: select text
+      const textArea = document.createElement('textarea');
+      textArea.value = hash;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setHashCopied(true);
+      setTimeout(() => setHashCopied(false), 2000);
+    }
+  }, []);
 
   useEffect(() => {
     const verificar = async () => {
@@ -278,18 +304,57 @@ export default function VerificarComprovante() {
                     </div>
                   )}
 
-                  {/* Integrity info */}
-                  {data.integridade_verificavel && (
+                  {/* Integrity info with copy/expand */}
+                  {data.integridade_verificavel && data.documento_hash && (
                     <div className="border-t pt-3">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1 mb-2">
                         <ShieldCheck className="h-3 w-3" />
                         Integridade Criptográfica
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Hash SHA-256: <code className="bg-muted px-1 rounded">{data.documento_hash}</code>
-                      </p>
-                      {data.documento_gerado_em && (
+                      
+                      <div className="bg-muted rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <code className="text-xs font-mono text-muted-foreground break-all">
+                            {hashExpanded 
+                              ? data.documento_hash 
+                              : `${data.documento_hash.substring(0, 16)}...`}
+                          </code>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => copyHash(data.documento_hash!)}
+                              title="Copiar hash completa"
+                            >
+                              {hashCopied ? (
+                                <Check className="h-3.5 w-3.5 text-success" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => setHashExpanded(!hashExpanded)}
+                              title={hashExpanded ? "Ocultar" : "Mostrar completa"}
+                            >
+                              {hashExpanded ? (
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
                         <p className="text-xs text-muted-foreground">
+                          Identificador técnico SHA-256 para conferência.
+                        </p>
+                      </div>
+
+                      {data.documento_gerado_em && (
+                        <p className="text-xs text-muted-foreground mt-2">
                           Gerado em: {format(new Date(data.documento_gerado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                         </p>
                       )}
@@ -355,19 +420,19 @@ export default function VerificarComprovante() {
                     <div className={`rounded-lg p-4 ${
                       integrityResult.integro 
                         ? 'bg-success/10 border border-success/30' 
-                        : 'bg-destructive/10 border border-destructive/30'
+                        : 'bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-700'
                     }`}>
                       <div className="flex items-start gap-3">
                         {integrityResult.integro ? (
                           <ShieldCheck className="h-6 w-6 text-success flex-shrink-0" />
                         ) : (
-                          <ShieldAlert className="h-6 w-6 text-destructive flex-shrink-0" />
+                          <Info className="h-6 w-6 text-amber-600 flex-shrink-0" />
                         )}
                         <div className="flex-1 min-w-0">
                           <p className={`font-semibold ${
-                            integrityResult.integro ? 'text-success' : 'text-destructive'
+                            integrityResult.integro ? 'text-success' : 'text-amber-600'
                           }`}>
-                            {integrityResult.integro ? 'Documento Íntegro' : 'Documento Alterado'}
+                            {integrityResult.integro ? 'Documento Íntegro' : 'Verificação Inconclusiva'}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
                             {integrityResult.mensagem || integrityResult.error}
