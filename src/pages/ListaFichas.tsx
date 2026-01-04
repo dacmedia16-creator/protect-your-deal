@@ -19,8 +19,16 @@ import {
   Building2,
   MapPin,
   Calendar,
-  Users
+  Users,
+  AlertTriangle,
+  HardDrive
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MobileHeader } from '@/components/MobileHeader';
@@ -216,10 +224,31 @@ export default function ListaFichas() {
                             </Badge>
                           )}
                         </div>
-                        <Badge variant={status.variant} className="gap-1 text-[10px] shrink-0">
-                          <StatusIcon className="h-3 w-3" />
-                          {status.label}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          {/* Backup indicator - mobile */}
+                          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div>
+                                    {ficha.backup_gerado_em ? (
+                                      <HardDrive className="h-3.5 w-3.5 text-green-500" />
+                                    ) : (
+                                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {ficha.backup_gerado_em ? 'Backup OK' : 'Backup pendente'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          <Badge variant={status.variant} className="gap-1 text-[10px] shrink-0">
+                            <StatusIcon className="h-3 w-3" />
+                            {status.label}
+                          </Badge>
+                        </div>
                       </div>
                       
                       <div className="flex items-start gap-2">
@@ -261,6 +290,25 @@ export default function ListaFichas() {
                               <StatusIcon className="h-3 w-3" />
                               {status.label}
                             </Badge>
+                            {/* Backup indicator - desktop */}
+                            {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-1">
+                                      {ficha.backup_gerado_em ? (
+                                        <HardDrive className="h-4 w-4 text-green-500" />
+                                      ) : (
+                                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                                      )}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {ficha.backup_gerado_em ? 'Backup OK' : 'Backup pendente - clique para regenerar'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                             {isParceiro && (
                               <Badge variant="outline" className="gap-1 text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
                                 <Users className="h-3 w-3" />
