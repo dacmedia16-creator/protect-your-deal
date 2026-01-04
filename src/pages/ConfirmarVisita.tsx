@@ -59,7 +59,10 @@ export default function ConfirmarVisita() {
   const [aceiteCpf, setAceiteCpf] = useState('');
   const [captandoLocalizacao, setCaptandoLocalizacao] = useState(false);
 
-  const loadOtpInfo = async () => {
+  const MAX_AUTO_RETRIES = 3;
+  const RETRY_DELAY_MS = 1500;
+
+  const loadOtpInfo = async (attempt = 1): Promise<void> => {
     if (!token) {
       setError('Link inválido');
       setLoading(false);
@@ -93,6 +96,12 @@ export default function ConfirmarVisita() {
 
       // Erro de rede real (não conseguiu conectar ao servidor)
       if (error && !data) {
+        // Retry automático se ainda não atingiu o máximo
+        if (attempt < MAX_AUTO_RETRIES) {
+          console.log(`Tentativa ${attempt}/${MAX_AUTO_RETRIES} falhou, tentando novamente em ${RETRY_DELAY_MS}ms...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+          return loadOtpInfo(attempt + 1);
+        }
         setConnectionError(true);
         setLoading(false);
         return;
@@ -115,21 +124,29 @@ export default function ConfirmarVisita() {
         return;
       }
     } catch (err) {
+      // Retry automático em caso de exceção
+      if (attempt < MAX_AUTO_RETRIES) {
+        console.log(`Tentativa ${attempt}/${MAX_AUTO_RETRIES} falhou com exceção, tentando novamente...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        return loadOtpInfo(attempt + 1);
+      }
       setConnectionError(true);
     } finally {
-      setLoading(false);
-      setRetrying(false);
+      if (attempt >= MAX_AUTO_RETRIES || !connectionError) {
+        setLoading(false);
+        setRetrying(false);
+      }
     }
   };
 
   const handleRetry = async () => {
     setRetrying(true);
     setLoading(true);
-    await loadOtpInfo();
+    await loadOtpInfo(1);
   };
 
   useEffect(() => {
-    loadOtpInfo();
+    loadOtpInfo(1);
   }, [token]);
 
   const handleVerify = async (e: React.FormEvent) => {
