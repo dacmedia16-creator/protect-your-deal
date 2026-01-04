@@ -28,7 +28,10 @@ const HELP_IMAGES: Record<string, string> = {
   'dashboard': '/help-images/dashboard.png',
   'clientes': '/help-images/clientes.png',
   'imoveis': '/help-images/imoveis.png',
-  'perfil': '/help-images/perfil.png',
+  'home': '/help-images/home.png',
+  'funcionalidades': '/help-images/funcionalidades.png',
+  'como-funciona': '/help-images/como-funciona.png',
+  'login': '/help-images/login.png',
 };
 
 // Process message content to extract image markers
