@@ -11,8 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -29,6 +35,7 @@ interface Ficha {
   status: string;
   user_id: string;
   imobiliaria_id: string | null;
+  backup_gerado_em: string | null;
   corretor_nome?: string;
   imobiliaria_nome?: string;
 }
@@ -45,7 +52,7 @@ export default function AdminFichas() {
       // Fetch all fichas
       const { data, error } = await supabase
         .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, imobiliaria_id')
+        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, imobiliaria_id, backup_gerado_em')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -112,6 +119,7 @@ export default function AdminFichas() {
     aguardando_proprietario: 'Aguard. Proprietário',
     aguardando_comprador: 'Aguard. Comprador',
     completo: 'Completo',
+    finalizado_parcial: 'Finalizado Parcial',
     cancelado: 'Cancelado',
   };
 
@@ -120,6 +128,7 @@ export default function AdminFichas() {
     aguardando_proprietario: 'bg-warning/20 text-warning border-warning/30',
     aguardando_comprador: 'bg-warning/20 text-warning border-warning/30',
     completo: 'bg-success/20 text-success border-success/30',
+    finalizado_parcial: 'bg-success/20 text-success border-success/30',
     cancelado: 'bg-muted text-muted-foreground',
   };
 
@@ -173,6 +182,7 @@ export default function AdminFichas() {
                       <TableHead className="hidden lg:table-cell">Endereço</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Backup</TableHead>
                       <TableHead className="w-[100px] text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -196,6 +206,28 @@ export default function AdminFichas() {
                           <Badge variant="outline" className={statusColors[ficha.status]}>
                             {statusLabels[ficha.status] || ficha.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center justify-center">
+                                    {ficha.backup_gerado_em ? (
+                                      <HardDrive className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {ficha.backup_gerado_em ? 'Backup OK' : 'Backup pendente'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <span className="text-muted-foreground text-center block">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
