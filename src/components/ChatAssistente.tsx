@@ -12,7 +12,40 @@ import { supabase } from '@/integrations/supabase/client';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  images?: string[];
 }
+
+// Help images mapping - Sofia can reference these by key
+const HELP_IMAGES: Record<string, string> = {
+  'criar-ficha': '/help-images/como-criar-ficha.png',
+  'enviar-otp': '/help-images/como-enviar-otp.png',
+  'convidar-parceiro': '/help-images/como-convidar-parceiro.png',
+  'menu': '/help-images/menu-navegacao.png',
+  'whatsapp': '/help-images/confirmacao-whatsapp.png',
+  'pdf': '/help-images/comprovante-pdf.png',
+  'instalar-app': '/help-images/instalar-app.png',
+  'lista-fichas': '/help-images/lista-fichas.png',
+  'dashboard': '/help-images/dashboard.png',
+  'clientes': '/help-images/clientes.png',
+  'imoveis': '/help-images/imoveis.png',
+  'perfil': '/help-images/perfil.png',
+};
+
+// Process message content to extract image markers
+const processMessageWithImages = (content: string): { text: string; images: string[] } => {
+  const imagePattern = /\[IMAGEM:([^\]]+)\]/g;
+  const images: string[] = [];
+  
+  const text = content.replace(imagePattern, (_, key) => {
+    const imageUrl = HELP_IMAGES[key.trim()];
+    if (imageUrl) {
+      images.push(imageUrl);
+    }
+    return ''; // Remove marker from text
+  });
+  
+  return { text: text.trim(), images };
+};
 
 interface UserContext {
   nome: string | null;
@@ -364,9 +397,13 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           const updated = [...prev];
           const lastMsg = updated[updated.length - 1];
           if (lastMsg && lastMsg.role === 'assistant') {
+            const newContent = lastMsg.content + nextChars;
+            // Process for images when content is updated
+            const { text, images } = processMessageWithImages(newContent);
             updated[updated.length - 1] = {
               ...lastMsg,
-              content: lastMsg.content + nextChars
+              content: text,
+              images: images.length > 0 ? images : undefined
             };
           }
           return updated;
@@ -456,7 +493,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
-              // Add to typing queue instead of directly updating
+              // Add to typing queue
               typingQueueRef.current += content;
             }
           } catch {
@@ -657,6 +694,25 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
                   >
                     {message.content}
                   </ReactMarkdown>
+                  
+                  {/* Help Images */}
+                  {message.images && message.images.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {message.images.map((img, imgIdx) => (
+                        <img
+                          key={imgIdx}
+                          src={img}
+                          alt="Imagem de ajuda"
+                          className="rounded-lg max-w-full cursor-pointer hover:opacity-90 transition-opacity border border-border"
+                          onClick={() => window.open(img, '_blank')}
+                          onError={(e) => {
+                            // Hide image if it doesn't exist
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
