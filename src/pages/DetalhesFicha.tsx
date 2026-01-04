@@ -51,7 +51,8 @@ import {
   X,
   Save,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -89,6 +90,7 @@ export default function DetalhesFicha() {
   
   const [sendingOtp, setSendingOtp] = useState<'proprietario' | 'comprador' | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [regeneratingBackup, setRegeneratingBackup] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [finalizingPartial, setFinalizingPartial] = useState(false);
   const [lastOtpResult, setLastOtpResult] = useState<{
@@ -405,6 +407,47 @@ export default function DetalhesFicha() {
       });
     } finally {
       setDownloadingPdf(false);
+    }
+  };
+
+  const regenerateBackup = async () => {
+    if (!ficha) return;
+    
+    setRegeneratingBackup(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-pdf', {
+        body: { 
+          ficha_id: ficha.id, 
+          app_url: window.location.origin, 
+          force_partial: ficha.status === 'finalizado_parcial',
+          is_backup: true 
+        },
+      });
+
+      if (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao regenerar backup',
+          description: error.message,
+        });
+        return;
+      }
+
+      toast({
+        title: 'Backup regenerado com sucesso!',
+        description: 'O comprovante foi salvo no armazenamento.',
+      });
+
+      // Refresh ficha data to update backup_gerado_em
+      refetch();
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao regenerar backup',
+      });
+    } finally {
+      setRegeneratingBackup(false);
     }
   };
 
@@ -877,6 +920,38 @@ export default function DetalhesFicha() {
                       <FileDown className="h-4 w-4" />
                     )}
                     Baixar Comprovante PDF
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Alerta de Backup Faltante */}
+          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && !ficha.backup_gerado_em && (
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      Backup não gerado
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      O backup automático desta ficha falhou. Clique para regenerar.
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={regenerateBackup}
+                    disabled={regeneratingBackup}
+                    variant="outline"
+                    className="gap-2 min-w-[180px] border-destructive/50 text-destructive hover:bg-destructive/10"
+                  >
+                    {regeneratingBackup ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    Regenerar Backup
                   </Button>
                 </div>
               </CardContent>
