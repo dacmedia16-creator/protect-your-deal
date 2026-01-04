@@ -167,12 +167,43 @@ export function ChatAssistente() {
     pageContext: currentPageInfo?.context || 'Navegação geral'
   }), [profileName, role, assinatura, imobiliaria, user, location.pathname, currentPageInfo]);
 
+  // Get page-specific hint for logged-in users
+  const getPageHint = (pathname: string): string => {
+    if (pathname.includes('/fichas/nova')) return 'Vi que você está criando uma ficha nova. ';
+    if (pathname.includes('/fichas')) return 'Navegando pelas suas fichas, né? ';
+    if (pathname.includes('/clientes/novo')) return 'Cadastrando um cliente novo! ';
+    if (pathname.includes('/clientes')) return 'Gerenciando seus clientes! ';
+    if (pathname.includes('/imoveis/novo')) return 'Adicionando um imóvel novo! ';
+    if (pathname.includes('/imoveis')) return 'Olhando seus imóveis cadastrados! ';
+    if (pathname.includes('/relatorios')) return 'Conferindo os relatórios! ';
+    if (pathname.includes('/perfil')) return 'Atualizando seu perfil! ';
+    if (pathname.includes('/assinatura')) return 'Verificando sua assinatura! ';
+    if (pathname.includes('/dashboard')) return '';
+    return '';
+  };
+
   // Generate personalized greeting
   const getGreeting = () => {
+    // Logged-in user
     if (userContext.isLoggedIn && userContext.nome) {
       const firstName = userContext.nome.split(' ')[0];
-      return `Olá, ${firstName}! 👋 Sou a Sofia, sua assistente virtual do VisitaSegura. Como posso te ajudar hoje?`;
+      const pageHint = getPageHint(location.pathname);
+      return `E aí, ${firstName}! 👋 ${pageHint}Como posso te ajudar hoje?`;
     }
+    
+    // Visitor on home page - sales focused
+    if (location.pathname === '/') {
+      return `Oi! 👋 Sou a Sofia, assistente do **VisitaSegura**.
+
+Nosso sistema protege corretores em visitas imobiliárias com:
+• 📱 Fichas digitais com confirmação via WhatsApp
+• ✅ Verificação de identidade por OTP
+• 📄 Comprovantes com QR Code verificável
+
+Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
+    }
+    
+    // Visitor on other pages
     return 'Olá! 👋 Sou a Sofia, assistente virtual do VisitaSegura. Posso te ajudar com dúvidas sobre o sistema, mostrar como funciona ou dar suporte técnico. Como posso te ajudar hoje?';
   };
 
@@ -409,7 +440,10 @@ export function ChatAssistente() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-4 sm:left-auto sm:right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90"
+        className={cn(
+          "fixed bottom-6 left-4 sm:left-auto sm:right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90",
+          !userContext.isLoggedIn && "animate-pulse-soft"
+        )}
         size="icon"
       >
         <MessageCircle className="h-6 w-6" />
@@ -420,7 +454,7 @@ export function ChatAssistente() {
   return (
     <div
       className={cn(
-        "fixed bottom-6 left-4 sm:left-auto sm:right-6 z-50 bg-background border rounded-2xl shadow-2xl transition-all duration-300",
+        "fixed bottom-6 left-4 sm:left-auto sm:right-6 z-50 bg-background border rounded-2xl shadow-2xl animate-chat-slide-up",
         isMinimized 
           ? "w-72 h-14" 
           : "w-[380px] h-[550px] max-h-[80vh] flex flex-col"
