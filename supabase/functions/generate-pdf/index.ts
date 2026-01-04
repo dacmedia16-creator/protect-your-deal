@@ -704,16 +704,28 @@ serve(async (req) => {
       return startY - 18;
     }
 
-    // Gerar PDF intermediário para calcular o hash
-    const pdfBytesForHash = await pdfDoc.save();
-
-    // Calcular SHA-256 hash para integridade do documento
-    const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(pdfBytesForHash).buffer);
+    // Calcular hash baseado nos dados da ficha (não no PDF) para evitar problema com duplo save()
+    // Isso garante integridade dos dados autenticados sem precisar gerar o PDF duas vezes
+    const dadosParaHash = JSON.stringify({
+      protocolo: ficha.protocolo,
+      imovel_endereco: ficha.imovel_endereco,
+      imovel_tipo: ficha.imovel_tipo,
+      proprietario_cpf: ficha.proprietario_cpf,
+      proprietario_nome: ficha.proprietario_nome,
+      comprador_cpf: ficha.comprador_cpf,
+      comprador_nome: ficha.comprador_nome,
+      proprietario_confirmado_em: confirmacaoProprietario?.aceite_em || null,
+      comprador_confirmado_em: confirmacaoComprador?.aceite_em || null,
+      data_visita: ficha.data_visita,
+      created_at: ficha.created_at,
+    });
+    
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dadosParaHash));
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const documentoHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const documentoGeradoEm = new Date().toISOString();
 
-    console.log('Generated document hash:', documentoHash);
+    console.log('Generated document hash from ficha data:', documentoHash.substring(0, 16) + '...');
 
     // Função para desenhar rodapé técnico (formato original da imagem + hash completa)
     const drawTechnicalFooter = (targetPage: typeof page, hash: string) => {
@@ -799,8 +811,10 @@ serve(async (req) => {
       console.log(`Footer applied to page ${index + 1}`);
     });
 
-    // Serializar PDF final com o hash no rodapé
+    // Serializar PDF final (único save - garante que o rodapé está incluído)
+    console.log('Saving PDF with footer (single save)...');
     const pdfBytesFinal = await pdfDoc.save();
+    console.log(`PDF generated successfully: ${pdfBytesFinal.length} bytes`);
 
     // Salvar hash no banco de dados
     const { error: updateError } = await supabase
