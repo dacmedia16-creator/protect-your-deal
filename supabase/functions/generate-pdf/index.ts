@@ -791,10 +791,13 @@ serve(async (req) => {
       });
     };
 
-    // Determinar qual é a última página e adicionar o rodapé técnico
-    const pageCount = pdfDoc.getPageCount();
-    const lastPage = pdfDoc.getPage(pageCount - 1);
-    drawTechnicalFooter(lastPage, documentoHash);
+    // Aplicar rodapé técnico em TODAS as páginas do PDF
+    const allPages = pdfDoc.getPages();
+    console.log(`Applying footer to all ${allPages.length} page(s)`);
+    allPages.forEach((targetPage, index) => {
+      drawTechnicalFooter(targetPage, documentoHash);
+      console.log(`Footer applied to page ${index + 1}`);
+    });
 
     // Serializar PDF final com o hash no rodapé
     const pdfBytesFinal = await pdfDoc.save();
