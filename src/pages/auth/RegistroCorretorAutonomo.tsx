@@ -117,8 +117,8 @@ export default function RegistroCorretorAutonomo() {
         }
 
         const { data, error } = await supabase
-          .from('imobiliarias')
-          .select('id, nome, status')
+          .from('imobiliarias_publicas')
+          .select('id, nome')
           .eq('codigo', codigo)
           .maybeSingle();
 
@@ -127,10 +127,8 @@ export default function RegistroCorretorAutonomo() {
         if (!data) {
           setCodigoError('Código não encontrado');
           setImobiliariaEncontrada(null);
-        } else if (data.status !== 'ativo') {
-          setCodigoError('Esta imobiliária não está ativa');
-          setImobiliariaEncontrada(null);
         } else {
+          // A VIEW já filtra apenas imobiliárias ativas
           setImobiliariaEncontrada({ id: data.id, nome: data.nome });
           setCodigoError('');
         }
