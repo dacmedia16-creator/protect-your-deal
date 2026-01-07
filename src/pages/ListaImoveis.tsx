@@ -189,36 +189,34 @@ export default function ListaImoveis() {
                 className="cursor-pointer hover:shadow-medium transition-shadow"
                 onClick={() => navigate(`/imoveis/${imovel.id}`)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Building2 className="h-6 w-6 text-primary" />
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium truncate">{imovel.endereco}</p>
-                          <Badge variant="secondary" className="text-xs shrink-0">
-                            {imovel.tipo}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="font-medium text-sm sm:text-base truncate">{imovel.endereco}</p>
+                        <Badge variant="secondary" className="text-xs mt-1">
+                          {imovel.tipo}
+                        </Badge>
+                        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground mt-1.5">
+                          <MapPin className="h-3 w-3 shrink-0" />
                           <span className="truncate">
                             {[imovel.bairro, imovel.cidade, imovel.estado].filter(Boolean).join(', ') || 'Sem localização'}
                           </span>
                         </div>
                         {imovel.proprietario_id && clientes?.[imovel.proprietario_id] && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                            <User className="h-3 w-3" />
-                            <span>{clientes[imovel.proprietario_id]}</span>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <User className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{clientes[imovel.proprietario_id]}</span>
                           </div>
                         )}
                       </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
