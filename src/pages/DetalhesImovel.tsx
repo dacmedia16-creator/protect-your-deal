@@ -138,19 +138,17 @@ export default function DetalhesImovel() {
         {/* Header Card */}
         <Card className="mb-4">
           <CardContent className="p-4 md:p-6">
-            <div className="flex items-start gap-4">
-              <div className="h-14 w-14 md:h-16 md:w-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Building2 className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Building2 className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-primary" />
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <Badge variant="secondary">{imovel.tipo}</Badge>
-                </div>
-                <h1 className="text-lg md:text-xl font-bold mb-1">{imovel.endereco}</h1>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <Badge variant="secondary" className="mb-1.5">{imovel.tipo}</Badge>
+                <h1 className="text-base sm:text-lg md:text-xl font-bold mb-1 break-words">{imovel.endereco}</h1>
                 {localizacao && (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{localizacao}</span>
+                  <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{localizacao}</span>
                   </div>
                 )}
               </div>
@@ -212,20 +210,20 @@ export default function DetalhesImovel() {
               {fichasRelacionadas.map((ficha) => (
                 <div 
                   key={ficha.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
+                  className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors"
                   onClick={() => navigate(`/fichas/${ficha.id}`)}
                 >
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-mono text-sm font-medium">#{ficha.protocolo}</p>
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs sm:text-sm font-medium">#{ficha.protocolo}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>{format(new Date(ficha.data_visita), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                        <Calendar className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{format(new Date(ficha.data_visita), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
                       </div>
                     </div>
                   </div>
-                  <Badge variant={ficha.status === 'completo' ? 'default' : 'secondary'}>
+                  <Badge variant={ficha.status === 'completo' ? 'default' : 'secondary'} className="shrink-0 text-xs">
                     {ficha.status === 'completo' ? 'Confirmado' : 'Pendente'}
                   </Badge>
                 </div>
