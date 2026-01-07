@@ -221,42 +221,38 @@ export default function ListaClientes() {
                 className="cursor-pointer hover:shadow-medium transition-shadow"
                 onClick={() => navigate(`/clientes/${cliente.id}`)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shrink-0 ${
                         cliente.tipo === 'proprietario' ? 'bg-primary/10' : 'bg-secondary'
                       }`}>
                         {cliente.tipo === 'proprietario' ? (
-                          <Building2 className="h-6 w-6 text-primary" />
+                          <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                         ) : (
-                          <User className="h-6 w-6 text-secondary-foreground" />
+                          <User className="h-5 w-5 sm:h-6 sm:w-6 text-secondary-foreground" />
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{cliente.nome}</p>
-                          <Badge variant={cliente.tipo === 'proprietario' ? 'default' : 'secondary'} className="text-xs">
-                            {cliente.tipo === 'proprietario' ? 'Proprietário' : 'Comprador'}
-                          </Badge>
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="font-medium text-sm sm:text-base truncate">{cliente.nome}</p>
+                        <Badge variant={cliente.tipo === 'proprietario' ? 'default' : 'secondary'} className="text-xs mt-1">
+                          {cliente.tipo === 'proprietario' ? 'Proprietário' : 'Comprador'}
+                        </Badge>
+                        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground mt-1.5">
+                          <Phone className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{formatPhone(cliente.telefone)}</span>
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {formatPhone(cliente.telefone)}
-                          </span>
-                          {cliente.email && (
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {cliente.email}
-                            </span>
-                          )}
-                        </div>
+                        {cliente.email && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{cliente.email}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
