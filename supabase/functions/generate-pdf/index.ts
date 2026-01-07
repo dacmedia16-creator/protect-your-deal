@@ -141,11 +141,22 @@ serve(async (req) => {
     const lightGray = rgb(0.6, 0.6, 0.6);
     const darkGray = rgb(0.3, 0.3, 0.3); // Cinza escuro para texto técnico
     const mediumGray = rgb(0.4, 0.4, 0.4); // Cinza médio para hash
-    const warningColor = rgb(0.8, 0.4, 0.0); // Orange for warnings
 
     let yPosition = height - 50;
     let logoHeight = 0;
     let headerTextX = 50;
+
+    // Current page tracking - allows dynamic page creation
+    let currentPage = page;
+
+    // Helper function to ensure enough space, creates new page if needed
+    const ensureSpace = (neededSpace: number = 200): void => {
+      if (yPosition < neededSpace) {
+        console.log(`[generate-pdf] Creating new page - yPosition: ${yPosition}, needed: ${neededSpace}`);
+        currentPage = pdfDoc.addPage([595, 842]);
+        yPosition = height - 50;
+      }
+    };
 
     // Try to embed imobiliaria logo if exists
     if (imobiliaria?.logo_url) {
@@ -180,7 +191,7 @@ serve(async (req) => {
           logoHeight = finalHeight;
           
           // Draw logo at top left
-          page.drawImage(logoImage, {
+          currentPage.drawImage(logoImage, {
             x: 50,
             y: height - 30 - finalHeight,
             width: finalWidth,
@@ -197,7 +208,7 @@ serve(async (req) => {
 
     // Header - with imobiliaria name if exists
     if (imobiliaria?.nome) {
-      page.drawText(imobiliaria.nome, {
+      currentPage.drawText(imobiliaria.nome, {
         x: headerTextX,
         y: yPosition,
         size: 14,
@@ -208,7 +219,7 @@ serve(async (req) => {
     }
 
     // Document title - always use standard title
-    page.drawText('COMPROVANTE DE VISITA IMOBILIÁRIA', {
+    currentPage.drawText('COMPROVANTE DE VISITA IMOBILIÁRIA', {
       x: headerTextX,
       y: yPosition,
       size: 16,
@@ -217,7 +228,7 @@ serve(async (req) => {
     });
 
     yPosition -= 22;
-    page.drawText(`Protocolo: ${ficha.protocolo}`, {
+    currentPage.drawText(`Protocolo: ${ficha.protocolo}`, {
       x: headerTextX,
       y: yPosition,
       size: 12,
@@ -225,11 +236,9 @@ serve(async (req) => {
       color: primaryColor,
     });
 
-    // Partial warning banner removed per user request
-
     // Draw line
     yPosition -= 15;
-    page.drawLine({
+    currentPage.drawLine({
       start: { x: 50, y: yPosition },
       end: { x: width - 50, y: yPosition },
       thickness: 1,
@@ -248,7 +257,7 @@ serve(async (req) => {
     const qrY = height - 80 - qrSize;
 
     // Draw white background for QR code
-    page.drawRectangle({
+    currentPage.drawRectangle({
       x: qrX - 5,
       y: qrY - 5,
       width: qrSize + 10,
@@ -260,7 +269,7 @@ serve(async (req) => {
     for (let row = 0; row < moduleCount; row++) {
       for (let col = 0; col < moduleCount; col++) {
         if (qr.isDark(row, col)) {
-          page.drawRectangle({
+          currentPage.drawRectangle({
             x: qrX + col * cellSize,
             y: qrY + (moduleCount - row - 1) * cellSize,
             width: cellSize,
@@ -271,7 +280,7 @@ serve(async (req) => {
       }
     }
 
-    page.drawText('Escaneie para verificar', {
+    currentPage.drawText('Escaneie para verificar', {
       x: qrX - 5,
       y: qrY - 15,
       size: 8,
@@ -279,9 +288,9 @@ serve(async (req) => {
       color: lightGray,
     });
 
-    // Helper function to draw section
+    // Helper function to draw section on current page
     const drawSection = (title: string, startY: number): number => {
-      page.drawText(title, {
+      currentPage.drawText(title, {
         x: 50,
         y: startY,
         size: 12,
@@ -291,16 +300,16 @@ serve(async (req) => {
       return startY - 20;
     };
 
-    // Helper function to draw field
+    // Helper function to draw field on current page
     const drawField = (label: string, value: string, startY: number): number => {
-      page.drawText(`${label}:`, {
+      currentPage.drawText(`${label}:`, {
         x: 50,
         y: startY,
         size: 10,
         font: helveticaBold,
         color: textColor,
       });
-      page.drawText(value || '-', {
+      currentPage.drawText(value || '-', {
         x: 160,
         y: startY,
         size: 10,
@@ -312,7 +321,7 @@ serve(async (req) => {
 
     // Helper function to draw field with word wrap for long texts
     const drawFieldWithWrap = (label: string, value: string, startY: number, maxWidth: number): number => {
-      page.drawText(`${label}:`, {
+      currentPage.drawText(`${label}:`, {
         x: 50,
         y: startY,
         size: 10,
@@ -327,7 +336,7 @@ serve(async (req) => {
       const textWidth = helvetica.widthOfTextAtSize(valueText, 10);
       
       if (textWidth <= availableWidth) {
-        page.drawText(valueText, {
+        currentPage.drawText(valueText, {
           x: valueX,
           y: startY,
           size: 10,
@@ -347,7 +356,7 @@ serve(async (req) => {
         const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
         
         if (testWidth > availableWidth && line) {
-          page.drawText(line, {
+          currentPage.drawText(line, {
             x: valueX,
             y: currentY,
             size: 10,
@@ -362,7 +371,7 @@ serve(async (req) => {
       }
       
       if (line) {
-        page.drawText(line, {
+        currentPage.drawText(line, {
           x: valueX,
           y: currentY,
           size: 10,
@@ -422,6 +431,8 @@ serve(async (req) => {
 
     // Owner Section with Legal Data
     yPosition -= 15;
+    ensureSpace(200); // Check space before owner section
+    
     if (proprietarioConfirmado) {
       yPosition = drawSection('PROPRIETÁRIO - DADOS E ACEITE JURÍDICO', yPosition);
       yPosition = drawField('Nome', ficha.proprietario_nome || confirmacaoProprietario?.aceite_nome || '-', yPosition);
@@ -431,7 +442,7 @@ serve(async (req) => {
       
       if (confirmacaoProprietario) {
         yPosition -= 5;
-        page.drawText('Dados da Assinatura Digital:', {
+        currentPage.drawText('Dados da Assinatura Digital:', {
           x: 50,
           y: yPosition,
           size: 9,
@@ -461,6 +472,8 @@ serve(async (req) => {
 
     // Buyer Section with Legal Data
     yPosition -= 15;
+    ensureSpace(200); // Check space before buyer section
+    
     if (compradorConfirmado) {
       yPosition = drawSection('COMPRADOR/INTERESSADO - DADOS E ACEITE JURÍDICO', yPosition);
       yPosition = drawField('Nome', ficha.comprador_nome || confirmacaoComprador?.aceite_nome || '-', yPosition);
@@ -470,7 +483,7 @@ serve(async (req) => {
       
       if (confirmacaoComprador) {
         yPosition -= 5;
-        page.drawText('Dados da Assinatura Digital:', {
+        currentPage.drawText('Dados da Assinatura Digital:', {
           x: 50,
           y: yPosition,
           size: 9,
@@ -500,16 +513,19 @@ serve(async (req) => {
 
     // Visit Section
     yPosition -= 15;
+    ensureSpace(150); // Check space before visit section
     yPosition = drawSection('DADOS DA VISITA', yPosition);
     yPosition = drawField('Data da Visita', formatDate(ficha.data_visita), yPosition);
     yPosition = drawField('Criado em', formatDate(ficha.created_at), yPosition);
     
-    // Track if we created extra pages during observations
-    let observacoesExtraPage: ReturnType<typeof pdfDoc.addPage> | null = null;
-    
+    // Observations with page break support
     if (ficha.observacoes) {
       yPosition -= 10;
-      page.drawText('Observações:', {
+      
+      // Check if we have space for observation header
+      ensureSpace(150);
+      
+      currentPage.drawText('Observações:', {
         x: 50,
         y: yPosition,
         size: 10,
@@ -519,20 +535,18 @@ serve(async (req) => {
       yPosition -= 15;
       
       // Word wrap for observations with page break check
-      const maxWidth = width - 100;
+      const obsMaxWidth = width - 100;
       const words = ficha.observacoes.split(' ');
       let line = '';
-      let currentPage: ReturnType<typeof pdfDoc.addPage> = page;
       
       for (const word of words) {
         const testLine = line + word + ' ';
         const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
         
-        if (testWidth > maxWidth) {
+        if (testWidth > obsMaxWidth) {
           // Check if we need a new page before drawing
           if (yPosition < 130) {
             currentPage = pdfDoc.addPage([595, 842]);
-            observacoesExtraPage = currentPage;
             yPosition = height - 50;
             
             currentPage.drawText('Observações (continuação):', {
@@ -563,7 +577,6 @@ serve(async (req) => {
       if (line.trim()) {
         if (yPosition < 130) {
           currentPage = pdfDoc.addPage([595, 842]);
-          observacoesExtraPage = currentPage;
           yPosition = height - 50;
         }
         
@@ -578,157 +591,65 @@ serve(async (req) => {
       }
     }
 
-    // Check if we need a second page for broker info
-    if (yPosition < 180) {
-      // Add second page
-      const page2 = pdfDoc.addPage([595, 842]);
-      yPosition = height - 50;
+    // Broker Section - always check space before
+    yPosition -= 15;
+    ensureSpace(180); // Need space for broker section
+    
+    if (profile) {
+      const hasPartner = !!partnerProfile;
+      yPosition = drawSection(hasPartner ? 'CORRETORES RESPONSÁVEIS' : 'CORRETOR RESPONSÁVEL', yPosition);
       
-      // Broker Section on page 2
-      if (profile) {
-        const hasPartner = !!partnerProfile;
-        yPosition = drawSectionOnPage(page2, hasPartner ? 'CORRETORES RESPONSÁVEIS' : 'CORRETOR RESPONSÁVEL', yPosition, helveticaBold, primaryColor);
-        
-        // Original broker
-        if (hasPartner) {
-          page2.drawText('Corretor Principal:', {
-            x: 50,
-            y: yPosition,
-            size: 9,
-            font: helveticaBold,
-            color: lightGray,
-          });
-          yPosition -= 15;
-        }
-        yPosition = drawFieldOnPage(page2, 'Nome', profile.nome, yPosition, helveticaBold, helvetica, textColor);
-        if (profile.creci) {
-          yPosition = drawFieldOnPage(page2, 'CRECI', profile.creci, yPosition, helveticaBold, helvetica, textColor);
-        }
-        if (profile.imobiliaria) {
-          yPosition = drawFieldOnPage(page2, 'Imobiliária', profile.imobiliaria, yPosition, helveticaBold, helvetica, textColor);
-        }
-        if (profile.telefone) {
-          yPosition = drawFieldOnPage(page2, 'Telefone', formatPhone(profile.telefone), yPosition, helveticaBold, helvetica, textColor);
-        }
-
-        // Partner broker on page 2
-        if (partnerProfile) {
-          yPosition -= 10;
-          page2.drawText('Corretor Parceiro:', {
-            x: 50,
-            y: yPosition,
-            size: 9,
-            font: helveticaBold,
-            color: lightGray,
-          });
-          yPosition -= 15;
-          yPosition = drawFieldOnPage(page2, 'Nome', partnerProfile.nome, yPosition, helveticaBold, helvetica, textColor);
-          if (partnerProfile.creci) {
-            yPosition = drawFieldOnPage(page2, 'CRECI', partnerProfile.creci, yPosition, helveticaBold, helvetica, textColor);
-          }
-          if (partnerProfile.imobiliaria) {
-            yPosition = drawFieldOnPage(page2, 'Imobiliária', partnerProfile.imobiliaria, yPosition, helveticaBold, helvetica, textColor);
-          }
-          if (partnerProfile.telefone) {
-            yPosition = drawFieldOnPage(page2, 'Telefone', formatPhone(partnerProfile.telefone), yPosition, helveticaBold, helvetica, textColor);
-          }
-          if (ficha.parte_preenchida_parceiro) {
-            const parteLabel = ficha.parte_preenchida_parceiro === 'proprietario' ? 'Proprietário' : 'Comprador';
-            yPosition = drawFieldOnPage(page2, 'Responsável por', `Dados do ${parteLabel}`, yPosition, helveticaBold, helvetica, textColor);
-          }
-        }
-      }
-
-      // Footer on page 2 - será preenchido após calcular o hash
-    } else {
-      // Broker Section on same page
-      if (profile) {
+      // Original broker
+      if (hasPartner) {
+        currentPage.drawText('Corretor Principal:', {
+          x: 50,
+          y: yPosition,
+          size: 9,
+          font: helveticaBold,
+          color: lightGray,
+        });
         yPosition -= 15;
-        const hasPartner = !!partnerProfile;
-        yPosition = drawSection(hasPartner ? 'CORRETORES RESPONSÁVEIS' : 'CORRETOR RESPONSÁVEL', yPosition);
-        
-        // Original broker
-        if (hasPartner) {
-          page.drawText('Corretor Principal:', {
-            x: 50,
-            y: yPosition,
-            size: 9,
-            font: helveticaBold,
-            color: lightGray,
-          });
-          yPosition -= 15;
-        }
-        yPosition = drawField('Nome', profile.nome, yPosition);
-        if (profile.creci) {
-          yPosition = drawField('CRECI', profile.creci, yPosition);
-        }
-        if (profile.imobiliaria) {
-          yPosition = drawField('Imobiliária', profile.imobiliaria, yPosition);
-        }
-        if (profile.telefone) {
-          yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
-        }
-
-        // Partner broker
-        if (partnerProfile) {
-          yPosition -= 10;
-          page.drawText('Corretor Parceiro:', {
-            x: 50,
-            y: yPosition,
-            size: 9,
-            font: helveticaBold,
-            color: lightGray,
-          });
-          yPosition -= 15;
-          yPosition = drawField('Nome', partnerProfile.nome, yPosition);
-          if (partnerProfile.creci) {
-            yPosition = drawField('CRECI', partnerProfile.creci, yPosition);
-          }
-          if (partnerProfile.imobiliaria) {
-            yPosition = drawField('Imobiliária', partnerProfile.imobiliaria, yPosition);
-          }
-          if (partnerProfile.telefone) {
-            yPosition = drawField('Telefone', formatPhone(partnerProfile.telefone), yPosition);
-          }
-          // Show which part the partner filled
-          if (ficha.parte_preenchida_parceiro) {
-            const parteLabel = ficha.parte_preenchida_parceiro === 'proprietario' ? 'Proprietário' : 'Comprador';
-            yPosition = drawField('Responsável por', `Dados do ${parteLabel}`, yPosition);
-          }
-        }
+      }
+      yPosition = drawField('Nome', profile.nome, yPosition);
+      if (profile.creci) {
+        yPosition = drawField('CRECI', profile.creci, yPosition);
+      }
+      if (profile.imobiliaria) {
+        yPosition = drawField('Imobiliária', profile.imobiliaria, yPosition);
+      }
+      if (profile.telefone) {
+        yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
       }
 
-      // Footer será preenchido após calcular o hash
-    }
-
-    // Helper functions for second page
-    function drawSectionOnPage(p: typeof page, title: string, startY: number, boldFont: typeof helveticaBold, color: typeof primaryColor): number {
-      p.drawText(title, {
-        x: 50,
-        y: startY,
-        size: 12,
-        font: boldFont,
-        color: color,
-      });
-      return startY - 20;
-    }
-
-    function drawFieldOnPage(p: typeof page, label: string, value: string, startY: number, boldFont: typeof helveticaBold, regularFont: typeof helvetica, color: typeof textColor): number {
-      p.drawText(`${label}:`, {
-        x: 50,
-        y: startY,
-        size: 10,
-        font: boldFont,
-        color: color,
-      });
-      p.drawText(value || '-', {
-        x: 160,
-        y: startY,
-        size: 10,
-        font: regularFont,
-        color: color,
-      });
-      return startY - 18;
+      // Partner broker - check space before
+      if (partnerProfile) {
+        ensureSpace(150); // Check space before partner section
+        
+        yPosition -= 10;
+        currentPage.drawText('Corretor Parceiro:', {
+          x: 50,
+          y: yPosition,
+          size: 9,
+          font: helveticaBold,
+          color: lightGray,
+        });
+        yPosition -= 15;
+        yPosition = drawField('Nome', partnerProfile.nome, yPosition);
+        if (partnerProfile.creci) {
+          yPosition = drawField('CRECI', partnerProfile.creci, yPosition);
+        }
+        if (partnerProfile.imobiliaria) {
+          yPosition = drawField('Imobiliária', partnerProfile.imobiliaria, yPosition);
+        }
+        if (partnerProfile.telefone) {
+          yPosition = drawField('Telefone', formatPhone(partnerProfile.telefone), yPosition);
+        }
+        // Show which part the partner filled
+        if (ficha.parte_preenchida_parceiro) {
+          const parteLabel = ficha.parte_preenchida_parceiro === 'proprietario' ? 'Proprietário' : 'Comprador';
+          yPosition = drawField('Responsável por', `Dados do ${parteLabel}`, yPosition);
+        }
+      }
     }
 
     // Calcular hash baseado nos dados da ficha (não no PDF) para evitar problema com duplo save()
