@@ -105,87 +105,87 @@ export default function DetalhesCliente() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 sm:pb-0">
       {/* Header */}
       <header className="border-b bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/clientes')}>
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 sm:h-10 sm:w-10" onClick={() => navigate('/clientes')}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div className="flex items-center gap-3">
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center shrink-0 ${
                   cliente.tipo === 'proprietario' ? 'bg-primary/10' : 'bg-secondary'
                 }`}>
                   {cliente.tipo === 'proprietario' ? (
-                    <Building2 className="h-6 w-6 text-primary" />
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   ) : (
-                    <User className="h-6 w-6 text-secondary-foreground" />
+                    <User className="h-5 w-5 sm:h-6 sm:w-6 text-secondary-foreground" />
                   )}
                 </div>
-                <div>
-                  <h1 className="font-display text-xl font-bold">{cliente.nome}</h1>
-                  <Badge variant={cliente.tipo === 'proprietario' ? 'default' : 'secondary'}>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h1 className="font-display text-base sm:text-xl font-bold truncate">{cliente.nome}</h1>
+                  <Badge variant={cliente.tipo === 'proprietario' ? 'default' : 'secondary'} className="text-xs">
                     {cliente.tipo === 'proprietario' ? 'Proprietário' : 'Comprador'}
                   </Badge>
                 </div>
               </div>
             </div>
-            <Button onClick={() => navigate(`/clientes/${id}/editar`)} className="gap-2">
+            <Button size="sm" onClick={() => navigate(`/clientes/${id}/editar`)} className="gap-1.5 shrink-0">
               <Pencil className="h-4 w-4" />
-              Editar
+              <span className="hidden sm:inline">Editar</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <div className="space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-3xl">
+        <div className="space-y-4 sm:space-y-6">
           {/* Contato */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informações de Contato</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-base sm:text-lg">Informações de Contato</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
+            <CardContent className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Telefone</p>
-                  <p className="font-medium">{formatPhone(cliente.telefone)}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Telefone</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{formatPhone(cliente.telefone)}</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{cliente.email || '-'}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">CPF</p>
-                  <p className="font-medium">{formatCPF(cliente.cpf)}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium text-sm sm:text-base truncate">{cliente.email || '-'}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Cadastrado em</p>
-                  <p className="font-medium">
-                    {format(new Date(cliente.created_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">CPF</p>
+                  <p className="font-medium text-sm sm:text-base">{formatCPF(cliente.cpf)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Cadastrado em</p>
+                  <p className="font-medium text-sm sm:text-base">
+                    {format(new Date(cliente.created_at), "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
               </div>
@@ -209,40 +209,40 @@ export default function DetalhesCliente() {
 
           {/* Histórico de Fichas */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Histórico de Visitas</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Histórico de Visitas</CardTitle>
                 {fichas && fichas.length > 0 && (
-                  <Badge variant="secondary">{fichas.length} fichas</Badge>
+                  <Badge variant="secondary" className="text-xs">{fichas.length} fichas</Badge>
                 )}
               </div>
             </CardHeader>
             <CardContent>
               {fichas && fichas.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {fichas.map((ficha) => (
                     <div 
                       key={ficha.id}
-                      className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between gap-2 p-2.5 sm:p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => navigate(`/fichas/${ficha.id}`)}
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-primary">#{ficha.protocolo}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs sm:text-sm text-primary">#{ficha.protocolo}</span>
                           <Badge variant={ficha.status === 'completo' ? 'default' : 'secondary'} className="text-xs">
                             {ficha.status === 'completo' ? 'Confirmado' : 'Pendente'}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">{ficha.imovel_endereco}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">{ficha.imovel_endereco}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(ficha.data_visita), 'dd/MM/yyyy')}
+                      <p className="text-xs sm:text-sm text-muted-foreground shrink-0">
+                        {format(new Date(ficha.data_visita), 'dd/MM/yy')}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-6">
+                <p className="text-muted-foreground text-center py-6 text-sm">
                   Nenhuma visita registrada para este cliente
                 </p>
               )}
