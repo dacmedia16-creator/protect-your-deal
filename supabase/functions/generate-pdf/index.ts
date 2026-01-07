@@ -504,8 +504,11 @@ serve(async (req) => {
     yPosition = drawField('Data da Visita', formatDate(ficha.data_visita), yPosition);
     yPosition = drawField('Criado em', formatDate(ficha.created_at), yPosition);
     
+    // Track if we created extra pages during observations
+    let observacoesExtraPage: ReturnType<typeof pdfDoc.addPage> | null = null;
+    
     if (ficha.observacoes) {
-      yPosition -= 5;
+      yPosition -= 10;
       page.drawText('Observações:', {
         x: 50,
         y: yPosition,
@@ -515,17 +518,34 @@ serve(async (req) => {
       });
       yPosition -= 15;
       
-      // Word wrap for observations
+      // Word wrap for observations with page break check
       const maxWidth = width - 100;
       const words = ficha.observacoes.split(' ');
       let line = '';
+      let currentPage: ReturnType<typeof pdfDoc.addPage> = page;
       
       for (const word of words) {
         const testLine = line + word + ' ';
         const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
         
         if (testWidth > maxWidth) {
-          page.drawText(line.trim(), {
+          // Check if we need a new page before drawing
+          if (yPosition < 130) {
+            currentPage = pdfDoc.addPage([595, 842]);
+            observacoesExtraPage = currentPage;
+            yPosition = height - 50;
+            
+            currentPage.drawText('Observações (continuação):', {
+              x: 50,
+              y: yPosition,
+              size: 10,
+              font: helveticaBold,
+              color: textColor,
+            });
+            yPosition -= 15;
+          }
+          
+          currentPage.drawText(line.trim(), {
             x: 50,
             y: yPosition,
             size: 10,
@@ -539,8 +559,15 @@ serve(async (req) => {
         }
       }
       
+      // Draw remaining text
       if (line.trim()) {
-        page.drawText(line.trim(), {
+        if (yPosition < 130) {
+          currentPage = pdfDoc.addPage([595, 842]);
+          observacoesExtraPage = currentPage;
+          yPosition = height - 50;
+        }
+        
+        currentPage.drawText(line.trim(), {
           x: 50,
           y: yPosition,
           size: 10,
