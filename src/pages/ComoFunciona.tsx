@@ -17,7 +17,7 @@ const ComoFunciona = () => {
     {
       icon: ClipboardCheck,
       number: '01',
-      title: 'Crie a Ficha',
+      title: 'Crie o Registro',
       description: 'Preencha os dados do imóvel, proprietário e comprador interessado.'
     },
     {

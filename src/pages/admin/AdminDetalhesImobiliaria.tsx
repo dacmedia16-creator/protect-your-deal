@@ -599,7 +599,7 @@ export default function AdminDetalhesImobiliaria() {
             <TabsTrigger value="corretores">Corretores ({corretores.length})</TabsTrigger>
             <TabsTrigger value="clientes">Clientes ({clientes.length})</TabsTrigger>
             <TabsTrigger value="imoveis">Imóveis ({imoveis.length})</TabsTrigger>
-            <TabsTrigger value="fichas">Fichas ({fichas.length})</TabsTrigger>
+            <TabsTrigger value="fichas">Registros ({fichas.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="space-y-6">
@@ -1096,9 +1096,9 @@ export default function AdminDetalhesImobiliaria() {
                 <div className="flex items-center gap-3">
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
-                    <CardTitle>Fichas de Visita</CardTitle>
+                    <CardTitle>Registros de Visita</CardTitle>
                     <CardDescription>
-                      {fichas.length} ficha(s) registrada(s)
+                      {fichas.length} registro(s)
                     </CardDescription>
                   </div>
                 </div>
@@ -1107,7 +1107,7 @@ export default function AdminDetalhesImobiliaria() {
                 {fichas.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhuma ficha de visita registrada nesta imobiliária</p>
+                    <p>Nenhum registro de visita nesta imobiliária</p>
                   </div>
                 ) : (
                   <ScrollArea className="h-[400px]">

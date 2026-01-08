@@ -438,7 +438,7 @@ export default function ConviteParceiro() {
             <div>
               <h1 className="font-display text-xl font-bold">Convite de Parceria</h1>
               <p className="text-sm text-muted-foreground">
-                {ficha?.protocolo && `Ficha #${ficha.protocolo}`}
+                {ficha?.protocolo && `Registro #${ficha.protocolo}`}
               </p>
             </div>
           </div>
@@ -457,7 +457,7 @@ export default function ConviteParceiro() {
                   </div>
                   <div>
                     <CardTitle className="text-lg">Detalhes do Imóvel</CardTitle>
-                    <CardDescription>Informações da ficha de visita</CardDescription>
+                    <CardDescription>Informações do registro de visita</CardDescription>
                   </div>
                 </div>
               </CardHeader>

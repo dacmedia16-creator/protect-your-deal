@@ -367,7 +367,7 @@ export default function ConviteParceiroExterno() {
                   </div>
                   <div>
                     <CardTitle className="text-lg">Detalhes do Imóvel</CardTitle>
-                    <CardDescription>Ficha #{ficha.protocolo}</CardDescription>
+                    <CardDescription>Registro #{ficha.protocolo}</CardDescription>
                   </div>
                 </div>
               </CardHeader>

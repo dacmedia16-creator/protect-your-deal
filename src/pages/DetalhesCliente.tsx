@@ -213,7 +213,7 @@ export default function DetalhesCliente() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base sm:text-lg">Histórico de Visitas</CardTitle>
                 {fichas && fichas.length > 0 && (
-                  <Badge variant="secondary" className="text-xs">{fichas.length} fichas</Badge>
+                  <Badge variant="secondary" className="text-xs">{fichas.length} registros</Badge>
                 )}
               </div>
             </CardHeader>
