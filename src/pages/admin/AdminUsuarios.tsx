@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatPhone } from "@/lib/phone";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -48,10 +50,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, Plus, UserPlus } from "lucide-react";
+import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { UserAvatar } from "@/components/UserAvatar";
+import { PasswordInput } from "@/components/PasswordInput";
+import { generatePassword } from "@/lib/password";
 
 interface UserWithRole {
   id: string;
@@ -63,6 +68,7 @@ interface UserWithRole {
     nome: string;
     telefone?: string;
     creci?: string;
+    ativo?: boolean;
   } | null;
   imobiliaria: {
     nome: string;
@@ -76,7 +82,6 @@ interface Imobiliaria {
 }
 
 export default function AdminUsuarios() {
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
@@ -118,13 +123,17 @@ export default function AdminUsuarios() {
   });
   const [isCreating, setIsCreating] = useState(false);
 
+  // Success dialog
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
+  const [createdUser, setCreatedUser] = useState<{ email: string; password: string; nome: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   // Fetch all users with their roles and emails
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       
-      // Fetch user_roles with imobiliarias
       const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select(`
@@ -139,16 +148,14 @@ export default function AdminUsuarios() {
 
       if (rolesError) throw rolesError;
 
-      // Fetch profiles
       const userIds = userRoles.map((ur: any) => ur.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("user_id, nome, telefone, creci")
+        .select("user_id, nome, telefone, creci, ativo")
         .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
 
-      // Fetch emails from auth.users via edge function
       let emailMap = new Map<string, string>();
       try {
         const { data: usersData, error: usersError } = await supabase.functions.invoke("admin-list-users", {
@@ -164,7 +171,6 @@ export default function AdminUsuarios() {
         console.error("Error fetching user emails:", e);
       }
 
-      // Create maps for quick lookup
       const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
 
       return userRoles.map((ur: any) => ({
@@ -180,7 +186,6 @@ export default function AdminUsuarios() {
     },
   });
 
-  // Fetch imobiliarias for filter
   const { data: imobiliarias } = useQuery({
     queryKey: ["admin-imobiliarias-filter"],
     queryFn: async () => {
@@ -357,8 +362,15 @@ export default function AdminUsuarios() {
         throw new Error(response.data?.error || response.error?.message || "Erro ao criar usuário");
       }
 
-      toast.success("Usuário criado com sucesso");
+      // Show success dialog
+      setCreatedUser({
+        email: createForm.email,
+        password: createForm.password,
+        nome: createForm.nome,
+      });
       setIsCreateDialogOpen(false);
+      setIsSuccessDialogOpen(true);
+      
       setCreateForm({
         email: "",
         password: "",
@@ -374,6 +386,26 @@ export default function AdminUsuarios() {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleCopy = async (text: string, field: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success("Copiado!");
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const openCreateWithPassword = () => {
+    setCreateForm({
+      email: "",
+      password: generatePassword(12),
+      nome: "",
+      telefone: "",
+      creci: "",
+      role: "corretor",
+      imobiliaria_id: "",
+    });
+    setIsCreateDialogOpen(true);
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -411,7 +443,7 @@ export default function AdminUsuarios() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={openCreateWithPassword}>
               <UserPlus className="h-4 w-4 mr-2" />
               Novo Usuário
             </Button>
@@ -467,96 +499,129 @@ export default function AdminUsuarios() {
 
         <Card>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Imobiliária</TableHead>
-                  <TableHead>Criado em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
+            <TooltipProvider>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      Carregando...
-                    </TableCell>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Imobiliária</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ) : filteredUsers?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Nenhum usuário encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers?.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <p className="font-medium">{user.profile?.nome || "Sem nome"}</p>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm text-muted-foreground">
-                          {user.email || "-"}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {getRoleLabel(user.role)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.imobiliaria?.nome || (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(user.created_at), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={user.role === "super_admin"}>
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setIsResetDialogOpen(true);
-                              }}
-                            >
-                              <KeyRound className="h-4 w-4 mr-2" />
-                              Redefinir Senha
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        Carregando...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredUsers?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        Nenhum usuário encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <UserAvatar 
+                              name={user.profile?.nome} 
+                              role={user.role}
+                              size="sm"
+                            />
+                            <div>
+                              <p className="font-medium">{user.profile?.nome || "Sem nome"}</p>
+                              {user.profile?.creci && (
+                                <p className="text-xs text-muted-foreground">CRECI: {user.profile.creci}</p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm text-muted-foreground">
+                            {user.email || "-"}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleBadgeVariant(user.role)}>
+                            {getRoleLabel(user.role)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.imobiliaria?.nome || (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.profile?.telefone ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground cursor-default">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{user.profile.telefone}</span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{user.profile.telefone}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(user.created_at), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" disabled={user.role === "super_admin"}>
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditDialog(user)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewPassword(generatePassword(12));
+                                  setIsResetDialogOpen(true);
+                                }}
+                              >
+                                <KeyRound className="h-4 w-4 mr-2" />
+                                Redefinir Senha
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => {
+                                  setUserToDelete(user);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           </CardContent>
         </Card>
       </div>
@@ -593,12 +658,13 @@ export default function AdminUsuarios() {
             </div>
 
             {resetAction === "set_password" && (
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Nova senha (mínimo 6 caracteres)"
+              <div className="space-y-2">
+                <Label>Nova Senha</Label>
+                <PasswordInput
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={setNewPassword}
+                  showGenerator={true}
+                  showStrength={true}
                 />
               </div>
             )}
@@ -640,64 +706,92 @@ export default function AdminUsuarios() {
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              {userToEdit && (
+                <UserAvatar name={userToEdit.profile?.nome} role={userToEdit.role} size="md" />
+              )}
+              Editar Usuário
+            </DialogTitle>
             <DialogDescription>
-              Altere os dados do usuário <strong>{userToEdit?.profile?.nome}</strong>
+              {userToEdit?.email}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nome</Label>
-              <Input
-                value={editForm.nome}
-                onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-              />
+          <div className="space-y-6">
+            {/* Dados Pessoais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <IdCard className="h-4 w-4" />
+                Dados Pessoais
+              </div>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input
+                    value={editForm.nome}
+                    onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefone</Label>
+                    <Input
+                      value={editForm.telefone}
+                      onChange={(e) => setEditForm({ ...editForm, telefone: formatPhone(e.target.value) })}
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CRECI</Label>
+                    <Input
+                      value={editForm.creci}
+                      onChange={(e) => setEditForm({ ...editForm, creci: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={editForm.telefone}
-                onChange={(e) => setEditForm({ ...editForm, telefone: formatPhone(e.target.value) })}
-                placeholder="(00) 00000-0000"
-                maxLength={15}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>CRECI</Label>
-              <Input
-                value={editForm.creci}
-                onChange={(e) => setEditForm({ ...editForm, creci: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="corretor">Corretor</SelectItem>
-                  <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Imobiliária</Label>
-              <Select value={editForm.imobiliaria_id} onValueChange={(v) => setEditForm({ ...editForm, imobiliaria_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma imobiliária" />
-                </SelectTrigger>
-                <SelectContent>
-                  {imobiliarias?.map((imob) => (
-                    <SelectItem key={imob.id} value={imob.id}>
-                      {imob.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <Separator />
+
+            {/* Permissões */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                Permissões
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="corretor">Corretor</SelectItem>
+                      <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Imobiliária</Label>
+                  <Select value={editForm.imobiliaria_id} onValueChange={(v) => setEditForm({ ...editForm, imobiliaria_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {imobiliarias?.map((imob) => (
+                        <SelectItem key={imob.id} value={imob.id}>
+                          {imob.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -714,81 +808,120 @@ export default function AdminUsuarios() {
 
       {/* Create User Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Novo Usuário</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Novo Usuário
+            </DialogTitle>
             <DialogDescription>
               Crie um novo usuário vinculado a uma imobiliária
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                value={createForm.email}
-                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-              />
+          <div className="space-y-6">
+            {/* Credenciais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <KeyRound className="h-4 w-4" />
+                Credenciais de Acesso
+              </div>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Senha *</Label>
+                  <PasswordInput
+                    value={createForm.password}
+                    onChange={(v) => setCreateForm({ ...createForm, password: v })}
+                    showGenerator={true}
+                    showStrength={true}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Senha *</Label>
-              <Input
-                type="password"
-                value={createForm.password}
-                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres"
-              />
+
+            <Separator />
+
+            {/* Dados Pessoais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <IdCard className="h-4 w-4" />
+                Dados Pessoais
+              </div>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input
+                    value={createForm.nome}
+                    onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefone</Label>
+                    <Input
+                      value={createForm.telefone}
+                      onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CRECI</Label>
+                    <Input
+                      value={createForm.creci}
+                      onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Nome *</Label>
-              <Input
-                value={createForm.nome}
-                onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={createForm.telefone}
-                onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
-                placeholder="(00) 00000-0000"
-                maxLength={15}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>CRECI</Label>
-              <Input
-                value={createForm.creci}
-                onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Role *</Label>
-              <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="corretor">Corretor</SelectItem>
-                  <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Imobiliária *</Label>
-              <Select value={createForm.imobiliaria_id} onValueChange={(v) => setCreateForm({ ...createForm, imobiliaria_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma imobiliária" />
-                </SelectTrigger>
-                <SelectContent>
-                  {imobiliarias?.map((imob) => (
-                    <SelectItem key={imob.id} value={imob.id}>
-                      {imob.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <Separator />
+
+            {/* Permissões */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                Permissões
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Role *</Label>
+                  <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="corretor">Corretor</SelectItem>
+                      <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Imobiliária *</Label>
+                  <Select value={createForm.imobiliaria_id} onValueChange={(v) => setCreateForm({ ...createForm, imobiliaria_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {imobiliarias?.map((imob) => (
+                        <SelectItem key={imob.id} value={imob.id}>
+                          {imob.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -798,6 +931,103 @@ export default function AdminUsuarios() {
             </Button>
             <Button onClick={handleCreateUser} disabled={isCreating}>
               {isCreating ? "Criando..." : "Criar Usuário"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+              Usuário Criado com Sucesso!
+            </DialogTitle>
+            <DialogDescription>
+              Anote as credenciais de acesso do usuário
+            </DialogDescription>
+          </DialogHeader>
+
+          {createdUser && (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nome</p>
+                    <p className="font-medium">{createdUser.nome}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="font-medium">{createdUser.email}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleCopy(createdUser.email, "email")}
+                  >
+                    {copiedField === "email" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Senha</p>
+                    <p className="font-mono font-medium">{createdUser.password}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleCopy(createdUser.password, "password")}
+                  >
+                    {copiedField === "password" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => handleCopy(`Email: ${createdUser.email}\nSenha: ${createdUser.password}`, "all")}
+              >
+                {copiedField === "all" ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar Credenciais
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsSuccessDialogOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => {
+              setIsSuccessDialogOpen(false);
+              openCreateWithPassword();
+            }}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Criar Outro
             </Button>
           </DialogFooter>
         </DialogContent>
