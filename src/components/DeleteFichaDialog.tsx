@@ -37,8 +37,8 @@ export function DeleteFichaDialog({ fichaId, protocolo, onDeleted, variant = 'ic
       if (error) throw error;
 
       toast({
-        title: 'Ficha excluída',
-        description: `A ficha ${protocolo} foi excluída com sucesso.`,
+        title: 'Registro excluído',
+        description: `O registro ${protocolo} foi excluído com sucesso.`,
       });
       
       setOpen(false);
@@ -47,7 +47,7 @@ export function DeleteFichaDialog({ fichaId, protocolo, onDeleted, variant = 'ic
       console.error('Erro ao excluir ficha:', error);
       toast({
         title: 'Erro ao excluir',
-        description: error.message || 'Não foi possível excluir a ficha.',
+        description: error.message || 'Não foi possível excluir o registro.',
         variant: 'destructive',
       });
     } finally {
@@ -81,9 +81,9 @@ export function DeleteFichaDialog({ fichaId, protocolo, onDeleted, variant = 'ic
       </AlertDialogTrigger>
       <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Excluir ficha de visita?</AlertDialogTitle>
+          <AlertDialogTitle>Excluir registro de visita?</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir a ficha <strong className="text-foreground">{protocolo}</strong>?
+            Tem certeza que deseja excluir o registro <strong className="text-foreground">{protocolo}</strong>?
             <br />
             <span className="text-destructive">Esta ação não pode ser desfeita.</span>
           </AlertDialogDescription>

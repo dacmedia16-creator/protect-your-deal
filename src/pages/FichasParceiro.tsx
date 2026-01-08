@@ -128,7 +128,7 @@ export default function FichasParceiro() {
           </Button>
           <div className="flex items-center gap-2">
             <Handshake className="h-5 w-5 text-primary" />
-            <span className="font-display text-lg font-bold">Fichas como Parceiro</span>
+            <span className="font-display text-lg font-bold">Registros como Parceiro</span>
           </div>
         </div>
       </header>
@@ -136,10 +136,10 @@ export default function FichasParceiro() {
       <main className="container mx-auto px-4 py-4 md:py-8">
         <div className="mb-6">
           <h1 className="font-display text-2xl md:text-3xl font-bold hidden sm:block">
-            Fichas como Parceiro
+            Registros como Parceiro
           </h1>
           <p className="text-muted-foreground mt-1">
-            Fichas de visita onde você preencheu dados como corretor parceiro
+            Registros de visita onde você preencheu dados como corretor parceiro
           </p>
         </div>
 
@@ -208,9 +208,9 @@ export default function FichasParceiro() {
                 <Handshake className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Nenhuma ficha como parceiro</h3>
+                <h3 className="font-semibold text-lg">Nenhum registro como parceiro</h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Quando você preencher dados em fichas de outros corretores, elas aparecerão aqui.
+                  Quando você preencher dados em registros de outros corretores, eles aparecerão aqui.
                 </p>
               </div>
               <Button variant="outline" onClick={() => navigate('/convites-recebidos')}>

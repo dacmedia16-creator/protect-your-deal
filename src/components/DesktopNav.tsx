@@ -31,7 +31,7 @@ import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/fichas', label: 'Fichas', icon: FileText },
+  { to: '/fichas', label: 'Registros', icon: FileText },
   { to: '/convites', label: 'Convites', icon: Handshake },
   { to: '/clientes', label: 'Clientes', icon: Users },
 ];
@@ -88,7 +88,7 @@ export function DesktopNav() {
             ) : (
               <FileText className="h-6 w-6" />
             )}
-            <span className="truncate max-w-[200px]">{imobiliaria?.nome || 'Ficha de Visita'}</span>
+            <span className="truncate max-w-[200px]">{imobiliaria?.nome || 'VisitaSegura'}</span>
           </NavLink>
           
           <div className="flex items-center gap-1">
@@ -151,7 +151,7 @@ export function DesktopNav() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/fichas-parceiro')} className="cursor-pointer">
                 <Handshake className="mr-2 h-4 w-4" />
-                Fichas como Parceiro
+                Registros como Parceiro
               </DropdownMenuItem>
               {isCorretorAutonomo && (
                 <DropdownMenuItem onClick={() => navigate('/minha-assinatura')} className="cursor-pointer">

@@ -102,7 +102,7 @@ export default function Dashboard() {
             toast({
               title: '🎉 Confirmação recebida!',
               description: fichaCompleta 
-                ? 'Uma ficha foi totalmente confirmada!'
+                ? 'Um registro foi totalmente confirmado!'
                 : novaConfirmacaoProprietario 
                   ? 'O proprietário confirmou uma visita.' 
                   : 'O comprador confirmou uma visita.',
@@ -245,7 +245,7 @@ export default function Dashboard() {
             Dashboard
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Gerencie suas fichas de visita e clientes
+            Gerencie seus registros de visita e clientes
           </p>
         </div>
 
@@ -257,7 +257,7 @@ export default function Dashboard() {
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
               <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Total Fichas
+                Total Registros
               </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -328,7 +328,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-primary">
-                  {fichasParceiro.total} {fichasParceiro.total === 1 ? 'ficha como parceiro' : 'fichas como parceiro'}
+                  {fichasParceiro.total} {fichasParceiro.total === 1 ? 'registro como parceiro' : 'registros como parceiro'}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {fichasParceiro.pendentes > 0 
@@ -350,9 +350,9 @@ export default function Dashboard() {
               <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Plus className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle>Nova Ficha de Visita</CardTitle>
+              <CardTitle>Novo Registro de Visita</CardTitle>
               <CardDescription>
-                Crie uma nova ficha e envie para confirmação
+                Crie um novo registro e envie para confirmação
               </CardDescription>
             </CardHeader>
           </Card>
@@ -382,7 +382,7 @@ export default function Dashboard() {
               </div>
               <CardTitle>Imóveis</CardTitle>
               <CardDescription>
-                Cadastre imóveis para agilizar fichas
+                Cadastre imóveis para agilizar registros
               </CardDescription>
             </CardHeader>
           </Card>
@@ -402,7 +402,7 @@ export default function Dashboard() {
                 <Plus className="h-5 w-5 text-primary-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="font-medium text-sm">Nova Ficha de Visita</p>
+                <p className="font-medium text-sm">Novo Registro de Visita</p>
                 <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
               </div>
             </CardContent>
@@ -444,7 +444,7 @@ export default function Dashboard() {
       {/* Floating Action Button for mobile */}
       <FloatingActionButton 
         onClick={() => navigate('/fichas/nova')} 
-        label="Nova Ficha"
+        label="Novo Registro"
       />
 
       {/* Mobile Navigation */}

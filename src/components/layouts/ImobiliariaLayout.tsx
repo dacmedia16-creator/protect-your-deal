@@ -27,7 +27,7 @@ interface ImobiliariaLayoutProps {
 const navItems = [
   { href: '/empresa', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/empresa/corretores', icon: Users, label: 'Corretores' },
-  { href: '/empresa/fichas', icon: FileText, label: 'Fichas de Visita' },
+  { href: '/empresa/fichas', icon: FileText, label: 'Registros de Visita' },
   { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
   { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
   { href: '/empresa/configuracoes', icon: Settings, label: 'Configurações' },

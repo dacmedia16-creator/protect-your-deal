@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
-  { path: '/fichas', label: 'Fichas', icon: FileText },
+  { path: '/fichas', label: 'Registros', icon: FileText },
   { path: '/convites', label: 'Convites', icon: Handshake },
 ];
 
@@ -114,7 +114,7 @@ export function MobileNav() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/fichas-parceiro')}>
               <Handshake className="h-4 w-4 mr-2" />
-              Fichas como Parceiro
+              Registros como Parceiro
             </DropdownMenuItem>
             {isCorretorAutonomo && (
               <DropdownMenuItem onClick={() => navigate('/minha-assinatura')}>
