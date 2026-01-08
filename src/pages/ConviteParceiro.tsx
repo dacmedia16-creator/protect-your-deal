@@ -231,7 +231,7 @@ export default function ConviteParceiro() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Dados da ficha não encontrados. Recarregue a página.',
+        description: 'Dados do registro não encontrados. Recarregue a página.',
       });
       return;
     }
