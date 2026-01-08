@@ -471,7 +471,7 @@ export default function ConfirmarVisita() {
                 <div className="text-left space-y-3 p-4 rounded-lg bg-card border">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Building2 className="h-4 w-4" />
-                    Ficha #{ficha.protocolo}
+                    Registro #{ficha.protocolo}
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Imóvel</p>
@@ -503,7 +503,7 @@ export default function ConfirmarVisita() {
                 <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Building2 className="h-4 w-4" />
-                    Ficha #{ficha.protocolo}
+                    Registro #{ficha.protocolo}
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Imóvel</p>

@@ -808,7 +808,7 @@ export default function DetalhesFicha() {
   if (!ficha) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
-        <p className="text-muted-foreground">Ficha não encontrada</p>
+        <p className="text-muted-foreground">Registro não encontrado</p>
         <Button onClick={() => navigate('/dashboard')}>Voltar ao Dashboard</Button>
       </div>
     );
@@ -834,7 +834,7 @@ export default function DetalhesFicha() {
               </Button>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-display text-xl font-bold">Ficha #{ficha.protocolo}</h1>
+                  <h1 className="font-display text-xl font-bold">Registro #{ficha.protocolo}</h1>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyProtocolo}>
                     <Copy className="h-4 w-4" />
                   </Button>
@@ -937,7 +937,7 @@ export default function DetalhesFicha() {
                     <h3 className="font-semibold text-foreground">Comprovante Disponível</h3>
                     <p className="text-sm text-muted-foreground">
                       {ficha.status === 'finalizado_parcial' 
-                        ? 'Ficha finalizada com assinatura parcial. Baixe o comprovante.'
+                        ? 'Registro finalizado com assinatura parcial. Baixe o comprovante.'
                         : 'Ambas as partes confirmaram. Baixe o comprovante com QR code de verificação.'}
                     </p>
                   </div>
@@ -969,7 +969,7 @@ export default function DetalhesFicha() {
                       Backup não gerado
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      O backup automático desta ficha falhou. Clique para regenerar.
+                      O backup automático deste registro falhou. Clique para regenerar.
                     </p>
                   </div>
                   <Button 
