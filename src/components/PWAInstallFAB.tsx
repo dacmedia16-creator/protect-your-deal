@@ -70,7 +70,7 @@ export function PWAInstallFAB() {
   return (
     <div 
       className={cn(
-        "fixed bottom-20 left-4 z-40 transition-all duration-300 sm:hidden",
+        "fixed bottom-40 left-4 z-40 transition-all duration-300 sm:hidden",
         isExpanded ? "w-auto" : "w-auto"
       )}
     >
