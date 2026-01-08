@@ -228,7 +228,7 @@ export default function DetalhesFicha() {
       if (!id) return null;
       const { data, error } = await supabase
         .from('convites_parceiro')
-        .select('parceiro_nome, parceiro_cpf, parceiro_creci, permite_externo, status')
+        .select('parceiro_nome, parceiro_cpf, parceiro_creci, parceiro_imobiliaria, permite_externo, status')
         .eq('ficha_id', id)
         .eq('status', 'aceito')
         .maybeSingle();
@@ -1772,7 +1772,7 @@ export default function DetalhesFicha() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Nome</p>
                     <p className="font-medium">{conviteParceiro.parceiro_nome}</p>
@@ -1784,6 +1784,10 @@ export default function DetalhesFicha() {
                   <div>
                     <p className="text-sm text-muted-foreground">CRECI</p>
                     <p className="font-medium">{conviteParceiro.parceiro_creci || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Imobiliária</p>
+                    <p className="font-medium">{conviteParceiro.parceiro_imobiliaria || '-'}</p>
                   </div>
                 </div>
               </CardContent>

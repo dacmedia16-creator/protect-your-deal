@@ -346,6 +346,7 @@ export type Database = {
           id: string
           parceiro_cpf: string | null
           parceiro_creci: string | null
+          parceiro_imobiliaria: string | null
           parceiro_nome: string | null
           parte_faltante: string
           permite_externo: boolean | null
@@ -363,6 +364,7 @@ export type Database = {
           id?: string
           parceiro_cpf?: string | null
           parceiro_creci?: string | null
+          parceiro_imobiliaria?: string | null
           parceiro_nome?: string | null
           parte_faltante: string
           permite_externo?: boolean | null
@@ -380,6 +382,7 @@ export type Database = {
           id?: string
           parceiro_cpf?: string | null
           parceiro_creci?: string | null
+          parceiro_imobiliaria?: string | null
           parceiro_nome?: string | null
           parte_faltante?: string
           permite_externo?: boolean | null

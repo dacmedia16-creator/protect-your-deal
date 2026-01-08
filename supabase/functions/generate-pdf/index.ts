@@ -114,7 +114,7 @@ serve(async (req) => {
       if (!partnerProfile) {
         const { data: conviteData } = await supabase
           .from('convites_parceiro')
-          .select('parceiro_nome, parceiro_cpf, parceiro_creci, permite_externo')
+          .select('parceiro_nome, parceiro_cpf, parceiro_creci, parceiro_imobiliaria, permite_externo')
           .eq('ficha_id', ficha_id)
           .eq('status', 'aceito')
           .maybeSingle();
@@ -687,6 +687,9 @@ serve(async (req) => {
         }
         if (externalPartnerData.parceiro_creci) {
           yPosition = drawField('CRECI', externalPartnerData.parceiro_creci, yPosition);
+        }
+        if (externalPartnerData.parceiro_imobiliaria) {
+          yPosition = drawField('Imobiliária', externalPartnerData.parceiro_imobiliaria, yPosition);
         }
         // Show which part the partner filled
         if (ficha.parte_preenchida_parceiro) {
