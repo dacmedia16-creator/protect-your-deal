@@ -102,15 +102,15 @@ const HOME_PATHS = ['/', '/inicial'];
 // Map routes to page context and quick replies
 const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[] }> = {
   '/dashboard': {
-    context: 'Dashboard principal - visão geral de fichas e métricas',
-    quickReplies: ['Como interpretar as métricas?', 'Exportar relatório', 'Ver fichas pendentes']
+    context: 'Dashboard principal - visão geral de registros e métricas',
+    quickReplies: ['Como interpretar as métricas?', 'Exportar relatório', 'Ver registros pendentes']
   },
   '/fichas': {
-    context: 'Lista de fichas de visita',
-    quickReplies: ['Como filtrar fichas?', 'Reenviar confirmação', 'Baixar comprovante PDF']
+    context: 'Lista de registros de visita',
+    quickReplies: ['Como filtrar registros?', 'Reenviar confirmação', 'Baixar comprovante PDF']
   },
   '/fichas/nova': {
-    context: 'Formulário de criação de nova ficha de visita',
+    context: 'Formulário de criação de novo registro de visita',
     quickReplies: ['Campos obrigatórios?', 'Como funciona o OTP?', 'Posso editar depois?']
   },
   '/clientes': {

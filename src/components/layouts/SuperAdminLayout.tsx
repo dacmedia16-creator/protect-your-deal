@@ -35,7 +35,7 @@ interface SuperAdminLayoutProps {
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
-  { href: '/admin/fichas', icon: FileText, label: 'Fichas' },
+  { href: '/admin/fichas', icon: FileText, label: 'Registros' },
   { href: '/admin/backups', icon: Archive, label: 'Backups' },
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
   { href: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },

@@ -74,7 +74,7 @@ const Integracoes = () => {
         body: { 
           action: 'send-text',
           phone: testPhone,
-          message: '✅ Teste de integração ZionTalk realizado com sucesso! Este é um envio automático do sistema de Fichas de Visita.'
+          message: '✅ Teste de integração ZionTalk realizado com sucesso! Este é um envio automático do sistema de Registros de Visita.'
         }
       });
 

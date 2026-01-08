@@ -6,10 +6,10 @@ import { Shield, CheckCircle2, FileText, Users, Building2, ArrowRight, Sparkles 
 const steps = [
   {
     icon: FileText,
-    title: 'Crie sua primeira ficha de visita',
+    title: 'Crie seu primeiro registro de visita',
     description: 'Registre visitas a imóveis com segurança jurídica e confirmação via WhatsApp.',
     action: '/fichas/nova',
-    actionText: 'Criar Ficha',
+    actionText: 'Criar Registro',
   },
   {
     icon: Users,
@@ -21,7 +21,7 @@ const steps = [
   {
     icon: Building2,
     title: 'Registre seus imóveis',
-    description: 'Cadastre os imóveis que você está trabalhando para facilitar o preenchimento das fichas.',
+    description: 'Cadastre os imóveis que você está trabalhando para facilitar o preenchimento dos registros.',
     action: '/imoveis/novo',
     actionText: 'Adicionar Imóvel',
   },

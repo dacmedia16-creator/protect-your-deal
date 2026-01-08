@@ -110,7 +110,7 @@ const Funcionalidades = () => {
       icon: Smartphone,
       title: 'App para Celular',
       subtitle: 'Acesse de qualquer lugar, a qualquer hora',
-      description: 'Instale o VisitaSegura no seu celular como um aplicativo. Acesse suas fichas, crie novas visitas e gere comprovantes diretamente do seu smartphone, mesmo offline.',
+      description: 'Instale o VisitaSegura no seu celular como um aplicativo. Acesse seus registros, crie novas visitas e gere comprovantes diretamente do seu smartphone, mesmo offline.',
       benefits: [
         'Instalação simples pelo navegador',
         'Funciona em Android e iPhone',
@@ -126,12 +126,12 @@ const Funcionalidades = () => {
     {
       icon: ClipboardList,
       title: 'Gestão de Equipe',
-      description: 'Gerencie corretores da sua imobiliária, acompanhe fichas e relatórios de cada membro.'
+      description: 'Gerencie corretores da sua imobiliária, acompanhe registros e relatórios de cada membro.'
     },
     {
       icon: BarChart3,
       title: 'Relatórios',
-      description: 'Visualize estatísticas de visitas, fichas pendentes e confirmadas em dashboards intuitivos.'
+      description: 'Visualize estatísticas de visitas, registros pendentes e confirmados em dashboards intuitivos.'
     },
     {
       icon: Lock,
