@@ -203,7 +203,7 @@ export default function DetalhesImovel() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Fichas de Visita Relacionadas
+                Registros de Visita Relacionados
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0 space-y-2">

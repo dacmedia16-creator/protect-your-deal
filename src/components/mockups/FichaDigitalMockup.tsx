@@ -6,7 +6,7 @@ const FichaDigitalMockup = () => {
       {/* Header */}
       <div className="bg-primary/10 px-4 py-3 border-b border-border flex items-center gap-2">
         <FileCheck className="h-5 w-5 text-primary" />
-        <span className="font-medium text-sm">Nova Ficha de Visita</span>
+        <span className="font-medium text-sm">Novo Registro de Visita</span>
       </div>
       
       {/* Form Content */}
@@ -81,7 +81,7 @@ const FichaDigitalMockup = () => {
         {/* Button */}
         <div className="pt-2">
           <div className="h-10 bg-primary rounded-md flex items-center justify-center text-primary-foreground text-sm font-medium">
-            Criar Ficha de Visita
+            Criar Registro de Visita
           </div>
         </div>
       </div>

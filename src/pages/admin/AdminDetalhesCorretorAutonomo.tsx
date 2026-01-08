@@ -360,7 +360,7 @@ export default function AdminDetalhesCorretorAutonomo() {
 
       const backfillMessage =
         response.data?.backfill?.updated > 0
-          ? ` (${response.data.backfill.updated} ficha(s) atualizada(s))`
+          ? ` (${response.data.backfill.updated} registro(s) atualizado(s))`
           : "";
 
       toast.success(`Corretor vinculado com sucesso${backfillMessage}`);
@@ -557,7 +557,7 @@ export default function AdminDetalhesCorretorAutonomo() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              {fichas.length} fichas
+              {fichas.length} registros
             </div>
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
@@ -574,7 +574,7 @@ export default function AdminDetalhesCorretorAutonomo() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="assinatura">Assinatura</TabsTrigger>
-            <TabsTrigger value="fichas">Fichas ({fichas.length})</TabsTrigger>
+            <TabsTrigger value="fichas">Registros ({fichas.length})</TabsTrigger>
             <TabsTrigger value="clientes">Clientes ({clientes.length})</TabsTrigger>
             <TabsTrigger value="imoveis">Imóveis ({imoveis.length})</TabsTrigger>
           </TabsList>
@@ -778,7 +778,7 @@ export default function AdminDetalhesCorretorAutonomo() {
                     {fichas.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Nenhuma ficha encontrada
+                          Nenhum registro encontrado
                         </TableCell>
                       </TableRow>
                     ) : (

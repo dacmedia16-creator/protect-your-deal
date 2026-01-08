@@ -33,14 +33,14 @@ const Funcionalidades = () => {
     {
       id: 'fichas-digitais',
       icon: FileCheck,
-      title: 'Fichas de Visita Digitais',
-      subtitle: 'Substitua o papel por fichas completas e organizadas',
-      description: 'Crie fichas de visita profissionais com todos os dados necessários: informações do imóvel, dados do proprietário e comprador, data e horário da visita. Tudo armazenado de forma segura na nuvem.',
+      title: 'Registros de Visita Digitais',
+      subtitle: 'Substitua o papel por registros completos e organizados',
+      description: 'Crie registros de visita profissionais com todos os dados necessários: informações do imóvel, dados do proprietário e comprador, data e horário da visita. Tudo armazenado de forma segura na nuvem.',
       benefits: [
         'Preenchimento rápido e intuitivo',
         'Dados sempre acessíveis',
         'Histórico completo de visitas',
-        'Protocolo único para cada ficha'
+        'Protocolo único para cada registro'
       ],
       screenshot: '/placeholder.svg',
       reverse: false

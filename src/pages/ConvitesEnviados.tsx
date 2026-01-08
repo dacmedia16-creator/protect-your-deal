@@ -197,7 +197,7 @@ export default function ConvitesEnviados() {
                 className="w-full"
                 onClick={() => navigate(`/fichas/${convite.ficha_id}`)}
               >
-                Ver Ficha
+                Ver Registro
               </Button>
             </div>
           )}

@@ -165,7 +165,7 @@ export default function EmpresaRelatorios() {
       const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `relatorio_fichas_${dataInicio}_${dataFim}.csv`;
+      link.download = `relatorio_registros_${dataInicio}_${dataFim}.csv`;
       link.click();
 
       toast.success('Relatório exportado com sucesso!');
@@ -200,7 +200,7 @@ export default function EmpresaRelatorios() {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Relatório de Fichas de Visita</title>
+          <title>Relatório de Registros de Visita</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             h1 { color: #1e40af; }
@@ -218,14 +218,14 @@ export default function EmpresaRelatorios() {
         </head>
         <body>
           <div class="header">
-            <h1>Relatório de Fichas de Visita</h1>
+            <h1>Relatório de Registros de Visita</h1>
             <p>Período: ${format(new Date(dataInicio), "dd/MM/yyyy", { locale: ptBR })} - ${format(new Date(dataFim), "dd/MM/yyyy", { locale: ptBR })}</p>
           </div>
           
           <div class="stats">
             <div class="stat">
               <div class="stat-value">${fichas.length}</div>
-              <div class="stat-label">Total de Fichas</div>
+              <div class="stat-label">Total de Registros</div>
             </div>
             <div class="stat">
               <div class="stat-value">${fichas.filter(f => f.status === 'completo').length}</div>
@@ -368,7 +368,7 @@ export default function EmpresaRelatorios() {
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{fichas.length}</div>
-              <p className="text-sm text-muted-foreground">Total de Fichas</p>
+              <p className="text-sm text-muted-foreground">Total de Registros</p>
             </CardContent>
           </Card>
           <Card>
@@ -400,7 +400,7 @@ export default function EmpresaRelatorios() {
         {/* Data table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Fichas de Visita</CardTitle>
+            <CardTitle className="text-lg">Registros de Visita</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -410,7 +410,7 @@ export default function EmpresaRelatorios() {
             ) : fichas.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">Nenhuma ficha encontrada</h3>
+                <h3 className="text-lg font-medium">Nenhum registro encontrado</h3>
                 <p className="text-muted-foreground">Ajuste os filtros para ver mais resultados</p>
               </div>
             ) : (

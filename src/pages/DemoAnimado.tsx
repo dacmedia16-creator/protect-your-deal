@@ -49,16 +49,16 @@ const DEMO_STEPS = [
     duration: 6000,
     icon: Home,
     content: 'dashboard',
-    narration: 'No painel inicial você tem uma visão completa das suas atividades. Fichas do mês, confirmações pendentes e muito mais em um só lugar.',
+    narration: 'No painel inicial você tem uma visão completa das suas atividades. Registros do mês, confirmações pendentes e muito mais em um só lugar.',
   },
   {
     id: 'criar-ficha',
-    title: 'Criando uma Ficha de Visita',
+    title: 'Criando um Registro de Visita',
     subtitle: 'Preencha os dados do imóvel e das partes envolvidas',
     duration: 5500,
     icon: FileCheck,
     content: 'form',
-    narration: 'Criar uma ficha de visita é simples e rápido. Basta preencher os dados do imóvel e das partes envolvidas.',
+    narration: 'Criar um registro de visita é simples e rápido. Basta preencher os dados do imóvel e das partes envolvidas.',
   },
   {
     id: 'dados-imovel',
@@ -112,7 +112,7 @@ const DEMO_STEPS = [
     duration: 5500,
     icon: Clock,
     content: 'historico',
-    narration: 'Acompanhe o histórico completo de todas as visitas realizadas. Status, datas e detalhes de cada ficha.',
+    narration: 'Acompanhe o histórico completo de todas as visitas realizadas. Status, datas e detalhes de cada registro.',
   },
   {
     id: 'qrcode',
@@ -121,7 +121,7 @@ const DEMO_STEPS = [
     duration: 5000,
     icon: QrCode,
     content: 'qrcode',
-    narration: 'Cada ficha possui um QR Code exclusivo para verificação de autenticidade. Proteção contra fraudes.',
+    narration: 'Cada registro possui um QR Code exclusivo para verificação de autenticidade. Proteção contra fraudes.',
   },
   {
     id: 'relatorios',
@@ -162,11 +162,11 @@ const DEMO_STEPS = [
   {
     id: 'parceiros',
     title: 'Gestão de Parceiros',
-    subtitle: 'Compartilhe fichas entre imobiliárias',
+    subtitle: 'Compartilhe registros entre imobiliárias',
     duration: 5500,
     icon: Handshake,
     content: 'parceiros',
-    narration: 'Trabalhe em parceria com outras imobiliárias. Envie convites e compartilhe fichas de forma segura.',
+    narration: 'Trabalhe em parceria com outras imobiliárias. Envie convites e compartilhe registros de forma segura.',
   },
   {
     id: 'templates',
@@ -439,7 +439,7 @@ export default function DemoAnimado() {
             </div>
             <div className="grid grid-cols-3 gap-4 mb-6">
               {[
-                { label: 'Fichas do Mês', value: '24', icon: FileCheck, color: 'text-primary' },
+                { label: 'Registros do Mês', value: '24', icon: FileCheck, color: 'text-primary' },
                 { label: 'Pendentes', value: '5', icon: Clock, color: 'text-orange-500' },
                 { label: 'Confirmadas', value: '19', icon: Check, color: 'text-green-500' },
               ].map((stat, index) => (
@@ -471,7 +471,7 @@ export default function DemoAnimado() {
           <div className="p-6 animate-fade-in">
             <div className="flex items-center gap-3 mb-6">
               <FileCheck className="h-6 w-6 text-primary" />
-              <h3 className="text-lg font-semibold">Nova Ficha de Visita</h3>
+              <h3 className="text-lg font-semibold">Novo Registro de Visita</h3>
             </div>
             <div className="space-y-4">
               <div className="h-10 bg-muted rounded-md animate-pulse" />
@@ -780,7 +780,7 @@ export default function DemoAnimado() {
               {[
                 { icon: Check, text: 'Maria Silva confirmou a visita', tempo: 'Agora', color: 'text-green-500' },
                 { icon: Clock, text: 'Lembrete: Visita às 14:00', tempo: '5 min', color: 'text-orange-500' },
-                { icon: FileCheck, text: 'Nova ficha criada por João', tempo: '1h', color: 'text-primary' },
+                { icon: FileCheck, text: 'Novo registro criado por João', tempo: '1h', color: 'text-primary' },
               ].map((notif, index) => (
                 <div 
                   key={notif.text}

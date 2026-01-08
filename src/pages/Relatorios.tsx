@@ -132,7 +132,7 @@ export default function Relatorios() {
 
   const chartConfig = {
     fichas: {
-      label: 'Fichas',
+      label: 'Registros',
       color: 'hsl(var(--primary))',
     },
   };
@@ -162,7 +162,7 @@ export default function Relatorios() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold">{totalFichas}</p>
-                      <p className="text-xs text-muted-foreground">Total Fichas</p>
+                      <p className="text-xs text-muted-foreground">Total Registros</p>
                     </div>
                   </div>
                 </CardContent>
@@ -295,7 +295,7 @@ export default function Relatorios() {
                     </ChartContainer>
                   ) : (
                     <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-                      Nenhuma ficha registrada ainda
+                      Nenhum registro ainda
                     </div>
                   )}
                 </CardContent>
@@ -304,7 +304,7 @@ export default function Relatorios() {
               {/* Status distribution */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium">Status das Fichas</CardTitle>
+                  <CardTitle className="text-base font-medium">Status dos Registros</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {statusData.length > 0 ? (
@@ -341,7 +341,7 @@ export default function Relatorios() {
                     </div>
                   ) : (
                     <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-                      Nenhuma ficha registrada ainda
+                      Nenhum registro ainda
                     </div>
                   )}
                 </CardContent>
