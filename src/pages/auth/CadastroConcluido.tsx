@@ -68,7 +68,7 @@ export default function CadastroConcluido() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
               <div className="p-3 rounded-lg bg-muted/50">
                 <div className="text-2xl font-bold text-primary">2</div>
-                <div className="text-xs text-muted-foreground">Fichas/mês</div>
+                <div className="text-xs text-muted-foreground">Registros/mês</div>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
                 <div className="text-2xl font-bold text-primary">8</div>

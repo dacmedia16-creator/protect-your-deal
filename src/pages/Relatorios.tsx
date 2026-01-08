@@ -267,7 +267,7 @@ export default function Relatorios() {
               {/* Monthly chart */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium">Fichas por Mês</CardTitle>
+                  <CardTitle className="text-base font-medium">Registros por Mês</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {monthlyData.some(d => d.fichas > 0) ? (

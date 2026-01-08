@@ -263,7 +263,7 @@ export default function EmpresaAssinatura() {
                       <div className="flex justify-between text-sm">
                         <span className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
-                          Fichas/Mês
+                          Registros/Mês
                         </span>
                         <span>{usage.fichasMes} / {currentPlano.max_fichas_mes}</span>
                       </div>
@@ -358,7 +358,7 @@ export default function EmpresaAssinatura() {
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
-                        {plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
+                        {plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />

@@ -33,7 +33,7 @@ const MobileAppMockup = () => {
               {/* Stats Cards */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-card rounded-lg p-2 border border-border">
-                  <p className="text-[10px] text-muted-foreground">Fichas do Mês</p>
+                  <p className="text-[10px] text-muted-foreground">Registros do Mês</p>
                   <p className="text-lg font-bold">24</p>
                 </div>
                 <div className="bg-card rounded-lg p-2 border border-border">

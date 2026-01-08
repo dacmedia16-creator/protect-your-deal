@@ -734,7 +734,7 @@ export default function AdminDetalhesCorretorAutonomo() {
                         <div className="grid gap-2 md:grid-cols-3 text-sm">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span>{assinatura.plano.max_fichas_mes} fichas/mês</span>
+                            <span>{assinatura.plano.max_fichas_mes} registros/mês</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-muted-foreground" />
