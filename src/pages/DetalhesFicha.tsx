@@ -221,6 +221,24 @@ export default function DetalhesFicha() {
     enabled: !!user && !!id && (ficha?.status === 'completo' || ficha?.status === 'finalizado_parcial'),
   });
 
+  // Fetch external partner data
+  const { data: conviteParceiro } = useQuery({
+    queryKey: ['convite-parceiro', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('convites_parceiro')
+        .select('parceiro_nome, parceiro_cpf, parceiro_creci, permite_externo, status')
+        .eq('ficha_id', id)
+        .eq('status', 'aceito')
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!id && !!ficha?.corretor_parceiro_id,
+  });
+
   const confirmacaoProprietario = confirmacoes?.find(c => c.tipo === 'proprietario');
   const confirmacaoComprador = confirmacoes?.find(c => c.tipo === 'comprador');
 
@@ -1735,6 +1753,39 @@ export default function DetalhesFicha() {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Dados do Corretor Parceiro Externo */}
+          {ficha.corretor_parceiro_id && conviteParceiro?.permite_externo && conviteParceiro?.parceiro_nome && (
+            <Card className="border-blue-500/30">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <UserPlus className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Corretor Parceiro</CardTitle>
+                    <CardDescription>Parceiro externo que participou desta ficha</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nome</p>
+                    <p className="font-medium">{conviteParceiro.parceiro_nome}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">CPF</p>
+                    <p className="font-medium">{formatCPF(conviteParceiro.parceiro_cpf)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">CRECI</p>
+                    <p className="font-medium">{conviteParceiro.parceiro_creci || '-'}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
