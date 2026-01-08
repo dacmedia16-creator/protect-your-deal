@@ -74,7 +74,7 @@ export function PWAInstallBanner() {
                 ? isIOS 
                   ? 'Toque em Compartilhar e depois "Adicionar à Tela de Início"'
                   : 'Toque no menu do navegador e "Instalar app"'
-                : 'Acesse suas fichas rapidamente direto da tela inicial'
+                : 'Acesse seus registros rapidamente direto da tela inicial'
               }
             </p>
             

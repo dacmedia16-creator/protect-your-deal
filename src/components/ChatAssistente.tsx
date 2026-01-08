@@ -151,7 +151,7 @@ const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[]
   },
   '/empresa/dashboard': {
     context: 'Dashboard da imobiliária',
-    quickReplies: ['Métricas por corretor', 'Relatório consolidado', 'Fichas da equipe']
+    quickReplies: ['Métricas por corretor', 'Relatório consolidado', 'Registros da equipe']
   },
   '/instalar': {
     context: 'Página de instalação do app PWA',
@@ -160,7 +160,7 @@ const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[]
 };
 
 const DEFAULT_QUICK_REPLIES_USER = [
-  "Como criar uma ficha?",
+  "Como criar um registro?",
   "Como enviar confirmação?",
   "Problemas com WhatsApp",
   "Alterar meu plano"
@@ -295,7 +295,7 @@ Ou se preferir, me conta: **qual é a sua maior dificuldade hoje nas visitas?**`
 Você está no **VisitaSegura**. Posso te ajudar com alguma coisa?
 
 Por exemplo:
-• 📋 Criar uma nova ficha de visita
+• 📋 Criar um novo registro de visita
 • 📊 Ver suas métricas e relatórios
 • ❓ Tirar dúvidas sobre o sistema
 
@@ -327,8 +327,8 @@ Por exemplo:
 
   // Get page-specific hint for logged-in users
   const getPageHint = (pathname: string): string => {
-    if (pathname.includes('/fichas/nova')) return 'Vi que você está criando uma ficha nova. ';
-    if (pathname.includes('/fichas')) return 'Navegando pelas suas fichas, né? ';
+    if (pathname.includes('/fichas/nova')) return 'Vi que você está criando um registro novo. ';
+    if (pathname.includes('/fichas')) return 'Navegando pelos seus registros, né? ';
     if (pathname.includes('/clientes/novo')) return 'Cadastrando um cliente novo! ';
     if (pathname.includes('/clientes')) return 'Gerenciando seus clientes! ';
     if (pathname.includes('/imoveis/novo')) return 'Adicionando um imóvel novo! ';
@@ -356,7 +356,7 @@ Por exemplo:
       return `Oi! 👋 Sou a Sofia, assistente do **VisitaSegura**.
 
 Nosso sistema protege corretores em visitas imobiliárias com:
-• 📱 Fichas digitais com confirmação via WhatsApp
+• 📱 Registros digitais com confirmação via WhatsApp
 • ✅ Verificação de identidade por OTP
 • 📄 Comprovantes com QR Code verificável
 
