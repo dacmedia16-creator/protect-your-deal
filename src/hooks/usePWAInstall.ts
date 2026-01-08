@@ -19,7 +19,7 @@ interface PWAInstallState {
   install: () => Promise<boolean>;
 }
 
-export function usePWAInstall(): PWAInstallState {
+export function usePWAInstall(): PWAInstallState & { isSafari: boolean; isIOSWrongBrowser: boolean } {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -29,6 +29,10 @@ export function usePWAInstall(): PWAInstallState {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   const isAndroid = /Android/.test(navigator.userAgent);
   const isDesktop = !isIOS && !isAndroid;
+  
+  // Detect if on Safari (required for iOS PWA install)
+  const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(navigator.userAgent);
+  const isIOSWrongBrowser = isIOS && !isSafari;
 
   useEffect(() => {
     // Check if already installed
@@ -113,6 +117,8 @@ export function usePWAInstall(): PWAInstallState {
     isAndroid,
     isDesktop,
     canShowManualInstall,
+    isSafari,
+    isIOSWrongBrowser,
     install
   };
 }

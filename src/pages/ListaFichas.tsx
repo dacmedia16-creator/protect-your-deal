@@ -37,6 +37,7 @@ import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
+import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -153,6 +154,9 @@ export default function ListaFichas() {
       />
 
       <main className="container mx-auto px-4 py-4 md:py-6">
+        {/* PWA Install Banner */}
+        <PWAInstallBanner />
+        
         {/* Filter Tabs - horizontal scroll on mobile */}
         <div className="mb-4 md:mb-6 -mx-4 px-4 overflow-x-auto scrollbar-hide">
           <Tabs value={currentTab} onValueChange={handleTabChange}>

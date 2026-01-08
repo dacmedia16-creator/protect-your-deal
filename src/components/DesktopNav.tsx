@@ -13,8 +13,10 @@ import {
   User,
   ChevronDown,
   CreditCard,
-  Handshake
+  Handshake,
+  Download
 } from 'lucide-react';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -40,8 +42,20 @@ export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliaria, imobiliariaId } = useUserRole();
+  const { isInstalled, isIOS, install } = usePWAInstall();
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
+  
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      navigate('/instalar');
+    } else {
+      const success = await install();
+      if (!success) {
+        navigate('/instalar');
+      }
+    }
+  };
   
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
 
@@ -157,6 +171,12 @@ export function DesktopNav() {
                 <DropdownMenuItem onClick={() => navigate('/minha-assinatura')} className="cursor-pointer">
                   <CreditCard className="mr-2 h-4 w-4" />
                   Minha Assinatura
+                </DropdownMenuItem>
+              )}
+              {!isInstalled && (
+                <DropdownMenuItem onClick={handleInstallApp} className="cursor-pointer">
+                  <Download className="mr-2 h-4 w-4" />
+                  Instalar App
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />

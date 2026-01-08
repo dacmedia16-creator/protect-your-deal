@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
@@ -29,9 +30,21 @@ export function MobileNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliariaId } = useUserRole();
+  const { isInstalled, isIOS, install } = usePWAInstall();
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
+  
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      navigate('/instalar');
+    } else {
+      const success = await install();
+      if (!success) {
+        navigate('/instalar');
+      }
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -120,6 +133,12 @@ export function MobileNav() {
               <DropdownMenuItem onClick={() => navigate('/minha-assinatura')}>
                 <CreditCard className="h-4 w-4 mr-2" />
                 Minha Assinatura
+              </DropdownMenuItem>
+            )}
+            {!isInstalled && (
+              <DropdownMenuItem onClick={handleInstallApp}>
+                <Download className="h-4 w-4 mr-2" />
+                Instalar App
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
