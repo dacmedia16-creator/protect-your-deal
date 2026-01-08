@@ -114,7 +114,7 @@ serve(async (req) => {
     if (updateFichaError) {
       console.error('[aceitar-convite-externo] Erro ao atualizar ficha:', updateFichaError);
       return new Response(
-        JSON.stringify({ error: 'Erro ao salvar dados na ficha' }),
+        JSON.stringify({ error: 'Erro ao salvar dados no registro' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

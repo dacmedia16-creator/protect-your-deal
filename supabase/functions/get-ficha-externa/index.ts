@@ -65,9 +65,9 @@ serve(async (req) => {
       .single();
 
     if (fichaError || !ficha) {
-      console.error('[get-ficha-externa] Ficha não encontrada:', fichaError);
+      console.error('[get-ficha-externa] Registro não encontrado:', fichaError);
       return new Response(
-        JSON.stringify({ error: 'Ficha não encontrada' }),
+        JSON.stringify({ error: 'Registro não encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
