@@ -18,6 +18,7 @@ interface AceitarExternoRequest {
   parceiro_nome?: string;
   parceiro_cpf?: string;
   parceiro_creci?: string;
+  parceiro_imobiliaria?: string;
 }
 
 serve(async (req) => {
@@ -30,9 +31,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { token, dados, parceiro_nome, parceiro_cpf, parceiro_creci }: AceitarExternoRequest = await req.json();
+    const { token, dados, parceiro_nome, parceiro_cpf, parceiro_creci, parceiro_imobiliaria }: AceitarExternoRequest = await req.json();
     console.log(`[aceitar-convite-externo] Token: ${token?.substring(0, 10)}...`);
-    console.log(`[aceitar-convite-externo] Dados do parceiro: nome=${parceiro_nome}, cpf=${parceiro_cpf?.substring(0, 3)}***, creci=${parceiro_creci}`);
+    console.log(`[aceitar-convite-externo] Dados do parceiro: nome=${parceiro_nome}, cpf=${parceiro_cpf?.substring(0, 3)}***, creci=${parceiro_creci}, imobiliaria=${parceiro_imobiliaria}`);
 
     if (!token || !dados?.telefone) {
       return new Response(
@@ -82,6 +83,7 @@ serve(async (req) => {
     if (parceiro_nome) conviteUpdateData.parceiro_nome = parceiro_nome;
     if (parceiro_cpf) conviteUpdateData.parceiro_cpf = parceiro_cpf;
     if (parceiro_creci) conviteUpdateData.parceiro_creci = parceiro_creci;
+    if (parceiro_imobiliaria) conviteUpdateData.parceiro_imobiliaria = parceiro_imobiliaria;
 
     const { error: updateConviteError } = await supabase
       .from('convites_parceiro')

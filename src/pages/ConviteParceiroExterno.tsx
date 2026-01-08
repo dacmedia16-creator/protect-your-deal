@@ -80,6 +80,7 @@ export default function ConviteParceiroExterno() {
     nome: '',
     cpf: '',
     creci: '',
+    imobiliaria: '',
   });
 
   const [lastOtpResult, setLastOtpResult] = useState<{
@@ -216,6 +217,7 @@ export default function ConviteParceiroExterno() {
           parceiro_nome: parceiroData.nome || undefined,
           parceiro_cpf: parceiroData.cpf || undefined,
           parceiro_creci: parceiroData.creci || undefined,
+          parceiro_imobiliaria: parceiroData.imobiliaria || undefined,
         }
       });
 
@@ -540,6 +542,14 @@ export default function ConviteParceiroExterno() {
                         placeholder="Ex: 12345-F"
                         value={parceiroData.creci}
                         onChange={(e) => setParceiroData({ ...parceiroData, creci: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2 sm:col-span-3">
+                      <Label>Sua Imobiliária</Label>
+                      <Input
+                        placeholder="Nome da sua imobiliária"
+                        value={parceiroData.imobiliaria}
+                        onChange={(e) => setParceiroData({ ...parceiroData, imobiliaria: e.target.value })}
                       />
                     </div>
                   </div>
