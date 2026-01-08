@@ -65,7 +65,7 @@ const MobileAppMockup = () => {
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-card rounded-lg p-2 border border-border text-center">
                   <FileCheck className="h-4 w-4 mx-auto text-primary mb-1" />
-                  <p className="text-[9px]">Fichas</p>
+                  <p className="text-[9px]">Registros</p>
                 </div>
                 <div className="bg-card rounded-lg p-2 border border-border text-center">
                   <Users className="h-4 w-4 mx-auto text-primary mb-1" />
