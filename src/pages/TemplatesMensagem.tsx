@@ -119,12 +119,12 @@ Obrigado por usar o VisitaSegura!`,
 const templateLabels: Record<TemplateType, { title: string; description: string; icon: string }> = {
   criacao_proprietario: {
     title: 'Criação - Proprietário',
-    description: 'Enviada ao proprietário quando uma ficha é criada',
+    description: 'Enviada ao proprietário quando um registro é criado',
     icon: '👤'
   },
   criacao_comprador: {
     title: 'Criação - Comprador',
-    description: 'Enviada ao comprador/visitante quando uma ficha é criada',
+    description: 'Enviada ao comprador/visitante quando um registro é criado',
     icon: '👥'
   },
   lembrete: {
@@ -144,7 +144,7 @@ const variaveisDisponiveis = [
   { nome: '{endereco}', descricao: 'Endereço do imóvel' },
   { nome: '{tipo_imovel}', descricao: 'Tipo do imóvel (Casa, Apartamento, etc.)' },
   { nome: '{data_visita}', descricao: 'Data e hora da visita formatada' },
-  { nome: '{protocolo}', descricao: 'Número do protocolo da ficha' },
+  { nome: '{protocolo}', descricao: 'Número do protocolo do registro' },
   { nome: '{codigo}', descricao: 'Código OTP de confirmação' },
   { nome: '{link}', descricao: 'Link para confirmação online' },
 ];
