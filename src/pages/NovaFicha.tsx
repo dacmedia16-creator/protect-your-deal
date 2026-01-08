@@ -13,7 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle, Send } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { z } from 'zod';
 import { validateCPF, formatCPF } from '@/lib/cpf';
 import { MobileHeader } from '@/components/MobileHeader';
@@ -160,6 +161,8 @@ export default function NovaFicha() {
   // Entidades selecionadas (apenas imóvel mantém seletor)
   const [imovelSelecionado, setImovelSelecionado] = useState<ImovelSelecionado | null>(null);
   
+  const [enviarWhatsappAutomatico, setEnviarWhatsappAutomatico] = useState(true);
+  
   const [formData, setFormData] = useState<FichaFormData>({
     imovel_endereco: '',
     imovel_tipo: '',
@@ -293,73 +296,81 @@ export default function NovaFicha() {
 
       if (error) throw error;
 
-      // Enviar OTP apenas para o lado preenchido
-      const currentAppUrl = window.location.origin;
-      const sendOtpPromises = [];
+      // Enviar OTP apenas se o usuário optou por enviar automaticamente
+      if (enviarWhatsappAutomatico) {
+        const currentAppUrl = window.location.origin;
+        const sendOtpPromises = [];
 
-      if (incluiProprietario) {
-        sendOtpPromises.push(
-          supabase.functions.invoke('send-otp', {
-            body: { ficha_id: data.id, tipo: 'proprietario', app_url: currentAppUrl }
-          }).then(({ data: otpData, error: otpError }) => {
-            if (otpError) {
-              console.error('Error sending OTP to owner:', otpError);
-              return { tipo: 'proprietario', success: false, error: otpError };
-            }
-            return { tipo: 'proprietario', success: true, ...otpData };
-          })
-        );
-      }
-
-      if (incluiComprador) {
-        sendOtpPromises.push(
-          supabase.functions.invoke('send-otp', {
-            body: { ficha_id: data.id, tipo: 'comprador', app_url: currentAppUrl }
-          }).then(({ data: otpData, error: otpError }) => {
-            if (otpError) {
-              console.error('Error sending OTP to buyer:', otpError);
-              return { tipo: 'comprador', success: false, error: otpError };
-            }
-            return { tipo: 'comprador', success: true, ...otpData };
-          })
-        );
-      }
-
-      if (sendOtpPromises.length > 0) {
-        const otpResults = await Promise.all(sendOtpPromises);
-        const successCount = otpResults.filter(r => r.success).length;
-        const simulationMode = otpResults.some(r => r.simulation);
-
-        let toastMessage = '';
-        if (modoCriacao === 'completo') {
-          if (successCount === 2) {
-            toastMessage = simulationMode 
-              ? `OTPs gerados em modo simulação.`
-              : `WhatsApp enviado ao proprietário e comprador.`;
-          } else if (successCount === 1) {
-            toastMessage = `Apenas um WhatsApp foi enviado.`;
-          } else {
-            toastMessage = `Envio de WhatsApp falhou, envie manualmente.`;
-          }
-        } else {
-          const tipoParte = modoCriacao === 'proprietario' ? 'proprietário' : 'comprador';
-          if (successCount === 1) {
-            toastMessage = simulationMode
-              ? `OTP gerado para ${tipoParte} em modo simulação.`
-              : `WhatsApp enviado para o ${tipoParte}.`;
-          } else {
-            toastMessage = `Falha ao enviar WhatsApp para ${tipoParte}.`;
-          }
+        if (incluiProprietario) {
+          sendOtpPromises.push(
+            supabase.functions.invoke('send-otp', {
+              body: { ficha_id: data.id, tipo: 'proprietario', app_url: currentAppUrl }
+            }).then(({ data: otpData, error: otpError }) => {
+              if (otpError) {
+                console.error('Error sending OTP to owner:', otpError);
+                return { tipo: 'proprietario', success: false, error: otpError };
+              }
+              return { tipo: 'proprietario', success: true, ...otpData };
+            })
+          );
         }
 
-        toast({
-          title: 'Ficha criada com sucesso!',
-          description: `Protocolo: ${protocolo}. ${toastMessage}`,
-        });
+        if (incluiComprador) {
+          sendOtpPromises.push(
+            supabase.functions.invoke('send-otp', {
+              body: { ficha_id: data.id, tipo: 'comprador', app_url: currentAppUrl }
+            }).then(({ data: otpData, error: otpError }) => {
+              if (otpError) {
+                console.error('Error sending OTP to buyer:', otpError);
+                return { tipo: 'comprador', success: false, error: otpError };
+              }
+              return { tipo: 'comprador', success: true, ...otpData };
+            })
+          );
+        }
+
+        if (sendOtpPromises.length > 0) {
+          const otpResults = await Promise.all(sendOtpPromises);
+          const successCount = otpResults.filter(r => r.success).length;
+          const simulationMode = otpResults.some(r => r.simulation);
+
+          let toastMessage = '';
+          if (modoCriacao === 'completo') {
+            if (successCount === 2) {
+              toastMessage = simulationMode 
+                ? `OTPs gerados em modo simulação.`
+                : `WhatsApp enviado ao proprietário e comprador.`;
+            } else if (successCount === 1) {
+              toastMessage = `Apenas um WhatsApp foi enviado.`;
+            } else {
+              toastMessage = `Envio de WhatsApp falhou, envie manualmente.`;
+            }
+          } else {
+            const tipoParte = modoCriacao === 'proprietario' ? 'proprietário' : 'comprador';
+            if (successCount === 1) {
+              toastMessage = simulationMode
+                ? `OTP gerado para ${tipoParte} em modo simulação.`
+                : `WhatsApp enviado para o ${tipoParte}.`;
+            } else {
+              toastMessage = `Falha ao enviar WhatsApp para ${tipoParte}.`;
+            }
+          }
+
+          toast({
+            title: 'Ficha criada com sucesso!',
+            description: `Protocolo: ${protocolo}. ${toastMessage}`,
+          });
+        } else {
+          toast({
+            title: 'Ficha criada com sucesso!',
+            description: `Protocolo: ${protocolo}`,
+          });
+        }
       } else {
+        // Envio automático desativado
         toast({
           title: 'Ficha criada com sucesso!',
-          description: `Protocolo: ${protocolo}`,
+          description: `Protocolo: ${protocolo}. Envie o código de confirmação manualmente quando desejar.`,
         });
       }
 
@@ -730,19 +741,34 @@ export default function NovaFicha() {
             </CardContent>
           </Card>
 
-          {/* Info sobre envio automático */}
-          <Card className="border-green-500/30 bg-green-500/5">
+          {/* Envio automático via WhatsApp - Selecionável */}
+          <Card className={`border-2 transition-colors ${enviarWhatsappAutomatico ? 'border-green-500/50 bg-green-500/5' : 'border-muted bg-muted/5'}`}>
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
-                <MessageCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                <div className="grid gap-1.5 leading-none">
-                  <span className="text-sm font-medium">Envio automático via WhatsApp</span>
+                <Switch
+                  id="enviar-whatsapp"
+                  checked={enviarWhatsappAutomatico}
+                  onCheckedChange={setEnviarWhatsappAutomatico}
+                />
+                <div className="flex-1 grid gap-1.5 leading-none">
+                  <label htmlFor="enviar-whatsapp" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                    {enviarWhatsappAutomatico ? (
+                      <MessageCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Send className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    Envio automático via WhatsApp
+                  </label>
                   <p className="text-sm text-muted-foreground">
-                    {modoCriacao === 'completo' 
-                      ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário e o comprador.'
-                      : modoCriacao === 'proprietario'
-                        ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário.'
-                        : 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o comprador.'}
+                    {enviarWhatsappAutomatico ? (
+                      modoCriacao === 'completo' 
+                        ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário e o comprador.'
+                        : modoCriacao === 'proprietario'
+                          ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário.'
+                          : 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o comprador.'
+                    ) : (
+                      'O código de confirmação não será enviado automaticamente. Você poderá enviar manualmente depois.'
+                    )}
                   </p>
                 </div>
               </div>
