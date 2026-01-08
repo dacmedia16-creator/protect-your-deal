@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,6 +36,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
+import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -44,6 +45,20 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   completo: { label: 'Confirmado', variant: 'default', icon: CheckCircle },
   finalizado_parcial: { label: 'Finalizado', variant: 'default', icon: CheckCircle },
   expirado: { label: 'Expirado', variant: 'destructive', icon: Clock },
+};
+
+type Ficha = {
+  id: string;
+  protocolo: string;
+  imovel_endereco: string;
+  imovel_tipo: string;
+  proprietario_nome: string | null;
+  comprador_nome: string | null;
+  data_visita: string;
+  status: string;
+  user_id: string;
+  corretor_parceiro_id: string | null;
+  backup_gerado_em: string | null;
 };
 
 export default function ListaFichas() {
@@ -61,24 +76,27 @@ export default function ListaFichas() {
     }
   }, [user, authLoading, navigate]);
 
-  const { data: fichas, isLoading } = useQuery({
-    queryKey: ['fichas', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      // Fetch fichas where user is owner OR partner
-      const { data, error } = await supabase
-        .from('fichas_visita')
-        .select('*')
-        .or(`user_id.eq.${user.id},corretor_parceiro_id.eq.${user.id}`)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
-    },
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteList<Ficha>({
+    queryKey: ['fichas', user?.id || ''],
+    table: 'fichas_visita',
+    orFilters: user ? `user_id.eq.${user.id},corretor_parceiro_id.eq.${user.id}` : undefined,
+    pageSize: 20,
     enabled: !!user,
   });
 
-  const filteredFichas = fichas?.filter(ficha => {
+  const fichas = useMemo(() => 
+    data?.pages.flatMap(page => page.items) || [], 
+    [data]
+  );
+  const totalCount = data?.pages[0]?.totalCount || 0;
+
+  const filteredFichas = useMemo(() => fichas.filter(ficha => {
     if (statusFilter) {
       if (statusFilter === 'pendente' && isFichaConfirmada(ficha.status)) return false;
       if (statusFilter === 'completo' && !isFichaConfirmada(ficha.status)) return false;
@@ -92,12 +110,11 @@ export default function ListaFichas() {
       (ficha.proprietario_nome && ficha.proprietario_nome.toLowerCase().includes(term)) ||
       (ficha.comprador_nome && ficha.comprador_nome.toLowerCase().includes(term))
     );
-  });
+  }), [fichas, statusFilter, searchTerm, user?.id]);
 
-  const allCount = fichas?.length || 0;
-  const pendingCount = fichas?.filter(f => isFichaPendente(f.status)).length || 0;
-  const confirmedCount = fichas?.filter(f => isFichaConfirmada(f.status)).length || 0;
-  const parceiroCount = fichas?.filter(f => f.corretor_parceiro_id === user?.id).length || 0;
+  const pendingCount = useMemo(() => fichas.filter(f => isFichaPendente(f.status)).length, [fichas]);
+  const confirmedCount = useMemo(() => fichas.filter(f => isFichaConfirmada(f.status)).length, [fichas]);
+  const parceiroCount = useMemo(() => fichas.filter(f => f.corretor_parceiro_id === user?.id).length, [fichas, user?.id]);
 
   const handleTabChange = (value: string) => {
     if (value === 'todas') {
@@ -129,7 +146,7 @@ export default function ListaFichas() {
       {/* Mobile Header */}
       <MobileHeader
         title="Fichas de Visita"
-        subtitle={`${fichas?.length || 0} fichas no total`}
+        subtitle={`${fichas.length} de ${totalCount} fichas`}
         showAdd
         onAdd={() => navigate('/fichas/nova')}
         addLabel="Nova Ficha"
@@ -143,7 +160,7 @@ export default function ListaFichas() {
               <TabsTrigger value="todas" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
                 Todas
                 <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
-                  {allCount}
+                  {totalCount}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="pendente" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
@@ -344,6 +361,13 @@ export default function ListaFichas() {
                 </Card>
               );
             })}
+            
+            {/* Infinite Scroll Trigger */}
+            <InfiniteScrollTrigger
+              onLoadMore={fetchNextPage}
+              hasMore={!!hasNextPage}
+              isLoading={isFetchingNextPage}
+            />
           </div>
         ) : (
           <div className="text-center py-12">

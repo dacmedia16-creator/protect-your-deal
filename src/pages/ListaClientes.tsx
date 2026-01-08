@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,6 +42,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
+import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 
 type Cliente = {
   id: string;
@@ -69,21 +71,26 @@ export default function ListaClientes() {
     }
   }, [user, authLoading, navigate]);
 
-  const { data: clientes, isLoading } = useQuery({
-    queryKey: ['clientes', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('nome', { ascending: true });
-      
-      if (error) throw error;
-      return data as Cliente[];
-    },
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteList<Cliente>({
+    queryKey: ['clientes', user?.id || ''],
+    table: 'clientes',
+    filters: { user_id: user?.id },
+    orderBy: { column: 'nome', ascending: true },
+    pageSize: 20,
     enabled: !!user,
   });
+
+  const clientes = useMemo(() => 
+    data?.pages.flatMap(page => page.items) || [], 
+    [data]
+  );
+  const totalCount = data?.pages[0]?.totalCount || 0;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -109,7 +116,7 @@ export default function ListaClientes() {
     },
   });
 
-  const filteredClientes = clientes?.filter(cliente => {
+  const filteredClientes = useMemo(() => clientes.filter(cliente => {
     const matchesSearch = 
       cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cliente.telefone.includes(searchTerm) ||
@@ -119,7 +126,7 @@ export default function ListaClientes() {
     const matchesTipo = !filterTipo || cliente.tipo === filterTipo;
     
     return matchesSearch && matchesTipo;
-  });
+  }), [clientes, searchTerm, filterTipo]);
 
   const formatPhone = (phone: string) => {
     const numbers = phone.replace(/\D/g, '');
@@ -129,8 +136,8 @@ export default function ListaClientes() {
     return phone;
   };
 
-  const totalProprietarios = clientes?.filter(c => c.tipo === 'proprietario').length || 0;
-  const totalCompradores = clientes?.filter(c => c.tipo === 'comprador').length || 0;
+  const totalProprietarios = useMemo(() => clientes.filter(c => c.tipo === 'proprietario').length, [clientes]);
+  const totalCompradores = useMemo(() => clientes.filter(c => c.tipo === 'comprador').length, [clientes]);
 
   if (authLoading) {
     return (
@@ -148,7 +155,7 @@ export default function ListaClientes() {
       {/* Mobile Header */}
       <MobileHeader
         title="CRM de Clientes"
-        subtitle={`${clientes?.length || 0} clientes cadastrados`}
+        subtitle={`${clientes.length} de ${totalCount} clientes`}
         showAdd
         onAdd={() => navigate('/clientes/novo')}
         addLabel="Novo Cliente"
@@ -280,6 +287,13 @@ export default function ListaClientes() {
                 </CardContent>
               </Card>
             ))}
+            
+            {/* Infinite Scroll Trigger */}
+            <InfiniteScrollTrigger
+              onLoadMore={fetchNextPage}
+              hasMore={!!hasNextPage}
+              isLoading={isFetchingNextPage}
+            />
           </div>
         ) : (
           <div className="text-center py-12">

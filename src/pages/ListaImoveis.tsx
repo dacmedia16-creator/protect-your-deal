@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,6 +40,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
+import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 
 type Imovel = {
   id: string;
@@ -71,21 +73,25 @@ export default function ListaImoveis() {
     }
   }, [user, authLoading, navigate]);
 
-  const { data: imoveis, isLoading } = useQuery({
-    queryKey: ['imoveis', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('imoveis')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Imovel[];
-    },
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteList<Imovel>({
+    queryKey: ['imoveis', user?.id || ''],
+    table: 'imoveis',
+    filters: { user_id: user?.id },
+    pageSize: 20,
     enabled: !!user,
   });
+
+  const imoveis = useMemo(() => 
+    data?.pages.flatMap(page => page.items) || [], 
+    [data]
+  );
+  const totalCount = data?.pages[0]?.totalCount || 0;
 
   const { data: clientes } = useQuery({
     queryKey: ['clientes-map', user?.id],
@@ -130,7 +136,7 @@ export default function ListaImoveis() {
     },
   });
 
-  const filteredImoveis = imoveis?.filter(imovel => {
+  const filteredImoveis = useMemo(() => imoveis.filter(imovel => {
     const term = searchTerm.toLowerCase();
     return (
       imovel.endereco.toLowerCase().includes(term) ||
@@ -138,7 +144,7 @@ export default function ListaImoveis() {
       imovel.bairro?.toLowerCase().includes(term) ||
       imovel.cidade?.toLowerCase().includes(term)
     );
-  });
+  }), [imoveis, searchTerm]);
 
   if (authLoading) {
     return (
@@ -156,7 +162,7 @@ export default function ListaImoveis() {
       {/* Mobile Header */}
       <MobileHeader
         title="Imóveis"
-        subtitle={`${imoveis?.length || 0} imóveis cadastrados`}
+        subtitle={`${imoveis.length} de ${totalCount} imóveis`}
         showAdd
         onAdd={() => navigate('/imoveis/novo')}
         addLabel="Novo Imóvel"
@@ -244,6 +250,13 @@ export default function ListaImoveis() {
                 </CardContent>
               </Card>
             ))}
+            
+            {/* Infinite Scroll Trigger */}
+            <InfiniteScrollTrigger
+              onLoadMore={fetchNextPage}
+              hasMore={!!hasNextPage}
+              isLoading={isFetchingNextPage}
+            />
           </div>
         ) : (
           <div className="text-center py-12">
