@@ -97,8 +97,21 @@ serve(async (req) => {
       .eq('user_id', ficha.user_id)
       .single();
 
+    // Fetch imobiliaria name for principal broker
+    let corretorPrincipalImobiliaria = null;
+    if (profile?.imobiliaria_id) {
+      const { data: imobData } = await supabase
+        .from('imobiliarias')
+        .select('nome')
+        .eq('id', profile.imobiliaria_id)
+        .single();
+      corretorPrincipalImobiliaria = imobData?.nome;
+      console.log('Principal broker imobiliaria:', corretorPrincipalImobiliaria);
+    }
+
     // Get partner broker profile if exists
     let partnerProfile = null;
+    let partnerImobiliaria = null;
     let externalPartnerData = null;
     
     if (ficha.corretor_parceiro_id) {
@@ -109,6 +122,17 @@ serve(async (req) => {
         .single();
       partnerProfile = partnerData;
       console.log('Partner broker found:', partnerProfile?.nome);
+      
+      // Fetch imobiliaria name for partner broker
+      if (partnerProfile?.imobiliaria_id) {
+        const { data: imobData } = await supabase
+          .from('imobiliarias')
+          .select('nome')
+          .eq('id', partnerProfile.imobiliaria_id)
+          .single();
+        partnerImobiliaria = imobData?.nome;
+        console.log('Partner broker imobiliaria:', partnerImobiliaria);
+      }
       
       // If no partner profile, check for external partner data
       if (!partnerProfile) {
@@ -631,8 +655,9 @@ serve(async (req) => {
       if (profile.creci) {
         yPosition = drawField('CRECI', profile.creci, yPosition);
       }
-      if (profile.imobiliaria) {
-        yPosition = drawField('Imobiliária', profile.imobiliaria, yPosition);
+      const imobNomePrincipal = corretorPrincipalImobiliaria || profile.imobiliaria;
+      if (imobNomePrincipal) {
+        yPosition = drawField('Imobiliária', imobNomePrincipal, yPosition);
       }
       if (profile.telefone) {
         yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
@@ -655,8 +680,9 @@ serve(async (req) => {
         if (partnerProfile.creci) {
           yPosition = drawField('CRECI', partnerProfile.creci, yPosition);
         }
-        if (partnerProfile.imobiliaria) {
-          yPosition = drawField('Imobiliária', partnerProfile.imobiliaria, yPosition);
+        const imobNomeParceiro = partnerImobiliaria || partnerProfile.imobiliaria;
+        if (imobNomeParceiro) {
+          yPosition = drawField('Imobiliária', imobNomeParceiro, yPosition);
         }
         if (partnerProfile.telefone) {
           yPosition = drawField('Telefone', formatPhone(partnerProfile.telefone), yPosition);
