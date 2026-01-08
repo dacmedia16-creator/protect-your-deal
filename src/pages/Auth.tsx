@@ -322,7 +322,7 @@ export default function Auth() {
         
         <div className="space-y-8">
           <h1 className="font-display text-4xl font-bold text-primary-foreground leading-tight">
-            Proteja sua comissão com fichas de visita digitais
+            Proteja sua comissão com registros de visita digitais
           </h1>
           
           <div className="space-y-4">
