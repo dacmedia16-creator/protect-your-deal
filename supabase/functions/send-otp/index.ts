@@ -174,7 +174,7 @@ serve(async (req) => {
 
     if (fichaError || !ficha) {
       return new Response(
-        JSON.stringify({ error: 'Ficha não encontrada' }),
+        JSON.stringify({ error: 'Registro não encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
