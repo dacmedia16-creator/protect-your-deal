@@ -25,7 +25,7 @@ serve(async (req) => {
     if (!ficha_id) {
       console.log('[generate-pdf] Erro: ficha_id não fornecido');
       return new Response(
-        JSON.stringify({ error: 'ID da ficha é obrigatório' }),
+        JSON.stringify({ error: 'ID do registro é obrigatório' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -38,9 +38,9 @@ serve(async (req) => {
       .single();
 
     if (fichaError || !ficha) {
-      console.error('[generate-pdf] Ficha não encontrada:', fichaError);
+      console.error('[generate-pdf] Registro não encontrado:', fichaError);
       return new Response(
-        JSON.stringify({ error: 'Ficha não encontrada' }),
+        JSON.stringify({ error: 'Registro não encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -88,8 +88,8 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 
 ## Funcionalidades Principais
 
-### 🔐 Ficha Digital de Visita
-- Substituição completa da ficha de papel
+### 🔐 Registro Digital de Visita
+- Substituição completa do formulário de papel
 - Registro de todos os dados da visita (corretor, comprador, proprietário, imóvel)
 - Protocolo único e rastreável para cada visita
 - Status em tempo real (pendente, confirmado, cancelado)
@@ -101,7 +101,7 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 - Aceite de termos legais registrado
 
 ### 📋 QR Code Verificável
-- Cada ficha gera um QR Code único
+- Cada registro gera um QR Code único
 - Qualquer pessoa pode verificar autenticidade
 - Página pública de verificação do comprovante
 
@@ -146,22 +146,22 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 
 ### 🤝 Sistema de Parceria entre Corretores
 
-O VisitaSegura permite que dois corretores trabalhem juntos em uma mesma ficha de visita - ideal para visitas compartilhadas!
+O VisitaSegura permite que dois corretores trabalhem juntos em um mesmo registro de visita - ideal para visitas compartilhadas!
 
 #### Como Funciona:
-1. **Criar ficha com dados parciais** - Corretor A cria a ficha preenchendo apenas os dados do lado que ele representa (ex: só o comprador OU só o proprietário)
-2. **Convidar parceiro** - Na página de detalhes da ficha, clica no botão "Convidar Parceiro"
+1. **Criar registro com dados parciais** - Corretor A cria o registro preenchendo apenas os dados do lado que ele representa (ex: só o comprador OU só o proprietário)
+2. **Convidar parceiro** - Na página de detalhes do registro, clica no botão "Convidar Parceiro"
 3. **Informar telefone do parceiro** - Digita o telefone do corretor parceiro
 4. **Parceiro recebe convite** - O corretor parceiro recebe um link pelo WhatsApp
 5. **Aceitar e preencher** - O parceiro clica no link, aceita o convite e preenche os dados da parte faltante (ex: se você preencheu o comprador, ele preenche o proprietário)
 6. **Confirmações normais** - Cada parte (comprador e proprietário) confirma via OTP normalmente
-7. **Ficha completa** - Ambos os corretores têm acesso à ficha finalizada
+7. **Registro completo** - Ambos os corretores têm acesso ao registro finalizado
 
 #### Onde encontrar no sistema:
-- **Enviar convite**: Abre a ficha → Botão "Convidar Parceiro" (só aparece se a ficha tiver dados faltando)
+- **Enviar convite**: Abre o registro → Botão "Convidar Parceiro" (só aparece se o registro tiver dados faltando)
 - **Ver convites enviados**: Menu → Convites → Aba "Enviados"
 - **Ver convites recebidos**: Menu → Convites → Aba "Recebidos"
-- **Fichas como parceiro**: Menu → Fichas Parceiro
+- **Registros como parceiro**: Menu → Registros Parceiro
 
 #### Estados do Convite:
 - **Pendente**: Aguardando resposta do parceiro
@@ -178,8 +178,8 @@ O VisitaSegura permite que dois corretores trabalhem juntos em uma mesma ficha d
 
 # Planos e Preços
 
-| Plano | Público | Fichas/mês | Corretores | Preço |
-|-------|---------|------------|------------|-------|
+| Plano | Público | Registros/mês | Corretores | Preço |
+|-------|---------|---------------|------------|-------|
 | **Gratuito** | Todos | 1 | 1 | R$ 0/mês |
 | **Individual** | Corretor Autônomo | 30 | 1 | R$ 49,90/mês |
 | **Pequena** | Imobiliária | 100 | 5 | R$ 149,90/mês |
@@ -283,7 +283,7 @@ O VisitaSegura permite que dois corretores trabalhem juntos em uma mesma ficha d
 "Por isso tem o plano gratuito! Testa com 1 ficha por mês sem pagar nada. Aí você vê na prática como funciona antes de decidir. Tranquilo, sem compromisso!"
 
 ## "Prefiro papel"
-"Ah, entendo! Papel parece mais simples mesmo. Só que... ele se perde, pode ser adulterado, e aí na hora do problema... 😬 Com a ficha digital, você tem confirmação por WhatsApp, registro de IP e localização, e um QR Code que qualquer pessoa verifica. É tipo blindagem jurídica mesmo!"
+"Ah, entendo! Papel parece mais simples mesmo. Só que... ele se perde, pode ser adulterado, e aí na hora do problema... 😬 Com o registro digital, você tem confirmação por WhatsApp, registro de IP e localização, e um QR Code que qualquer pessoa verifica. É tipo blindagem jurídica mesmo!"
 
 ## "Funciona no meu celular?"
 "Com certeza! Funciona como um app no celular, seja Android ou iPhone. Instala direto do navegador, sem precisar de loja de apps. É rápido, leve e funciona até offline! 📱"
@@ -378,14 +378,14 @@ Use EXATAMENTE a sintaxe: [IMAGEM:chave] (sem espaços extras!)
 - ❌ ERRADO: [imagem:criar-ficha] (minúsculas - USE MAIÚSCULAS!)
 
 ## Imagens Básicas Disponíveis:
-- **[IMAGEM:criar-ficha]** - Screenshot do formulário de nova ficha
+- **[IMAGEM:criar-ficha]** - Screenshot do formulário de novo registro
 - **[IMAGEM:enviar-otp]** - Como enviar/reenviar código OTP
 - **[IMAGEM:convidar-parceiro]** - Tela de convite de parceiro
 - **[IMAGEM:menu]** - Menu de navegação do sistema
 - **[IMAGEM:whatsapp]** - Exemplo da mensagem de WhatsApp
 - **[IMAGEM:pdf]** - Exemplo do comprovante PDF
 - **[IMAGEM:instalar-app]** - Tela de instalação do PWA
-- **[IMAGEM:lista-fichas]** - Lista de fichas de visita
+- **[IMAGEM:lista-fichas]** - Lista de registros de visita
 - **[IMAGEM:dashboard]** - Dashboard principal
 - **[IMAGEM:clientes]** - Tela de clientes
 - **[IMAGEM:imoveis]** - Tela de imóveis
@@ -404,11 +404,11 @@ Use EXATAMENTE a sintaxe: [IMAGEM:chave] (sem espaços extras!)
 - **[IMAGEM:parceiro-passo-2]** - Passo 2: Parceiro recebe convite no WhatsApp
 - **[IMAGEM:parceiro-passo-3]** - Passo 3: Parceiro aceita e preenche sua parte
 
-## Passo-a-passo: Criar Ficha de Visita
+## Passo-a-passo: Criar Registro de Visita
 - **[IMAGEM:ficha-passo-1]** - Passo 1: Selecionar o imóvel
 - **[IMAGEM:ficha-passo-2]** - Passo 2: Preencher dados do comprador
 - **[IMAGEM:ficha-passo-3]** - Passo 3: Preencher dados do proprietário
-- **[IMAGEM:ficha-passo-4]** - Passo 4: Ficha criada com sucesso!
+- **[IMAGEM:ficha-passo-4]** - Passo 4: Registro criado com sucesso!
 
 ## Quando usar imagens:
 - Quando alguém pergunta "onde fica...?" ou "como faço para...?"
@@ -419,7 +419,7 @@ Use EXATAMENTE a sintaxe: [IMAGEM:chave] (sem espaços extras!)
 - Coloque a imagem APÓS a explicação textual de cada passo
 
 ## Exemplo de uso (simples):
-"É bem fácil criar uma ficha! Vai no menu e clica em 'Nova Ficha'. Aí é só preencher os dados do comprador, proprietário e do imóvel.
+"É bem fácil criar um registro! Vai no menu e clica em 'Novo Registro'. Aí é só preencher os dados do comprador, proprietário e do imóvel.
 
 [IMAGEM:criar-ficha]
 
@@ -437,7 +437,7 @@ Olha só como fica! Tranquilo, né?"
 **Passo 3:** Ele digita o código e confirma a visita
 [IMAGEM:otp-passo-3]
 
-Pronto! A ficha fica confirmada e você tem o comprovante jurídico! 🎉"
+Pronto! O registro fica confirmado e você tem o comprovante jurídico! 🎉"
 
 ---
 
@@ -524,11 +524,11 @@ serve(async (req) => {
         dynamicContext += `\n**Dicas contextuais para esta página**:\n`;
         
         if (userContext.currentPage.includes('/fichas/nova')) {
-          dynamicContext += `- O usuário está criando uma nova ficha de visita\n`;
+          dynamicContext += `- O usuário está criando um novo registro de visita\n`;
           dynamicContext += `- Ajude com: campos obrigatórios, como funciona o OTP, dicas de preenchimento\n`;
           dynamicContext += `- Explique que após criar, o sistema envia WhatsApp para comprador e proprietário\n`;
         } else if (userContext.currentPage.includes('/fichas')) {
-          dynamicContext += `- O usuário está visualizando fichas de visita\n`;
+          dynamicContext += `- O usuário está visualizando registros de visita\n`;
           dynamicContext += `- Ajude com: como filtrar, reenviar confirmações, baixar PDFs\n`;
         } else if (userContext.currentPage.includes('/clientes/novo')) {
           dynamicContext += `- O usuário está cadastrando um novo cliente\n`;

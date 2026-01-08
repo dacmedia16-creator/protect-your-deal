@@ -192,7 +192,7 @@ serve(async (req) => {
         .eq('id', convite.id);
       
       return new Response(
-        JSON.stringify({ error: 'Erro ao vincular à ficha. Tente novamente.' }),
+        JSON.stringify({ error: 'Erro ao vincular ao registro. Tente novamente.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
