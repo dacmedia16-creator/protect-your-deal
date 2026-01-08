@@ -438,14 +438,14 @@ export default function NovaFicha() {
                   <RadioGroupItem value="proprietario" id="proprietario" />
                   <label htmlFor="proprietario" className="flex-1 cursor-pointer">
                     <span className="font-medium">Apenas Proprietário primeiro</span>
-                    <p className="text-sm text-muted-foreground">Preencha o comprador depois na ficha</p>
+                    <p className="text-sm text-muted-foreground">Preencha o comprador depois no registro</p>
                   </label>
                 </div>
                 <div className="flex items-center space-x-3 p-3 rounded-lg border bg-background hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value="comprador" id="comprador" />
                   <label htmlFor="comprador" className="flex-1 cursor-pointer">
                     <span className="font-medium">Apenas Comprador primeiro</span>
-                    <p className="text-sm text-muted-foreground">Preencha o proprietário depois na ficha</p>
+                    <p className="text-sm text-muted-foreground">Preencha o proprietário depois no registro</p>
                   </label>
                 </div>
               </RadioGroup>

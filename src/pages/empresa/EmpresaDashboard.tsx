@@ -227,7 +227,7 @@ export default function EmpresaDashboard() {
               </Link>
               <Link to="/empresa/fichas" className="block">
                 <Button variant="outline" className="w-full justify-between">
-                  Ver todas as fichas
+                  Ver todos os registros
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>

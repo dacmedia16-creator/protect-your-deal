@@ -240,7 +240,7 @@ export default function RegistroImobiliaria() {
                         <p className="text-sm text-muted-foreground mt-1">Para corretores autônomos (pessoa física)</p>
                         <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
                           <span>1 corretor</span>
-                          <span>2 fichas/mês</span>
+                          <span>2 registros/mês</span>
                         </div>
                       </div>
                     </label>

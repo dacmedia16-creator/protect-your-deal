@@ -907,7 +907,7 @@ export default function DemoAnimado() {
                     </div>
                     <div>
                       <p className="font-medium text-sm">{parceiro.nome}</p>
-                      <p className="text-xs text-muted-foreground">{parceiro.fichas} fichas compartilhadas</p>
+                      <p className="text-xs text-muted-foreground">{parceiro.fichas} registros compartilhados</p>
                     </div>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded ${
@@ -1016,7 +1016,7 @@ export default function DemoAnimado() {
                 <h4 className="font-semibold mb-2">Gratuito</h4>
                 <p className="text-2xl font-bold mb-2">R$ 0</p>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>✓ 10 fichas/mês</li>
+                  <li>✓ 10 registros/mês</li>
                   <li>✓ 50 clientes</li>
                   <li>✓ 1 corretor</li>
                 </ul>
@@ -1032,7 +1032,7 @@ export default function DemoAnimado() {
                 <h4 className="font-semibold mb-2">Premium</h4>
                 <p className="text-2xl font-bold mb-2">R$ 49<span className="text-sm font-normal">/mês</span></p>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>✓ Fichas ilimitadas</li>
+                  <li>✓ Registros ilimitados</li>
                   <li>✓ Clientes ilimitados</li>
                   <li>✓ Equipe completa</li>
                 </ul>
