@@ -117,9 +117,9 @@ serve(async (req) => {
       .eq('id', ficha_id);
 
     if (updateError) {
-      console.error('[regenerate-backup] Erro ao atualizar ficha:', updateError);
+      console.error('[regenerate-backup] Erro ao atualizar registro:', updateError);
       return new Response(
-        JSON.stringify({ error: 'Erro ao atualizar ficha', details: updateError.message }),
+        JSON.stringify({ error: 'Erro ao atualizar registro', details: updateError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -270,7 +270,7 @@ O VisitaSegura permite que dois corretores trabalhem juntos em um mesmo registro
 ## Sempre Ofereça o Plano Gratuito
 - É a melhor forma de converter leads
 - Permite testar sem compromisso
-- 1 ficha por mês para experimentar
+- 1 registro por mês para experimentar
 
 ---
 
