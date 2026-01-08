@@ -75,6 +75,13 @@ export default function ConviteParceiroExterno() {
     autopreenchimento: false,
   });
 
+  // Dados do corretor parceiro externo
+  const [parceiroData, setParceiroData] = useState({
+    nome: '',
+    cpf: '',
+    creci: '',
+  });
+
   const [lastOtpResult, setLastOtpResult] = useState<{
     simulation: boolean;
     codigo?: string;
@@ -204,7 +211,11 @@ export default function ConviteParceiroExterno() {
             cpf: formData.cpf || null,
             telefone: formData.telefone.replace(/\D/g, ''),
             autopreenchimento: formData.autopreenchimento,
-          }
+          },
+          // Dados do corretor parceiro externo
+          parceiro_nome: parceiroData.nome || undefined,
+          parceiro_cpf: parceiroData.cpf || undefined,
+          parceiro_creci: parceiroData.creci || undefined,
         }
       });
 
@@ -495,7 +506,58 @@ export default function ConviteParceiroExterno() {
                   Preencha os dados abaixo para enviar o código de confirmação
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Dados do Corretor Parceiro (você) */}
+                <div className="space-y-4 pb-4 border-b">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-medium">Seus Dados como Corretor <span className="text-xs text-muted-foreground">(opcional)</span></h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    Identifique-se para que seus dados fiquem registrados na ficha
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Seu Nome</Label>
+                      <Input
+                        placeholder="Seu nome completo"
+                        value={parceiroData.nome}
+                        onChange={(e) => setParceiroData({ ...parceiroData, nome: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Seu CPF</Label>
+                      <Input
+                        placeholder="000.000.000-00"
+                        value={parceiroData.cpf}
+                        onChange={(e) => setParceiroData({ ...parceiroData, cpf: formatCPF(e.target.value) })}
+                        maxLength={14}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Seu CRECI</Label>
+                      <Input
+                        placeholder="Ex: 12345-F"
+                        value={parceiroData.creci}
+                        onChange={(e) => setParceiroData({ ...parceiroData, creci: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dados do Proprietário/Comprador */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    {convite.parte_faltante === 'proprietario' ? (
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <h3 className="font-medium">
+                      Dados do {convite.parte_faltante === 'proprietario' ? 'Proprietário' : 'Comprador'}
+                    </h3>
+                  </div>
+
                 <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
                   <Checkbox 
                     id="autopreenchimento"
@@ -564,6 +626,7 @@ export default function ConviteParceiroExterno() {
                   )}
                   Salvar e Enviar Confirmação
                 </Button>
+                </div>
               </CardContent>
             </Card>
           )}

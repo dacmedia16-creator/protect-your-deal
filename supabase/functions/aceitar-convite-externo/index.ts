@@ -14,6 +14,10 @@ interface AceitarExternoRequest {
     telefone: string;
     autopreenchimento: boolean;
   };
+  // Dados do corretor parceiro externo (opcional)
+  parceiro_nome?: string;
+  parceiro_cpf?: string;
+  parceiro_creci?: string;
 }
 
 serve(async (req) => {
@@ -26,8 +30,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { token, dados }: AceitarExternoRequest = await req.json();
+    const { token, dados, parceiro_nome, parceiro_cpf, parceiro_creci }: AceitarExternoRequest = await req.json();
     console.log(`[aceitar-convite-externo] Token: ${token?.substring(0, 10)}...`);
+    console.log(`[aceitar-convite-externo] Dados do parceiro: nome=${parceiro_nome}, cpf=${parceiro_cpf?.substring(0, 3)}***, creci=${parceiro_creci}`);
 
     if (!token || !dados?.telefone) {
       return new Response(
@@ -67,23 +72,28 @@ serve(async (req) => {
       );
     }
 
-    // Update convite status to 'aceito' if not already
-    if (convite.status !== 'aceito') {
-      const { error: updateConviteError } = await supabase
-        .from('convites_parceiro')
-        .update({ 
-          status: 'aceito',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', convite.id);
+    // Update convite status to 'aceito' and save partner data
+    const conviteUpdateData: Record<string, unknown> = {
+      status: 'aceito',
+      updated_at: new Date().toISOString(),
+    };
 
-      if (updateConviteError) {
-        console.error('[aceitar-convite-externo] Erro ao atualizar convite:', updateConviteError);
-        return new Response(
-          JSON.stringify({ error: 'Erro ao aceitar convite' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    // Add partner data if provided
+    if (parceiro_nome) conviteUpdateData.parceiro_nome = parceiro_nome;
+    if (parceiro_cpf) conviteUpdateData.parceiro_cpf = parceiro_cpf;
+    if (parceiro_creci) conviteUpdateData.parceiro_creci = parceiro_creci;
+
+    const { error: updateConviteError } = await supabase
+      .from('convites_parceiro')
+      .update(conviteUpdateData)
+      .eq('id', convite.id);
+
+    if (updateConviteError) {
+      console.error('[aceitar-convite-externo] Erro ao atualizar convite:', updateConviteError);
+      return new Response(
+        JSON.stringify({ error: 'Erro ao aceitar convite' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Prepare update data based on parte_faltante

@@ -344,6 +344,9 @@ export type Database = {
           expira_em: string
           ficha_id: string
           id: string
+          parceiro_cpf: string | null
+          parceiro_creci: string | null
+          parceiro_nome: string | null
           parte_faltante: string
           permite_externo: boolean | null
           status: string
@@ -358,6 +361,9 @@ export type Database = {
           expira_em?: string
           ficha_id: string
           id?: string
+          parceiro_cpf?: string | null
+          parceiro_creci?: string | null
+          parceiro_nome?: string | null
           parte_faltante: string
           permite_externo?: boolean | null
           status?: string
@@ -372,6 +378,9 @@ export type Database = {
           expira_em?: string
           ficha_id?: string
           id?: string
+          parceiro_cpf?: string | null
+          parceiro_creci?: string | null
+          parceiro_nome?: string | null
           parte_faltante?: string
           permite_externo?: boolean | null
           status?: string
