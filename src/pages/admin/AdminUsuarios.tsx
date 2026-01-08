@@ -50,7 +50,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2 } from "lucide-react";
+import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -125,7 +125,8 @@ export default function AdminUsuarios() {
 
   // Success dialog
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
-  const [createdUser, setCreatedUser] = useState<{ email: string; password: string; nome: string } | null>(null);
+  const [createdUser, setCreatedUser] = useState<{ email: string; password: string; nome: string; telefone?: string } | null>(null);
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Fetch all users with their roles and emails
@@ -367,6 +368,7 @@ export default function AdminUsuarios() {
         email: createForm.email,
         password: createForm.password,
         nome: createForm.nome,
+        telefone: createForm.telefone || undefined,
       });
       setIsCreateDialogOpen(false);
       setIsSuccessDialogOpen(true);
@@ -393,6 +395,41 @@ export default function AdminUsuarios() {
     setCopiedField(field);
     toast.success("Copiado!");
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!createdUser?.telefone) {
+      toast.error("Usuário não possui telefone cadastrado");
+      return;
+    }
+
+    setIsSendingWhatsApp(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const message = `Olá ${createdUser.nome}! 🎉\n\nSua conta foi criada com sucesso!\n\n📧 *Email:* ${createdUser.email}\n🔑 *Senha:* ${createdUser.password}\n\nAcesse: ${window.location.origin}\n\nRecomendamos que você altere sua senha após o primeiro acesso.`;
+
+      const response = await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          action: "send-text",
+          to: createdUser.telefone,
+          message,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao enviar WhatsApp");
+      }
+
+      toast.success("Credenciais enviadas por WhatsApp!");
+    } catch (error: any) {
+      console.error("Erro ao enviar WhatsApp:", error);
+      toast.error(error.message || "Erro ao enviar WhatsApp");
+    } finally {
+      setIsSendingWhatsApp(false);
+    }
   };
 
   const openCreateWithPassword = () => {
@@ -998,23 +1035,44 @@ export default function AdminUsuarios() {
                 </div>
               </div>
 
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => handleCopy(`Email: ${createdUser.email}\nSenha: ${createdUser.password}`, "all")}
-              >
-                {copiedField === "all" ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2 text-green-500" />
-                    Copiado!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar Credenciais
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleCopy(`Email: ${createdUser.email}\nSenha: ${createdUser.password}`, "all")}
+                >
+                  {copiedField === "all" ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2 text-green-500" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="default"
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={handleSendWhatsApp}
+                  disabled={!createdUser.telefone || isSendingWhatsApp}
+                  title={!createdUser.telefone ? "Usuário sem telefone cadastrado" : "Enviar credenciais por WhatsApp"}
+                >
+                  {isSendingWhatsApp ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      WhatsApp
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
