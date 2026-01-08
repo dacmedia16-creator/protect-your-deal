@@ -502,8 +502,8 @@ export default function DetalhesFicha() {
       queryClient.invalidateQueries({ queryKey: ['fichas'] });
 
       toast({
-        title: 'Ficha finalizada',
-        description: 'A ficha foi finalizada com assinatura parcial e o backup foi gerado.',
+        title: 'Registro finalizado',
+        description: 'O registro foi finalizado com assinatura parcial e o backup foi gerado.',
       });
 
       // Redirecionar para lista de finalizados
@@ -730,8 +730,8 @@ export default function DetalhesFicha() {
       if (error) throw error;
 
       toast({
-        title: 'Ficha excluída',
-        description: 'A ficha foi excluída com sucesso.',
+        title: 'Registro excluído',
+        description: 'O registro foi excluído com sucesso.',
       });
 
       queryClient.invalidateQueries({ queryKey: ['fichas'] });
@@ -858,9 +858,9 @@ export default function DetalhesFicha() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir ficha</AlertDialogTitle>
+                      <AlertDialogTitle>Excluir registro</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Tem certeza que deseja excluir a ficha #{ficha.protocolo}? Esta ação não pode ser desfeita.
+                        Tem certeza que deseja excluir o registro #{ficha.protocolo}? Esta ação não pode ser desfeita.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1881,7 +1881,7 @@ export default function DetalhesFicha() {
                       <span className="font-medium text-sm">Proprietário não confirmou</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Esta ficha foi finalizada sem a confirmação do proprietário.
+                      Este registro foi finalizado sem a confirmação do proprietário.
                     </p>
                   </div>
                 )}
@@ -1893,7 +1893,7 @@ export default function DetalhesFicha() {
                       <span className="font-medium text-sm">Comprador não confirmou</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Esta ficha foi finalizada sem a confirmação do comprador.
+                      Este registro foi finalizado sem a confirmação do comprador.
                     </p>
                   </div>
                 )}

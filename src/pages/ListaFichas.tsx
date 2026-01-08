@@ -145,11 +145,11 @@ export default function ListaFichas() {
       
       {/* Mobile Header */}
       <MobileHeader
-        title="Fichas de Visita"
-        subtitle={`${fichas.length} de ${totalCount} fichas`}
+        title="Registros de Visita"
+        subtitle={`${fichas.length} de ${totalCount} registros`}
         showAdd
         onAdd={() => navigate('/fichas/nova')}
-        addLabel="Nova Ficha"
+        addLabel="Novo Registro"
       />
 
       <main className="container mx-auto px-4 py-4 md:py-6">
@@ -374,14 +374,14 @@ export default function ListaFichas() {
             <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <FileText className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="font-medium mb-1">Nenhuma ficha encontrada</h3>
+            <h3 className="font-medium mb-1">Nenhum registro encontrado</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {searchTerm ? 'Tente outro termo de busca' : 'Crie sua primeira ficha de visita'}
+              {searchTerm ? 'Tente outro termo de busca' : 'Crie seu primeiro registro de visita'}
             </p>
             {!searchTerm && (
               <Button onClick={() => navigate('/fichas/nova')} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Nova Ficha
+                Novo Registro
               </Button>
             )}
           </div>
@@ -391,7 +391,7 @@ export default function ListaFichas() {
       {/* Floating Action Button for mobile */}
       <FloatingActionButton 
         onClick={() => navigate('/fichas/nova')} 
-        label="Nova Ficha"
+        label="Novo Registro"
       />
 
       {/* Mobile Navigation */}

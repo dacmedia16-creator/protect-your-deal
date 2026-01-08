@@ -146,8 +146,8 @@ export default function AdminFichas() {
     <SuperAdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Fichas de Visita</h1>
-          <p className="text-muted-foreground">Visualize todas as fichas do sistema</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">Registros de Visita</h1>
+          <p className="text-muted-foreground">Visualize todos os registros do sistema</p>
         </div>
 
         <Card>
@@ -166,9 +166,9 @@ export default function AdminFichas() {
             {filteredFichas.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">Nenhuma ficha encontrada</h3>
+                <h3 className="text-lg font-medium">Nenhum registro encontrado</h3>
                 <p className="text-muted-foreground">
-                  {search ? 'Tente buscar por outro termo' : 'Ainda não há fichas cadastradas no sistema'}
+                  {search ? 'Tente buscar por outro termo' : 'Ainda não há registros cadastrados no sistema'}
                 </p>
               </div>
             ) : (

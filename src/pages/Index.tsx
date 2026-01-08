@@ -75,8 +75,8 @@ const Index = () => {
   const features = [
     {
       icon: FileCheck,
-      title: 'Fichas Digitais',
-      description: 'Crie fichas de visita completas com todos os dados do imóvel, comprador e proprietário.'
+      title: 'Registros Digitais',
+      description: 'Crie registros de visita completos com todos os dados do imóvel, comprador e proprietário.'
     },
     {
       icon: MessageSquare,
@@ -106,7 +106,7 @@ const Index = () => {
     {
       icon: Smartphone,
       title: 'App para Celular',
-      description: 'Instale o app no seu celular e acesse suas fichas rapidamente, de qualquer lugar.'
+      description: 'Instale o app no seu celular e acesse seus registros rapidamente, de qualquer lugar.'
     }
   ];
 
@@ -114,7 +114,7 @@ const Index = () => {
     {
       icon: ClipboardCheck,
       number: '01',
-      title: 'Crie a Ficha',
+      title: 'Crie o Registro',
       description: 'Preencha os dados do imóvel, proprietário e comprador interessado.'
     },
     {

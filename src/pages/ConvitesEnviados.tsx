@@ -340,11 +340,11 @@ export default function ConvitesEnviados() {
               <div>
                 <h3 className="font-semibold text-lg">Nenhum convite enviado</h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Você ainda não enviou convites de parceria. Crie uma ficha de visita e convide um parceiro!
+                  Você ainda não enviou convites de parceria. Crie um registro de visita e convide um parceiro!
                 </p>
               </div>
               <Button onClick={() => navigate('/fichas/nova')}>
-                Criar Nova Ficha
+                Criar Novo Registro
               </Button>
             </CardContent>
           </Card>

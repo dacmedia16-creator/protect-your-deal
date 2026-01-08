@@ -357,19 +357,19 @@ export default function NovaFicha() {
           }
 
           toast({
-            title: 'Ficha criada com sucesso!',
+            title: 'Registro criado com sucesso!',
             description: `Protocolo: ${protocolo}. ${toastMessage}`,
           });
         } else {
           toast({
-            title: 'Ficha criada com sucesso!',
+            title: 'Registro criado com sucesso!',
             description: `Protocolo: ${protocolo}`,
           });
         }
       } else {
         // Envio automático desativado
         toast({
-          title: 'Ficha criada com sucesso!',
+          title: 'Registro criado com sucesso!',
           description: `Protocolo: ${protocolo}. Envie o código de confirmação manualmente quando desejar.`,
         });
       }
@@ -378,7 +378,7 @@ export default function NovaFicha() {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Erro ao criar ficha',
+        title: 'Erro ao criar registro',
         description: error.message,
       });
     } finally {
@@ -401,7 +401,7 @@ export default function NovaFicha() {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
       <MobileHeader
-        title="Nova Ficha de Visita"
+        title="Novo Registro de Visita"
         subtitle="Preencha os dados da visita"
         backPath="/fichas"
       />
@@ -416,7 +416,7 @@ export default function NovaFicha() {
                   <FileText className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Como deseja criar esta ficha?</CardTitle>
+                  <CardTitle className="text-lg">Como deseja criar este registro?</CardTitle>
                   <CardDescription>Escolha se quer preencher todos os dados agora ou começar por uma das partes</CardDescription>
                 </div>
               </div>
@@ -762,10 +762,10 @@ export default function NovaFicha() {
                   <p className="text-sm text-muted-foreground">
                     {enviarWhatsappAutomatico ? (
                       modoCriacao === 'completo' 
-                        ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário e o comprador.'
+                        ? 'Ao criar o registro, o código de confirmação será enviado automaticamente para o proprietário e o comprador.'
                         : modoCriacao === 'proprietario'
-                          ? 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o proprietário.'
-                          : 'Ao criar a ficha, o código de confirmação será enviado automaticamente para o comprador.'
+                          ? 'Ao criar o registro, o código de confirmação será enviado automaticamente para o proprietário.'
+                          : 'Ao criar o registro, o código de confirmação será enviado automaticamente para o comprador.'
                     ) : (
                       'O código de confirmação não será enviado automaticamente. Você poderá enviar manualmente depois.'
                     )}
@@ -800,7 +800,7 @@ export default function NovaFicha() {
                 ) : (
                   <>
                     <FileText className="h-4 w-4" />
-                    Criar Ficha
+                    Criar Registro
                   </>
                 )}
               </Button>
