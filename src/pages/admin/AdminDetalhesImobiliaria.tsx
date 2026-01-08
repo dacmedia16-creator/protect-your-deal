@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -52,7 +52,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound, UserCircle, Home, FileText, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound, UserCircle, Home, FileText, Phone, Mail, Upload, Trash2, ImageIcon } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -148,6 +148,11 @@ export default function AdminDetalhesImobiliaria() {
   const [selectedPlano, setSelectedPlano] = useState<string>('');
   const [savingPlano, setSavingPlano] = useState(false);
 
+  // Logo state
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Password reset dialog state
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: string; nome: string } | null>(null);
@@ -201,6 +206,9 @@ export default function AdminDetalhesImobiliaria() {
           // @ts-ignore - codigo vem da query
           codigo: imobiliaria.codigo,
         });
+
+        // Set logo URL
+        setLogoUrl(imobiliaria.logo_url);
 
         // Fetch planos
         const { data: planosData } = await supabase
@@ -437,6 +445,109 @@ export default function AdminDetalhesImobiliaria() {
     }
   };
 
+  // Logo upload helpers
+  const extractFilePathFromUrl = (url: string): string | null => {
+    try {
+      const match = url.match(/logos-imobiliarias\/(.+)/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !id) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 2MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      // Remove old logo if exists
+      if (logoUrl) {
+        const oldPath = extractFilePathFromUrl(logoUrl);
+        if (oldPath) {
+          await supabase.storage.from('logos-imobiliarias').remove([oldPath]);
+        }
+      }
+
+      // Upload new logo
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${id}/logo-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('logos-imobiliarias')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('logos-imobiliarias')
+        .getPublicUrl(filePath);
+
+      // Update imobiliaria record
+      const { error: updateError } = await supabase
+        .from('imobiliarias')
+        .update({ logo_url: publicUrl })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      setLogoUrl(publicUrl);
+      toast.success('Logo atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast.error('Erro ao fazer upload do logo');
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!logoUrl || !id) return;
+
+    setUploadingLogo(true);
+
+    try {
+      // Remove from storage
+      const filePath = extractFilePathFromUrl(logoUrl);
+      if (filePath) {
+        await supabase.storage.from('logos-imobiliarias').remove([filePath]);
+      }
+
+      // Update imobiliaria record
+      const { error } = await supabase
+        .from('imobiliarias')
+        .update({ logo_url: null })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setLogoUrl(null);
+      toast.success('Logo removido com sucesso!');
+    } catch (error: any) {
+      console.error('Error removing logo:', error);
+      toast.error('Erro ao remover logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const statusColors: Record<string, string> = {
     ativa: 'bg-success text-success-foreground',
     trial: 'bg-warning text-warning-foreground',
@@ -491,7 +602,78 @@ export default function AdminDetalhesImobiliaria() {
             <TabsTrigger value="fichas">Fichas ({fichas.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dados">
+          <TabsContent value="dados" className="space-y-6">
+            {/* Logo Card */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <ImageIcon className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Logo da Empresa</CardTitle>
+                    <CardDescription>O logo aparecerá nos comprovantes de visita</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  <div className="relative h-24 w-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted/50">
+                    {logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt="Logo da imobiliária"
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <Building2 className="h-10 w-10 text-muted-foreground/50" />
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                    >
+                      {uploadingLogo ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      {logoUrl ? 'Alterar Logo' : 'Fazer Upload'}
+                    </Button>
+
+                    {logoUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveLogo}
+                        disabled={uploadingLogo}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remover
+                      </Button>
+                    )}
+
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG ou WebP. Máximo: 2MB
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Dados Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Dados da Imobiliária</CardTitle>
