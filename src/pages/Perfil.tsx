@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX, Smartphone, Download, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,10 +32,22 @@ export default function Perfil() {
   const { user, loading: authLoading } = useAuth();
   const { soundEnabled, toggleSound } = useNotificationSettings();
   const { playNotificationSound } = useNotificationSound();
+  const { isInstalled, isIOS, install } = usePWAInstall();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      navigate('/instalar');
+    } else {
+      const success = await install();
+      if (!success) {
+        navigate('/instalar');
+      }
+    }
+  };
 
   const [nome, setNome] = useState('');
   const [creci, setCreci] = useState('');
@@ -345,6 +358,44 @@ export default function Perfil() {
               </div>
               <ThemeToggle />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* App Installation Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Aplicativo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isInstalled ? (
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <Check className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-green-600">App instalado</p>
+                  <p className="text-sm text-muted-foreground">
+                    Você está usando o app instalado
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Instalar app</p>
+                  <p className="text-sm text-muted-foreground">
+                    Acesse rapidamente pela tela inicial
+                  </p>
+                </div>
+                <Button onClick={handleInstallApp} size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Instalar
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
