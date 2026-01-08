@@ -38,6 +38,7 @@ import { DesktopNav } from '@/components/DesktopNav';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { PWAInstallFAB } from '@/components/PWAInstallFAB';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -397,6 +398,9 @@ export default function ListaFichas() {
         onClick={() => navigate('/fichas/nova')} 
         label="Novo Registro"
       />
+      
+      {/* PWA Install FAB */}
+      <PWAInstallFAB />
 
       {/* Mobile Navigation */}
       <MobileNav />
