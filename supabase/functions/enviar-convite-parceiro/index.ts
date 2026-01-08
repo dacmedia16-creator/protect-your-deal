@@ -66,9 +66,9 @@ serve(async (req) => {
       .maybeSingle();
 
     if (fichaError || !ficha) {
-      console.error('Ficha não encontrada:', fichaError);
+      console.error('Registro não encontrado:', fichaError);
       return new Response(
-        JSON.stringify({ error: 'Ficha não encontrada ou você não tem permissão' }),
+        JSON.stringify({ error: 'Registro não encontrado ou você não tem permissão' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -76,7 +76,7 @@ serve(async (req) => {
     // Check if ficha already has a partner
     if (ficha.corretor_parceiro_id) {
       return new Response(
-        JSON.stringify({ error: 'Esta ficha já possui um corretor parceiro' }),
+        JSON.stringify({ error: 'Este registro já possui um corretor parceiro' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
