@@ -99,6 +99,8 @@ serve(async (req) => {
 
     // Get partner broker profile if exists
     let partnerProfile = null;
+    let externalPartnerData = null;
+    
     if (ficha.corretor_parceiro_id) {
       const { data: partnerData } = await supabase
         .from('profiles')
@@ -107,6 +109,21 @@ serve(async (req) => {
         .single();
       partnerProfile = partnerData;
       console.log('Partner broker found:', partnerProfile?.nome);
+      
+      // If no partner profile, check for external partner data
+      if (!partnerProfile) {
+        const { data: conviteData } = await supabase
+          .from('convites_parceiro')
+          .select('parceiro_nome, parceiro_cpf, parceiro_creci, permite_externo')
+          .eq('ficha_id', ficha_id)
+          .eq('status', 'aceito')
+          .maybeSingle();
+        
+        if (conviteData?.permite_externo && conviteData?.parceiro_nome) {
+          externalPartnerData = conviteData;
+          console.log('External partner found:', externalPartnerData.parceiro_nome);
+        }
+      }
     }
 
     // Get imobiliaria data if exists
@@ -621,7 +638,7 @@ serve(async (req) => {
         yPosition = drawField('Telefone', formatPhone(profile.telefone), yPosition);
       }
 
-      // Partner broker - check space before
+      // Partner broker (registered) - check space before
       if (partnerProfile) {
         ensureSpace(150); // Check space before partner section
         
@@ -643,6 +660,33 @@ serve(async (req) => {
         }
         if (partnerProfile.telefone) {
           yPosition = drawField('Telefone', formatPhone(partnerProfile.telefone), yPosition);
+        }
+        // Show which part the partner filled
+        if (ficha.parte_preenchida_parceiro) {
+          const parteLabel = ficha.parte_preenchida_parceiro === 'proprietario' ? 'Proprietário' : 'Comprador';
+          yPosition = drawField('Responsável por', `Dados do ${parteLabel}`, yPosition);
+        }
+      }
+      
+      // External partner (not registered) - check space before
+      if (externalPartnerData && !partnerProfile) {
+        ensureSpace(150); // Check space before external partner section
+        
+        yPosition -= 10;
+        currentPage.drawText('Corretor Parceiro (Externo):', {
+          x: 50,
+          y: yPosition,
+          size: 9,
+          font: helveticaBold,
+          color: lightGray,
+        });
+        yPosition -= 15;
+        yPosition = drawField('Nome', externalPartnerData.parceiro_nome, yPosition);
+        if (externalPartnerData.parceiro_cpf) {
+          yPosition = drawField('CPF', formatCPF(externalPartnerData.parceiro_cpf), yPosition);
+        }
+        if (externalPartnerData.parceiro_creci) {
+          yPosition = drawField('CRECI', externalPartnerData.parceiro_creci, yPosition);
         }
         // Show which part the partner filled
         if (ficha.parte_preenchida_parceiro) {
