@@ -420,7 +420,7 @@ const Index = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-primary'}`} />
-                        {plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
+                        {plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-primary'}`} />
@@ -488,7 +488,7 @@ const Index = () => {
                   O que é o VisitaSegura?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  O VisitaSegura é uma plataforma digital para corretores de imóveis criarem fichas de visita 
+                  O VisitaSegura é uma plataforma digital para corretores de imóveis criarem registros de visita 
                   com confirmação via WhatsApp. Proprietários e compradores confirmam a visita através de um 
                   código OTP, gerando um comprovante PDF com QR Code para verificação de autenticidade.
                 </AccordionContent>
@@ -499,7 +499,7 @@ const Index = () => {
                   Como funciona a confirmação via OTP?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Após criar a ficha de visita, você envia códigos de confirmação para o proprietário e o 
+                  Após criar o registro de visita, você envia códigos de confirmação para o proprietário e o 
                   comprador via WhatsApp. Cada um recebe um código único que deve ser inserido na plataforma 
                   para confirmar a visita. Isso garante que ambas as partes concordaram com os termos.
                 </AccordionContent>
@@ -511,7 +511,7 @@ const Index = () => {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
                   O plano gratuito é ideal para corretores autônomos que estão começando. Ele oferece 
-                  recursos básicos para gerenciar suas visitas. Para recursos avançados, mais fichas por mês 
+                  recursos básicos para gerenciar suas visitas. Para recursos avançados, mais registros por mês 
                   ou gestão de equipe, você pode fazer upgrade para um plano pago a qualquer momento.
                 </AccordionContent>
               </AccordionItem>

@@ -271,10 +271,10 @@ export default function RegistroImobiliaria() {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>{plano.max_corretores} corretores</span>
-                          <span>{plano.max_fichas_mes} fichas/mês</span>
-                        </div>
+                            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                              <span>{plano.max_corretores} corretores</span>
+                              <span>{plano.max_fichas_mes} registros/mês</span>
+                            </div>
                       </div>
                     </label>
                   ))}

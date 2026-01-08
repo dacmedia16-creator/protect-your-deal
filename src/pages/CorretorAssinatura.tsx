@@ -252,7 +252,7 @@ export default function CorretorAssinatura() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <FileText className="h-4 w-4" />
-                        Fichas/mês
+                        Registros/mês
                       </span>
                       <span className="font-medium">
                         {usage.fichas_mes} / {assinatura.plano.max_fichas_mes}
@@ -338,7 +338,7 @@ export default function CorretorAssinatura() {
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-success" />
-                          {plano.max_fichas_mes} fichas/mês
+                          {plano.max_fichas_mes} registros/mês
                         </li>
                         <li className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-success" />

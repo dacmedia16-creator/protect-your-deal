@@ -139,7 +139,7 @@ export function UpgradeBanner({ className = '' }: UpgradeBannerProps) {
             {fichasPercent >= 70 && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Fichas do mês</span>
+                  <span className="text-muted-foreground">Registros do mês</span>
                   <span className={fichasPercent >= 100 ? 'text-destructive font-medium' : ''}>
                     {usage.fichasMes.current}/{usage.fichasMes.max}
                   </span>
