@@ -28,6 +28,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { DesktopNav } from '@/components/DesktopNav';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
+import { PWAInstallFAB } from '@/components/PWAInstallFAB';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 
@@ -449,6 +450,9 @@ export default function Dashboard() {
 
       {/* Mobile Navigation */}
       <MobileNav />
+      
+      {/* PWA Install FAB */}
+      <PWAInstallFAB />
 
       {/* Debug Banner - clique 5x no título para mostrar */}
       {showDebug && (
