@@ -204,7 +204,7 @@ export default function AdminPlanos() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="max_fichas_mes">Máx. Fichas/Mês</Label>
+                    <Label htmlFor="max_fichas_mes">Máx. Registros/Mês</Label>
                     <Input
                       id="max_fichas_mes"
                       type="number"
@@ -316,7 +316,7 @@ export default function AdminPlanos() {
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span>{plano.max_fichas_mes >= 99999 ? 'Ilimitado' : plano.max_fichas_mes} fichas/mês</span>
+                    <span>{plano.max_fichas_mes >= 99999 ? 'Ilimitado' : plano.max_fichas_mes} registros/mês</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
