@@ -909,6 +909,36 @@ export type Database = {
           },
         ]
       }
+      webhook_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_type: string | null
+          id: string
+          payload: Json
+          processed: boolean | null
+          source: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          source?: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       imobiliarias_publicas: {

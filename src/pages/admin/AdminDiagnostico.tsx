@@ -22,17 +22,22 @@ import { useToast } from "@/hooks/use-toast";
 import {
   AlertTriangle,
   CheckCircle,
+  CreditCard,
   Database,
   ExternalLink,
   Info,
   Loader2,
+  Play,
   RefreshCw,
   Search,
+  Settings,
   Shield,
   ShieldAlert,
   ShieldCheck,
+  Trash2,
   User,
   UserPlus,
+  Webhook,
   Wrench,
   XCircle,
 } from "lucide-react";
@@ -88,6 +93,32 @@ type ImobiliariaOption = {
   nome: string;
 };
 
+// Asaas webhook test types
+interface WebhookConfig {
+  asaas_api_key_configured: boolean;
+  asaas_api_key_prefix: string | null;
+  sandbox_mode: boolean;
+  webhook_url: string;
+}
+
+interface WebhookLog {
+  id: string;
+  source: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  processed: boolean;
+  error_message: string | null;
+  created_at: string;
+}
+
+interface WebhookStats {
+  total: number;
+  processed: number;
+  failed: number;
+  by_event_type: Record<string, number>;
+  last_event_at: string | null;
+}
+
 export default function AdminDiagnostico() {
   const { user } = useAuth();
   const { role, imobiliariaId, loading: roleLoading, refetch } = useUserRole();
@@ -106,6 +137,13 @@ export default function AdminDiagnostico() {
   const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
   const [isCheckingSystem, setIsCheckingSystem] = useState(false);
   const [fixingOperation, setFixingOperation] = useState<string | null>(null);
+
+  // Asaas webhook test state
+  const [webhookConfig, setWebhookConfig] = useState<WebhookConfig | null>(null);
+  const [webhookLogs, setWebhookLogs] = useState<WebhookLog[]>([]);
+  const [webhookStats, setWebhookStats] = useState<WebhookStats | null>(null);
+  const [isLoadingWebhook, setIsLoadingWebhook] = useState(false);
+  const [webhookAction, setWebhookAction] = useState<string | null>(null);
 
   const normalizedSearchEmail = useMemo(
     () => searchEmail.trim().toLowerCase(),
@@ -204,6 +242,73 @@ export default function AdminDiagnostico() {
       setFixingOperation(null);
     },
   });
+
+  // Asaas webhook test functions
+  const invokeWebhookTest = async (action: string) => {
+    setIsLoadingWebhook(true);
+    setWebhookAction(action);
+    try {
+      const { data, error } = await supabase.functions.invoke('asaas-webhook-test', {
+        body: { action }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      return data;
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro no teste de webhook",
+        description: error?.message ?? "Erro desconhecido",
+      });
+      return null;
+    } finally {
+      setIsLoadingWebhook(false);
+      setWebhookAction(null);
+    }
+  };
+
+  const checkWebhookConfig = async () => {
+    const data = await invokeWebhookTest('check-config');
+    if (data?.success) {
+      setWebhookConfig(data.config);
+      toast({ title: "Configuração verificada", description: "Veja os detalhes abaixo." });
+    }
+  };
+
+  const loadWebhookLogs = async () => {
+    const data = await invokeWebhookTest('list-logs');
+    if (data?.success) {
+      setWebhookLogs(data.logs || []);
+      toast({ title: "Logs carregados", description: `${data.count} evento(s) encontrado(s).` });
+    }
+  };
+
+  const loadWebhookStats = async () => {
+    const data = await invokeWebhookTest('stats');
+    if (data?.success) {
+      setWebhookStats(data.stats);
+      toast({ title: "Estatísticas carregadas" });
+    }
+  };
+
+  const simulatePayment = async () => {
+    const data = await invokeWebhookTest('simulate-payment');
+    if (data?.success) {
+      toast({ title: "Evento simulado", description: data.message });
+      await loadWebhookLogs();
+    }
+  };
+
+  const clearOldLogs = async () => {
+    const data = await invokeWebhookTest('clear-old-logs');
+    if (data?.success) {
+      toast({ title: "Logs limpos", description: `${data.deleted_count} log(s) removido(s).` });
+      await loadWebhookLogs();
+      await loadWebhookStats();
+    }
+  };
 
   // Check for system-wide inconsistencies
   const checkSystemInconsistencies = async () => {
@@ -864,6 +969,232 @@ export default function AdminDiagnostico() {
 
         {/* System Alerts */}
         <SystemAlertsSection />
+
+        {/* Asaas Webhook Test Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Webhook className="h-5 w-5 text-green-600" />
+                Diagnóstico Webhook Asaas
+              </CardTitle>
+              <Badge variant="outline" className="text-xs">
+                Pagamentos
+              </Badge>
+            </div>
+            <CardDescription>
+              Verifique se o webhook de pagamentos está funcionando corretamente
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={checkWebhookConfig}
+                disabled={isLoadingWebhook}
+              >
+                {webhookAction === 'check-config' ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Settings className="h-4 w-4 mr-2" />
+                )}
+                Verificar Configuração
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadWebhookLogs}
+                disabled={isLoadingWebhook}
+              >
+                {webhookAction === 'list-logs' ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Database className="h-4 w-4 mr-2" />
+                )}
+                Ver Logs
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadWebhookStats}
+                disabled={isLoadingWebhook}
+              >
+                {webhookAction === 'stats' ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <CreditCard className="h-4 w-4 mr-2" />
+                )}
+                Estatísticas
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={simulatePayment}
+                disabled={isLoadingWebhook}
+              >
+                {webhookAction === 'simulate-payment' ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                Simular Pagamento
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isLoadingWebhook}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Limpar Logs Antigos
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Limpar logs antigos?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação irá remover todos os logs de webhook com mais de 30 dias.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={clearOldLogs}>
+                      Confirmar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+
+            {/* Config Display */}
+            {webhookConfig && (
+              <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Configuração Atual
+                </h4>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    {webhookConfig.asaas_api_key_configured ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-destructive" />
+                    )}
+                    <span>
+                      API Key: {webhookConfig.asaas_api_key_configured 
+                        ? webhookConfig.asaas_api_key_prefix 
+                        : 'Não configurada'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-blue-500" />
+                    <span>Modo: {webhookConfig.sandbox_mode ? 'Sandbox' : 'Produção'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-mono text-xs break-all">{webhookConfig.webhook_url}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Display */}
+            {webhookStats && (
+              <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Estatísticas
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="text-center p-3 rounded bg-background">
+                    <p className="text-2xl font-bold">{webhookStats.total}</p>
+                    <p className="text-xs text-muted-foreground">Total de eventos</p>
+                  </div>
+                  <div className="text-center p-3 rounded bg-green-500/10">
+                    <p className="text-2xl font-bold text-green-600">{webhookStats.processed}</p>
+                    <p className="text-xs text-muted-foreground">Processados</p>
+                  </div>
+                  <div className="text-center p-3 rounded bg-destructive/10">
+                    <p className="text-2xl font-bold text-destructive">{webhookStats.failed}</p>
+                    <p className="text-xs text-muted-foreground">Falharam</p>
+                  </div>
+                </div>
+                {Object.keys(webhookStats.by_event_type).length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">Por tipo de evento:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(webhookStats.by_event_type).map(([event, count]) => (
+                        <Badge key={event} variant="outline" className="text-xs">
+                          {event}: {count}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {webhookStats.last_event_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Último evento: {new Date(webhookStats.last_event_at).toLocaleString('pt-BR')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Logs Display */}
+            {webhookLogs.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Últimos Logs ({webhookLogs.length})
+                </h4>
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {webhookLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className={`p-3 rounded-lg border text-sm ${
+                        log.processed
+                          ? 'bg-green-500/5 border-green-500/30'
+                          : 'bg-amber-500/5 border-amber-500/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <Badge variant={log.processed ? 'default' : 'secondary'} className="text-xs">
+                          {log.event_type || 'unknown'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(log.created_at).toLocaleString('pt-BR')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        {log.processed ? (
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <AlertTriangle className="h-3 w-3 text-amber-500" />
+                        )}
+                        <span>{log.processed ? 'Processado' : 'Pendente'}</span>
+                        <span className="text-muted-foreground">• {log.source}</span>
+                      </div>
+                      {log.error_message && (
+                        <p className="text-xs text-destructive mt-1">{log.error_message}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!webhookConfig && !webhookStats && webhookLogs.length === 0 && (
+              <div className="text-center py-6 text-muted-foreground">
+                <Webhook className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p>Clique em um dos botões acima para começar o diagnóstico</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Current User Diagnostics */}
         {isRunningCurrentTests ? (
