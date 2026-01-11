@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
@@ -421,7 +421,15 @@ export default function Auth() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-password">Senha</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password">Senha</Label>
+                        <Link 
+                          to="/auth/recuperar-senha" 
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Esqueceu sua senha?
+                        </Link>
+                      </div>
                       <Input
                         id="login-password"
                         type="password"

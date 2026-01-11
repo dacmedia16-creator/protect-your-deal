@@ -31,6 +31,8 @@ import RegistroCorretorAutonomo from "./pages/auth/RegistroCorretorAutonomo";
 import RegistroTipo from "./pages/auth/RegistroTipo";
 import AceitarConvite from "./pages/auth/AceitarConvite";
 import CadastroConcluido from "./pages/auth/CadastroConcluido";
+import RecuperarSenha from "./pages/auth/RecuperarSenha";
+import RedefinirSenha from "./pages/auth/RedefinirSenha";
 import ConviteParceiro from "./pages/ConviteParceiro";
 import ConviteParceiroExterno from "./pages/ConviteParceiroExterno";
 import TermosDeUso from "./pages/TermosDeUso";
@@ -119,6 +121,8 @@ const App = () => (
                 <Route path="/convite-externo/:token" element={<ConviteParceiroExterno />} />
                 <Route path="/termos-de-uso" element={<TermosDeUso />} />
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+                <Route path="/auth/recuperar-senha" element={<RecuperarSenha />} />
+                <Route path="/auth/redefinir-senha" element={<RedefinirSenha />} />
                 
                 {/* Protected route for terms acceptance */}
                 <Route path="/aceitar-termos" element={
