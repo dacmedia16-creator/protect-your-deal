@@ -19,6 +19,30 @@ serve(async (req) => {
     const webhookData = await req.json();
     console.log('Asaas webhook received:', JSON.stringify(webhookData));
 
+    // Log webhook event to database for traceability
+    let logId: string | null = null;
+    try {
+      const { data: logData, error: logError } = await supabase
+        .from('webhook_logs')
+        .insert({
+          source: 'asaas',
+          event_type: webhookData.event || 'unknown',
+          payload: webhookData,
+          processed: false
+        })
+        .select('id')
+        .single();
+
+      if (logError) {
+        console.error('Error logging webhook:', logError);
+      } else {
+        logId = logData?.id;
+        console.log('Webhook logged with id:', logId);
+      }
+    } catch (logErr) {
+      console.error('Failed to log webhook:', logErr);
+    }
+
     const { event, payment, subscription } = webhookData;
 
     // Processar eventos de pagamento
@@ -158,6 +182,14 @@ serve(async (req) => {
             .eq('id', assinatura.id);
         }
       }
+    }
+
+    // Mark webhook as processed
+    if (logId) {
+      await supabase
+        .from('webhook_logs')
+        .update({ processed: true })
+        .eq('id', logId);
     }
 
     return new Response(
