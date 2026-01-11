@@ -6,6 +6,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to send WhatsApp notification
+async function sendWhatsAppNotification(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  phone: string,
+  message: string
+): Promise<boolean> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      },
+      body: JSON.stringify({
+        action: 'send-text',
+        phone,
+        message,
+      }),
+    });
+
+    const result = await response.json();
+    console.log('WhatsApp notification result:', result);
+    return result.success === true;
+  } catch (error) {
+    console.error('Error sending WhatsApp notification:', error);
+    return false;
+  }
+}
+
+// Helper function to format currency
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,12 +85,12 @@ serve(async (req) => {
 
     // Processar eventos de pagamento
     if (payment) {
-      const { subscription: subscriptionId, status, externalReference } = payment;
+      const { subscription: subscriptionId, status, externalReference, value } = payment;
 
       // Buscar assinatura pelo asaas_subscription_id
       const { data: assinatura, error: assinaturaError } = await supabase
         .from('assinaturas')
-        .select('*')
+        .select('*, planos(nome)')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
@@ -63,6 +101,8 @@ serve(async (req) => {
       if (assinatura) {
         let newStatus = assinatura.status;
         let updateData: Record<string, any> = { updated_at: new Date().toISOString() };
+        let shouldNotify = false;
+        let notificationType: 'confirmed' | 'overdue' | 'cancelled' | null = null;
 
         switch (event) {
           case 'PAYMENT_RECEIVED':
@@ -75,6 +115,8 @@ serve(async (req) => {
             nextPayment.setDate(nextPayment.getDate() + 30);
             updateData.proxima_cobranca = nextPayment.toISOString().split('T')[0];
             console.log(`Payment confirmed for subscription ${subscriptionId}, activating...`);
+            shouldNotify = true;
+            notificationType = 'confirmed';
             break;
 
           case 'PAYMENT_OVERDUE':
@@ -82,6 +124,8 @@ serve(async (req) => {
             newStatus = 'pendente';
             updateData.status = newStatus;
             console.log(`Payment overdue for subscription ${subscriptionId}`);
+            shouldNotify = true;
+            notificationType = 'overdue';
             break;
 
           case 'PAYMENT_DELETED':
@@ -91,6 +135,8 @@ serve(async (req) => {
             newStatus = 'suspensa';
             updateData.status = newStatus;
             console.log(`Payment cancelled/refunded for subscription ${subscriptionId}, suspending...`);
+            shouldNotify = true;
+            notificationType = 'cancelled';
             break;
 
           default:
@@ -109,6 +155,80 @@ serve(async (req) => {
             console.log(`Assinatura ${assinatura.id} updated to status: ${newStatus}`);
           }
         }
+
+        // Send WhatsApp notification if needed
+        if (shouldNotify && notificationType) {
+          // Get user phone from profile
+          let userPhone: string | null = null;
+          let userName: string | null = null;
+
+          if (assinatura.user_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('telefone, nome')
+              .eq('user_id', assinatura.user_id)
+              .single();
+
+            userPhone = profile?.telefone;
+            userName = profile?.nome;
+          }
+
+          // If no user phone, try imobiliaria
+          if (!userPhone && assinatura.imobiliaria_id) {
+            const { data: imobiliaria } = await supabase
+              .from('imobiliarias')
+              .select('telefone, nome')
+              .eq('id', assinatura.imobiliaria_id)
+              .single();
+
+            userPhone = imobiliaria?.telefone;
+            userName = imobiliaria?.nome;
+          }
+
+          if (userPhone) {
+            const planoNome = (assinatura as any).planos?.nome || 'Plano';
+            const valorFormatado = formatCurrency(value || 0);
+            let message = '';
+
+            switch (notificationType) {
+              case 'confirmed':
+                message = `✅ *Pagamento Confirmado!*\n\n` +
+                  `Olá${userName ? `, ${userName.split(' ')[0]}` : ''}!\n\n` +
+                  `Recebemos seu pagamento de ${valorFormatado} referente ao plano *${planoNome}*.\n\n` +
+                  `Sua assinatura está ativa e você pode continuar usando todos os recursos do sistema.\n\n` +
+                  `Obrigado por usar o Visita Segura! 🏠`;
+                break;
+
+              case 'overdue':
+                message = `⚠️ *Pagamento Pendente*\n\n` +
+                  `Olá${userName ? `, ${userName.split(' ')[0]}` : ''}!\n\n` +
+                  `Identificamos que o pagamento de ${valorFormatado} do plano *${planoNome}* está vencido.\n\n` +
+                  `Para evitar a suspensão dos serviços, regularize sua situação o mais breve possível.\n\n` +
+                  `Se já efetuou o pagamento, por favor desconsidere esta mensagem.`;
+                break;
+
+              case 'cancelled':
+                message = `❌ *Pagamento Cancelado*\n\n` +
+                  `Olá${userName ? `, ${userName.split(' ')[0]}` : ''}!\n\n` +
+                  `O pagamento de ${valorFormatado} do plano *${planoNome}* foi cancelado/estornado.\n\n` +
+                  `Sua assinatura foi suspensa. Entre em contato conosco para mais informações.`;
+                break;
+            }
+
+            if (message) {
+              console.log(`Sending WhatsApp notification to ${userPhone} for event ${notificationType}`);
+              const notificationSent = await sendWhatsAppNotification(
+                supabaseUrl,
+                supabaseServiceKey,
+                userPhone,
+                message
+              );
+              console.log(`WhatsApp notification sent: ${notificationSent}`);
+            }
+          } else {
+            console.log('No phone found for notification, skipping WhatsApp');
+          }
+        }
       } else {
         // Tentar criar assinatura a partir do externalReference
         if (externalReference) {
@@ -117,7 +237,7 @@ serve(async (req) => {
             if (ref.planoId && (ref.userId || ref.imobiliariaId)) {
               console.log('Creating assinatura from webhook externalReference:', ref);
               
-              const { error: insertError } = await supabase
+              const { data: newAssinatura, error: insertError } = await supabase
                 .from('assinaturas')
                 .insert({
                   plano_id: ref.planoId,
@@ -127,12 +247,57 @@ serve(async (req) => {
                   asaas_subscription_id: subscriptionId,
                   status: event === 'PAYMENT_RECEIVED' ? 'ativa' : 'pendente',
                   data_inicio: new Date().toISOString().split('T')[0],
-                });
+                })
+                .select('*, planos(nome)')
+                .single();
 
               if (insertError) {
                 console.error('Error creating assinatura from webhook:', insertError);
               } else {
                 console.log('Assinatura created from webhook');
+
+                // Send welcome notification for new subscription
+                if (event === 'PAYMENT_RECEIVED' && newAssinatura) {
+                  let userPhone: string | null = null;
+                  let userName: string | null = null;
+
+                  if (ref.userId) {
+                    const { data: profile } = await supabase
+                      .from('profiles')
+                      .select('telefone, nome')
+                      .eq('user_id', ref.userId)
+                      .single();
+
+                    userPhone = profile?.telefone;
+                    userName = profile?.nome;
+                  }
+
+                  if (!userPhone && ref.imobiliariaId) {
+                    const { data: imobiliaria } = await supabase
+                      .from('imobiliarias')
+                      .select('telefone, nome')
+                      .eq('id', ref.imobiliariaId)
+                      .single();
+
+                    userPhone = imobiliaria?.telefone;
+                    userName = imobiliaria?.nome;
+                  }
+
+                  if (userPhone) {
+                    const planoNome = (newAssinatura as any).planos?.nome || 'Plano';
+                    const valorFormatado = formatCurrency(value || 0);
+
+                    const message = `🎉 *Bem-vindo ao Visita Segura!*\n\n` +
+                      `Olá${userName ? `, ${userName.split(' ')[0]}` : ''}!\n\n` +
+                      `Sua assinatura do plano *${planoNome}* foi ativada com sucesso!\n\n` +
+                      `Valor: ${valorFormatado}\n\n` +
+                      `Você já pode acessar todas as funcionalidades do sistema.\n\n` +
+                      `Obrigado por escolher o Visita Segura! 🏠✨`;
+
+                    console.log(`Sending welcome WhatsApp to ${userPhone}`);
+                    await sendWhatsAppNotification(supabaseUrl, supabaseServiceKey, userPhone, message);
+                  }
+                }
               }
             }
           } catch (parseError) {
@@ -148,12 +313,14 @@ serve(async (req) => {
 
       const { data: assinatura } = await supabase
         .from('assinaturas')
-        .select('*')
+        .select('*, planos(nome)')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
       if (assinatura) {
         let updateData: Record<string, any> = { updated_at: new Date().toISOString() };
+        let shouldNotify = false;
+        let notificationMessage = '';
 
         switch (event) {
           case 'SUBSCRIPTION_DELETED':
@@ -161,6 +328,25 @@ serve(async (req) => {
             updateData.status = 'cancelada';
             updateData.data_fim = new Date().toISOString().split('T')[0];
             console.log(`Subscription ${subscriptionId} cancelled/expired`);
+            shouldNotify = true;
+
+            // Get user info for notification
+            let userName = '';
+            if (assinatura.user_id) {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('nome')
+                .eq('user_id', assinatura.user_id)
+                .single();
+              userName = profile?.nome?.split(' ')[0] || '';
+            }
+
+            const planoNome = (assinatura as any).planos?.nome || 'Plano';
+            notificationMessage = `📋 *Assinatura Encerrada*\n\n` +
+              `Olá${userName ? `, ${userName}` : ''}!\n\n` +
+              `Sua assinatura do plano *${planoNome}* foi encerrada.\n\n` +
+              `Você pode reativar sua assinatura a qualquer momento pelo app.\n\n` +
+              `Obrigado por usar o Visita Segura!`;
             break;
 
           case 'SUBSCRIPTION_RENEWED':
@@ -180,6 +366,34 @@ serve(async (req) => {
             .from('assinaturas')
             .update(updateData)
             .eq('id', assinatura.id);
+        }
+
+        // Send notification if needed
+        if (shouldNotify && notificationMessage) {
+          let userPhone: string | null = null;
+
+          if (assinatura.user_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('telefone')
+              .eq('user_id', assinatura.user_id)
+              .single();
+            userPhone = profile?.telefone;
+          }
+
+          if (!userPhone && assinatura.imobiliaria_id) {
+            const { data: imobiliaria } = await supabase
+              .from('imobiliarias')
+              .select('telefone')
+              .eq('id', assinatura.imobiliaria_id)
+              .single();
+            userPhone = imobiliaria?.telefone;
+          }
+
+          if (userPhone) {
+            console.log(`Sending subscription event WhatsApp to ${userPhone}`);
+            await sendWhatsAppNotification(supabaseUrl, supabaseServiceKey, userPhone, notificationMessage);
+          }
         }
       }
     }
