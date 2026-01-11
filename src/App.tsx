@@ -12,6 +12,7 @@ import { ChatAssistente } from "@/components/ChatAssistente";
 
 // Public pages
 import Index from "./pages/Index";
+import AppLanding from "./pages/AppLanding";
 import Auth from "./pages/Auth";
 import ConfirmarVisita from "./pages/ConfirmarVisita";
 import VerificarComprovante from "./pages/VerificarComprovante";
@@ -114,6 +115,7 @@ const App = () => (
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/como-funciona" element={<ComoFunciona />} />
+                <Route path="/app" element={<AppLanding />} />
                 {/* Disabled: Tour and Demo routes */}
                 {/* <Route path="/tour-audio" element={<TourAudio />} /> */}
                 {/* <Route path="/demo" element={<DemoAnimado />} /> */}
