@@ -17,8 +17,11 @@ import {
   ArrowLeftRight,
   BarChart3,
   Quote,
-  Layers
+  Layers,
+  Copy,
+  Check
 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const templates = [
@@ -61,6 +64,8 @@ export default function AdminMarketingImages() {
   const [estilo, setEstilo] = useState<'claro' | 'escuro'>('escuro');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [legenda, setLegenda] = useState<string>('');
+  const [copied, setCopied] = useState(false);
 
   const handleFuncionalidadeChange = (value: string) => {
     setFuncionalidade(value);
@@ -79,6 +84,8 @@ export default function AdminMarketingImages() {
 
     setIsGenerating(true);
     setGeneratedImage(null);
+    setLegenda('');
+    setCopied(false);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-marketing-image', {
@@ -109,6 +116,12 @@ export default function AdminMarketingImages() {
           // Assumir que é base64 sem prefixo
           setGeneratedImage(`data:image/png;base64,${data.image}`);
         }
+        
+        // Definir legenda pronta para copiar
+        if (data.legenda) {
+          setLegenda(data.legenda);
+        }
+        
         toast.success('Imagem gerada com sucesso!');
       } else {
         throw new Error('Nenhuma imagem retornada');
@@ -131,6 +144,19 @@ export default function AdminMarketingImages() {
     link.click();
     document.body.removeChild(link);
     toast.success('Imagem baixada!');
+  };
+
+  const handleCopyLegenda = async () => {
+    if (!legenda) return;
+    
+    try {
+      await navigator.clipboard.writeText(legenda);
+      setCopied(true);
+      toast.success('Legenda copiada!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error('Erro ao copiar legenda');
+    }
   };
 
   return (
@@ -329,21 +355,58 @@ export default function AdminMarketingImages() {
 
               {/* Ações */}
               {generatedImage && (
-                <div className="flex gap-2 mt-4">
-                  <Button 
-                    onClick={handleDownload}
-                    className="flex-1"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar Imagem
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
+                <div className="space-y-4 mt-4">
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleDownload}
+                      className="flex-1"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar Imagem
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={handleGenerate}
+                      disabled={isGenerating}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  {/* Legenda pronta para copiar */}
+                  {legenda && (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        📝 Legenda pronta para copiar
+                      </Label>
+                      <Textarea 
+                        value={legenda}
+                        onChange={(e) => setLegenda(e.target.value)}
+                        className="min-h-[120px] text-sm"
+                        placeholder="Legenda será gerada automaticamente..."
+                      />
+                      <Button 
+                        variant="secondary"
+                        onClick={handleCopyLegenda}
+                        className="w-full"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copiar Legenda
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        💡 A imagem é gerada sem texto para evitar erros. Cole a legenda no Instagram!
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
