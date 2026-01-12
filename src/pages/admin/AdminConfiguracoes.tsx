@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Settings, 
   Bell, 
@@ -14,16 +14,68 @@ import {
   MessageSquare,
   Database,
   CheckCircle,
-  XCircle
+  XCircle,
+  Clock
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+type ConfiguracaoSistema = {
+  id: string;
+  chave: string;
+  valor: boolean | string;
+  descricao: string | null;
+};
 
 export default function AdminConfiguracoes() {
+  const queryClient = useQueryClient();
+  
   const [settings, setSettings] = useState({
     notificacoesEmail: true,
     notificacoesWhatsApp: true,
     manutencaoAtiva: false,
     registroAberto: true,
+  });
+
+  // Fetch system configurations from database
+  const { data: configuracoes, isLoading: isLoadingConfig } = useQuery({
+    queryKey: ['configuracoes-sistema'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('configuracoes_sistema')
+        .select('*');
+      
+      if (error) throw error;
+      return data as ConfiguracaoSistema[];
+    },
+  });
+
+  // Get specific configuration value
+  const getConfigValue = (chave: string): boolean => {
+    const config = configuracoes?.find(c => c.chave === chave);
+    if (!config) return true; // default to true
+    return config.valor === true || config.valor === 'true';
+  };
+
+  // Mutation to update configuration
+  const updateConfigMutation = useMutation({
+    mutationFn: async ({ chave, valor }: { chave: string; valor: boolean }) => {
+      const { error } = await supabase
+        .from('configuracoes_sistema')
+        .update({ valor: valor })
+        .eq('chave', chave);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['configuracoes-sistema'] });
+      toast.success("Configuração atualizada");
+    },
+    onError: (error) => {
+      console.error('Error updating configuration:', error);
+      toast.error("Erro ao atualizar configuração");
+    },
   });
 
   const handleSettingChange = (key: keyof typeof settings) => {
@@ -32,6 +84,14 @@ export default function AdminConfiguracoes() {
       [key]: !prev[key],
     }));
     toast.success("Configuração atualizada");
+  };
+
+  const handleToggleLembretesOtp = () => {
+    const currentValue = getConfigValue('lembretes_otp_ativo');
+    updateConfigMutation.mutate({ 
+      chave: 'lembretes_otp_ativo', 
+      valor: !currentValue 
+    });
   };
 
   const integracoes = [
@@ -136,6 +196,27 @@ export default function AdminConfiguracoes() {
                   checked={settings.notificacoesWhatsApp}
                   onCheckedChange={() => handleSettingChange("notificacoesWhatsApp")}
                 />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label>Lembretes Automáticos OTP</Label>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Enviar lembrete via WhatsApp quando OTP estiver próximo de expirar (15 min)
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-6 w-11" />
+                ) : (
+                  <Switch
+                    checked={getConfigValue('lembretes_otp_ativo')}
+                    onCheckedChange={handleToggleLembretesOtp}
+                    disabled={updateConfigMutation.isPending}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

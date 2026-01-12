@@ -204,6 +204,33 @@ export type Database = {
           },
         ]
       }
+      configuracoes_sistema: {
+        Row: {
+          chave: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          updated_at: string | null
+          valor: Json
+        }
+        Insert: {
+          chave: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          updated_at?: string | null
+          valor?: Json
+        }
+        Update: {
+          chave?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          updated_at?: string | null
+          valor?: Json
+        }
+        Relationships: []
+      }
       confirmacoes_otp: {
         Row: {
           aceite_cpf: string | null
