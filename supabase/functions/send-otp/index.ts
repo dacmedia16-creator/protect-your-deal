@@ -243,7 +243,7 @@ serve(async (req) => {
     // Generate OTP and token
     const codigo = generateOTP();
     const token = generateToken();
-    const expiraEm = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    const expiraEm = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     // Check if there's already a pending OTP for this ficha/tipo
     const { data: existingOtp } = await supabase
@@ -329,7 +329,7 @@ serve(async (req) => {
         ? '\n\n📝 *Você precisará preencher seus dados (nome e CPF) ao confirmar.*'
         : '';
       
-      message = `🏠 *VisitaSegura*\n\n${saudacao}\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}${instrucaoExtra}\n\n⏰ Este código expira em 30 minutos.\n\n_Não compartilhe este código com ninguém._`;
+      message = `🏠 *VisitaSegura*\n\n${saudacao}\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}${instrucaoExtra}\n\n⏰ Este código expira em 1 hora.\n\n_Não compartilhe este código com ninguém._`;
       
       console.log('Using default template, autopreenchimento:', autopreenchimento);
     }
