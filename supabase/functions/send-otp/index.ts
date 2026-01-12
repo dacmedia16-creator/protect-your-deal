@@ -165,6 +165,62 @@ serve(async (req) => {
       );
     }
 
+    // Get user from JWT token
+    const authHeader = req.headers.get('authorization');
+    let userId: string | null = null;
+    
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id || null;
+    }
+
+    // Check user role for rate limiting
+    let userRole: string | null = null;
+    if (userId) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+      userRole = roleData?.role || null;
+    }
+
+    // Rate limit: 30 minutes for corretor role only
+    const RATE_LIMIT_MINUTES = 30;
+    if (userRole === 'corretor') {
+      const thirtyMinutesAgo = new Date(Date.now() - RATE_LIMIT_MINUTES * 60 * 1000);
+      
+      // Check for recent OTP send for this ficha/tipo
+      const { data: recentOtp } = await supabase
+        .from('confirmacoes_otp')
+        .select('created_at')
+        .eq('ficha_id', ficha_id)
+        .eq('tipo', tipo)
+        .gte('created_at', thirtyMinutesAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (recentOtp) {
+        const lastSent = new Date(recentOtp.created_at);
+        const nextAvailable = new Date(lastSent.getTime() + RATE_LIMIT_MINUTES * 60 * 1000);
+        const minutesRemaining = Math.ceil((nextAvailable.getTime() - Date.now()) / 60000);
+        
+        console.log(`Rate limit hit for corretor ${userId}. Last OTP sent at ${lastSent.toISOString()}. Minutes remaining: ${minutesRemaining}`);
+        
+        return new Response(
+          JSON.stringify({ 
+            error: `Aguarde ${minutesRemaining} minuto${minutesRemaining > 1 ? 's' : ''} para enviar novamente.`,
+            rate_limited: true,
+            next_available: nextAvailable.toISOString(),
+            minutes_remaining: minutesRemaining
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Get ficha data
     const { data: ficha, error: fichaError } = await supabase
       .from('fichas_visita')
