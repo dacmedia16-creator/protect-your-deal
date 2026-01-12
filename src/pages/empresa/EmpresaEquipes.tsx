@@ -29,8 +29,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { EquipeBadge } from '@/components/EquipeBadge';
 import {
   Plus,
   Users,
@@ -41,6 +45,9 @@ import {
   Loader2,
   Search,
   Crown,
+  ChevronDown,
+  ChevronRight,
+  FolderPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -51,8 +58,10 @@ interface Equipe {
   cor: string;
   ativa: boolean;
   lider_id: string | null;
+  parent_id: string | null;
   lider?: { id: string; nome: string } | null;
   membros_count?: number;
+  subequipes?: Equipe[];
 }
 
 interface Corretor {
@@ -85,9 +94,11 @@ const CORES = [
 export default function EmpresaEquipes() {
   const { imobiliariaId } = useUserRole();
   const [equipes, setEquipes] = useState<Equipe[]>([]);
+  const [allEquipes, setAllEquipes] = useState<Equipe[]>([]);
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [expandedEquipes, setExpandedEquipes] = useState<Set<string>>(new Set());
   
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -104,6 +115,7 @@ export default function EmpresaEquipes() {
   const [descricao, setDescricao] = useState('');
   const [cor, setCor] = useState(CORES[0]);
   const [liderId, setLiderId] = useState<string>('');
+  const [parentId, setParentId] = useState<string>('');
 
   useEffect(() => {
     if (imobiliariaId) {
@@ -136,7 +148,28 @@ export default function EmpresaEquipes() {
           return { ...equipe, membros_count: count || 0 };
         })
       );
-      setEquipes(equipesWithCount);
+      
+      // Store all equipes flat
+      setAllEquipes(equipesWithCount);
+      
+      // Build hierarchical structure
+      const mainEquipes = equipesWithCount.filter(e => !e.parent_id);
+      const subEquipesMap = new Map<string, Equipe[]>();
+      
+      equipesWithCount.forEach(e => {
+        if (e.parent_id) {
+          const existing = subEquipesMap.get(e.parent_id) || [];
+          existing.push(e);
+          subEquipesMap.set(e.parent_id, existing);
+        }
+      });
+      
+      const hierarchicalEquipes = mainEquipes.map(e => ({
+        ...e,
+        subequipes: subEquipesMap.get(e.id) || []
+      }));
+      
+      setEquipes(hierarchicalEquipes);
     }
 
     // Fetch all corretores for the dropdown
@@ -168,6 +201,7 @@ export default function EmpresaEquipes() {
             descricao: descricao.trim() || null,
             cor,
             lider_id: liderId || null,
+            parent_id: parentId || null,
           })
           .eq('id', editingEquipe.id);
 
@@ -183,6 +217,7 @@ export default function EmpresaEquipes() {
             descricao: descricao.trim() || null,
             cor,
             lider_id: liderId || null,
+            parent_id: parentId || null,
           });
 
         if (error) throw error;
@@ -311,11 +346,16 @@ export default function EmpresaEquipes() {
     setDescricao(equipe.descricao || '');
     setCor(equipe.cor);
     setLiderId(equipe.lider_id || '');
+    setParentId(equipe.parent_id || '');
     setDialogOpen(true);
   }
 
-  function openCreateDialog() {
+  function openCreateDialog(parentEquipe?: Equipe) {
     resetForm();
+    if (parentEquipe) {
+      setParentId(parentEquipe.id);
+      setCor(parentEquipe.cor);
+    }
     setDialogOpen(true);
   }
 
@@ -325,14 +365,148 @@ export default function EmpresaEquipes() {
     setDescricao('');
     setCor(CORES[0]);
     setLiderId('');
+    setParentId('');
   }
 
-  const filteredEquipes = equipes.filter(e => 
-    e.nome.toLowerCase().includes(search.toLowerCase())
-  );
+  function toggleExpanded(equipeId: string) {
+    const newExpanded = new Set(expandedEquipes);
+    if (newExpanded.has(equipeId)) {
+      newExpanded.delete(equipeId);
+    } else {
+      newExpanded.add(equipeId);
+    }
+    setExpandedEquipes(newExpanded);
+  }
+
+  const filteredEquipes = equipes.filter(e => {
+    const matchesSearch = e.nome.toLowerCase().includes(search.toLowerCase());
+    const subMatches = e.subequipes?.some(s => s.nome.toLowerCase().includes(search.toLowerCase()));
+    return matchesSearch || subMatches;
+  });
 
   const membrosIds = membros.map(m => m.user_id);
   const availableCorretores = corretores.filter(c => !membrosIds.includes(c.id));
+  
+  // Get main equipes for parent selector (excluding the one being edited and its descendants)
+  const availableParentEquipes = allEquipes.filter(e => 
+    !e.parent_id && 
+    e.id !== editingEquipe?.id
+  );
+
+  function renderEquipeCard(equipe: Equipe, isSubequipe = false) {
+    const hasSubequipes = equipe.subequipes && equipe.subequipes.length > 0;
+    const isExpanded = expandedEquipes.has(equipe.id);
+
+    return (
+      <div key={equipe.id} className={isSubequipe ? 'ml-6 mt-2' : ''}>
+        <Card className={`${!equipe.ativa ? 'opacity-60' : ''} ${isSubequipe ? 'border-l-4' : ''}`}
+          style={isSubequipe ? { borderLeftColor: equipe.cor } : undefined}>
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                {hasSubequipes && !isSubequipe && (
+                  <button
+                    onClick={() => toggleExpanded(equipe.id)}
+                    className="p-1 hover:bg-muted rounded"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                )}
+                <div
+                  className="w-4 h-4 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: equipe.cor }}
+                />
+                <div>
+                  <CardTitle className="text-lg">{equipe.nome}</CardTitle>
+                  {isSubequipe && (
+                    <span className="text-xs text-muted-foreground">Sub-equipe</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {!equipe.ativa && (
+                  <Badge variant="secondary">Inativa</Badge>
+                )}
+                {hasSubequipes && (
+                  <Badge variant="outline">{equipe.subequipes?.length} sub</Badge>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {equipe.descricao && (
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {equipe.descricao}
+              </p>
+            )}
+            
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span>{equipe.membros_count} membros</span>
+              </div>
+              {equipe.lider && (
+                <div className="flex items-center gap-1">
+                  <Crown className="h-4 w-4 text-warning" />
+                  <span className="truncate">{equipe.lider.nome}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => openMembrosDialog(equipe)}
+              >
+                <UserPlus className="h-4 w-4 mr-1" />
+                Membros
+              </Button>
+              {!isSubequipe && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openCreateDialog(equipe)}
+                  title="Adicionar sub-equipe"
+                >
+                  <FolderPlus className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openEditDialog(equipe)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedEquipe(equipe);
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Sub-equipes */}
+        {hasSubequipes && isExpanded && (
+          <div className="space-y-2">
+            {equipe.subequipes?.map(sub => renderEquipeCard(sub, true))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -352,10 +526,10 @@ export default function EmpresaEquipes() {
           <div>
             <h1 className="text-2xl font-display font-bold">Equipes</h1>
             <p className="text-muted-foreground">
-              Organize seus corretores em equipes
+              Organize seus corretores em equipes e sub-equipes
             </p>
           </div>
-          <Button onClick={openCreateDialog}>
+          <Button onClick={() => openCreateDialog()}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Equipe
           </Button>
@@ -381,7 +555,7 @@ export default function EmpresaEquipes() {
               <p className="text-muted-foreground text-center mb-4">
                 Crie equipes para organizar seus corretores
               </p>
-              <Button onClick={openCreateDialog}>
+              <Button onClick={() => openCreateDialog()}>
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Equipe
               </Button>
@@ -389,73 +563,7 @@ export default function EmpresaEquipes() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredEquipes.map((equipe) => (
-              <Card key={equipe.id} className={!equipe.ativa ? 'opacity-60' : ''}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: equipe.cor }}
-                      />
-                      <CardTitle className="text-lg">{equipe.nome}</CardTitle>
-                    </div>
-                    {!equipe.ativa && (
-                      <Badge variant="secondary">Inativa</Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {equipe.descricao && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {equipe.descricao}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{equipe.membros_count} membros</span>
-                    </div>
-                    {equipe.lider && (
-                      <div className="flex items-center gap-1">
-                        <Crown className="h-4 w-4 text-warning" />
-                        <span className="truncate">{equipe.lider.nome}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => openMembrosDialog(equipe)}
-                    >
-                      <UserPlus className="h-4 w-4 mr-1" />
-                      Membros
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(equipe)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedEquipe(equipe);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {filteredEquipes.map((equipe) => renderEquipeCard(equipe))}
           </div>
         )}
       </div>
@@ -465,11 +573,44 @@ export default function EmpresaEquipes() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingEquipe ? 'Editar Equipe' : 'Nova Equipe'}
+              {editingEquipe 
+                ? 'Editar Equipe' 
+                : parentId 
+                  ? 'Nova Sub-equipe' 
+                  : 'Nova Equipe'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Parent equipe selector - only for new equipes or editing sub-equipes */}
+            {!editingEquipe && (
+              <div className="space-y-2">
+                <Label htmlFor="parent">Equipe Pai (opcional)</Label>
+                <Select value={parentId} onValueChange={setParentId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhuma (equipe principal)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhuma (equipe principal)</SelectItem>
+                    {availableParentEquipes.map((equipe) => (
+                      <SelectItem key={equipe.id} value={equipe.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: equipe.cor }}
+                          />
+                          {equipe.nome}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Se selecionado, esta será uma sub-equipe
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="nome">Nome da Equipe *</Label>
               <Input
@@ -636,7 +777,14 @@ export default function EmpresaEquipes() {
           </DialogHeader>
           <p className="text-muted-foreground">
             Tem certeza que deseja excluir a equipe "{selectedEquipe?.nome}"?
-            Todos os membros serão desvinculados.
+            {selectedEquipe?.subequipes && selectedEquipe.subequipes.length > 0 && (
+              <span className="block mt-2 text-destructive font-medium">
+                Atenção: As {selectedEquipe.subequipes.length} sub-equipes também serão excluídas!
+              </span>
+            )}
+            <span className="block mt-2">
+              Todos os membros serão desvinculados.
+            </span>
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
