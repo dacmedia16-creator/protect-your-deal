@@ -8,6 +8,7 @@ import {
   Building2,
   LayoutDashboard,
   Users,
+  Users2,
   FileText,
   Settings,
   LogOut,
@@ -27,6 +28,7 @@ interface ImobiliariaLayoutProps {
 const navItems = [
   { href: '/empresa', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/empresa/corretores', icon: Users, label: 'Corretores' },
+  { href: '/empresa/equipes', icon: Users2, label: 'Equipes' },
   { href: '/empresa/fichas', icon: FileText, label: 'Registros de Visita' },
   { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
   { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
