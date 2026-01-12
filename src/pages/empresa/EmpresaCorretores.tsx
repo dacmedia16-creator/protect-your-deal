@@ -85,15 +85,18 @@ export default function EmpresaCorretores() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [moveEquipeDialogOpen, setMoveEquipeDialogOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [movingEquipe, setMovingEquipe] = useState(false);
   const [conviteForm, setConviteForm] = useState({ nome: '', email: '' });
   const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', telefone: '', creci: '' });
   const [editForm, setEditForm] = useState({ user_id: '', nome: '', telefone: '', creci: '', email: '' });
   const [resetPasswordForm, setResetPasswordForm] = useState({ user_id: '', nome: '', newPassword: '' });
   const [selectedCorretor, setSelectedCorretor] = useState<Corretor | null>(null);
+  const [selectedEquipeId, setSelectedEquipeId] = useState<string>('');
 
   async function fetchData() {
     if (!imobiliariaId) return;
@@ -447,6 +450,54 @@ export default function EmpresaCorretores() {
     }
   }
 
+  function openMoveEquipeDialog(corretor: Corretor) {
+    setSelectedCorretor(corretor);
+    setSelectedEquipeId(corretor.equipe?.id || '');
+    setMoveEquipeDialogOpen(true);
+  }
+
+  async function handleMoveToEquipe() {
+    if (!selectedCorretor) return;
+
+    setMovingEquipe(true);
+
+    try {
+      // Remove from current team if exists
+      if (selectedCorretor.equipe) {
+        await supabase
+          .from('equipes_membros')
+          .delete()
+          .eq('user_id', selectedCorretor.user_id);
+      }
+
+      // Add to new team if selected
+      if (selectedEquipeId && selectedEquipeId !== 'none') {
+        const { error } = await supabase
+          .from('equipes_membros')
+          .insert({
+            equipe_id: selectedEquipeId,
+            user_id: selectedCorretor.user_id,
+            cargo: 'corretor',
+          });
+
+        if (error) throw error;
+        toast.success('Corretor movido para a equipe!');
+      } else {
+        toast.success('Corretor removido da equipe!');
+      }
+
+      setMoveEquipeDialogOpen(false);
+      setSelectedCorretor(null);
+      setSelectedEquipeId('');
+      fetchData();
+    } catch (error: any) {
+      console.error('Error moving to team:', error);
+      toast.error(error.message || 'Erro ao mover corretor');
+    } finally {
+      setMovingEquipe(false);
+    }
+  }
+
   const filteredCorretores = corretores.filter(c => {
     const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
       c.creci?.toLowerCase().includes(search.toLowerCase());
@@ -729,6 +780,10 @@ export default function EmpresaCorretores() {
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Editar
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openMoveEquipeDialog(corretor)}>
+                                <Users2 className="h-4 w-4 mr-2" />
+                                {corretor.equipe ? 'Mudar Equipe' : 'Adicionar à Equipe'}
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => toggleCorretorAtivo(corretor)}>
                                 {corretor.ativo ? (
                                   <>
@@ -847,6 +902,58 @@ export default function EmpresaCorretores() {
                 Redefinir Senha
               </Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Move to equipe dialog */}
+        <Dialog open={moveEquipeDialogOpen} onOpenChange={setMoveEquipeDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Mover para Equipe</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Selecione a equipe para <strong>{selectedCorretor?.nome}</strong>
+              </p>
+              {selectedCorretor?.equipe && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Equipe atual:</span>
+                  <EquipeBadge nome={selectedCorretor.equipe.nome} cor={selectedCorretor.equipe.cor} />
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="equipe_select">Nova Equipe</Label>
+                <Select value={selectedEquipeId} onValueChange={setSelectedEquipeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma equipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem equipe</SelectItem>
+                    {equipes.map((equipe) => (
+                      <SelectItem key={equipe.id} value={equipe.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: equipe.cor }}
+                          />
+                          {equipe.nome}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setMoveEquipeDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleMoveToEquipe} disabled={movingEquipe}>
+                  {movingEquipe && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  <Users2 className="h-4 w-4 mr-2" />
+                  Confirmar
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
