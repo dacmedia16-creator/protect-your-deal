@@ -18,7 +18,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { usePWAInstallContext } from '@/contexts/PWAInstallContext';
 
 const navItems = [
   { path: '/dashboard', label: 'Início', icon: Home },
@@ -31,11 +30,21 @@ export function MobileNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliariaId } = useUserRole();
-  const { isInstalled } = usePWAInstall();
-  const { showInstallPrompt } = usePWAInstallContext();
+  const { isInstalled, isIOS, install } = usePWAInstall();
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
+  
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      navigate('/instalar');
+    } else {
+      const success = await install();
+      if (!success) {
+        navigate('/instalar');
+      }
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -127,7 +136,7 @@ export function MobileNav() {
               </DropdownMenuItem>
             )}
             {!isInstalled && (
-              <DropdownMenuItem onClick={showInstallPrompt}>
+              <DropdownMenuItem onClick={handleInstallApp}>
                 <Download className="h-4 w-4 mr-2" />
                 Instalar App
               </DropdownMenuItem>

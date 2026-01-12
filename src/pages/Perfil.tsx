@@ -5,7 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { usePWAInstallContext } from '@/contexts/PWAInstallContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,12 +32,22 @@ export default function Perfil() {
   const { user, loading: authLoading } = useAuth();
   const { soundEnabled, toggleSound } = useNotificationSettings();
   const { playNotificationSound } = useNotificationSound();
-  const { isInstalled } = usePWAInstall();
-  const { showInstallPrompt } = usePWAInstallContext();
+  const { isInstalled, isIOS, install } = usePWAInstall();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      navigate('/instalar');
+    } else {
+      const success = await install();
+      if (!success) {
+        navigate('/instalar');
+      }
+    }
+  };
 
   const [nome, setNome] = useState('');
   const [creci, setCreci] = useState('');
@@ -381,7 +390,7 @@ export default function Perfil() {
                     Acesse rapidamente pela tela inicial
                   </p>
                 </div>
-                <Button onClick={showInstallPrompt} size="sm" className="gap-2">
+                <Button onClick={handleInstallApp} size="sm" className="gap-2">
                   <Download className="h-4 w-4" />
                   Instalar
                 </Button>

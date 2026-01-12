@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { UserRoleProvider } from "@/hooks/useUserRole";
-import { PWAInstallProvider } from "@/contexts/PWAInstallContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -94,15 +93,14 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
         <UserRoleProvider>
-          <PWAInstallProvider>
-            <TooltipProvider>
-              <BrowserRouter>
-                <Toaster />
-                <Sonner />
-                <PWAUpdatePrompt />
-                <PWAInstallPrompt />
-                <ChatAssistente />
-                <Routes>
+          <TooltipProvider>
+            <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <PWAUpdatePrompt />
+              <PWAInstallPrompt />
+              <ChatAssistente />
+              <Routes>
                 {/* Public routes */}
                 <Route path="/inicial" element={<Index />} />
                 <Route path="/" element={<Navigate to="/inicial" replace />} />
@@ -353,9 +351,8 @@ const App = () => (
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </PWAInstallProvider>
+            </BrowserRouter>
+          </TooltipProvider>
         </UserRoleProvider>
       </AuthProvider>
     </ThemeProvider>
