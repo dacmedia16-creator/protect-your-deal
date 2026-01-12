@@ -122,6 +122,21 @@ export default function Dashboard() {
 
   // Query única para todas as stats do dashboard
   // Busca fichas onde o usuário é dono OU parceiro (igual ListaFichas)
+  // Query para buscar o perfil do usuário
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard-stats', user?.id],
     queryFn: async () => {
@@ -243,7 +258,7 @@ export default function Dashboard() {
               setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
             }}
           >
-            Dashboard
+            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Gerencie seus registros de visita e clientes
