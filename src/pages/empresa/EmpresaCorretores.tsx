@@ -30,11 +30,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2 } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { EquipeBadge } from '@/components/EquipeBadge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+interface Equipe {
+  id: string;
+  nome: string;
+  cor: string;
+}
 
 interface Corretor {
   id: string;
@@ -46,6 +60,7 @@ interface Corretor {
   created_at: string;
   fichas_count?: number;
   ativo: boolean;
+  equipe?: Equipe | null;
 }
 
 interface Convite {
@@ -62,8 +77,10 @@ export default function EmpresaCorretores() {
   const { user } = useAuth();
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [convites, setConvites] = useState<Convite[]>([]);
+  const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [equipeFilter, setEquipeFilter] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -82,6 +99,16 @@ export default function EmpresaCorretores() {
     if (!imobiliariaId) return;
 
     try {
+      // Fetch equipes first
+      const { data: equipesData } = await supabase
+        .from('equipes')
+        .select('id, nome, cor')
+        .eq('imobiliaria_id', imobiliariaId)
+        .eq('ativa', true)
+        .order('nome');
+
+      setEquipes(equipesData || []);
+
       // Fetch corretores (users with corretor role in this imobiliaria)
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
@@ -102,6 +129,22 @@ export default function EmpresaCorretores() {
 
         if (profilesError) throw profilesError;
 
+        // Fetch equipes_membros to get team assignments
+        const { data: membrosData } = await supabase
+          .from('equipes_membros')
+          .select(`
+            user_id,
+            equipe:equipes!equipes_membros_equipe_id_fkey(id, nome, cor)
+          `)
+          .in('user_id', userIds);
+
+        const membrosMap: Record<string, Equipe | null> = {};
+        (membrosData || []).forEach((m: any) => {
+          if (m.equipe) {
+            membrosMap[m.user_id] = m.equipe;
+          }
+        });
+
         // Fetch emails from edge function
         const { data: sessionData } = await supabase.auth.getSession();
         let emailsMap: Record<string, string> = {};
@@ -118,7 +161,7 @@ export default function EmpresaCorretores() {
           console.warn('Could not fetch emails:', emailError);
         }
 
-        // Enrich with fichas count and emails
+        // Enrich with fichas count, emails and team
         const enrichedCorretores = await Promise.all(
           (profilesData || []).map(async (profile) => {
             const { count } = await supabase
@@ -138,6 +181,7 @@ export default function EmpresaCorretores() {
               created_at: roleData?.created_at || profile.created_at,
               fichas_count: count || 0,
               ativo: profile.ativo ?? true,
+              equipe: membrosMap[profile.user_id] || null,
             };
           })
         );
@@ -403,10 +447,16 @@ export default function EmpresaCorretores() {
     }
   }
 
-  const filteredCorretores = corretores.filter(c =>
-    c.nome.toLowerCase().includes(search.toLowerCase()) ||
-    c.creci?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredCorretores = corretores.filter(c => {
+    const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
+      c.creci?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesEquipe = equipeFilter === 'all' || 
+      (equipeFilter === 'none' && !c.equipe) ||
+      c.equipe?.id === equipeFilter;
+
+    return matchesSearch && matchesEquipe;
+  });
 
   const maxCorretores = assinatura?.plano?.max_corretores || 0;
   const canAddMore = corretores.length + convites.length < maxCorretores;
@@ -592,6 +642,27 @@ export default function EmpresaCorretores() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              <Select value={equipeFilter} onValueChange={setEquipeFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <Users2 className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filtrar por equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as equipes</SelectItem>
+                  <SelectItem value="none">Sem equipe</SelectItem>
+                  {equipes.map((equipe) => (
+                    <SelectItem key={equipe.id} value={equipe.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: equipe.cor }}
+                        />
+                        {equipe.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
@@ -609,6 +680,7 @@ export default function EmpresaCorretores() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
+                      <TableHead className="hidden sm:table-cell">Equipe</TableHead>
                       <TableHead className="hidden md:table-cell">CRECI</TableHead>
                       <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                       <TableHead>Fichas</TableHead>
@@ -622,6 +694,13 @@ export default function EmpresaCorretores() {
                       <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
                         <TableCell>
                           <p className="font-medium">{corretor.nome}</p>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {corretor.equipe ? (
+                            <EquipeBadge nome={corretor.equipe.nome} cor={corretor.equipe.cor} />
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {corretor.creci || '-'}
