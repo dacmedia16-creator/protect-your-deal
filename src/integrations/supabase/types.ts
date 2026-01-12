@@ -1104,6 +1104,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_equipe_access: {
+        Args: { equipe_imobiliaria_id: string }
+        Returns: boolean
+      }
       check_subscription_status: {
         Args: { _imobiliaria_id: string }
         Returns: string
@@ -1131,6 +1135,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_equipe_admin: {
+        Args: { equipe_imobiliaria_id: string }
         Returns: boolean
       }
       is_imobiliaria_admin: {
