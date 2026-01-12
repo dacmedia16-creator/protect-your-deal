@@ -586,12 +586,12 @@ export default function EmpresaEquipes() {
             {!editingEquipe && (
               <div className="space-y-2">
                 <Label htmlFor="parent">Equipe Pai (opcional)</Label>
-                <Select value={parentId} onValueChange={setParentId}>
+                <Select value={parentId || "none"} onValueChange={(val) => setParentId(val === "none" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Nenhuma (equipe principal)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma (equipe principal)</SelectItem>
+                    <SelectItem value="none">Nenhuma (equipe principal)</SelectItem>
                     {availableParentEquipes.map((equipe) => (
                       <SelectItem key={equipe.id} value={equipe.id}>
                         <div className="flex items-center gap-2">
@@ -651,12 +651,12 @@ export default function EmpresaEquipes() {
 
             <div className="space-y-2">
               <Label htmlFor="lider">Líder da Equipe</Label>
-              <Select value={liderId} onValueChange={setLiderId}>
+              <Select value={liderId || "none"} onValueChange={(val) => setLiderId(val === "none" ? "" : val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um líder (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {corretores.map((corretor) => (
                     <SelectItem key={corretor.id} value={corretor.id}>
                       {corretor.nome}
