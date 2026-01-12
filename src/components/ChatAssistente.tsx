@@ -246,32 +246,6 @@ export function ChatAssistente() {
     }
   }, [isOpen, userContext.isLoggedIn, roleLoading, proactiveMessageSent]);
 
-  // Proactive message after 12 seconds for visitors who haven't interacted (on home page)
-  useEffect(() => {
-    const isHomePage = HOME_PATHS.includes(location.pathname);
-    if (!isOpen && !userContext.isLoggedIn && !roleLoading && !proactiveMessageSent && isHomePage) {
-      const timer = setTimeout(() => {
-        // Open chat and add proactive message
-        setIsOpen(true);
-        setProactiveMessageSent(true);
-        setHasNewSuggestion(false);
-        
-        // Add a proactive follow-up message
-        setMessages(prev => [
-          ...prev,
-          { 
-            role: 'assistant', 
-            content: `Vi que você está conhecendo o VisitaSegura! 🏠
-
-Você é corretor de imóveis? Posso te mostrar como o sistema funciona na prática - é bem rapidinho!
-
-Ou se preferir, me conta: **qual é a sua maior dificuldade hoje nas visitas?**` 
-          }
-        ]);
-      }, 12000); // Open chat after 12 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, userContext.isLoggedIn, roleLoading, proactiveMessageSent, location.pathname]);
 
   // Detect login transition and show welcome message
   useEffect(() => {
