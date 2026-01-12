@@ -324,12 +324,21 @@ export default function DetalhesFicha() {
         body: { ficha_id: ficha.id, tipo, app_url: window.location.origin },
       });
 
-      if (error || data.error) {
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao enviar OTP',
-          description: data?.error || error?.message || 'Erro desconhecido',
-        });
+      if (error || data?.error) {
+        // Handle rate limit error specifically
+        if (data?.rate_limited) {
+          toast({
+            variant: 'destructive',
+            title: 'Aguarde para reenviar',
+            description: `Você poderá enviar novamente em ${data.minutes_remaining} minuto${data.minutes_remaining > 1 ? 's' : ''}.`,
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'Erro ao enviar OTP',
+            description: data?.error || error?.message || 'Erro desconhecido',
+          });
+        }
         return;
       }
 
