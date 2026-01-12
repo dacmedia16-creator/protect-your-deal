@@ -94,11 +94,11 @@ const App = () => (
       <AuthProvider>
         <UserRoleProvider>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <PWAUpdatePrompt />
-            <PWAInstallPrompt />
             <BrowserRouter>
+              <Toaster />
+              <Sonner />
+              <PWAUpdatePrompt />
+              <PWAInstallPrompt />
               <ChatAssistente />
               <Routes>
                 {/* Public routes */}
