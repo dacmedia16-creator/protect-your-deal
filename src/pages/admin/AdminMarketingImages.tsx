@@ -64,8 +64,9 @@ export default function AdminMarketingImages() {
   const [estilo, setEstilo] = useState<'claro' | 'escuro'>('escuro');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [legenda, setLegenda] = useState<string>('');
+const [legenda, setLegenda] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [isRegeneratingDesc, setIsRegeneratingDesc] = useState(false);
 
   const handleFuncionalidadeChange = (value: string) => {
     setFuncionalidade(value);
@@ -156,6 +157,42 @@ export default function AdminMarketingImages() {
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error('Erro ao copiar legenda');
+    }
+  };
+
+  const handleRegenerateDescription = async () => {
+    if (!titulo.trim()) {
+      toast.error('Digite um título primeiro');
+      return;
+    }
+
+    setIsRegeneratingDesc(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-marketing-image', {
+        body: {
+          template,
+          titulo,
+          subtitulo,
+          funcionalidade,
+          formato,
+          estilo,
+          onlyDescription: true,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data.error) throw new Error(data.error);
+
+      if (data.legenda) {
+        setLegenda(data.legenda);
+        toast.success('Nova descrição gerada!');
+      }
+    } catch (error) {
+      console.error('Error regenerating description:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao regenerar descrição');
+    } finally {
+      setIsRegeneratingDesc(false);
     }
   };
 
@@ -373,37 +410,55 @@ export default function AdminMarketingImages() {
                     </Button>
                   </div>
                   
-                  {/* Legenda pronta para copiar */}
+                  {/* Descrição profissional para copiar */}
                   {legenda && (
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        📝 Legenda pronta para copiar
-                      </Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="flex items-center gap-2">
+                          📝 Descrição profissional para Instagram
+                        </Label>
+                        <span className="text-xs text-muted-foreground">
+                          {legenda.length}/2200 caracteres
+                        </span>
+                      </div>
                       <Textarea 
                         value={legenda}
                         onChange={(e) => setLegenda(e.target.value)}
-                        className="min-h-[120px] text-sm"
-                        placeholder="Legenda será gerada automaticamente..."
+                        className="min-h-[200px] text-sm leading-relaxed"
+                        placeholder="Descrição será gerada automaticamente..."
                       />
-                      <Button 
-                        variant="secondary"
-                        onClick={handleCopyLegenda}
-                        className="w-full"
-                      >
-                        {copied ? (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            Copiado!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Copiar Legenda
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="secondary"
+                          onClick={handleCopyLegenda}
+                          className="flex-1"
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="h-4 w-4 mr-2" />
+                              Copiado!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copiar Descrição
+                            </>
+                          )}
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={handleRegenerateDescription}
+                          disabled={isRegeneratingDesc}
+                        >
+                          {isRegeneratingDesc ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        💡 A imagem é gerada sem texto para evitar erros. Cole a legenda no Instagram!
+                        💡 Descrição gerada por IA com estrutura otimizada para engajamento. Edite à vontade antes de copiar!
                       </p>
                     </div>
                   )}
