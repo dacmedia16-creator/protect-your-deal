@@ -20,12 +20,12 @@ export default defineConfig(({ mode }) => ({
         name: 'VisitaSegura - Fichas de Visita Digitais',
         short_name: 'VisitaSegura',
         description: 'Crie fichas de visita digitais com confirmação segura via WhatsApp e comprovantes PDF com QR Code',
-        theme_color: '#0f172a',
-        background_color: '#ffffff',
+        theme_color: '#0B3C5D',
+        background_color: '#0B3C5D',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
-        start_url: '/dashboard',
+        start_url: '/app',
         categories: ['business', 'productivity'],
         icons: [
           {
