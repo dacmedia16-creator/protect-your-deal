@@ -62,7 +62,7 @@ export function ProtectedRoute({
 
   // Check subscription status (for non-super-admin users)
   if (requireSubscription && role !== 'super_admin') {
-    if (!assinatura || assinatura.status === 'suspensa' || assinatura.status === 'cancelada') {
+    if (!assinatura || assinatura.status === 'suspensa' || assinatura.status === 'cancelada' || assinatura.status === 'pendente') {
       return <Navigate to="/assinatura-suspensa" replace />;
     }
   }
