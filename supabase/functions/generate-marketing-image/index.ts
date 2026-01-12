@@ -100,7 +100,7 @@ IMPORTANTE:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-2.5-flash-image-preview",
         messages: [
           { 
             role: "user", 
@@ -137,24 +137,27 @@ IMPORTANTE:
     }
 
     const data = await response.json();
-    console.log('AI Gateway response received');
+    console.log('AI Gateway response received:', JSON.stringify(data, null, 2));
 
     // Extrair a imagem da resposta
     const message = data.choices?.[0]?.message;
     let imageData = null;
     let textContent = null;
 
+    // Extrair texto do content
     if (message?.content) {
-      if (Array.isArray(message.content)) {
-        for (const part of message.content) {
-          if (part.type === 'image' && part.image) {
-            imageData = part.image;
-          } else if (part.type === 'text') {
-            textContent = part.text;
-          }
-        }
-      } else if (typeof message.content === 'string') {
+      if (typeof message.content === 'string') {
         textContent = message.content;
+      }
+    }
+
+    // Extrair imagem do array images (estrutura correta da API)
+    if (message?.images && Array.isArray(message.images)) {
+      for (const img of message.images) {
+        if (img.type === 'image_url' && img.image_url?.url) {
+          imageData = img.image_url.url;
+          break;
+        }
       }
     }
 
