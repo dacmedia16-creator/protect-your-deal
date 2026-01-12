@@ -172,14 +172,26 @@ export default function EmpresaEquipes() {
       setEquipes(hierarchicalEquipes);
     }
 
-    // Fetch all corretores for the dropdown
-    const { data: corretoresData } = await supabase
-      .from('profiles')
-      .select('id, nome')
+    // Fetch corretores - first get user_ids from user_roles
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('user_id')
       .eq('imobiliaria_id', imobiliariaId)
-      .order('nome');
+      .eq('role', 'corretor');
 
-    setCorretores(corretoresData || []);
+    const userIds = rolesData?.map(r => r.user_id) || [];
+
+    if (userIds.length > 0) {
+      const { data: corretoresData } = await supabase
+        .from('profiles')
+        .select('id, nome, user_id')
+        .in('user_id', userIds)
+        .order('nome');
+      
+      setCorretores(corretoresData?.map(c => ({ id: c.user_id, nome: c.nome })) || []);
+    } else {
+      setCorretores([]);
+    }
     setLoading(false);
   }
 
