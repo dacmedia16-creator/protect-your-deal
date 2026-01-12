@@ -212,9 +212,10 @@ serve(async (req) => {
     console.log('Generating marketing image...');
 
     // Dimensões baseadas no formato
+    const aspectRatio = formato === 'quadrado' ? '1:1' : '4:5';
     const dimensions = formato === 'quadrado' 
-      ? '1080x1080 pixels (1:1 square ratio)'
-      : '1080x1350 pixels (4:5 vertical ratio)';
+      ? '1080x1080 pixels'
+      : '1080x1350 pixels';
 
     // Cores baseadas no estilo
     const colors = estilo === 'claro'
@@ -227,8 +228,16 @@ serve(async (req) => {
     // Prompt em inglês para melhor qualidade de geração
     const prompt = `Create a professional Instagram marketing image for "VisitaSegura", a Brazilian real estate management app.
 
+=== CRITICAL: IMAGE DIMENSIONS ===
+ASPECT RATIO: ${aspectRatio}
+${formato === 'quadrado' 
+  ? 'The image MUST be PERFECTLY SQUARE (1:1 ratio). Width equals height. Example: 1080x1080 pixels.' 
+  : 'The image MUST be VERTICAL/PORTRAIT orientation (4:5 ratio). Height is GREATER than width. The image is TALLER than it is wide. Example: 1080x1350 pixels.'}
+DO NOT generate a landscape (horizontal) image under any circumstances.
+${formato === 'vertical' ? 'PORTRAIT MODE ONLY. HEIGHT > WIDTH.' : ''}
+
 SPECIFICATIONS:
-- Dimensions: ${dimensions}
+- Output size: ${dimensions}
 - Visual style: ${colors}
 - Post type: ${templateDesc}
 - Feature to highlight: ${funcDescImage}
@@ -266,7 +275,7 @@ TARGET AUDIENCE: Brazilian real estate agents looking to modernize their work`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
+        model: "google/gemini-3-pro-image-preview",
         messages: [{ role: "user", content: prompt }],
         modalities: ["image", "text"]
       }),
