@@ -440,6 +440,7 @@ export type Database = {
           imobiliaria_id: string
           lider_id: string | null
           nome: string
+          parent_id: string | null
           updated_at: string
         }
         Insert: {
@@ -451,6 +452,7 @@ export type Database = {
           imobiliaria_id: string
           lider_id?: string | null
           nome: string
+          parent_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -462,6 +464,7 @@ export type Database = {
           imobiliaria_id?: string
           lider_id?: string | null
           nome?: string
+          parent_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -484,6 +487,13 @@ export type Database = {
             columns: ["lider_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
             referencedColumns: ["id"]
           },
         ]
