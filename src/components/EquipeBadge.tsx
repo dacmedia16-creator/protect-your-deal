@@ -3,10 +3,11 @@ import { cn } from '@/lib/utils';
 interface EquipeBadgeProps {
   nome: string;
   cor: string;
+  parentNome?: string;
   className?: string;
 }
 
-export function EquipeBadge({ nome, cor, className }: EquipeBadgeProps) {
+export function EquipeBadge({ nome, cor, parentNome, className }: EquipeBadgeProps) {
   // Determinar se a cor é clara ou escura para escolher texto contrastante
   const isLightColor = (hexColor: string) => {
     const hex = hexColor.replace('#', '');
@@ -18,6 +19,7 @@ export function EquipeBadge({ nome, cor, className }: EquipeBadgeProps) {
   };
 
   const textColor = isLightColor(cor) ? '#000000' : '#FFFFFF';
+  const displayName = parentNome ? `${parentNome} › ${nome}` : nome;
 
   return (
     <span
@@ -30,7 +32,7 @@ export function EquipeBadge({ nome, cor, className }: EquipeBadgeProps) {
         color: textColor 
       }}
     >
-      {nome}
+      {displayName}
     </span>
   );
 }
