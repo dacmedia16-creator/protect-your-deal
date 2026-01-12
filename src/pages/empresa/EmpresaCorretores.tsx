@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -61,6 +61,7 @@ interface Corretor {
   fichas_count?: number;
   ativo: boolean;
   equipe?: Equipe | null;
+  role: 'corretor' | 'imobiliaria_admin';
 }
 
 interface Convite {
@@ -91,6 +92,7 @@ export default function EmpresaCorretores() {
   const [editing, setEditing] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [movingEquipe, setMovingEquipe] = useState(false);
+  const [promoting, setPromoting] = useState(false);
   const [conviteForm, setConviteForm] = useState({ nome: '', email: '' });
   const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', telefone: '', creci: '' });
   const [editForm, setEditForm] = useState({ user_id: '', nome: '', telefone: '', creci: '', email: '' });
@@ -112,12 +114,12 @@ export default function EmpresaCorretores() {
 
       setEquipes(equipesData || []);
 
-      // Fetch corretores (users with corretor role in this imobiliaria)
+      // Fetch corretores and admins (users with corretor or imobiliaria_admin role in this imobiliaria)
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
-        .select('user_id, created_at')
+        .select('user_id, created_at, role')
         .eq('imobiliaria_id', imobiliariaId)
-        .eq('role', 'corretor');
+        .in('role', ['corretor', 'imobiliaria_admin']);
 
       if (rolesError) throw rolesError;
 
@@ -185,6 +187,7 @@ export default function EmpresaCorretores() {
               fichas_count: count || 0,
               ativo: profile.ativo ?? true,
               equipe: membrosMap[profile.user_id] || null,
+              role: (roleData?.role as 'corretor' | 'imobiliaria_admin') || 'corretor',
             };
           })
         );
@@ -498,6 +501,44 @@ export default function EmpresaCorretores() {
     }
   }
 
+  async function handlePromoteCorretor(corretor: Corretor) {
+    const newRole = corretor.role === 'corretor' ? 'imobiliaria_admin' : 'corretor';
+    const actionText = newRole === 'imobiliaria_admin' ? 'promover a administrador' : 'rebaixar para corretor';
+    
+    if (!confirm(`Tem certeza que deseja ${actionText} ${corretor.nome}?`)) {
+      return;
+    }
+
+    setPromoting(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      const { data, error } = await supabase.functions.invoke('admin-promote-corretor', {
+        body: {
+          user_id: corretor.user_id,
+          new_role: newRole,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(data?.message || (newRole === 'imobiliaria_admin' 
+        ? 'Usuário promovido a administrador!' 
+        : 'Usuário rebaixado para corretor!'));
+      fetchData();
+    } catch (error: any) {
+      console.error('Error promoting corretor:', error);
+      toast.error(error.message || 'Erro ao alterar role do usuário');
+    } finally {
+      setPromoting(false);
+    }
+  }
+
   const filteredCorretores = corretores.filter(c => {
     const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
       c.creci?.toLowerCase().includes(search.toLowerCase());
@@ -731,6 +772,7 @@ export default function EmpresaCorretores() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
+                      <TableHead className="hidden sm:table-cell">Cargo</TableHead>
                       <TableHead className="hidden sm:table-cell">Equipe</TableHead>
                       <TableHead className="hidden md:table-cell">CRECI</TableHead>
                       <TableHead className="hidden lg:table-cell">Telefone</TableHead>
@@ -745,6 +787,21 @@ export default function EmpresaCorretores() {
                       <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
                         <TableCell>
                           <p className="font-medium">{corretor.nome}</p>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} className="gap-1">
+                            {corretor.role === 'imobiliaria_admin' ? (
+                              <>
+                                <ShieldCheck className="h-3 w-3" />
+                                Admin
+                              </>
+                            ) : (
+                              <>
+                                <Shield className="h-3 w-3" />
+                                Corretor
+                              </>
+                            )}
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           {corretor.equipe ? (
@@ -800,6 +857,22 @@ export default function EmpresaCorretores() {
                               <DropdownMenuItem onClick={() => openResetPasswordDialog(corretor)}>
                                 <KeyRound className="h-4 w-4 mr-2" />
                                 Redefinir Senha
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handlePromoteCorretor(corretor)}
+                                disabled={promoting}
+                              >
+                                {corretor.role === 'corretor' ? (
+                                  <>
+                                    <ShieldCheck className="h-4 w-4 mr-2" />
+                                    Promover a Admin
+                                  </>
+                                ) : (
+                                  <>
+                                    <Shield className="h-4 w-4 mr-2" />
+                                    Rebaixar para Corretor
+                                  </>
+                                )}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => removeCorretor(corretor.user_id)}
