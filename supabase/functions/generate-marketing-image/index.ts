@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -340,6 +341,50 @@ TARGET AUDIENCE: Brazilian real estate agents looking to modernize their work`;
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Redimensionar imagem para garantir formato correto
+    console.log('Resizing image to correct dimensions...');
+    try {
+      const targetWidth = 1080;
+      const targetHeight = formato === 'quadrado' ? 1080 : 1350;
+      
+      // Extrair base64 da imagem
+      const base64Match = imageData.match(/^data:image\/\w+;base64,(.+)$/);
+      if (base64Match) {
+        const base64Data = base64Match[1];
+        
+        // Decodificar base64 para bytes
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Carregar imagem
+        const img = await Image.decode(bytes);
+        console.log(`Original image size: ${img.width}x${img.height}`);
+        
+        // Redimensionar usando cover (preenche a área mantendo proporção, com crop se necessário)
+        const resized = img.cover(targetWidth, targetHeight);
+        console.log(`Resized image size: ${resized.width}x${resized.height}`);
+        
+        // Re-codificar para PNG
+        const outputBytes = await resized.encode();
+        
+        // Converter para base64
+        let binaryStr = '';
+        for (let i = 0; i < outputBytes.length; i++) {
+          binaryStr += String.fromCharCode(outputBytes[i]);
+        }
+        const newBase64 = btoa(binaryStr);
+        imageData = `data:image/png;base64,${newBase64}`;
+        
+        console.log('Image successfully resized to', targetWidth, 'x', targetHeight);
+      }
+    } catch (resizeError) {
+      console.error('Error resizing image:', resizeError);
+      // Continua com a imagem original se houver erro no redimensionamento
     }
 
     // Gerar descrição profissional
