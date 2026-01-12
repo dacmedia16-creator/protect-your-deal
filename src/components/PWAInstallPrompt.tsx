@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useAuth } from '@/hooks/useAuth';
+import { usePWAInstallContext } from '@/contexts/PWAInstallContext';
 import { Button } from '@/components/ui/button';
 import { 
   Download, 
@@ -27,50 +28,19 @@ const features = [
 export function PWAInstallPrompt() {
   const { user, loading: authLoading } = useAuth();
   const { isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, isIOSWrongBrowser, install } = usePWAInstall();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { isPromptVisible, hideInstallPrompt } = usePWAInstallContext();
   const navigate = useNavigate();
 
+  // Fechar automaticamente se já instalou ou não está logado
   useEffect(() => {
-    // Não mostrar enquanto carrega auth
-    if (authLoading) {
-      setIsVisible(false);
-      return;
+    if (isInstalled || (!authLoading && !user)) {
+      hideInstallPrompt();
     }
-
-    // Não mostrar se NÃO está logado
-    if (!user) {
-      setIsVisible(false);
-      return;
-    }
-
-    // Não mostrar se já instalou
-    if (isInstalled) {
-      setIsVisible(false);
-      return;
-    }
-
-    const dismissedAt = localStorage.getItem(PROMPT_DISMISSED_KEY);
-    if (dismissedAt) {
-      const elapsed = Date.now() - parseInt(dismissedAt, 10);
-      if (elapsed < DISMISS_DURATION) {
-        setIsVisible(false);
-        return;
-      }
-    }
-
-    // Mostrar após pequeno delay para melhor UX
-    const timer = setTimeout(() => {
-      const shouldShow = isInstallable || isIOS || (isAndroid && canShowManualInstall);
-      setIsVisible(shouldShow && !isIOSWrongBrowser);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [user, authLoading, isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, isIOSWrongBrowser]);
+  }, [isInstalled, user, authLoading, hideInstallPrompt]);
 
   const handleDismiss = () => {
     localStorage.setItem(PROMPT_DISMISSED_KEY, Date.now().toString());
-    setIsVisible(false);
+    hideInstallPrompt();
   };
 
   const handleInstall = async () => {
@@ -79,7 +49,7 @@ export function PWAInstallPrompt() {
     } else {
       const success = await install();
       if (success) {
-        setIsVisible(false);
+        hideInstallPrompt();
       }
     }
   };
@@ -88,7 +58,7 @@ export function PWAInstallPrompt() {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isPromptVisible && (
         <>
           {/* Backdrop */}
           <motion.div
@@ -96,7 +66,7 @@ export function PWAInstallPrompt() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
-            onClick={() => setIsExpanded(false)}
+            onClick={hideInstallPrompt}
           />
 
           {/* Main Prompt */}
