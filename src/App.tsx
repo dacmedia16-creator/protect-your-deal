@@ -82,6 +82,7 @@ import AdminMarketingImages from "./pages/admin/AdminMarketingImages";
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
+import EmpresaEquipes from "./pages/empresa/EmpresaEquipes";
 import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
 import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
 import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
@@ -232,6 +233,11 @@ const App = () => (
                 <Route path="/empresa/corretores" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaCorretores />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/equipes" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaEquipes />
                   </ProtectedRoute>
                 } />
                 <Route path="/empresa/fichas" element={

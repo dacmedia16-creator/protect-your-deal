@@ -430,6 +430,106 @@ export type Database = {
           },
         ]
       }
+      equipes: {
+        Row: {
+          ativa: boolean | null
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          imobiliaria_id: string
+          lider_id: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean | null
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imobiliaria_id: string
+          lider_id?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean | null
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imobiliaria_id?: string
+          lider_id?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipes_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipes_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipes_lider_id_fkey"
+            columns: ["lider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipes_membros: {
+        Row: {
+          cargo: string | null
+          created_at: string
+          entrou_em: string
+          equipe_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          cargo?: string | null
+          created_at?: string
+          entrou_em?: string
+          equipe_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          cargo?: string | null
+          created_at?: string
+          entrou_em?: string
+          equipe_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipes_membros_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipes_membros_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fichas_visita: {
         Row: {
           backup_gerado_em: string | null
