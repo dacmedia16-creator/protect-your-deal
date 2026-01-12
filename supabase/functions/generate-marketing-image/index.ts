@@ -30,66 +30,72 @@ serve(async (req) => {
     }
 
     // Dimensões baseadas no formato
-    const dimensoes = formato === 'quadrado' 
-      ? '1080x1080 pixels (proporção 1:1)'
-      : '1080x1350 pixels (proporção 4:5)';
+    const dimensions = formato === 'quadrado' 
+      ? '1080x1080 pixels (1:1 square ratio)'
+      : '1080x1350 pixels (4:5 vertical ratio)';
 
     // Cores baseadas no estilo
-    const cores = estilo === 'claro'
-      ? 'fundo branco ou gradiente suave de tons claros, texto escuro (preto ou azul marinho), acentos em verde esmeralda (#10B981) ou azul royal (#3B82F6)'
-      : 'fundo escuro (preto, azul marinho profundo ou gradiente escuro), texto branco ou claro, acentos em verde esmeralda (#10B981) ou azul elétrico (#60A5FA)';
+    const colors = estilo === 'claro'
+      ? 'light background (white or soft gradient), with emerald green (#10B981) and royal blue (#3B82F6) accents'
+      : 'dark background (black, deep navy, or dark gradient), with emerald green (#10B981) and electric blue (#60A5FA) accents';
 
     // Templates de prompt baseados no tipo
     const templateDescriptions: Record<string, string> = {
-      'feature': `Um design de destaque para funcionalidade de app, estilo moderno e tech, com ícone representativo em destaque, título grande e impactante`,
-      'dica': `Um card de dica profissional, estilo educativo e amigável, com ícone de lâmpada ou similar, layout tipo "Dica do Dia"`,
-      'antes-depois': `Uma comparação visual lado a lado entre método tradicional (papel, caneta, desorganização) e método digital (app, organização, modernidade)`,
-      'estatistica': `Um infográfico limpo com número grande em destaque, estilo data-driven, gráficos minimalistas`,
-      'depoimento': `Um card de citação/testimonial elegante, com aspas grandes, foto placeholder de perfil, nome e cargo`,
-      'carrossel': `Um slide de carrossel explicativo, numeração no canto, design consistente para série de posts`,
+      'feature': 'Modern tech-style feature highlight with prominent icon, clean layout',
+      'dica': 'Professional tip card with lightbulb icon, educational and friendly style',
+      'antes-depois': 'Side-by-side visual comparison: traditional method (paper, pen, chaos) vs digital method (app, organization, modernity)',
+      'estatistica': 'Clean infographic with large number display, data-driven style, minimalist charts',
+      'depoimento': 'Elegant testimonial card with large quotation marks, profile placeholder',
+      'carrossel': 'Carousel slide with corner numbering, consistent design for series',
     };
 
-    // Descrições de funcionalidades para contexto
+    // Descrições de funcionalidades para contexto visual
     const funcionalidadeDescriptions: Record<string, string> = {
-      'otp-whatsapp': 'Confirmação via código OTP no WhatsApp - segurança na palma da mão',
-      'qr-code': 'QR Code para verificação instantânea de comprovantes',
-      'pdf': 'Geração automática de PDFs profissionais com assinatura digital',
-      'crm': 'CRM integrado para gestão de clientes e imóveis',
-      'mobile': 'Aplicativo mobile para acesso em qualquer lugar',
-      'parcerias': 'Sistema de parcerias entre corretores',
-      'dashboard': 'Dashboard com métricas e relatórios em tempo real',
-      'geral': 'Sistema completo de gestão para corretores de imóveis',
+      'otp-whatsapp': 'WhatsApp OTP verification - show phone with WhatsApp icon and security lock',
+      'qr-code': 'QR Code scanning - show phone scanning QR code with checkmark',
+      'pdf': 'PDF document generation - show professional document with signature icon',
+      'crm': 'CRM system - show organized client cards and property listings',
+      'mobile': 'Mobile app - show smartphone with app interface mockup',
+      'parcerias': 'Partnership system - show two people/hands connecting or handshake icon',
+      'dashboard': 'Dashboard analytics - show charts, graphs, and metrics display',
+      'geral': 'Complete real estate management - show shield with house icon',
     };
 
     const templateDesc = templateDescriptions[template] || templateDescriptions['feature'];
     const funcDesc = funcionalidadeDescriptions[funcionalidade] || funcionalidadeDescriptions['geral'];
 
-    const prompt = `Crie uma imagem profissional para post de Instagram sobre um aplicativo de gestão imobiliária chamado "VisitaSegura".
+    // Prompt em inglês para melhor qualidade de geração
+    const prompt = `Create a professional Instagram marketing image for "VisitaSegura", a Brazilian real estate management app.
 
-ESPECIFICAÇÕES:
-- Dimensões: ${dimensoes}
-- Estilo visual: ${cores}
-- Tipo de post: ${templateDesc}
-- Funcionalidade em destaque: ${funcDesc}
+SPECIFICATIONS:
+- Dimensions: ${dimensions}
+- Visual style: ${colors}
+- Post type: ${templateDesc}
+- Feature to highlight: ${funcDesc}
 
-CONTEÚDO:
-- Título principal: "${titulo}"
-- Subtítulo: "${subtitulo}"
+VISUAL ELEMENTS TO INCLUDE:
+- Shield icon or house icon representing real estate security
+- Modern, tech-inspired abstract graphics
+- Professional gradient backgrounds
+- Clean geometric shapes and patterns
+- Smartphone mockups showing the app (optional)
+- Icons representing the feature (locks, QR codes, documents, etc.)
 
-ELEMENTOS OBRIGATÓRIOS:
-- Logo/marca "VisitaSegura" discretamente posicionado (canto inferior ou superior)
-- Ícone de escudo ou casa estilizado representando segurança imobiliária
-- Design clean, moderno e profissional
-- Tipografia bold para o título, leve para o subtítulo
-- Elementos gráficos abstratos ou ícones relacionados ao tema imobiliário (casas, chaves, documentos, celulares)
+CRITICAL TEXT RULES:
+- Include ONLY the brand name "VisitaSegura" as text
+- DO NOT write any Portuguese sentences or phrases
+- DO NOT include the title or subtitle as text in the image
+- Use ONLY visual icons and graphics to represent concepts
+- Maximum text allowed: 2 words total (just the brand name)
+- If any text is needed, use UPPERCASE without accents
 
-PÚBLICO-ALVO: Corretores de imóveis brasileiros que buscam modernizar seu trabalho
+STYLE:
+- Clean, modern, and professional
+- Tech-focused aesthetic
+- High contrast for visual impact
+- Instagram-ready composition
 
-IMPORTANTE:
-- NÃO incluir texto genérico ou placeholder
-- Usar EXATAMENTE os textos fornecidos
-- Design deve ser limpo e sem poluição visual
-- Priorizar legibilidade e impacto visual`;
+TARGET AUDIENCE: Brazilian real estate agents looking to modernize their work`;
 
     console.log('Sending prompt to AI Gateway');
 
@@ -172,10 +178,30 @@ IMPORTANTE:
       });
     }
 
+    // Gerar legenda com hashtags
+    const hashtags = [
+      '#corretordeimoveis',
+      '#imobiliaria', 
+      '#mercadoimobiliario',
+      '#visitasegura',
+      '#tecnologia',
+      '#imoveis',
+      '#corretor',
+      '#gestao'
+    ];
+    
+    const legenda = `${titulo}
+
+${subtitulo}
+
+${hashtags.slice(0, 6).join(' ')}`;
+
     return new Response(JSON.stringify({ 
       success: true,
       image: imageData,
-      description: textContent
+      description: textContent,
+      legenda,
+      hashtags
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
