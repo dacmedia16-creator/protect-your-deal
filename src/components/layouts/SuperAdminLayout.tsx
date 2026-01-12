@@ -24,7 +24,8 @@ import {
   Mail,
   UserCircle,
   TrendingUp,
-  Archive
+  Archive,
+  Image
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -44,6 +45,7 @@ const navItems = [
   { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
   { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
   { href: '/admin/convites', icon: Mail, label: 'Convites' },
+  { href: '/admin/marketing', icon: Image, label: 'Marketing' },
   { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
   { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
 ];

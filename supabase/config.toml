@@ -107,3 +107,6 @@ verify_jwt = true
 
 [functions.otp-reminder]
 verify_jwt = false
+
+[functions.generate-marketing-image]
+verify_jwt = true
