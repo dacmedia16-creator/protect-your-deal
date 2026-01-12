@@ -195,23 +195,28 @@ export default function Dashboard() {
       
       {/* Mobile Header */}
       <header className="sm:hidden border-b bg-card safe-area-top">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {imobiliaria?.logo_url ? (
-              <img 
-                src={imobiliaria.logo_url} 
-                alt={imobiliaria.nome} 
-                className="h-8 w-8 rounded-lg object-contain"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-                <FileText className="h-4 w-4 text-primary-foreground" />
-              </div>
-            )}
-            <span className="font-display text-lg font-bold truncate max-w-[180px]">
-              {imobiliaria?.nome || 'VisitaSegura'}
-            </span>
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {imobiliaria?.logo_url ? (
+                <img 
+                  src={imobiliaria.logo_url} 
+                  alt={imobiliaria.nome} 
+                  className="h-8 w-8 rounded-lg object-contain"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-primary-foreground" />
+                </div>
+              )}
+              <span className="font-display text-lg font-bold truncate max-w-[180px]">
+                {imobiliaria?.nome || 'VisitaSegura'}
+              </span>
+            </div>
           </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+          </p>
         </div>
       </header>
 
