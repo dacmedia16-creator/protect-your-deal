@@ -100,6 +100,11 @@ export default function DetalhesFicha() {
     verification_url?: string;
   } | null>(null);
 
+  // Rate limit state for OTP buttons
+  const RATE_LIMIT_MINUTES = 30;
+  const [rateLimitProprietario, setRateLimitProprietario] = useState<number | null>(null);
+  const [rateLimitComprador, setRateLimitComprador] = useState<number | null>(null);
+
   // State for completing missing party data
   const [showCompletarProprietario, setShowCompletarProprietario] = useState(false);
   const [showCompletarComprador, setShowCompletarComprador] = useState(false);
@@ -242,6 +247,60 @@ export default function DetalhesFicha() {
   const confirmacaoProprietario = confirmacoes?.find(c => c.tipo === 'proprietario');
   const confirmacaoComprador = confirmacoes?.find(c => c.tipo === 'comprador');
 
+  // Fetch last OTPs for rate limit display (only for corretor role)
+  const { data: lastOtps, refetch: refetchOtps } = useQuery({
+    queryKey: ['last-otps', id, role],
+    queryFn: async () => {
+      if (!id || role !== 'corretor') return null;
+      
+      const thirtyMinutesAgo = new Date(Date.now() - RATE_LIMIT_MINUTES * 60 * 1000);
+      
+      const { data, error } = await supabase
+        .from('confirmacoes_otp')
+        .select('tipo, created_at')
+        .eq('ficha_id', id)
+        .gte('created_at', thirtyMinutesAgo.toISOString())
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!id && role === 'corretor',
+    refetchInterval: 60000, // Refetch every minute
+  });
+
+  // Calculate rate limit remaining time
+  useEffect(() => {
+    if (role !== 'corretor' || !lastOtps) {
+      setRateLimitProprietario(null);
+      setRateLimitComprador(null);
+      return;
+    }
+
+    const calculateRemainingMinutes = (tipo: string): number | null => {
+      const lastOtp = lastOtps.find(otp => otp.tipo === tipo);
+      if (!lastOtp) return null;
+      
+      const lastSentTime = new Date(lastOtp.created_at).getTime();
+      const nextAvailable = lastSentTime + RATE_LIMIT_MINUTES * 60 * 1000;
+      const remaining = Math.ceil((nextAvailable - Date.now()) / 60000);
+      
+      return remaining > 0 ? remaining : null;
+    };
+
+    const updateLimits = () => {
+      setRateLimitProprietario(calculateRemainingMinutes('proprietario'));
+      setRateLimitComprador(calculateRemainingMinutes('comprador'));
+    };
+
+    updateLimits();
+    
+    // Update every minute
+    const interval = setInterval(updateLimits, 60000);
+    
+    return () => clearInterval(interval);
+  }, [lastOtps, role]);
+
   // Fetch corretores da mesma imobiliária para seleção no convite de parceiro
   const { data: corretoresImobiliaria } = useQuery({
     queryKey: ['corretores-imobiliaria', imobiliariaId],
@@ -361,8 +420,9 @@ export default function DetalhesFicha() {
         });
       }
 
-      // Refresh ficha data
+      // Refresh ficha data and rate limit info
       refetch();
+      refetchOtps();
       
     } catch (err) {
       toast({
@@ -1504,33 +1564,57 @@ export default function DetalhesFicha() {
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-3">
                 {!ficha.proprietario_confirmado_em && !proprietarioFaltando && (
-                  <Button 
-                    className="gap-2 flex-1"
-                    onClick={() => sendOtp('proprietario')}
-                    disabled={sendingOtp !== null}
-                  >
-                    {sendingOtp === 'proprietario' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
+                  <div className="flex-1 flex flex-col gap-1">
+                    <Button 
+                      className="gap-2 w-full"
+                      onClick={() => sendOtp('proprietario')}
+                      disabled={sendingOtp !== null || rateLimitProprietario !== null}
+                    >
+                      {sendingOtp === 'proprietario' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : rateLimitProprietario !== null ? (
+                        <Clock className="h-4 w-4" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      {rateLimitProprietario !== null 
+                        ? `Aguarde ${rateLimitProprietario} min`
+                        : 'Enviar para Proprietário'
+                      }
+                    </Button>
+                    {rateLimitProprietario !== null && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Disponível em {rateLimitProprietario} minuto{rateLimitProprietario > 1 ? 's' : ''}
+                      </p>
                     )}
-                    Enviar para Proprietário
-                  </Button>
+                  </div>
                 )}
                 {!ficha.comprador_confirmado_em && !compradorFaltando && (
-                  <Button 
-                    variant={ficha.proprietario_confirmado_em ? 'default' : 'outline'}
-                    className="gap-2 flex-1"
-                    onClick={() => sendOtp('comprador')}
-                    disabled={sendingOtp !== null}
-                  >
-                    {sendingOtp === 'comprador' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
+                  <div className="flex-1 flex flex-col gap-1">
+                    <Button 
+                      variant={ficha.proprietario_confirmado_em ? 'default' : 'outline'}
+                      className="gap-2 w-full"
+                      onClick={() => sendOtp('comprador')}
+                      disabled={sendingOtp !== null || rateLimitComprador !== null}
+                    >
+                      {sendingOtp === 'comprador' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : rateLimitComprador !== null ? (
+                        <Clock className="h-4 w-4" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      {rateLimitComprador !== null 
+                        ? `Aguarde ${rateLimitComprador} min`
+                        : 'Enviar para Comprador'
+                      }
+                    </Button>
+                    {rateLimitComprador !== null && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Disponível em {rateLimitComprador} minuto{rateLimitComprador > 1 ? 's' : ''}
+                      </p>
                     )}
-                    Enviar para Comprador
-                  </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
