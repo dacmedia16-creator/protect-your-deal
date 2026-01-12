@@ -221,6 +221,7 @@ export type Database = {
           expira_em: string
           ficha_id: string
           id: string
+          lembrete_enviado_em: string | null
           telefone: string
           tentativas: number | null
           tipo: string
@@ -242,6 +243,7 @@ export type Database = {
           expira_em: string
           ficha_id: string
           id?: string
+          lembrete_enviado_em?: string | null
           telefone: string
           tentativas?: number | null
           tipo: string
@@ -263,6 +265,7 @@ export type Database = {
           expira_em?: string
           ficha_id?: string
           id?: string
+          lembrete_enviado_em?: string | null
           telefone?: string
           tentativas?: number | null
           tipo?: string
