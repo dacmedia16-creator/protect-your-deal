@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { 
   Download, 
@@ -24,13 +25,26 @@ const features = [
 ];
 
 export function PWAInstallPrompt() {
+  const { user, loading: authLoading } = useAuth();
   const { isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, isIOSWrongBrowser, install } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Don't show if already installed
+    // Não mostrar enquanto carrega auth
+    if (authLoading) {
+      setIsVisible(false);
+      return;
+    }
+
+    // Não mostrar se NÃO está logado
+    if (!user) {
+      setIsVisible(false);
+      return;
+    }
+
+    // Não mostrar se já instalou
     if (isInstalled) {
       setIsVisible(false);
       return;
@@ -45,14 +59,14 @@ export function PWAInstallPrompt() {
       }
     }
 
-    // Show after a short delay for better UX
+    // Mostrar após pequeno delay para melhor UX
     const timer = setTimeout(() => {
       const shouldShow = isInstallable || isIOS || (isAndroid && canShowManualInstall);
       setIsVisible(shouldShow && !isIOSWrongBrowser);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, isIOSWrongBrowser]);
+  }, [user, authLoading, isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, isIOSWrongBrowser]);
 
   const handleDismiss = () => {
     localStorage.setItem(PROMPT_DISMISSED_KEY, Date.now().toString());
