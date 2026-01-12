@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.regenerate-backup]
 verify_jwt = true
+
+[functions.otp-reminder]
+verify_jwt = false
