@@ -141,6 +141,27 @@ serve(async (req) => {
 
     console.log('Starting OTP reminder check...');
 
+    // Check if reminders are enabled in system configuration
+    const { data: config, error: configError } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'lembretes_otp_ativo')
+      .single();
+
+    if (configError && configError.code !== 'PGRST116') {
+      console.error('Error fetching configuration:', configError);
+    }
+
+    const lembretesAtivos = config?.valor === true || config?.valor === 'true';
+
+    if (!lembretesAtivos) {
+      console.log('OTP reminders are disabled by system configuration');
+      return new Response(
+        JSON.stringify({ success: true, message: 'Reminders disabled by admin', count: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Find OTPs that:
     // - Are not confirmed
     // - Will expire in the next 15 minutes
