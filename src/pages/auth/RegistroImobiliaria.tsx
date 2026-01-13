@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Shield, Loader2, Building2, ArrowLeft, Check, Ticket, X } from 'lucide-react';
+import { Shield, Loader2, Building2, ArrowLeft, Check, Ticket, X, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
 import { formatCNPJ } from '@/lib/cnpj';
@@ -284,6 +284,8 @@ export default function RegistroImobiliaria() {
                     navigate('/registro-autonomo?plano=gratuito');
                   } else if (value === 'cpf-profissional') {
                     navigate('/registro-autonomo?plano=profissional');
+                  } else if (value === 'vincular-imobiliaria') {
+                    navigate('/registro-vinculado');
                   } else {
                     setSelectedPlano(value);
                   }
@@ -324,6 +326,30 @@ export default function RegistroImobiliaria() {
                       <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
                         <span>1 corretor</span>
                         <span>15 registros/mês</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Opção Vincular a Imobiliária - redireciona para registro vinculado */}
+                  <label
+                    className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors border-border hover:border-primary/50 bg-green-50/50 dark:bg-green-900/10"
+                    onClick={() => navigate('/registro-vinculado')}
+                  >
+                    <RadioGroupItem value="vincular-imobiliaria" className="mt-1" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium flex items-center gap-2">
+                          <UserPlus className="h-4 w-4 text-green-600" />
+                          Vincular a Imobiliária
+                        </span>
+                        <span className="font-bold text-green-600">Grátis</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Já trabalha em uma imobiliária? Vincule-se usando o código dela
+                      </p>
+                      <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                        <span>Use o código da empresa</span>
+                        <span>Acesso ao sistema</span>
                       </div>
                     </div>
                   </label>
