@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar } from 'lucide-react';
+import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar, Building2, User, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,15 +17,32 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
 interface BackupFile {
   name: string;
-visita_id: string;
+  visita_id: string;
   protocolo: string;
   size: number;
   created_at: string;
+  imobiliaria_id: string | null;
+  imobiliaria_nome: string | null;
+}
+
+interface BackupGroup {
+  id: string;
+  type: 'imobiliaria' | 'corretor_autonomo';
+  name: string;
+  backups: BackupFile[];
+  totalSize: number;
 }
 
 function formatBytes(bytes: number): string {
@@ -34,6 +51,49 @@ function formatBytes(bytes: number): string {
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function groupBackups(backups: BackupFile[]): BackupGroup[] {
+  const imobiliariaGroups = new Map<string, BackupFile[]>();
+  const autonomos: BackupFile[] = [];
+
+  backups.forEach(backup => {
+    if (backup.imobiliaria_id && backup.imobiliaria_nome) {
+      const existing = imobiliariaGroups.get(backup.imobiliaria_id) || [];
+      existing.push(backup);
+      imobiliariaGroups.set(backup.imobiliaria_id, existing);
+    } else {
+      autonomos.push(backup);
+    }
+  });
+
+  const groups: BackupGroup[] = [];
+
+  // Add imobiliaria groups sorted by name
+  const imobiliariaEntries = Array.from(imobiliariaGroups.entries())
+    .map(([id, groupBackups]) => ({
+      id,
+      type: 'imobiliaria' as const,
+      name: groupBackups[0].imobiliaria_nome || 'Sem nome',
+      backups: groupBackups,
+      totalSize: groupBackups.reduce((acc, b) => acc + b.size, 0),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  groups.push(...imobiliariaEntries);
+
+  // Add autonomos group if any
+  if (autonomos.length > 0) {
+    groups.push({
+      id: 'autonomos',
+      type: 'corretor_autonomo',
+      name: 'Corretores Autônomos',
+      backups: autonomos,
+      totalSize: autonomos.reduce((acc, b) => acc + b.size, 0),
+    });
+  }
+
+  return groups;
 }
 
 export default function AdminBackups() {
@@ -58,35 +118,51 @@ export default function AdminBackups() {
       // Extract protocols from filenames
       const protocolos = backupFiles.map(f => f.name.split('-backup-')[0]);
 
-      // Fetch fichas data by protocol
+      // Fetch fichas data with imobiliaria info
       const { data: fichas, error: fichasError } = await supabase
         .from('fichas_visita')
-        .select('id, protocolo')
+        .select(`
+          id, 
+          protocolo, 
+          imobiliaria_id,
+          imobiliarias!left(nome)
+        `)
         .in('protocolo', protocolos);
 
       if (fichasError) throw fichasError;
 
-      const fichasMap = new Map(fichas?.map(f => [f.protocolo, f.id]) || []);
+      const fichasMap = new Map(fichas?.map(f => [f.protocolo, {
+        id: f.id,
+        imobiliaria_id: f.imobiliaria_id,
+        imobiliaria_nome: (f.imobiliarias as any)?.nome || null,
+      }]) || []);
 
       return backupFiles.map(f => {
         const protocolo = f.name.split('-backup-')[0];
+        const fichaInfo = fichasMap.get(protocolo);
         return {
           name: f.name,
-          visita_id: fichasMap.get(protocolo) || '',
+          visita_id: fichaInfo?.id || '',
           protocolo: protocolo,
           size: f.metadata?.size || 0,
           created_at: f.created_at,
+          imobiliaria_id: fichaInfo?.imobiliaria_id || null,
+          imobiliaria_nome: fichaInfo?.imobiliaria_nome || null,
         } as BackupFile;
       });
     },
   });
 
   const filteredBackups = backups?.filter(b =>
-    b.protocolo.toLowerCase().includes(search.toLowerCase())
+    b.protocolo.toLowerCase().includes(search.toLowerCase()) ||
+    b.imobiliaria_nome?.toLowerCase().includes(search.toLowerCase())
   ) || [];
+
+  const groups = groupBackups(filteredBackups);
 
   const totalSize = backups?.reduce((acc, b) => acc + b.size, 0) || 0;
   const lastBackup = backups?.[0]?.created_at;
+  const totalImobiliarias = groups.filter(g => g.type === 'imobiliaria').length;
 
   const handleDownload = async (fileName: string, protocolo: string) => {
     try {
@@ -136,7 +212,7 @@ export default function AdminBackups() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Backups</CardTitle>
@@ -147,6 +223,20 @@ export default function AdminBackups() {
                 <Skeleton className="h-8 w-20" />
               ) : (
                 <div className="text-2xl font-bold">{backups?.length || 0}</div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Imobiliárias</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <div className="text-2xl font-bold">{totalImobiliarias}</div>
               )}
             </CardContent>
           </Card>
@@ -189,7 +279,7 @@ export default function AdminBackups() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por protocolo..."
+              placeholder="Buscar por protocolo ou imobiliária..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -197,76 +287,97 @@ export default function AdminBackups() {
           </div>
         </div>
 
-        {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Protocolo</TableHead>
-                  <TableHead>Data do Backup</TableHead>
-                  <TableHead>Tamanho</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : filteredBackups.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                      {search ? 'Nenhum backup encontrado' : 'Nenhum backup gerado ainda'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredBackups.map((backup) => (
-                    <TableRow key={backup.name}>
-                      <TableCell>
-                        <Link
-                          to={`/admin/fichas`}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {backup.protocolo}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(backup.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>{formatBytes(backup.size)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleView(backup.name)}
-                            title="Visualizar"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDownload(backup.name, backup.protocolo)}
-                            title="Baixar"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Grouped Backups */}
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : groups.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              {search ? 'Nenhum backup encontrado' : 'Nenhum backup gerado ainda'}
+            </CardContent>
+          </Card>
+        ) : (
+          <Accordion type="multiple" defaultValue={groups.map(g => g.id)} className="space-y-2">
+            {groups.map((group) => (
+              <AccordionItem key={group.id} value={group.id} className="border rounded-lg bg-card">
+                <AccordionTrigger className="px-4 hover:no-underline">
+                  <div className="flex items-center gap-3 flex-1">
+                    {group.type === 'imobiliaria' ? (
+                      <Building2 className="h-5 w-5 text-primary" />
+                    ) : (
+                      <User className="h-5 w-5 text-orange-500" />
+                    )}
+                    <span className="font-medium">{group.name}</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {group.backups.length} {group.backups.length === 1 ? 'backup' : 'backups'}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground ml-auto mr-4">
+                      {formatBytes(group.totalSize)}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-0 pb-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Protocolo</TableHead>
+                        <TableHead>Data do Backup</TableHead>
+                        <TableHead>Tamanho</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {group.backups.map((backup) => (
+                        <TableRow key={backup.name}>
+                          <TableCell>
+                            <Link
+                              to={`/admin/fichas`}
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {backup.protocolo}
+                            </Link>
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(backup.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>{formatBytes(backup.size)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleView(backup.name)}
+                                title="Visualizar"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDownload(backup.name, backup.protocolo)}
+                                title="Baixar"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </div>
     </SuperAdminLayout>
   );
