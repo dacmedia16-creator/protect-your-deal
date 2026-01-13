@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -22,6 +23,9 @@ export default function EmpresaDashboard() {
   const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Hook de notificação para fichas confirmadas
+  useFichaNotification();
 
   useEffect(() => {
     async function fetchStats() {
