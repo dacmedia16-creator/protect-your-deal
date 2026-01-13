@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => ({
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
-        start_url: '/app',
+        start_url: '/',
         categories: ['business', 'productivity'],
         icons: [
           {
