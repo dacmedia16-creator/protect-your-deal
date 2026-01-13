@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
@@ -11,8 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Check, DollarSign, Clock, User, Ticket, Copy, FileText } from "lucide-react";
-import { format } from "date-fns";
+import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar } from "lucide-react";
+import { format, startOfMonth, endOfMonth, subMonths, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Afiliado {
@@ -48,14 +48,32 @@ interface CupomUso {
   imobiliarias?: { nome: string } | null;
 }
 
+// Gerar lista de meses para filtro (últimos 12 meses + todos)
+const generateMonthOptions = () => {
+  const options = [];
+  const now = new Date();
+  
+  for (let i = 0; i < 12; i++) {
+    const date = subMonths(now, i);
+    const value = `${getYear(date)}-${String(getMonth(date) + 1).padStart(2, '0')}`;
+    const label = format(date, "MMMM yyyy", { locale: ptBR });
+    options.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
+  }
+  
+  return options;
+};
+
 export default function AdminComissoes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filtroAfiliado, setFiltroAfiliado] = useState<string>("todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroPeriodo, setFiltroPeriodo] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedComissaoId, setSelectedComissaoId] = useState<string | null>(null);
   const [observacao, setObservacao] = useState("");
+
+  const monthOptions = useMemo(() => generateMonthOptions(), []);
 
   const { data: afiliados } = useQuery({
     queryKey: ["afiliados-lista"],
@@ -70,7 +88,7 @@ export default function AdminComissoes() {
   });
 
   const { data: comissoes, isLoading } = useQuery({
-    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus],
+    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus, filtroPeriodo],
     queryFn: async () => {
       let query = supabase
         .from("cupons_usos")
@@ -85,6 +103,16 @@ export default function AdminComissoes() {
         query = query.eq("comissao_paga", false);
       } else if (filtroStatus === "pago") {
         query = query.eq("comissao_paga", true);
+      }
+
+      // Filtro por período
+      if (filtroPeriodo !== "todos") {
+        const [year, month] = filtroPeriodo.split("-").map(Number);
+        const startDate = startOfMonth(new Date(year, month - 1));
+        const endDate = endOfMonth(new Date(year, month - 1));
+        query = query
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
       }
 
       const { data, error } = await query;
@@ -231,6 +259,23 @@ export default function AdminComissoes() {
                 {afiliados?.map((afiliado) => (
                   <SelectItem key={afiliado.id} value={afiliado.id}>
                     {afiliado.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-[200px]">
+            <Select value={filtroPeriodo} onValueChange={setFiltroPeriodo}>
+              <SelectTrigger>
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filtrar por período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os períodos</SelectItem>
+                {monthOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
