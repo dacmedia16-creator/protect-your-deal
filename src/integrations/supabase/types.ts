@@ -1294,6 +1294,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_cupom_usos: { Args: { cupom_uuid: string }; Returns: undefined }
       is_equipe_admin: {
         Args: { equipe_imobiliaria_id: string }
         Returns: boolean
