@@ -121,10 +121,12 @@ export default function RegistroImobiliaria() {
 
         if (error) throw error;
         
-        // Reordenar: planos "sob consulta" (valor_mensal null) vão para o final
+        // Reordenar: Enterprise vai para o final (mesmo com valor_mensal = 0)
         const planosOrdenados = (data || []).sort((a, b) => {
-          if (a.valor_mensal === null) return 1;
-          if (b.valor_mensal === null) return -1;
+          const aIsEnterprise = a.nome.toLowerCase() === 'enterprise';
+          const bIsEnterprise = b.nome.toLowerCase() === 'enterprise';
+          if (aIsEnterprise && !bIsEnterprise) return 1;
+          if (!aIsEnterprise && bIsEnterprise) return -1;
           return a.valor_mensal - b.valor_mensal;
         });
         setPlanos(planosOrdenados);
