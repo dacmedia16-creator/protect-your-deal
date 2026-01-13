@@ -77,7 +77,7 @@ export default function RegistroCorretorAutonomo() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
-          .eq('tipo_cadastro', 'cpf')
+          .eq('max_corretores', 1)
           .order('valor_mensal', { ascending: true });
 
         if (error) throw error;

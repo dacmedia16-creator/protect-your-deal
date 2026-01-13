@@ -32,7 +32,6 @@ import ComoFunciona from "./pages/ComoFunciona";
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
 import RegistroCorretorAutonomo from "./pages/auth/RegistroCorretorAutonomo";
 import RegistroTipo from "./pages/auth/RegistroTipo";
-import RegistroPessoaJuridica from "./pages/auth/RegistroPessoaJuridica";
 import AceitarConvite from "./pages/auth/AceitarConvite";
 import CadastroConcluido from "./pages/auth/CadastroConcluido";
 import RecuperarSenha from "./pages/auth/RecuperarSenha";
@@ -115,7 +114,6 @@ const App = () => (
                 <Route path="/registro" element={<RegistroImobiliaria />} />
                 <Route path="/registro/tipo" element={<RegistroTipo />} />
                 <Route path="/registro-autonomo" element={<RegistroCorretorAutonomo />} />
-                <Route path="/registro-pj" element={<RegistroPessoaJuridica />} />
                 <Route path="/convite/:token" element={<AceitarConvite />} />
                 <Route path="/cadastro-concluido" element={<CadastroConcluido />} />
                 <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
