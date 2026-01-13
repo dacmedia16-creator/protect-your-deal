@@ -9,8 +9,8 @@ import {
   LogOut,
   Menu,
   X,
-  Ticket,
-  TrendingUp
+  TrendingUp,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -21,6 +21,7 @@ interface AfiliadoLayoutProps {
 const navItems = [
   { href: '/afiliado', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/afiliado/comissoes', icon: DollarSign, label: 'Comissões' },
+  { href: '/afiliado/perfil', icon: User, label: 'Meu Perfil' },
 ];
 
 export function AfiliadoLayout({ children }: AfiliadoLayoutProps) {
