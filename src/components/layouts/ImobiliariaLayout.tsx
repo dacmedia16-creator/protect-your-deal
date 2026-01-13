@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Building2,
   LayoutDashboard,
@@ -37,9 +39,23 @@ const navItems = [
 
 export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { imobiliaria, assinatura } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('nome')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const statusColors: Record<string, string> = {
     ativa: 'bg-success text-success-foreground',
@@ -63,13 +79,18 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
           ) : (
             <Building2 className="h-6 w-6 text-primary" />
           )}
-          <span className="font-display font-bold text-lg truncate max-w-[180px]">
+          <span className="font-display font-bold text-lg truncate max-w-[120px]">
             {imobiliaria?.nome || 'Imobiliária'}
           </span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            Olá, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+          </span>
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
 
       {/* Sidebar */}

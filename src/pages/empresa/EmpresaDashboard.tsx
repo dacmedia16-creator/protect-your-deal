@@ -105,7 +105,7 @@ export default function EmpresaDashboard() {
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground">
-              Bem-vindo, {imobiliaria?.nome}
+              Gerencie sua imobiliária e corretores
             </p>
           </div>
           <Link to="/empresa/corretores">
