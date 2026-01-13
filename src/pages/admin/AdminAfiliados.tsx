@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign } from "lucide-react";
+import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { invokeWithRetry } from "@/lib/invokeWithRetry";
 
 interface Afiliado {
   id: string;
@@ -22,6 +23,7 @@ interface Afiliado {
   pix_chave: string | null;
   ativo: boolean;
   created_at: string;
+  user_id: string | null;
   total_cupons?: number;
   total_usos?: number;
   comissao_pendente?: number;
@@ -164,6 +166,29 @@ export default function AdminAfiliados() {
     onError: (error: Error) => {
       toast({
         title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const criarAcessoMutation = useMutation({
+    mutationFn: async (afiliadoId: string) => {
+      const { data, error } = await invokeWithRetry<{ success: boolean; message: string }>(
+        "admin-criar-acesso-afiliado",
+        { body: { afiliado_id: afiliadoId } }
+      );
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || "Erro desconhecido");
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
+      toast({ title: "Acesso criado!", description: data.message });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao criar acesso",
         description: error.message,
         variant: "destructive",
       });
@@ -335,6 +360,7 @@ export default function AdminAfiliados() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleEdit(afiliado)}
+                            title="Editar"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -345,6 +371,7 @@ export default function AdminAfiliados() {
                               id: afiliado.id,
                               ativo: !afiliado.ativo,
                             })}
+                            title={afiliado.ativo ? "Desativar" : "Ativar"}
                           >
                             {afiliado.ativo ? (
                               <UserX className="h-4 w-4 text-destructive" />
@@ -352,6 +379,26 @@ export default function AdminAfiliados() {
                               <UserCheck className="h-4 w-4 text-green-600" />
                             )}
                           </Button>
+                          {!afiliado.user_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => criarAcessoMutation.mutate(afiliado.id)}
+                              disabled={criarAcessoMutation.isPending}
+                              title="Criar acesso ao painel"
+                            >
+                              {criarAcessoMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <KeyRound className="h-4 w-4 text-blue-600" />
+                              )}
+                            </Button>
+                          )}
+                          {afiliado.user_id && (
+                            <Badge variant="outline" className="text-xs ml-1">
+                              Acesso ativo
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

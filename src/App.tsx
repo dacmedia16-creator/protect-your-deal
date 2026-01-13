@@ -84,6 +84,10 @@ import AdminAfiliados from "./pages/admin/AdminAfiliados";
 import AdminCupons from "./pages/admin/AdminCupons";
 import AdminComissoes from "./pages/admin/AdminComissoes";
 
+// Afiliado pages
+import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
+import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
+
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
@@ -380,6 +384,10 @@ const App = () => (
                     <FichasParceiro />
                   </ProtectedRoute>
                 } />
+
+                {/* Afiliado routes */}
+                <Route path="/afiliado" element={<AfiliadoDashboard />} />
+                <Route path="/afiliado/comissoes" element={<AfiliadoComissoes />} />
 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
