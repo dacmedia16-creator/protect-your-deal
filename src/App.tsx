@@ -87,6 +87,7 @@ import AdminComissoes from "./pages/admin/AdminComissoes";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
+import AfiliadoPerfil from "./pages/afiliado/AfiliadoPerfil";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
@@ -394,6 +395,11 @@ const App = () => (
                 <Route path="/afiliado/comissoes" element={
                   <ProtectedRoute allowedRoles={['afiliado']}>
                     <AfiliadoComissoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/afiliado/perfil" element={
+                  <ProtectedRoute allowedRoles={['afiliado']}>
+                    <AfiliadoPerfil />
                   </ProtectedRoute>
                 } />
 
