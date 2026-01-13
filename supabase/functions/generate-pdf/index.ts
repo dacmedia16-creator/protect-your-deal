@@ -275,7 +275,7 @@ serve(async (req) => {
           y: yPosition,
           size: 9,
           font: helvetica,
-          color: textColor,
+          color: primaryColor,
         });
         yPosition -= 12;
       }
@@ -287,7 +287,7 @@ serve(async (req) => {
           y: yPosition,
           size: 9,
           font: helvetica,
-          color: textColor,
+          color: primaryColor,
         });
         yPosition -= 12;
       }
@@ -331,7 +331,7 @@ serve(async (req) => {
     const cellSize = 3; // Size of each QR module in PDF points
     const qrSize = moduleCount * cellSize;
     const qrX = width - 150;
-    const qrY = height - 80 - qrSize;
+    const qrY = height - 160 - qrSize;
 
     // Draw white background for QR code
     currentPage.drawRectangle({
