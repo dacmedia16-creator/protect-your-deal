@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX, Smartphone, Download, Check } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX, Smartphone, Download, Check, RefreshCw, Info } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
@@ -16,6 +16,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import { formatPhone, unformatPhone, isValidPhone } from '@/lib/phone';
+import { forceAppRefresh, getAppExecutionModeLabel, getBuildVersion } from '@/lib/forceAppRefresh';
 
 interface Profile {
   id: string;
@@ -37,6 +38,7 @@ export default function Perfil() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   const handleInstallApp = async () => {
     if (isIOS) {
@@ -47,6 +49,12 @@ export default function Perfil() {
         navigate('/instalar');
       }
     }
+  };
+
+  const handleForceRefresh = async () => {
+    setRefreshing(true);
+    toast.info('Atualizando app...');
+    await forceAppRefresh();
   };
 
   const [nome, setNome] = useState('');
@@ -369,7 +377,22 @@ export default function Perfil() {
               Aplicativo
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Diagnóstico do app */}
+            <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Modo:</span>
+                <span className="font-medium">{getAppExecutionModeLabel()}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Versão:</span>
+                <span className="font-mono text-xs">{getBuildVersion()}</span>
+              </div>
+            </div>
+
+            {/* Status de instalação */}
             {isInstalled ? (
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -396,6 +419,26 @@ export default function Perfil() {
                 </Button>
               </div>
             )}
+
+            {/* Botão de forçar atualização */}
+            <div className="pt-2 border-t">
+              <Button 
+                variant="outline" 
+                className="w-full gap-2" 
+                onClick={handleForceRefresh}
+                disabled={refreshing}
+              >
+                {refreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Forçar atualização do app
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Limpa cache e recarrega a versão mais recente
+              </p>
+            </div>
           </CardContent>
         </Card>
 
