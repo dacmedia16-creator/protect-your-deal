@@ -93,6 +93,7 @@ export default function DetalhesFicha() {
   const [regeneratingBackup, setRegeneratingBackup] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [finalizingPartial, setFinalizingPartial] = useState(false);
+  const [retryingOtp, setRetryingOtp] = useState<string | null>(null);
   const [lastOtpResult, setLastOtpResult] = useState<{
     tipo: string;
     simulation: boolean;
@@ -268,6 +269,29 @@ export default function DetalhesFicha() {
     enabled: !!user && !!id && role === 'corretor',
     refetchInterval: 60000, // Refetch every minute
   });
+
+  // Fetch OTP queue items for this ficha
+  const { data: otpQueueItems, refetch: refetchOtpQueue } = useQuery({
+    queryKey: ['otp-queue', id],
+    queryFn: async () => {
+      if (!id) return null;
+      
+      const { data, error } = await supabase
+        .from('otp_queue')
+        .select('*')
+        .eq('ficha_id', id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!id,
+    refetchInterval: 10000, // Refetch every 10 seconds to show status updates
+  });
+
+  // Get failed OTP queue items
+  const failedOtpItems = otpQueueItems?.filter(item => item.status === 'falhou') || [];
+  const pendingOtpItems = otpQueueItems?.filter(item => item.status === 'pendente' || item.status === 'processando') || [];
 
   // Calculate rate limit remaining time
   useEffect(() => {
@@ -604,6 +628,56 @@ export default function DetalhesFicha() {
       });
     } finally {
       setFinalizingPartial(false);
+    }
+  };
+
+  // Retry failed OTP queue item
+  const handleRetryOtp = async (queueItemId: string, tipo: string) => {
+    if (!ficha || !user) return;
+    
+    setRetryingOtp(queueItemId);
+    try {
+      // Delete the failed item
+      await supabase
+        .from('otp_queue')
+        .delete()
+        .eq('id', queueItemId);
+
+      // Re-queue with high priority
+      const { error: insertError } = await supabase
+        .from('otp_queue')
+        .insert({
+          ficha_id: ficha.id,
+          tipo,
+          app_url: window.location.origin,
+          user_id: user.id,
+          prioridade: 10,
+          status: 'pendente',
+          tentativas: 0,
+        });
+
+      if (insertError) throw insertError;
+
+      // Trigger immediate processing
+      supabase.functions.invoke('process-otp-queue').catch(err => {
+        console.log('Processamento da fila iniciado em background:', err);
+      });
+
+      toast({
+        title: 'Reenvio agendado',
+        description: `O código será reenviado para o ${tipo === 'proprietario' ? 'proprietário' : 'comprador'} em instantes.`,
+      });
+
+      refetchOtpQueue();
+    } catch (err) {
+      console.error('Erro ao reagendar OTP:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao reagendar o envio do OTP',
+      });
+    } finally {
+      setRetryingOtp(null);
     }
   };
 
@@ -1014,6 +1088,78 @@ export default function DetalhesFicha() {
               </div>
             </CardContent>
           </Card>
+
+          {/* OTP Queue Status - Pending items */}
+          {pendingOtpItems.length > 0 && (
+            <Card className="border-blue-500/30 bg-blue-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                  <div>
+                    <h3 className="font-semibold text-foreground">Enviando código de confirmação...</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {pendingOtpItems.map(item => 
+                        item.tipo === 'proprietario' ? 'Proprietário' : 'Comprador'
+                      ).join(' e ')} - aguardando envio via WhatsApp
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* OTP Queue Status - Failed items */}
+          {failedOtpItems.length > 0 && (
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <div>
+                    <h3 className="font-semibold text-foreground">Falha no envio do código</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Houve um problema ao enviar o código de confirmação via WhatsApp
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {failedOtpItems.map(item => (
+                    <div 
+                      key={item.id} 
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-lg bg-background border"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">
+                          {item.tipo === 'proprietario' ? 'Proprietário' : 'Comprador'}
+                        </p>
+                        {item.ultimo_erro && (
+                          <p className="text-xs text-muted-foreground">
+                            Erro: {item.ultimo_erro}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Tentativas: {item.tentativas}/3
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+                        onClick={() => handleRetryOtp(item.id, item.tipo)}
+                        disabled={retryingOtp === item.id}
+                      >
+                        {retryingOtp === item.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                        Tentar Novamente
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Download PDF - when complete or finalized partial */}
           {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
