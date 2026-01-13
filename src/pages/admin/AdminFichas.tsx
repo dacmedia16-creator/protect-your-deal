@@ -38,6 +38,7 @@ interface Ficha {
   backup_gerado_em: string | null;
   corretor_nome?: string;
   imobiliaria_nome?: string;
+  is_autonomo?: boolean;
 }
 
 export default function AdminFichas() {
@@ -90,10 +91,26 @@ export default function AdminFichas() {
       const enrichedFichas = (data || []).map(f => ({
         ...f,
         corretor_nome: corretorMap[f.user_id] || 'Desconhecido',
-        imobiliaria_nome: f.imobiliaria_id ? imobiliariaMap[f.imobiliaria_id] || '-' : 'Autônomo'
+        imobiliaria_nome: f.imobiliaria_id ? imobiliariaMap[f.imobiliaria_id] || '-' : 'Autônomo',
+        is_autonomo: !f.imobiliaria_id
       }));
 
-      setFichas(enrichedFichas);
+      // Ordenar: primeiro imobiliárias (alfabética), depois autônomos, e por data dentro de cada grupo
+      const sortedFichas = enrichedFichas.sort((a, b) => {
+        // Autônomos vão para o final
+        if (a.is_autonomo && !b.is_autonomo) return 1;
+        if (!a.is_autonomo && b.is_autonomo) return -1;
+        
+        // Se ambos são da mesma categoria, ordenar por imobiliária
+        if (a.imobiliaria_nome !== b.imobiliaria_nome) {
+          return (a.imobiliaria_nome || '').localeCompare(b.imobiliaria_nome || '');
+        }
+        
+        // Dentro da mesma imobiliária, ordenar por data (mais recente primeiro)
+        return new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime();
+      });
+
+      setFichas(sortedFichas);
     } catch (error) {
       console.error('Error fetching fichas:', error);
     } finally {
@@ -187,64 +204,80 @@ export default function AdminFichas() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredFichas.map((ficha) => (
-                      <TableRow key={ficha.id}>
-                        <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
-                        <TableCell>{ficha.corretor_nome}</TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant={ficha.imobiliaria_id ? "secondary" : "outline"}>
-                            {ficha.imobiliaria_nome}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
-                          {ficha.imovel_endereco}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={statusColors[ficha.status]}>
-                            {statusLabels[ficha.status] || ficha.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-center justify-center">
-                                    {ficha.backup_gerado_em ? (
-                                      <HardDrive className="h-4 w-4 text-green-500" />
-                                    ) : (
-                                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                                    )}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {ficha.backup_gerado_em ? 'Backup OK' : 'Backup pendente'}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <span className="text-muted-foreground text-center block">-</span>
+                    {filteredFichas.map((ficha, index) => {
+                      const prevFicha = index > 0 ? filteredFichas[index - 1] : null;
+                      const showSeparator = prevFicha && !prevFicha.is_autonomo && ficha.is_autonomo;
+                      
+                      return (
+                        <>
+                          {showSeparator && (
+                            <TableRow key={`separator-${ficha.id}`} className="hover:bg-transparent">
+                              <TableCell colSpan={8} className="bg-muted/50 py-2">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  Corretores Autônomos
+                                </span>
+                              </TableCell>
+                            </TableRow>
                           )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link to={`/fichas/${ficha.id}`}>
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <DeleteFichaDialog 
-                              fichaId={ficha.id} 
-                              protocolo={ficha.protocolo}
-                              onDeleted={fetchFichas}
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          <TableRow key={ficha.id}>
+                            <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
+                            <TableCell>{ficha.corretor_nome}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <Badge variant={ficha.imobiliaria_id ? "secondary" : "outline"}>
+                                {ficha.imobiliaria_nome}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
+                              {ficha.imovel_endereco}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={statusColors[ficha.status]}>
+                                {statusLabels[ficha.status] || ficha.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center justify-center">
+                                        {ficha.backup_gerado_em ? (
+                                          <HardDrive className="h-4 w-4 text-green-500" />
+                                        ) : (
+                                          <AlertTriangle className="h-4 w-4 text-destructive" />
+                                        )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {ficha.backup_gerado_em ? 'Backup OK' : 'Backup pendente'}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-muted-foreground text-center block">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Link to={`/fichas/${ficha.id}`}>
+                                  <Button variant="ghost" size="icon">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                                <DeleteFichaDialog 
+                                  fichaId={ficha.id} 
+                                  protocolo={ficha.protocolo}
+                                  onDeleted={fetchFichas}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        </>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
