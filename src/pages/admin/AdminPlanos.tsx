@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Loader2, Users, FileText, Building2, Home, Trash2 } from 'lucide-react';
+import { Plus, Edit, Loader2, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Plano {
@@ -330,10 +330,15 @@ export default function AdminPlanos() {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {planos.map((plano) => (
-            <Card key={plano.id} className={!plano.ativo ? 'opacity-60' : ''}>
+            <Card key={plano.id} className={`relative overflow-hidden ${!plano.ativo ? 'opacity-60' : ''}`}>
+              {plano.valor_mensal === 0 && (
+                <div className="absolute top-3 right-14">
+                  <Badge variant="success">Grátis</Badge>
+                </div>
+              )}
               <CardHeader className="flex flex-row items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
+                <div className="pr-16">
+                  <CardTitle className="text-xl flex items-center gap-2">
                     {plano.nome}
                     {!plano.ativo && (
                       <Badge variant="outline" className="text-muted-foreground">
@@ -361,35 +366,35 @@ export default function AdminPlanos() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-3xl font-bold text-primary">
+                <div className="text-3xl font-bold">
                   {plano.valor_mensal === 0 ? (
-                    'Sob consulta'
+                    'Grátis'
                   ) : (
                     <>
                       R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
-                      <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                      <span className="text-base font-normal text-muted-foreground">/mês</span>
                     </>
                   )}
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{plano.max_corretores === 999 ? 'Ilimitado' : plano.max_corretores} corretores</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span>{plano.max_fichas_mes >= 99999 ? 'Ilimitado' : plano.max_fichas_mes} registros/mês</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>{plano.max_clientes >= 99999 ? 'Ilimitado' : plano.max_clientes} clientes</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Home className="h-4 w-4 text-muted-foreground" />
-                    <span>{plano.max_imoveis >= 99999 ? 'Ilimitado' : plano.max_imoveis} imóveis</span>
-                  </div>
-                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span>{plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span>{plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span>{plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <span>{plano.max_corretores === 999 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}</span>
+                  </li>
+                </ul>
 
                 {plano.asaas_plan_id && (
                   <div className="pt-2 border-t border-border">
