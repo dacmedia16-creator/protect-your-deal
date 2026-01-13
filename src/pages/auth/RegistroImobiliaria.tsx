@@ -120,7 +120,14 @@ export default function RegistroImobiliaria() {
           .order('valor_mensal', { ascending: true });
 
         if (error) throw error;
-        setPlanos(data || []);
+        
+        // Reordenar: planos "sob consulta" (valor_mensal null) vão para o final
+        const planosOrdenados = (data || []).sort((a, b) => {
+          if (a.valor_mensal === null) return 1;
+          if (b.valor_mensal === null) return -1;
+          return a.valor_mensal - b.valor_mensal;
+        });
+        setPlanos(planosOrdenados);
         
         // Se veio com parâmetro plano=gratuito, seleciona o plano gratuito automaticamente
         if (planoParam === 'gratuito' && data) {
