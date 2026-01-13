@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ interface UsageStats {
 
 export default function EmpresaAssinatura() {
   const { imobiliariaId, assinatura, imobiliaria, refetch } = useUserRole();
+  useAssinaturaNotification();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);

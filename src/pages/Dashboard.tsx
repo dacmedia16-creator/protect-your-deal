@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
+import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,6 +42,9 @@ export default function Dashboard() {
 
   // Hook de notificação para fichas confirmadas
   useFichaNotification();
+  
+  // Hook de notificação para mudanças de assinatura
+  useAssinaturaNotification();
 
   // Função para forçar atualização (limpar cache e recarregar)
   const handleForceUpdate = async () => {
