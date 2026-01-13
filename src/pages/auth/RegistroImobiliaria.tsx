@@ -271,6 +271,41 @@ export default function RegistroImobiliaria() {
             {/* Step 1: Choose plan */}
             {step === 1 && (
               <div className="space-y-4">
+                {/* Campo de cupom de desconto */}
+                <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Ticket className="h-4 w-4 text-primary" />
+                    <Label htmlFor="cupom">Cupom de desconto (opcional)</Label>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="cupom"
+                      value={codigoCupom}
+                      onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
+                      placeholder="Ex: DESCONTO10"
+                      className={cupomInfo?.valido === false ? 'border-destructive' : cupomInfo?.valido ? 'border-green-500' : ''}
+                    />
+                    {validatingCupom && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                  {cupomInfo && !cupomInfo.valido && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <X className="h-3 w-3" />
+                      {cupomInfo.mensagem}
+                    </p>
+                  )}
+                  {cupomInfo?.valido && (
+                    <p className="text-sm text-green-600 flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      {cupomInfo.tipo_desconto === 'percentual' 
+                        ? `${cupomInfo.valor_desconto}% de desconto aplicado!`
+                        : `R$ ${Number(cupomInfo.valor_desconto).toFixed(2)} de desconto aplicado!`
+                      }
+                    </p>
+                  )}
+                </div>
+
                 <RadioGroup value={selectedPlano} onValueChange={(value) => {
                   if (value === 'cpf-gratuito') {
                     navigate('/registro-autonomo?plano=gratuito');
@@ -299,38 +334,63 @@ export default function RegistroImobiliaria() {
                     </label>
                   )}
                   
-                  {planos.map((plano) => (
-                    <label
-                      key={plano.id}
-                      className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedPlano === plano.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <RadioGroupItem value={plano.id} className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">
-                            {plano.nome.toLowerCase() === 'gratuito' ? 'Gratuito CNPJ' : plano.nome}
-                          </span>
-                          <span className="font-bold text-primary">
-                            {plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise')
-                              ? 'Grátis' 
-                              : plano.nome.toLowerCase() === 'enterprise' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'gratuito')
-                              ? 'Sob consulta'
-                              : `R$ ${plano.valor_mensal.toFixed(2).replace('.', ',')}/mês`
-                            }
-                          </span>
+                  {planos.map((plano) => {
+                    // Calcular preço com desconto
+                    let precoOriginal = plano.valor_mensal;
+                    let precoComDesconto = precoOriginal;
+                    
+                    if (cupomInfo?.valido && precoOriginal > 0) {
+                      if (cupomInfo.tipo_desconto === 'percentual') {
+                        precoComDesconto = precoOriginal * (1 - cupomInfo.valor_desconto / 100);
+                      } else {
+                        precoComDesconto = Math.max(0, precoOriginal - cupomInfo.valor_desconto);
+                      }
+                    }
+                    
+                    const temDesconto = cupomInfo?.valido && precoOriginal > 0 && precoComDesconto !== precoOriginal;
+                    
+                    return (
+                      <label
+                        key={plano.id}
+                        className={`flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
+                          selectedPlano === plano.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <RadioGroupItem value={plano.id} className="mt-1" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {plano.nome.toLowerCase() === 'gratuito' ? 'Gratuito CNPJ' : plano.nome}
+                            </span>
+                            <span className="font-bold text-primary">
+                              {plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'enterprise')
+                                ? 'Grátis' 
+                                : plano.nome.toLowerCase() === 'enterprise' || (plano.valor_mensal === 0 && plano.nome.toLowerCase() !== 'gratuito')
+                                ? 'Sob consulta'
+                                : temDesconto
+                                ? (
+                                  <span className="flex items-center gap-2">
+                                    <span className="line-through text-muted-foreground text-sm font-normal">
+                                      R$ {precoOriginal.toFixed(2).replace('.', ',')}
+                                    </span>
+                                    <span>R$ {precoComDesconto.toFixed(2).replace('.', ',')}/mês</span>
+                                  </span>
+                                )
+                                : `R$ ${plano.valor_mensal.toFixed(2).replace('.', ',')}/mês`
+                              }
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
+                              <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                                <span>{plano.max_corretores} corretores</span>
+                                <span>{plano.max_fichas_mes} registros/mês</span>
+                              </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
-                            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                              <span>{plano.max_corretores} corretores</span>
-                              <span>{plano.max_fichas_mes} registros/mês</span>
-                            </div>
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    );
+                  })}
                 </RadioGroup>
                 
                 <Button 
@@ -470,40 +530,6 @@ export default function RegistroImobiliaria() {
                   </div>
                 </div>
 
-                {/* Campo de cupom de desconto */}
-                <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-                  <div className="flex items-center gap-2">
-                    <Ticket className="h-4 w-4 text-primary" />
-                    <Label htmlFor="cupom">Cupom de desconto (opcional)</Label>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="cupom"
-                      value={codigoCupom}
-                      onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
-                      placeholder="Ex: DESCONTO10"
-                      className={cupomInfo?.valido === false ? 'border-destructive' : cupomInfo?.valido ? 'border-green-500' : ''}
-                    />
-                    {validatingCupom && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                  {cupomInfo && !cupomInfo.valido && (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <X className="h-3 w-3" />
-                      {cupomInfo.mensagem}
-                    </p>
-                  )}
-                  {cupomInfo?.valido && (
-                    <p className="text-sm text-green-600 flex items-center gap-1">
-                      <Check className="h-3 w-3" />
-                      {cupomInfo.tipo_desconto === 'percentual' 
-                        ? `${cupomInfo.valor_desconto}% de desconto aplicado!`
-                        : `R$ ${Number(cupomInfo.valor_desconto).toFixed(2)} de desconto aplicado!`
-                      }
-                    </p>
-                  )}
-                </div>
 
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" onClick={() => setStep(2)} className="flex-1">
