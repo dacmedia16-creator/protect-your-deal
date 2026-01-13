@@ -55,6 +55,8 @@ export function ProtectedRoute({
       return <Navigate to="/admin" replace />;
     } else if (role === 'imobiliaria_admin') {
       return <Navigate to="/empresa" replace />;
+    } else if (role === 'afiliado') {
+      return <Navigate to="/afiliado" replace />;
     } else {
       return <Navigate to="/dashboard" replace />;
     }

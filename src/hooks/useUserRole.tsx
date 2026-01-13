@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-export type AppRole = 'super_admin' | 'imobiliaria_admin' | 'corretor';
+export type AppRole = 'super_admin' | 'imobiliaria_admin' | 'corretor' | 'afiliado';
 
 interface UserRoleContextType {
   role: AppRole | null;
@@ -162,11 +162,26 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
           }
         }
       } else {
-        // No role found - reset role state
-        setRole(null);
-        setImobiliariaId(null);
-        setImobiliaria(null);
-        setAssinatura(null);
+        // No role in user_roles - check if user is an afiliado
+        const { data: afiliadoData, error: afiliadoError } = await supabase
+          .from('afiliados')
+          .select('id')
+          .eq('user_id', currentUserId)
+          .maybeSingle();
+
+        if (!afiliadoError && afiliadoData) {
+          // User is an afiliado
+          setRole('afiliado');
+          setImobiliariaId(null);
+          setImobiliaria(null);
+          setAssinatura(null);
+        } else {
+          // No role found - reset role state
+          setRole(null);
+          setImobiliariaId(null);
+          setImobiliaria(null);
+          setAssinatura(null);
+        }
       }
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
@@ -224,6 +239,7 @@ export function usePermissions() {
     isSuperAdmin: role === 'super_admin',
     isImobiliariaAdmin: role === 'imobiliaria_admin',
     isCorretor: role === 'corretor',
+    isAfiliado: role === 'afiliado',
     isCorretorAutonomo: role === 'corretor' && !imobiliariaId,
     canManageImobiliarias: role === 'super_admin',
     canManagePlanos: role === 'super_admin',

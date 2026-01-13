@@ -386,8 +386,16 @@ const App = () => (
                 } />
 
                 {/* Afiliado routes */}
-                <Route path="/afiliado" element={<AfiliadoDashboard />} />
-                <Route path="/afiliado/comissoes" element={<AfiliadoComissoes />} />
+                <Route path="/afiliado" element={
+                  <ProtectedRoute allowedRoles={['afiliado']}>
+                    <AfiliadoDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/afiliado/comissoes" element={
+                  <ProtectedRoute allowedRoles={['afiliado']}>
+                    <AfiliadoComissoes />
+                  </ProtectedRoute>
+                } />
 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
