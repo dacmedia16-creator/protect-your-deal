@@ -64,7 +64,15 @@ export default function EmpresaAssinatura() {
           .eq('ativo', true)
           .order('valor_mensal', { ascending: true });
 
-        setPlanos(planosData || []);
+        // Reordenar: Enterprise vai para o final
+        const planosOrdenados = (planosData || []).sort((a, b) => {
+          const aIsEnterprise = a.nome.toLowerCase() === 'enterprise';
+          const bIsEnterprise = b.nome.toLowerCase() === 'enterprise';
+          if (aIsEnterprise && !bIsEnterprise) return 1;
+          if (!aIsEnterprise && bIsEnterprise) return -1;
+          return a.valor_mensal - b.valor_mensal;
+        });
+        setPlanos(planosOrdenados);
 
         // Fetch usage stats
         const { count: corretores } = await supabase
