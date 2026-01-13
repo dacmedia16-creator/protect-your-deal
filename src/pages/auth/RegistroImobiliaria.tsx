@@ -282,6 +282,8 @@ export default function RegistroImobiliaria() {
                 <RadioGroup value={selectedPlano} onValueChange={(value) => {
                   if (value === 'cpf-gratuito') {
                     navigate('/registro-autonomo?plano=gratuito');
+                  } else if (value === 'cpf-profissional') {
+                    navigate('/registro-autonomo?plano=profissional');
                   } else {
                     setSelectedPlano(value);
                   }
@@ -306,6 +308,25 @@ export default function RegistroImobiliaria() {
                       </div>
                     </label>
                   )}
+
+                  {/* Opção Profissional CPF - redireciona para registro autônomo */}
+                  <label
+                    className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors border-border hover:border-primary/50"
+                    onClick={() => navigate('/registro-autonomo?plano=profissional')}
+                  >
+                    <RadioGroupItem value="cpf-profissional" className="mt-1" />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Profissional</span>
+                        <span className="font-bold text-primary">R$ 79,90/mês</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Para corretores autônomos que precisam de mais recursos</p>
+                      <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                        <span>1 corretor</span>
+                        <span>15 registros/mês</span>
+                      </div>
+                    </div>
+                  </label>
                   
                   {planos.map((plano) => {
                     // Calcular preço com desconto
