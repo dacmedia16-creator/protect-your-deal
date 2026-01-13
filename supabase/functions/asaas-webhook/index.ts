@@ -165,37 +165,54 @@ serve(async (req) => {
           let shouldGenerateCommissionForAffiliate = true;
 
           try {
-            const { data: limiteConfig } = await supabase
-              .from('configuracoes_sistema')
-              .select('chave, valor')
-              .in('chave', ['limite_meses_comissao_ativo', 'limite_meses_comissao_valor']);
-            
-            const limiteAtivo = limiteConfig?.find(c => c.chave === 'limite_meses_comissao_ativo')?.valor === true || 
-                               limiteConfig?.find(c => c.chave === 'limite_meses_comissao_ativo')?.valor === 'true';
-            const limiteMeses = Number(limiteConfig?.find(c => c.chave === 'limite_meses_comissao_valor')?.valor || 12);
-            
-            console.log(`Commission limit config - active: ${limiteAtivo}, months: ${limiteMeses}`);
+            // Verificar se o afiliado tem comissão ativa
+            const { data: afiliadoData, error: afiliadoError } = await supabase
+              .from('afiliados')
+              .select('comissao_ativa')
+              .eq('id', assinatura.afiliado_id)
+              .single();
 
-            if (limiteAtivo) {
-              // Contar quantas comissões já foram geradas para esta assinatura
-              const { count, error: countError } = await supabase
-                .from('cupons_usos')
-                .select('id', { count: 'exact', head: true })
-                .eq('assinatura_id', assinatura.id);
+            if (afiliadoError) {
+              console.error('Error fetching affiliate data:', afiliadoError);
+            } else if (afiliadoData?.comissao_ativa === false) {
+              console.log(`Commission disabled for affiliate ${assinatura.afiliado_id}, skipping commission`);
+              shouldGenerateCommissionForAffiliate = false;
+            }
+
+            // Se comissão do afiliado está ativa, verificar limite de meses
+            if (shouldGenerateCommissionForAffiliate) {
+              const { data: limiteConfig } = await supabase
+                .from('configuracoes_sistema')
+                .select('chave, valor')
+                .in('chave', ['limite_meses_comissao_ativo', 'limite_meses_comissao_valor']);
               
-              if (countError) {
-                console.error('Error counting commissions:', countError);
-              } else {
-                console.log(`Commission count for subscription ${assinatura.id}: ${count}/${limiteMeses}`);
+              const limiteAtivo = limiteConfig?.find(c => c.chave === 'limite_meses_comissao_ativo')?.valor === true || 
+                                 limiteConfig?.find(c => c.chave === 'limite_meses_comissao_ativo')?.valor === 'true';
+              const limiteMeses = Number(limiteConfig?.find(c => c.chave === 'limite_meses_comissao_valor')?.valor || 12);
+              
+              console.log(`Commission limit config - active: ${limiteAtivo}, months: ${limiteMeses}`);
+
+              if (limiteAtivo) {
+                // Contar quantas comissões já foram geradas para esta assinatura
+                const { count, error: countError } = await supabase
+                  .from('cupons_usos')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('assinatura_id', assinatura.id);
                 
-                if ((count || 0) >= limiteMeses) {
-                  console.log(`Commission limit reached (${count}/${limiteMeses}) for subscription ${assinatura.id}, skipping commission`);
-                  shouldGenerateCommissionForAffiliate = false;
+                if (countError) {
+                  console.error('Error counting commissions:', countError);
+                } else {
+                  console.log(`Commission count for subscription ${assinatura.id}: ${count}/${limiteMeses}`);
+                  
+                  if ((count || 0) >= limiteMeses) {
+                    console.log(`Commission limit reached (${count}/${limiteMeses}) for subscription ${assinatura.id}, skipping commission`);
+                    shouldGenerateCommissionForAffiliate = false;
+                  }
                 }
               }
             }
           } catch (configError) {
-            console.error('Error checking commission limit config:', configError);
+            console.error('Error checking commission config:', configError);
           }
 
           if (shouldGenerateCommissionForAffiliate) {

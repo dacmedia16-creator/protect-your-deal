@@ -17,6 +17,7 @@ export type Database = {
       afiliados: {
         Row: {
           ativo: boolean
+          comissao_ativa: boolean
           created_at: string
           email: string
           id: string
@@ -28,6 +29,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          comissao_ativa?: boolean
           created_at?: string
           email: string
           id?: string
@@ -39,6 +41,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          comissao_ativa?: boolean
           created_at?: string
           email?: string
           id?: string
