@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { 
   Settings, 
   Bell, 
@@ -15,7 +16,8 @@ import {
   Database,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 type ConfiguracaoSistema = {
   id: string;
   chave: string;
-  valor: boolean | string;
+  valor: boolean | string | number;
   descricao: string | null;
 };
 
@@ -51,11 +53,19 @@ export default function AdminConfiguracoes() {
     },
   });
 
-  // Get specific configuration value
+  // Get specific configuration value (boolean)
   const getConfigValue = (chave: string): boolean => {
     const config = configuracoes?.find(c => c.chave === chave);
-    if (!config) return true; // default to true
+    if (!config) return false; // default to false
     return config.valor === true || config.valor === 'true';
+  };
+
+  // Get specific configuration value (number)
+  const getConfigNumberValue = (chave: string, defaultValue: number = 12): number => {
+    const config = configuracoes?.find(c => c.chave === chave);
+    if (!config) return defaultValue;
+    const numValue = Number(config.valor);
+    return isNaN(numValue) ? defaultValue : numValue;
   };
 
   // Mutation to update configuration
@@ -91,6 +101,22 @@ export default function AdminConfiguracoes() {
     updateConfigMutation.mutate({ 
       chave: 'lembretes_otp_ativo', 
       valor: !currentValue 
+    });
+  };
+
+  const handleToggleLimiteComissao = () => {
+    const currentValue = getConfigValue('limite_meses_comissao_ativo');
+    updateConfigMutation.mutate({ 
+      chave: 'limite_meses_comissao_ativo', 
+      valor: !currentValue 
+    });
+  };
+
+  const handleUpdateLimiteMeses = (valor: string) => {
+    const numValue = Math.max(1, Math.min(48, Number(valor) || 12));
+    updateConfigMutation.mutate({ 
+      chave: 'limite_meses_comissao_valor', 
+      valor: numValue as any
     });
   };
 
@@ -259,6 +285,65 @@ export default function AdminConfiguracoes() {
                   </Badge>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* Afiliados */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Afiliados
+              </CardTitle>
+              <CardDescription>
+                Configurações do programa de afiliados
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Limitar Meses de Comissão</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Pagar comissão apenas nos primeiros meses da assinatura
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-6 w-11" />
+                ) : (
+                  <Switch
+                    checked={getConfigValue('limite_meses_comissao_ativo')}
+                    onCheckedChange={handleToggleLimiteComissao}
+                    disabled={updateConfigMutation.isPending}
+                  />
+                )}
+              </div>
+              
+              {getConfigValue('limite_meses_comissao_ativo') && (
+                <>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Quantidade de Meses</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Número máximo de meses para pagamento de comissão
+                      </p>
+                    </div>
+                    {isLoadingConfig ? (
+                      <Skeleton className="h-9 w-20" />
+                    ) : (
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={getConfigNumberValue('limite_meses_comissao_valor')}
+                        onChange={(e) => handleUpdateLimiteMeses(e.target.value)}
+                        min="1"
+                        max="48"
+                        disabled={updateConfigMutation.isPending}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

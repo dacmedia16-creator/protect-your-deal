@@ -161,24 +161,63 @@ serve(async (req) => {
 
         // Gerar comissão recorrente para o afiliado
         if (shouldGenerateCommission && assinatura.afiliado_id && assinatura.comissao_percentual > 0) {
-          const valorComissao = value * (Number(assinatura.comissao_percentual) / 100);
-          console.log(`Generating recurring commission: ${valorComissao} for affiliate ${assinatura.afiliado_id}`);
+          // Verificar configuração de limite de meses para comissão
+          let shouldGenerateCommissionForAffiliate = true;
 
-          const { error: comissaoError } = await supabase.from('cupons_usos').insert({
-            cupom_id: assinatura.cupom_id,
-            assinatura_id: assinatura.id,
-            imobiliaria_id: assinatura.imobiliaria_id,
-            user_id: assinatura.user_id,
-            valor_original: value,
-            valor_desconto: 0, // Desconto só no primeiro pagamento
-            valor_comissao: valorComissao,
-            comissao_paga: false,
-          });
+          try {
+            const { data: limiteConfig } = await supabase
+              .from('configuracoes_sistema')
+              .select('chave, valor')
+              .in('chave', ['limite_meses_comissao_ativo', 'limite_meses_comissao_valor']);
+            
+            const limiteAtivo = limiteConfig?.find(c => c.chave === 'limite_meses_comissao_ativo')?.valor === true || 
+                               limiteConfig?.find(c => c.chave === 'limite_meses_comissao_ativo')?.valor === 'true';
+            const limiteMeses = Number(limiteConfig?.find(c => c.chave === 'limite_meses_comissao_valor')?.valor || 12);
+            
+            console.log(`Commission limit config - active: ${limiteAtivo}, months: ${limiteMeses}`);
 
-          if (comissaoError) {
-            console.error('Error creating recurring commission:', comissaoError);
-          } else {
-            console.log('Recurring commission created successfully');
+            if (limiteAtivo) {
+              // Contar quantas comissões já foram geradas para esta assinatura
+              const { count, error: countError } = await supabase
+                .from('cupons_usos')
+                .select('id', { count: 'exact', head: true })
+                .eq('assinatura_id', assinatura.id);
+              
+              if (countError) {
+                console.error('Error counting commissions:', countError);
+              } else {
+                console.log(`Commission count for subscription ${assinatura.id}: ${count}/${limiteMeses}`);
+                
+                if ((count || 0) >= limiteMeses) {
+                  console.log(`Commission limit reached (${count}/${limiteMeses}) for subscription ${assinatura.id}, skipping commission`);
+                  shouldGenerateCommissionForAffiliate = false;
+                }
+              }
+            }
+          } catch (configError) {
+            console.error('Error checking commission limit config:', configError);
+          }
+
+          if (shouldGenerateCommissionForAffiliate) {
+            const valorComissao = value * (Number(assinatura.comissao_percentual) / 100);
+            console.log(`Generating recurring commission: ${valorComissao} for affiliate ${assinatura.afiliado_id}`);
+
+            const { error: comissaoError } = await supabase.from('cupons_usos').insert({
+              cupom_id: assinatura.cupom_id,
+              assinatura_id: assinatura.id,
+              imobiliaria_id: assinatura.imobiliaria_id,
+              user_id: assinatura.user_id,
+              valor_original: value,
+              valor_desconto: 0, // Desconto só no primeiro pagamento
+              valor_comissao: valorComissao,
+              comissao_paga: false,
+            });
+
+            if (comissaoError) {
+              console.error('Error creating recurring commission:', comissaoError);
+            } else {
+              console.log('Recurring commission created successfully');
+            }
           }
         }
 
