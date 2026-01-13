@@ -155,7 +155,7 @@ serve(async (req) => {
     if (ficha.imobiliaria_id) {
       const { data: imobData } = await supabase
         .from('imobiliarias')
-        .select('nome, logo_url')
+        .select('nome, logo_url, cnpj, creci_juridico')
         .eq('id', ficha.imobiliaria_id)
         .single();
       imobiliaria = imobData;
@@ -247,6 +247,16 @@ serve(async (req) => {
       }
     }
 
+    // Helper to format CNPJ (defined early for header use)
+    const formatCNPJ = (cnpj: string | null) => {
+      if (!cnpj) return '-';
+      const cleaned = cnpj.replace(/\D/g, '');
+      if (cleaned.length === 14) {
+        return `${cleaned.slice(0,2)}.${cleaned.slice(2,5)}.${cleaned.slice(5,8)}/${cleaned.slice(8,12)}-${cleaned.slice(12)}`;
+      }
+      return cnpj;
+    };
+
     // Header - with imobiliaria name if exists
     if (imobiliaria?.nome) {
       currentPage.drawText(imobiliaria.nome, {
@@ -256,7 +266,33 @@ serve(async (req) => {
         font: helveticaBold,
         color: primaryColor,
       });
-      yPosition -= 20;
+      yPosition -= 16;
+      
+      // Add CNPJ if exists
+      if (imobiliaria?.cnpj) {
+        currentPage.drawText(`CNPJ: ${formatCNPJ(imobiliaria.cnpj)}`, {
+          x: headerTextX,
+          y: yPosition,
+          size: 9,
+          font: helvetica,
+          color: textColor,
+        });
+        yPosition -= 12;
+      }
+      
+      // Add CRECI Jurídico if exists
+      if (imobiliaria?.creci_juridico) {
+        currentPage.drawText(`CRECI-J: ${imobiliaria.creci_juridico}`, {
+          x: headerTextX,
+          y: yPosition,
+          size: 9,
+          font: helvetica,
+          color: textColor,
+        });
+        yPosition -= 12;
+      }
+      
+      yPosition -= 4;
     }
 
     // Document title - always use standard title
