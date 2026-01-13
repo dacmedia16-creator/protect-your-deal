@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
+
 interface Ficha {
   id: string;
   protocolo: string;
@@ -35,6 +37,9 @@ export default function EmpresaFichas() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  // Hook de notificação para fichas confirmadas
+  useFichaNotification();
 
   const fetchFichas = useCallback(async () => {
     if (!imobiliariaId) return;
