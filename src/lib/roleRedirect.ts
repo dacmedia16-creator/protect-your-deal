@@ -6,6 +6,8 @@ export function getRedirectPathByRole(role: AppRole | null): string {
       return '/admin';
     case 'imobiliaria_admin':
       return '/empresa';
+    case 'afiliado':
+      return '/afiliado';
     case 'corretor':
     default:
       return '/dashboard';
