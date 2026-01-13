@@ -25,6 +25,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2, Building2 } from 'lucide-react';
+import { isValidCreciJuridico } from '@/lib/creci';
 
 const estadosBrasileiros = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -35,7 +36,10 @@ const estadosBrasileiros = [
 const formSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   cnpj: z.string().optional(),
-  creci_juridico: z.string().optional(),
+  creci_juridico: z.string().optional().refine(
+    (val) => !val || isValidCreciJuridico(val),
+    { message: 'Formato inválido. Use J-12345' }
+  ),
   email: z.string().email('Email inválido'),
   telefone: z.string().optional(),
   endereco: z.string().optional(),
