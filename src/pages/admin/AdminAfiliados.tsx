@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock } from "lucide-react";
+import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock, Coins, CoinsIcon } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { invokeWithRetry } from "@/lib/invokeWithRetry";
@@ -22,6 +23,7 @@ interface Afiliado {
   telefone: string | null;
   pix_chave: string | null;
   ativo: boolean;
+  comissao_ativa: boolean;
   created_at: string;
   user_id: string | null;
   total_cupons?: number;
@@ -223,6 +225,32 @@ export default function AdminAfiliados() {
     },
   });
 
+  const toggleComissaoMutation = useMutation({
+    mutationFn: async ({ id, comissao_ativa }: { id: string; comissao_ativa: boolean }) => {
+      const { error } = await supabase
+        .from("afiliados")
+        .update({ comissao_ativa })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
+      toast({ 
+        title: variables.comissao_ativa ? "Comissão ativada!" : "Comissão desativada!",
+        description: variables.comissao_ativa 
+          ? "O afiliado receberá comissões em novos pagamentos." 
+          : "O afiliado não receberá mais comissões."
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao alterar comissão",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({ nome: "", email: "", telefone: "", pix_chave: "" });
     setEditingAfiliado(null);
@@ -350,6 +378,7 @@ export default function AdminAfiliados() {
                     <TableHead className="text-center">Cupons</TableHead>
                     <TableHead className="text-center">Usos</TableHead>
                     <TableHead className="text-right">Comissão Pendente</TableHead>
+                    <TableHead className="text-center">Comissão</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -376,6 +405,21 @@ export default function AdminAfiliados() {
                         ) : (
                           "-"
                         )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Switch
+                            checked={afiliado.comissao_ativa}
+                            onCheckedChange={(checked) =>
+                              toggleComissaoMutation.mutate({
+                                id: afiliado.id,
+                                comissao_ativa: checked,
+                              })
+                            }
+                            disabled={toggleComissaoMutation.isPending}
+                          />
+                          <Coins className={`h-4 w-4 ${afiliado.comissao_ativa ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={afiliado.ativo ? "default" : "secondary"}>
