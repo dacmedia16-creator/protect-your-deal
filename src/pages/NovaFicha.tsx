@@ -296,70 +296,58 @@ export default function NovaFicha() {
 
       if (error) throw error;
 
-      // Enviar OTP apenas se o usuário optou por enviar automaticamente
+      // Enviar OTP usando a fila de processamento
       if (enviarWhatsappAutomatico) {
         const currentAppUrl = window.location.origin;
-        const sendOtpPromises = [];
+        const queueItems = [];
 
         if (incluiProprietario) {
-          sendOtpPromises.push(
-            supabase.functions.invoke('send-otp', {
-              body: { ficha_id: data.id, tipo: 'proprietario', app_url: currentAppUrl }
-            }).then(({ data: otpData, error: otpError }) => {
-              if (otpError) {
-                console.error('Error sending OTP to owner:', otpError);
-                return { tipo: 'proprietario', success: false, error: otpError };
-              }
-              return { tipo: 'proprietario', success: true, ...otpData };
-            })
-          );
+          queueItems.push({
+            ficha_id: data.id,
+            tipo: 'proprietario',
+            app_url: currentAppUrl,
+            user_id: user.id,
+            prioridade: 10, // Alta prioridade para envio imediato
+          });
         }
 
         if (incluiComprador) {
-          sendOtpPromises.push(
-            supabase.functions.invoke('send-otp', {
-              body: { ficha_id: data.id, tipo: 'comprador', app_url: currentAppUrl }
-            }).then(({ data: otpData, error: otpError }) => {
-              if (otpError) {
-                console.error('Error sending OTP to buyer:', otpError);
-                return { tipo: 'comprador', success: false, error: otpError };
-              }
-              return { tipo: 'comprador', success: true, ...otpData };
-            })
-          );
+          queueItems.push({
+            ficha_id: data.id,
+            tipo: 'comprador',
+            app_url: currentAppUrl,
+            user_id: user.id,
+            prioridade: 10,
+          });
         }
 
-        if (sendOtpPromises.length > 0) {
-          const otpResults = await Promise.all(sendOtpPromises);
-          const successCount = otpResults.filter(r => r.success).length;
-          const simulationMode = otpResults.some(r => r.simulation);
+        if (queueItems.length > 0) {
+          // Inserir na fila de OTP
+          const { error: queueError } = await supabase
+            .from('otp_queue')
+            .insert(queueItems);
 
-          let toastMessage = '';
-          if (modoCriacao === 'completo') {
-            if (successCount === 2) {
-              toastMessage = simulationMode 
-                ? `OTPs gerados em modo simulação.`
-                : `WhatsApp enviado ao proprietário e comprador.`;
-            } else if (successCount === 1) {
-              toastMessage = `Apenas um WhatsApp foi enviado.`;
-            } else {
-              toastMessage = `Envio de WhatsApp falhou, envie manualmente.`;
-            }
+          if (queueError) {
+            console.error('Erro ao enfileirar OTPs:', queueError);
+            toast({
+              title: 'Registro criado com sucesso!',
+              description: `Protocolo: ${protocolo}. Houve um erro ao agendar o envio do código. Envie manualmente.`,
+            });
           } else {
-            const tipoParte = modoCriacao === 'proprietario' ? 'proprietário' : 'comprador';
-            if (successCount === 1) {
-              toastMessage = simulationMode
-                ? `OTP gerado para ${tipoParte} em modo simulação.`
-                : `WhatsApp enviado para o ${tipoParte}.`;
-            } else {
-              toastMessage = `Falha ao enviar WhatsApp para ${tipoParte}.`;
-            }
-          }
+            // Disparar processamento imediato da fila (fire-and-forget)
+            supabase.functions.invoke('process-otp-queue').catch(err => {
+              console.log('Processamento da fila iniciado em background:', err);
+            });
 
-          toast({
-            title: 'Registro criado com sucesso!',
-            description: `Protocolo: ${protocolo}. ${toastMessage}`,
-          });
+            const partesEnviadas = [];
+            if (incluiProprietario) partesEnviadas.push('proprietário');
+            if (incluiComprador) partesEnviadas.push('comprador');
+
+            toast({
+              title: 'Registro criado com sucesso!',
+              description: `Protocolo: ${protocolo}. Código de confirmação será enviado para ${partesEnviadas.join(' e ')} em instantes.`,
+            });
+          }
         } else {
           toast({
             title: 'Registro criado com sucesso!',

@@ -980,6 +980,56 @@ export type Database = {
           },
         ]
       }
+      otp_queue: {
+        Row: {
+          app_url: string | null
+          created_at: string | null
+          ficha_id: string
+          id: string
+          prioridade: number | null
+          processed_at: string | null
+          status: string
+          tentativas: number | null
+          tipo: string
+          ultimo_erro: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_url?: string | null
+          created_at?: string | null
+          ficha_id: string
+          id?: string
+          prioridade?: number | null
+          processed_at?: string | null
+          status?: string
+          tentativas?: number | null
+          tipo: string
+          ultimo_erro?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_url?: string | null
+          created_at?: string | null
+          ficha_id?: string
+          id?: string
+          prioridade?: number | null
+          processed_at?: string | null
+          status?: string
+          tentativas?: number | null
+          tipo?: string
+          ultimo_erro?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "otp_queue_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_visita"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planos: {
         Row: {
           asaas_plan_id: string | null
