@@ -107,9 +107,9 @@ const App = () => (
               <PWAInstallPrompt />
               <ChatAssistente />
               <Routes>
-                {/* Public routes */}
-                <Route path="/inicial" element={<Index />} />
-                <Route path="/" element={<SmartRedirect />} />
+              {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/redirect" element={<SmartRedirect />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/registro" element={<RegistroImobiliaria />} />
                 <Route path="/registro/tipo" element={<RegistroTipo />} />
