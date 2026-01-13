@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, User, Phone, Key, Mail, Calendar, CheckCircle } from 'lucide-react';
+import { Loader2, Save, User, Phone, Key, Mail, Calendar, CheckCircle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
@@ -36,6 +36,12 @@ export default function AfiliadoPerfil() {
   const [telefone, setTelefone] = useState('');
   const [pixChave, setPixChave] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Estado para alteração de senha
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   // Sync form state when data loads
   useState(() => {
@@ -77,15 +83,70 @@ export default function AfiliadoPerfil() {
     },
   });
 
+  const changePasswordMutation = useMutation({
+    mutationFn: async ({ senhaAtual, novaSenha }: { senhaAtual: string; novaSenha: string }) => {
+      // Primeiro, verifica a senha atual fazendo login
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: senhaAtual,
+      });
+      
+      if (signInError) {
+        throw new Error('Senha atual incorreta');
+      }
+
+      // Atualiza a senha
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: novaSenha,
+      });
+      
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      toast.success('Senha alterada com sucesso!');
+      setSenhaAtual('');
+      setNovaSenha('');
+      setConfirmarSenha('');
+      setIsChangingPassword(false);
+    },
+    onError: (error: Error) => {
+      console.error('Erro ao alterar senha:', error);
+      toast.error(error.message || 'Erro ao alterar senha');
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateMutation.mutate({ telefone, pix_chave: pixChave });
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (novaSenha.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    
+    if (novaSenha !== confirmarSenha) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+    
+    changePasswordMutation.mutate({ senhaAtual, novaSenha });
   };
 
   const handleCancel = () => {
     setTelefone(afiliado?.telefone || '');
     setPixChave(afiliado?.pix_chave || '');
     setIsEditing(false);
+  };
+
+  const handleCancelPassword = () => {
+    setSenhaAtual('');
+    setNovaSenha('');
+    setConfirmarSenha('');
+    setIsChangingPassword(false);
   };
 
   if (isLoading) {
@@ -242,6 +303,90 @@ export default function AfiliadoPerfil() {
                   </div>
                 )}
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Alterar Senha */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Alterar Senha
+              </CardTitle>
+              <CardDescription>Atualize sua senha de acesso</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!isChangingPassword ? (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsChangingPassword(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Alterar minha senha
+                </Button>
+              ) : (
+                <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="senhaAtual">Senha Atual</Label>
+                    <Input
+                      id="senhaAtual"
+                      type="password"
+                      value={senhaAtual}
+                      onChange={(e) => setSenhaAtual(e.target.value)}
+                      placeholder="Digite sua senha atual"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="novaSenha">Nova Senha</Label>
+                    <Input
+                      id="novaSenha"
+                      type="password"
+                      value={novaSenha}
+                      onChange={(e) => setNovaSenha(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmarSenha">Confirmar Nova Senha</Label>
+                    <Input
+                      id="confirmarSenha"
+                      type="password"
+                      value={confirmarSenha}
+                      onChange={(e) => setConfirmarSenha(e.target.value)}
+                      placeholder="Repita a nova senha"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="submit"
+                      disabled={changePasswordMutation.isPending}
+                    >
+                      {changePasswordMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      Salvar Nova Senha
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelPassword}
+                      disabled={changePasswordMutation.isPending}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
         </div>
