@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, FileCheck, Users, Loader2, Building2, Check } from 'lucide-react';
+import { Shield, FileCheck, Users, Loader2, Building2, Check, Ticket, X } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -54,6 +54,17 @@ export default function Auth() {
   const [validatingCodigo, setValidatingCodigo] = useState(false);
   const [imobiliariaEncontrada, setImobiliariaEncontrada] = useState<ImobiliariaEncontrada | null>(null);
   const [codigoError, setCodigoError] = useState('');
+  
+  // Cupom de desconto
+  const [codigoCupom, setCodigoCupom] = useState('');
+  const [validatingCupom, setValidatingCupom] = useState(false);
+  const [cupomInfo, setCupomInfo] = useState<{
+    cupom_id: string;
+    tipo_desconto: string;
+    valor_desconto: number;
+    valido: boolean;
+    mensagem: string;
+  } | null>(null);
 
   useEffect(() => {
     // Quando terminar de carregar e o usuário estiver logado
@@ -159,6 +170,45 @@ export default function Auth() {
     return () => clearTimeout(debounce);
   }, [codigoImobiliaria, vincularImobiliaria]);
 
+  // Validar cupom de desconto
+  useEffect(() => {
+    if (!codigoCupom || codigoCupom.length < 2) {
+      setCupomInfo(null);
+      return;
+    }
+
+    const debounce = setTimeout(async () => {
+      setValidatingCupom(true);
+      try {
+        const { data, error } = await supabase.rpc('validar_cupom', {
+          codigo_cupom: codigoCupom
+        });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const result = data[0];
+          setCupomInfo({
+            cupom_id: result.cupom_id,
+            tipo_desconto: result.tipo_desconto,
+            valor_desconto: result.valor_desconto,
+            valido: result.valido,
+            mensagem: result.mensagem
+          });
+        } else {
+          setCupomInfo(null);
+        }
+      } catch (error) {
+        console.error('Error validating cupom:', error);
+        setCupomInfo(null);
+      } finally {
+        setValidatingCupom(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(debounce);
+  }, [codigoCupom]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -231,6 +281,7 @@ export default function Auth() {
             email: signupData.email,
             senha: signupData.password,
             codigo_imobiliaria: codigoImobiliaria,
+            codigo_cupom: cupomInfo?.valido ? codigoCupom : null,
           },
         });
 
@@ -540,6 +591,47 @@ export default function Auth() {
                             Peça o código para o administrador da imobiliária
                           </p>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Cupom de desconto */}
+                    <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <Ticket className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="codigoCupom" className="text-sm font-medium">
+                          Cupom de desconto (opcional)
+                        </Label>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="codigoCupom"
+                          type="text"
+                          value={codigoCupom}
+                          onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
+                          placeholder="Digite seu cupom"
+                          className={cupomInfo ? (cupomInfo.valido ? 'border-green-500 pr-10' : 'border-destructive pr-10') : ''}
+                        />
+                        {validatingCupom && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                        {cupomInfo && !validatingCupom && (
+                          cupomInfo.valido ? (
+                            <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                          ) : (
+                            <X className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+                          )
+                        )}
+                      </div>
+                      {cupomInfo && (
+                        <p className={`text-sm ${cupomInfo.valido ? 'text-green-600' : 'text-destructive'}`}>
+                          {cupomInfo.valido 
+                            ? `${cupomInfo.tipo_desconto === 'percentual' 
+                                ? `${cupomInfo.valor_desconto}%` 
+                                : `R$ ${cupomInfo.valor_desconto.toFixed(2).replace('.', ',')}`
+                              } de desconto no 1º mês!`
+                            : cupomInfo.mensagem
+                          }
+                        </p>
                       )}
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading}>
