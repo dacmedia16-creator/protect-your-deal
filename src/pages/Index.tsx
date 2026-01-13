@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
@@ -48,16 +48,9 @@ interface Plano {
 const Index = () => {
   const { user, loading } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
-  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loadingPlanos, setLoadingPlanos] = useState(true);
-
-  useEffect(() => {
-    if (!loading && !roleLoading && user && role) {
-      navigate(getRedirectPathByRole(role));
-    }
-  }, [user, loading, role, roleLoading, navigate]);
 
   useEffect(() => {
     const fetchPlanos = async () => {
@@ -190,15 +183,23 @@ const Index = () => {
           
           <div className="flex items-center gap-3">
             {/* Desktop buttons */}
-            <Button variant="ghost" asChild className="hidden sm:inline-flex">
-              <Link to="/auth">Entrar</Link>
-            </Button>
-            <Button variant="outline" asChild className="hidden sm:inline-flex">
-              <Link to="/registro-autonomo?plano=gratuito">Teste Grátis</Link>
-            </Button>
-            <Button asChild className="hidden sm:inline-flex">
-              <Link to="/registro">Cadastrar</Link>
-            </Button>
+            {user ? (
+              <Button asChild className="hidden sm:inline-flex">
+                <Link to={getRedirectPathByRole(role)}>Meu Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" asChild className="hidden sm:inline-flex">
+                  <Link to="/auth">Entrar</Link>
+                </Button>
+                <Button variant="outline" asChild className="hidden sm:inline-flex">
+                  <Link to="/registro-autonomo?plano=gratuito">Teste Grátis</Link>
+                </Button>
+                <Button asChild className="hidden sm:inline-flex">
+                  <Link to="/registro">Cadastrar</Link>
+                </Button>
+              </>
+            )}
 
             {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -248,17 +249,27 @@ const Index = () => {
                   </nav>
                   
                   <div className="flex flex-col gap-3 pt-4 border-t">
-                    <Button variant="outline" asChild className="w-full">
-                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
-                    </Button>
-                    <Button variant="outline" asChild className="w-full">
-                      <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
-                        Teste Grátis
-                      </Link>
-                    </Button>
-                    <Button asChild className="w-full">
-                      <Link to="/registro" onClick={() => setMobileMenuOpen(false)}>Cadastrar</Link>
-                    </Button>
+                    {user ? (
+                      <Button asChild className="w-full">
+                        <Link to={getRedirectPathByRole(role)} onClick={() => setMobileMenuOpen(false)}>
+                          Meu Dashboard
+                        </Link>
+                      </Button>
+                    ) : (
+                      <>
+                        <Button variant="outline" asChild className="w-full">
+                          <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
+                        </Button>
+                        <Button variant="outline" asChild className="w-full">
+                          <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
+                            Teste Grátis
+                          </Link>
+                        </Button>
+                        <Button asChild className="w-full">
+                          <Link to="/registro" onClick={() => setMobileMenuOpen(false)}>Cadastrar</Link>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>
