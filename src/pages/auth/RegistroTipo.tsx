@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, User, Building2, ArrowLeft } from 'lucide-react';
+import { Shield, User, Building2, UserPlus, ArrowLeft } from 'lucide-react';
 
 const RegistroTipo = () => {
   const { user, loading } = useAuth();
@@ -39,7 +39,7 @@ const RegistroTipo = () => {
 
       {/* Content */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
+        <div className="w-full max-w-4xl">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">
               Como você quer se cadastrar?
@@ -49,7 +49,7 @@ const RegistroTipo = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Pessoa Física */}
             <Card 
               className="group cursor-pointer hover:border-primary hover:shadow-lg transition-all duration-300"
@@ -82,6 +82,42 @@ const RegistroTipo = () => {
                 </ul>
                 <Button className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground">
                   Cadastrar como Pessoa Física
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Vincular a Imobiliária */}
+            <Card 
+              className="group cursor-pointer hover:border-green-500 hover:shadow-lg transition-all duration-300"
+              onClick={() => navigate('/registro-vinculado')}
+            >
+              <CardHeader className="text-center pb-2">
+                <div className="mx-auto h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4 group-hover:bg-green-200 dark:group-hover:bg-green-800/40 transition-colors">
+                  <UserPlus className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle className="text-xl">Vincular a Imobiliária</CardTitle>
+                <CardDescription>Corretor de Imobiliária</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Para corretores que já possuem uma imobiliária cadastrada e desejam se vincular.
+                </p>
+                <ul className="text-sm text-left space-y-2">
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    Usa código da imobiliária
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    Acesso ao sistema da empresa
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    Sem custos adicionais
+                  </li>
+                </ul>
+                <Button variant="outline" className="w-full mt-4 group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600">
+                  Vincular a uma Imobiliária
                 </Button>
               </CardContent>
             </Card>
