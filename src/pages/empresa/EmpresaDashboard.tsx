@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
+import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -26,6 +27,9 @@ export default function EmpresaDashboard() {
 
   // Hook de notificação para fichas confirmadas
   useFichaNotification();
+  
+  // Hook de notificação para mudanças de assinatura
+  useAssinaturaNotification();
 
   useEffect(() => {
     async function fetchStats() {

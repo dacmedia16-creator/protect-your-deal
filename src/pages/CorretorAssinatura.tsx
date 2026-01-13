@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
+import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +47,7 @@ export default function CorretorAssinatura() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { assinatura, role, imobiliariaId, refetch } = useUserRole();
+  useAssinaturaNotification();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
