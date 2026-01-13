@@ -35,6 +35,7 @@ const estadosBrasileiros = [
 const formSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   cnpj: z.string().optional(),
+  creci_juridico: z.string().optional(),
   email: z.string().email('Email inválido'),
   telefone: z.string().optional(),
   endereco: z.string().optional(),
@@ -62,6 +63,7 @@ export default function AdminNovaImobiliaria() {
     defaultValues: {
       nome: '',
       cnpj: '',
+      creci_juridico: '',
       email: '',
       telefone: '',
       endereco: '',
@@ -94,6 +96,7 @@ export default function AdminNovaImobiliaria() {
         .insert({
           nome: data.nome,
           cnpj: data.cnpj || null,
+          creci_juridico: data.creci_juridico || null,
           email: data.email,
           telefone: data.telefone || null,
           endereco: data.endereco || null,
@@ -185,6 +188,20 @@ export default function AdminNovaImobiliaria() {
                         <FormLabel>CNPJ</FormLabel>
                         <FormControl>
                           <Input placeholder="00.000.000/0000-00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="creci_juridico"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>CRECI Jurídico</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: J-12345" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

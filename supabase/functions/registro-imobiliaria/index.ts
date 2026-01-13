@@ -9,6 +9,7 @@ interface RegistroRequest {
   imobiliaria: {
     nome: string;
     cnpj?: string;
+    creci_juridico?: string;
     email: string;
     telefone?: string;
     endereco?: string;
@@ -120,6 +121,7 @@ Deno.serve(async (req) => {
       .insert({
         nome: imobiliaria.nome,
         cnpj: imobiliaria.cnpj || null,
+        creci_juridico: imobiliaria.creci_juridico || null,
         email: imobiliaria.email,
         telefone: imobiliaria.telefone || null,
         endereco: imobiliaria.endereco || null,
