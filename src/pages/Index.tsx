@@ -3,9 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Shield, 
   FileCheck, 
@@ -24,19 +28,53 @@ import {
   Menu,
   MapPin,
   Phone,
+  Building2,
+  User,
+  Briefcase,
 } from 'lucide-react';
+
+interface Plano {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  max_corretores: number;
+  max_fichas_mes: number;
+  max_clientes: number;
+  max_imoveis: number;
+  valor_mensal: number;
+  tipo_cadastro: string | null;
+}
 
 const Index = () => {
   const { user, loading } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [planos, setPlanos] = useState<Plano[]>([]);
+  const [loadingPlanos, setLoadingPlanos] = useState(true);
 
   useEffect(() => {
     if (!loading && !roleLoading && user && role) {
       navigate(getRedirectPathByRole(role));
     }
   }, [user, loading, role, roleLoading, navigate]);
+
+  useEffect(() => {
+    const fetchPlanos = async () => {
+      const { data } = await supabase
+        .from('planos')
+        .select('*')
+        .eq('ativo', true)
+        .order('valor_mensal', { ascending: true });
+      
+      if (data) {
+        setPlanos(data);
+      }
+      setLoadingPlanos(false);
+    };
+    
+    fetchPlanos();
+  }, []);
 
   if (loading || (user && roleLoading)) {
     return (
@@ -142,6 +180,12 @@ const Index = () => {
               <Smartphone className="h-4 w-4" />
               Baixar App
             </Link>
+            <a 
+              href="#planos" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Ver Planos
+            </a>
           </nav>
           
           <div className="flex items-center gap-3">
@@ -194,6 +238,13 @@ const Index = () => {
                       <Smartphone className="h-4 w-4" />
                       Baixar App
                     </Link>
+                    <a 
+                      href="#planos" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Ver Planos
+                    </a>
                   </nav>
                   
                   <div className="flex flex-col gap-3 pt-4 border-t">
@@ -322,6 +373,108 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="planos" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Planos e Preços
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Escolha o plano ideal para você ou sua imobiliária.
+            </p>
+          </div>
+
+          {loadingPlanos ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <Tabs defaultValue="cpf" className="w-full">
+              <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-8">
+                <TabsTrigger value="cpf" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Autônomo</span>
+                  <span className="sm:hidden">CPF</span>
+                </TabsTrigger>
+                <TabsTrigger value="cnpj_individual" className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  <span className="hidden sm:inline">MEI</span>
+                  <span className="sm:hidden">MEI</span>
+                </TabsTrigger>
+                <TabsTrigger value="cnpj" className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Imobiliária</span>
+                  <span className="sm:hidden">CNPJ</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {['cpf', 'cnpj_individual', 'cnpj'].map((tipo) => (
+                <TabsContent key={tipo} value={tipo}>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center">
+                    {planos
+                      .filter((p) => p.tipo_cadastro === tipo)
+                      .map((plano) => (
+                        <Card key={plano.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
+                          {plano.valor_mensal === 0 && (
+                            <div className="absolute top-3 right-3">
+                              <Badge variant="success">Grátis</Badge>
+                            </div>
+                          )}
+                          <CardHeader>
+                            <CardTitle className="text-xl">{plano.nome}</CardTitle>
+                            <CardDescription>{plano.descricao}</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="text-3xl font-bold">
+                              {plano.valor_mensal === 0 ? (
+                                'Grátis'
+                              ) : plano.valor_mensal === -1 ? (
+                                <span className="text-lg">Sob consulta</span>
+                              ) : (
+                                <>
+                                  R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
+                                  <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                                </>
+                              )}
+                            </div>
+                            
+                            <ul className="space-y-2 text-sm">
+                              <li className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                {plano.max_fichas_mes === -1 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                {plano.max_clientes === -1 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-primary" />
+                                {plano.max_imoveis === -1 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}
+                              </li>
+                              {tipo !== 'cpf' && (
+                                <li className="flex items-center gap-2">
+                                  <Check className="h-4 w-4 text-primary" />
+                                  {plano.max_corretores === -1 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}
+                                </li>
+                              )}
+                            </ul>
+
+                            <Button className="w-full" asChild>
+                              <Link to={tipo === 'cpf' ? `/registro-autonomo?plano=${plano.nome.toLowerCase().replace(/\s+/g, '-')}` : '/registro'}>
+                                {plano.valor_mensal === 0 ? 'Começar Grátis' : 'Escolher Plano'}
+                              </Link>
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          )}
+        </div>
+      </section>
 
       {/* FAQ Section */}
       <section id="faq" className="py-20">
