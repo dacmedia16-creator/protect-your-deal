@@ -193,6 +193,17 @@ Deno.serve(async (req) => {
 
       const valorOriginal = planoData?.valor_mensal || 0;
       
+      // Buscar afiliado_id do cupom se existir
+      let afiliadoId: string | null = null;
+      if (cupomData) {
+        const { data: cupomInfo } = await supabaseAdmin
+          .from("cupons")
+          .select("afiliado_id")
+          .eq("id", cupomData.cupom_id)
+          .single();
+        afiliadoId = cupomInfo?.afiliado_id || null;
+      }
+
       const { data: assinData, error: assinError } = await supabaseAdmin
         .from("assinaturas")
         .insert({
@@ -200,6 +211,10 @@ Deno.serve(async (req) => {
           plano_id: plano_id,
           status: "trial",
           data_inicio: new Date().toISOString().split("T")[0],
+          // Novos campos para comissões recorrentes
+          afiliado_id: afiliadoId,
+          cupom_id: cupomData?.cupom_id || null,
+          comissao_percentual: cupomData?.comissao_percentual || 0,
         })
         .select()
         .single();
@@ -208,7 +223,7 @@ Deno.serve(async (req) => {
         console.error("Subscription error:", assinError);
         // Non-critical, continue
       } else if (cupomData && assinData) {
-        // Register coupon usage
+        // Register initial coupon usage (first payment commission)
         console.log("Registering coupon usage...");
         
         let valorDesconto = 0;
