@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2 } from "lucide-react";
+import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { invokeWithRetry } from "@/lib/invokeWithRetry";
@@ -40,6 +40,9 @@ export default function AdminAfiliados() {
     telefone: "",
     pix_chave: "",
   });
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [selectedAfiliadoForPassword, setSelectedAfiliadoForPassword] = useState<Afiliado | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   const { data: afiliados, isLoading } = useQuery({
     queryKey: ["admin-afiliados"],
@@ -189,6 +192,31 @@ export default function AdminAfiliados() {
     onError: (error: Error) => {
       toast({
         title: "Erro ao criar acesso",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const { data, error } = await invokeWithRetry<{ success: boolean; message: string }>(
+        "admin-reset-password",
+        { body: { user_id: userId, action: "set_password", new_password: password } }
+      );
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || "Erro desconhecido");
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: "Senha alterada com sucesso!" });
+      setPasswordDialogOpen(false);
+      setNewPassword("");
+      setSelectedAfiliadoForPassword(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao alterar senha",
         description: error.message,
         variant: "destructive",
       });
@@ -395,9 +423,22 @@ export default function AdminAfiliados() {
                             </Button>
                           )}
                           {afiliado.user_id && (
-                            <Badge variant="outline" className="text-xs ml-1">
-                              Acesso ativo
-                            </Badge>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedAfiliadoForPassword(afiliado);
+                                  setPasswordDialogOpen(true);
+                                }}
+                                title="Alterar senha"
+                              >
+                                <Lock className="h-4 w-4 text-orange-600" />
+                              </Button>
+                              <Badge variant="outline" className="text-xs ml-1">
+                                Acesso ativo
+                              </Badge>
+                            </>
                           )}
                         </div>
                       </TableCell>
@@ -408,6 +449,54 @@ export default function AdminAfiliados() {
             )}
           </CardContent>
         </Card>
+
+        {/* Dialog de Alteração de Senha */}
+        <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
+          setPasswordDialogOpen(open);
+          if (!open) {
+            setNewPassword("");
+            setSelectedAfiliadoForPassword(null);
+          }
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Senha do Afiliado</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Alterar senha para: <strong>{selectedAfiliadoForPassword?.nome}</strong> ({selectedAfiliadoForPassword?.email})
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova Senha</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (selectedAfiliadoForPassword?.user_id) {
+                      resetPasswordMutation.mutate({
+                        userId: selectedAfiliadoForPassword.user_id,
+                        password: newPassword
+                      });
+                    }
+                  }}
+                  disabled={newPassword.length < 6 || resetPasswordMutation.isPending}
+                >
+                  {resetPasswordMutation.isPending ? "Salvando..." : "Salvar Senha"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </SuperAdminLayout>
   );
