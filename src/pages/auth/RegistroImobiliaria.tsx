@@ -299,8 +299,8 @@ export default function RegistroImobiliaria() {
                     <p className="text-sm text-green-600 flex items-center gap-1">
                       <Check className="h-3 w-3" />
                       {cupomInfo.tipo_desconto === 'percentual' 
-                        ? `${cupomInfo.valor_desconto}% de desconto aplicado!`
-                        : `R$ ${Number(cupomInfo.valor_desconto).toFixed(2)} de desconto aplicado!`
+                        ? `${cupomInfo.valor_desconto}% de desconto no 1º mês!`
+                        : `R$ ${Number(cupomInfo.valor_desconto).toFixed(2)} de desconto no 1º mês!`
                       }
                     </p>
                   )}
@@ -371,12 +371,19 @@ export default function RegistroImobiliaria() {
                                 ? 'Sob consulta'
                                 : temDesconto
                                 ? (
-                                  <span className="flex items-center gap-2">
-                                    <span className="line-through text-muted-foreground text-sm font-normal">
-                                      R$ {precoOriginal.toFixed(2).replace('.', ',')}
+                                  <div className="text-right">
+                                    <div className="flex items-center gap-2 justify-end">
+                                      <span className="line-through text-muted-foreground text-sm font-normal">
+                                        R$ {precoOriginal.toFixed(2).replace('.', ',')}
+                                      </span>
+                                      <span className="text-green-600 font-semibold">
+                                        R$ {precoComDesconto.toFixed(2).replace('.', ',')}
+                                      </span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      1º mês • depois R$ {precoOriginal.toFixed(2).replace('.', ',')}/mês
                                     </span>
-                                    <span>R$ {precoComDesconto.toFixed(2).replace('.', ',')}/mês</span>
-                                  </span>
+                                  </div>
                                 )
                                 : `R$ ${plano.valor_mensal.toFixed(2).replace('.', ',')}/mês`
                               }
