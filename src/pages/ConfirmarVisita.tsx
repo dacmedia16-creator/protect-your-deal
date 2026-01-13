@@ -23,6 +23,8 @@ interface FichaInfo {
   comprador_autopreenchimento?: boolean;
   status: string;
   ficha_id?: string;
+  corretor_nome?: string | null;
+  corretor_creci?: string | null;
 }
 
 interface OtpInfo {
@@ -514,6 +516,15 @@ export default function ConfirmarVisita() {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     {format(new Date(ficha.data_visita), "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
                   </div>
+                  {ficha.corretor_nome && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Corretor</p>
+                      <p className="text-sm font-medium">{ficha.corretor_nome}</p>
+                      {ficha.corretor_creci && (
+                        <p className="text-xs text-muted-foreground">CRECI: {ficha.corretor_creci}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
