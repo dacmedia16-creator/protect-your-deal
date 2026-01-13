@@ -212,9 +212,6 @@ export default function Dashboard() {
               {imobiliaria?.nome || 'VisitaSegura'}
             </span>
           </div>
-          <span className="text-sm text-muted-foreground">
-            Olá, {profile?.nome?.split(' ')[0] || 'Usuário'}!
-          </span>
         </div>
       </header>
 
