@@ -49,9 +49,12 @@ export type Database = {
       }
       assinaturas: {
         Row: {
+          afiliado_id: string | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
+          comissao_percentual: number | null
           created_at: string
+          cupom_id: string | null
           data_fim: string | null
           data_inicio: string
           id: string
@@ -65,9 +68,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          afiliado_id?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          comissao_percentual?: number | null
           created_at?: string
+          cupom_id?: string | null
           data_fim?: string | null
           data_inicio?: string
           id?: string
@@ -81,9 +87,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          afiliado_id?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          comissao_percentual?: number | null
           created_at?: string
+          cupom_id?: string | null
           data_fim?: string | null
           data_inicio?: string
           id?: string
@@ -97,6 +106,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "assinaturas_afiliado_id_fkey"
+            columns: ["afiliado_id"]
+            isOneToOne: false
+            referencedRelation: "afiliados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_cupom_id_fkey"
+            columns: ["cupom_id"]
+            isOneToOne: false
+            referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assinaturas_imobiliaria_id_fkey"
             columns: ["imobiliaria_id"]

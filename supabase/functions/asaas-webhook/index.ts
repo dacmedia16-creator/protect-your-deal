@@ -87,10 +87,10 @@ serve(async (req) => {
     if (payment) {
       const { subscription: subscriptionId, status, externalReference, value } = payment;
 
-      // Buscar assinatura pelo asaas_subscription_id
+      // Buscar assinatura pelo asaas_subscription_id - incluindo campos de afiliado
       const { data: assinatura, error: assinaturaError } = await supabase
         .from('assinaturas')
-        .select('*, planos(nome)')
+        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
@@ -103,6 +103,7 @@ serve(async (req) => {
         let updateData: Record<string, any> = { updated_at: new Date().toISOString() };
         let shouldNotify = false;
         let notificationType: 'confirmed' | 'overdue' | 'cancelled' | null = null;
+        let shouldGenerateCommission = false;
 
         switch (event) {
           case 'PAYMENT_RECEIVED':
@@ -117,6 +118,8 @@ serve(async (req) => {
             console.log(`Payment confirmed for subscription ${subscriptionId}, activating...`);
             shouldNotify = true;
             notificationType = 'confirmed';
+            // Gerar comissão recorrente para o afiliado
+            shouldGenerateCommission = true;
             break;
 
           case 'PAYMENT_OVERDUE':
@@ -153,6 +156,29 @@ serve(async (req) => {
             console.error('Error updating assinatura:', updateError);
           } else {
             console.log(`Assinatura ${assinatura.id} updated to status: ${newStatus}`);
+          }
+        }
+
+        // Gerar comissão recorrente para o afiliado
+        if (shouldGenerateCommission && assinatura.afiliado_id && assinatura.comissao_percentual > 0) {
+          const valorComissao = value * (Number(assinatura.comissao_percentual) / 100);
+          console.log(`Generating recurring commission: ${valorComissao} for affiliate ${assinatura.afiliado_id}`);
+
+          const { error: comissaoError } = await supabase.from('cupons_usos').insert({
+            cupom_id: assinatura.cupom_id,
+            assinatura_id: assinatura.id,
+            imobiliaria_id: assinatura.imobiliaria_id,
+            user_id: assinatura.user_id,
+            valor_original: value,
+            valor_desconto: 0, // Desconto só no primeiro pagamento
+            valor_comissao: valorComissao,
+            comissao_paga: false,
+          });
+
+          if (comissaoError) {
+            console.error('Error creating recurring commission:', comissaoError);
+          } else {
+            console.log('Recurring commission created successfully');
           }
         }
 
