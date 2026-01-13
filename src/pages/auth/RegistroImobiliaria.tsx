@@ -117,6 +117,7 @@ export default function RegistroImobiliaria() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .eq('tipo_cadastro', 'cnpj')
           .order('valor_mensal', { ascending: true });
 
         if (error) throw error;
