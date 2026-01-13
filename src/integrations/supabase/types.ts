@@ -986,6 +986,7 @@ export type Database = {
           max_fichas_mes: number
           max_imoveis: number
           nome: string
+          tipo_cadastro: string | null
           updated_at: string
           valor_mensal: number
         }
@@ -1000,6 +1001,7 @@ export type Database = {
           max_fichas_mes?: number
           max_imoveis?: number
           nome: string
+          tipo_cadastro?: string | null
           updated_at?: string
           valor_mensal?: number
         }
@@ -1014,6 +1016,7 @@ export type Database = {
           max_fichas_mes?: number
           max_imoveis?: number
           nome?: string
+          tipo_cadastro?: string | null
           updated_at?: string
           valor_mensal?: number
         }
