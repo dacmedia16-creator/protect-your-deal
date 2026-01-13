@@ -117,6 +117,7 @@ export default function RegistroImobiliaria() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .gt('max_corretores', 1) // Filtrar apenas planos CNPJ (mais de 1 corretor)
           .order('valor_mensal', { ascending: true });
 
         if (error) throw error;
