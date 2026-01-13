@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { UserRoleProvider } from "@/hooks/useUserRole";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SmartRedirect } from "@/components/SmartRedirect";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { ChatAssistente } from "@/components/ChatAssistente";
@@ -105,7 +106,7 @@ const App = () => (
               <Routes>
                 {/* Public routes */}
                 <Route path="/inicial" element={<Index />} />
-                <Route path="/" element={<Navigate to="/inicial" replace />} />
+                <Route path="/" element={<SmartRedirect />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/registro" element={<RegistroImobiliaria />} />
                 <Route path="/registro/tipo" element={<RegistroTipo />} />
