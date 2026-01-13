@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -45,6 +52,20 @@ export default function AdminFichas() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedImobiliaria, setSelectedImobiliaria] = useState<string>('all');
+
+  // Lista única de imobiliárias para o filtro
+  const imobiliariaOptions = useMemo(() => {
+    const uniqueImobiliarias = new Map<string, string>();
+    fichas.forEach(f => {
+      if (f.imobiliaria_id && f.imobiliaria_nome && f.imobiliaria_nome !== '-') {
+        uniqueImobiliarias.set(f.imobiliaria_id, f.imobiliaria_nome);
+      }
+    });
+    return Array.from(uniqueImobiliarias.entries())
+      .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [fichas]);
 
   const fetchFichas = useCallback(async () => {
     try {
@@ -122,14 +143,22 @@ export default function AdminFichas() {
     fetchFichas();
   }, [fetchFichas]);
 
-  const filteredFichas = fichas.filter(f =>
-    f.protocolo.toLowerCase().includes(search.toLowerCase()) ||
-    f.imovel_endereco.toLowerCase().includes(search.toLowerCase()) ||
-    f.corretor_nome?.toLowerCase().includes(search.toLowerCase()) ||
-    f.imobiliaria_nome?.toLowerCase().includes(search.toLowerCase()) ||
-    f.proprietario_nome?.toLowerCase().includes(search.toLowerCase()) ||
-    f.comprador_nome?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredFichas = fichas.filter(f => {
+    // Filtro por imobiliária
+    if (selectedImobiliaria === 'autonomo' && !f.is_autonomo) return false;
+    if (selectedImobiliaria !== 'all' && selectedImobiliaria !== 'autonomo' && f.imobiliaria_id !== selectedImobiliaria) return false;
+
+    // Filtro por busca
+    const searchLower = search.toLowerCase();
+    return (
+      f.protocolo.toLowerCase().includes(searchLower) ||
+      f.imovel_endereco.toLowerCase().includes(searchLower) ||
+      f.corretor_nome?.toLowerCase().includes(searchLower) ||
+      f.imobiliaria_nome?.toLowerCase().includes(searchLower) ||
+      f.proprietario_nome?.toLowerCase().includes(searchLower) ||
+      f.comprador_nome?.toLowerCase().includes(searchLower)
+    );
+  });
 
   const statusLabels: Record<string, string> = {
     pendente: 'Pendente',
@@ -169,14 +198,43 @@ export default function AdminFichas() {
 
         <Card>
           <CardHeader>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por protocolo, endereço, corretor, imobiliária..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por protocolo, endereço, corretor..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <Select value={selectedImobiliaria} onValueChange={setSelectedImobiliaria}>
+                <SelectTrigger className="w-full sm:w-[220px]">
+                  <SelectValue placeholder="Filtrar por imobiliária" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      <span>Todas</span>
+                    </div>
+                  </SelectItem>
+                  {imobiliariaOptions.map(imob => (
+                    <SelectItem key={imob.id} value={imob.id}>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4" />
+                        <span>{imob.nome}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="autonomo">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>Corretores Autônomos</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent>
