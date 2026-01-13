@@ -11,6 +11,7 @@ import { Shield, Loader2, Building2, ArrowLeft, Check, Ticket, X, UserPlus } fro
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
 import { formatCNPJ } from '@/lib/cnpj';
+import { formatCreciJuridico, isValidCreciJuridico } from '@/lib/creci';
 
 interface Plano {
   id: string;
@@ -164,6 +165,11 @@ export default function RegistroImobiliaria() {
 
     if (adminForm.senha.length < 6) {
       toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    if (imobiliariaForm.creci_juridico && !isValidCreciJuridico(imobiliariaForm.creci_juridico)) {
+      toast.error('Formato de CRECI Jurídico inválido. Use o formato J-12345');
       return;
     }
 
@@ -461,7 +467,7 @@ export default function RegistroImobiliaria() {
                       id="creci_juridico"
                       placeholder="Ex: J-12345"
                       value={imobiliariaForm.creci_juridico}
-                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, creci_juridico: e.target.value })}
+                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, creci_juridico: formatCreciJuridico(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-2">
