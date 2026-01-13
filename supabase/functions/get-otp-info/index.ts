@@ -47,6 +47,22 @@ serve(async (req) => {
       .eq('id', otp.ficha_id)
       .single();
 
+    // Get corretor (broker) data
+    let corretor_nome: string | null = null;
+    let corretor_creci: string | null = null;
+    if (ficha?.user_id) {
+      const { data: corretor } = await supabase
+        .from('profiles')
+        .select('nome, creci')
+        .eq('user_id', ficha.user_id)
+        .maybeSingle();
+      
+      if (corretor) {
+        corretor_nome = corretor.nome;
+        corretor_creci = corretor.creci;
+      }
+    }
+
     // Check if already confirmed
     if (otp.confirmado) {
       return new Response(
@@ -58,17 +74,19 @@ serve(async (req) => {
             confirmado: true,
             ficha_id: otp.ficha_id,
           },
-          ficha: ficha ? {
-            protocolo: ficha.protocolo,
-            imovel_endereco: ficha.imovel_endereco,
-            imovel_tipo: ficha.imovel_tipo,
-            data_visita: ficha.data_visita,
-            proprietario_nome: ficha.proprietario_nome,
-            comprador_nome: ficha.comprador_nome,
-            proprietario_autopreenchimento: ficha.proprietario_autopreenchimento,
-            comprador_autopreenchimento: ficha.comprador_autopreenchimento,
-            status: ficha.status,
-          } : null
+        ficha: ficha ? {
+          protocolo: ficha.protocolo,
+          imovel_endereco: ficha.imovel_endereco,
+          imovel_tipo: ficha.imovel_tipo,
+          data_visita: ficha.data_visita,
+          proprietario_nome: ficha.proprietario_nome,
+          comprador_nome: ficha.comprador_nome,
+          proprietario_autopreenchimento: ficha.proprietario_autopreenchimento,
+          comprador_autopreenchimento: ficha.comprador_autopreenchimento,
+          status: ficha.status,
+          corretor_nome,
+          corretor_creci,
+        } : null
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -93,17 +111,19 @@ serve(async (req) => {
           tentativas: otp.tentativas || 0,
           max_tentativas: 5,
         },
-        ficha: ficha ? {
-          protocolo: ficha.protocolo,
-          imovel_endereco: ficha.imovel_endereco,
-          imovel_tipo: ficha.imovel_tipo,
-          data_visita: ficha.data_visita,
-          proprietario_nome: ficha.proprietario_nome,
-          comprador_nome: ficha.comprador_nome,
-          proprietario_autopreenchimento: ficha.proprietario_autopreenchimento,
-          comprador_autopreenchimento: ficha.comprador_autopreenchimento,
-          status: ficha.status,
-        } : null
+      ficha: ficha ? {
+        protocolo: ficha.protocolo,
+        imovel_endereco: ficha.imovel_endereco,
+        imovel_tipo: ficha.imovel_tipo,
+        data_visita: ficha.data_visita,
+        proprietario_nome: ficha.proprietario_nome,
+        comprador_nome: ficha.comprador_nome,
+        proprietario_autopreenchimento: ficha.proprietario_autopreenchimento,
+        comprador_autopreenchimento: ficha.comprador_autopreenchimento,
+        status: ficha.status,
+        corretor_nome,
+        corretor_creci,
+      } : null
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
