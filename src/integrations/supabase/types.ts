@@ -525,6 +525,7 @@ export type Database = {
           cupom_id: string
           id: string
           imobiliaria_id: string | null
+          observacao_pagamento: string | null
           user_id: string | null
           valor_comissao: number
           valor_desconto: number
@@ -538,6 +539,7 @@ export type Database = {
           cupom_id: string
           id?: string
           imobiliaria_id?: string | null
+          observacao_pagamento?: string | null
           user_id?: string | null
           valor_comissao?: number
           valor_desconto: number
@@ -551,6 +553,7 @@ export type Database = {
           cupom_id?: string
           id?: string
           imobiliaria_id?: string | null
+          observacao_pagamento?: string | null
           user_id?: string | null
           valor_comissao?: number
           valor_desconto?: number

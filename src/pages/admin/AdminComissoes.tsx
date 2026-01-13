@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Check, DollarSign, Clock, User, Ticket, Copy } from "lucide-react";
+import { Check, DollarSign, Clock, User, Ticket, Copy, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -30,6 +33,7 @@ interface CupomUso {
   valor_comissao: number;
   comissao_paga: boolean;
   comissao_paga_em: string | null;
+  observacao_pagamento: string | null;
   created_at: string;
   cupons: {
     codigo: string;
@@ -49,6 +53,9 @@ export default function AdminComissoes() {
   const queryClient = useQueryClient();
   const [filtroAfiliado, setFiltroAfiliado] = useState<string>("todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedComissaoId, setSelectedComissaoId] = useState<string | null>(null);
+  const [observacao, setObservacao] = useState("");
 
   const { data: afiliados } = useQuery({
     queryKey: ["afiliados-lista"],
@@ -96,12 +103,13 @@ export default function AdminComissoes() {
   });
 
   const marcarPagoMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, observacao }: { id: string; observacao: string }) => {
       const { error } = await supabase
         .from("cupons_usos")
         .update({
           comissao_paga: true,
           comissao_paga_em: new Date().toISOString(),
+          observacao_pagamento: observacao.trim() || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -110,6 +118,9 @@ export default function AdminComissoes() {
       queryClient.invalidateQueries({ queryKey: ["admin-comissoes"] });
       queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
       toast({ title: "Comissão marcada como paga!" });
+      setDialogOpen(false);
+      setSelectedComissaoId(null);
+      setObservacao("");
     },
     onError: (error: Error) => {
       toast({
@@ -119,6 +130,18 @@ export default function AdminComissoes() {
       });
     },
   });
+
+  const handleMarcarPago = (id: string) => {
+    setSelectedComissaoId(id);
+    setObservacao("");
+    setDialogOpen(true);
+  };
+
+  const confirmarPagamento = () => {
+    if (selectedComissaoId) {
+      marcarPagoMutation.mutate({ id: selectedComissaoId, observacao });
+    }
+  };
 
   const totalPendente = comissoes
     ?.filter((c) => !c.comissao_paga)
@@ -318,17 +341,27 @@ export default function AdminComissoes() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => marcarPagoMutation.mutate(comissao.id)}
+                            onClick={() => handleMarcarPago(comissao.id)}
                             disabled={marcarPagoMutation.isPending}
                           >
                             <Check className="h-4 w-4 mr-1" />
                             Marcar Pago
                           </Button>
                         )}
-                        {comissao.comissao_paga && comissao.comissao_paga_em && (
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(comissao.comissao_paga_em), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
+                        {comissao.comissao_paga && (
+                          <div className="flex flex-col gap-1">
+                            {comissao.comissao_paga_em && (
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(comissao.comissao_paga_em), "dd/MM/yyyy", { locale: ptBR })}
+                              </span>
+                            )}
+                            {comissao.observacao_pagamento && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                {comissao.observacao_pagamento}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
@@ -338,6 +371,42 @@ export default function AdminComissoes() {
             )}
           </CardContent>
         </Card>
+
+        {/* Dialog para adicionar observação ao marcar como pago */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Marcar Comissão como Paga</DialogTitle>
+              <DialogDescription>
+                Adicione uma observação opcional sobre este pagamento (ex: número do comprovante, data do PIX, etc.)
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="observacao">Observação (opcional)</Label>
+                <Textarea
+                  id="observacao"
+                  placeholder="Ex: PIX realizado em 13/01/2026 - Comprovante #12345"
+                  value={observacao}
+                  onChange={(e) => setObservacao(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={confirmarPagamento}
+                disabled={marcarPagoMutation.isPending}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Confirmar Pagamento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </SuperAdminLayout>
   );
