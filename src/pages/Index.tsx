@@ -286,7 +286,7 @@ const Index = () => {
                 </Link>
               </Button>
               <Button size="lg" className="text-base" asChild>
-                <Link to="/auth">
+                <Link to="/registro">
                   Começar Agora
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
