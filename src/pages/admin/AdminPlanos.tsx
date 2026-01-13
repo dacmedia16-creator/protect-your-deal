@@ -14,8 +14,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Loader2, Users, FileText, Building2, Home } from 'lucide-react';
+import { Plus, Edit, Loader2, Users, FileText, Building2, Home, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Plano {
@@ -62,6 +72,9 @@ export default function AdminPlanos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PlanoForm>(defaultForm);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [planoToDelete, setPlanoToDelete] = useState<Plano | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function fetchPlanos() {
     try {
@@ -104,6 +117,43 @@ export default function AdminPlanos() {
     setEditingId(null);
     setForm(defaultForm);
     setDialogOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!planoToDelete) return;
+    setDeleting(true);
+
+    try {
+      // Verificar se há assinaturas vinculadas
+      const { count, error: countError } = await supabase
+        .from('assinaturas')
+        .select('*', { count: 'exact', head: true })
+        .eq('plano_id', planoToDelete.id);
+
+      if (countError) throw countError;
+
+      if (count && count > 0) {
+        toast.error(`Não é possível excluir: ${count} assinatura(s) vinculada(s) a este plano`);
+        return;
+      }
+
+      // Excluir plano
+      const { error } = await supabase
+        .from('planos')
+        .delete()
+        .eq('id', planoToDelete.id);
+
+      if (error) throw error;
+      toast.success('Plano excluído com sucesso');
+      fetchPlanos();
+    } catch (error) {
+      console.error('Error deleting plano:', error);
+      toast.error('Erro ao excluir plano');
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setPlanoToDelete(null);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -293,9 +343,22 @@ export default function AdminPlanos() {
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(plano)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(plano)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => {
+                      setPlanoToDelete(plano);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-3xl font-bold text-primary">
@@ -339,6 +402,29 @@ export default function AdminPlanos() {
             </Card>
           ))}
         </div>
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Plano</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o plano "{planoToDelete?.nome}"?
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive hover:bg-destructive/90"
+                disabled={deleting}
+              >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </SuperAdminLayout>
   );
