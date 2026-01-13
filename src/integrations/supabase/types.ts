@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      afiliados: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          pix_chave: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          pix_chave?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          pix_chave?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       assinaturas: {
         Row: {
           asaas_customer_id: string | null
@@ -426,6 +459,130 @@ export type Database = {
             columns: ["ficha_id"]
             isOneToOne: false
             referencedRelation: "fichas_visita"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cupons: {
+        Row: {
+          afiliado_id: string
+          ativo: boolean
+          codigo: string
+          comissao_percentual: number
+          created_at: string
+          id: string
+          max_usos: number | null
+          tipo_desconto: string
+          updated_at: string
+          usos_atuais: number
+          valido_ate: string | null
+          valor_desconto: number
+        }
+        Insert: {
+          afiliado_id: string
+          ativo?: boolean
+          codigo: string
+          comissao_percentual?: number
+          created_at?: string
+          id?: string
+          max_usos?: number | null
+          tipo_desconto: string
+          updated_at?: string
+          usos_atuais?: number
+          valido_ate?: string | null
+          valor_desconto: number
+        }
+        Update: {
+          afiliado_id?: string
+          ativo?: boolean
+          codigo?: string
+          comissao_percentual?: number
+          created_at?: string
+          id?: string
+          max_usos?: number | null
+          tipo_desconto?: string
+          updated_at?: string
+          usos_atuais?: number
+          valido_ate?: string | null
+          valor_desconto?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cupons_afiliado_id_fkey"
+            columns: ["afiliado_id"]
+            isOneToOne: false
+            referencedRelation: "afiliados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cupons_usos: {
+        Row: {
+          assinatura_id: string
+          comissao_paga: boolean
+          comissao_paga_em: string | null
+          created_at: string
+          cupom_id: string
+          id: string
+          imobiliaria_id: string | null
+          user_id: string | null
+          valor_comissao: number
+          valor_desconto: number
+          valor_original: number
+        }
+        Insert: {
+          assinatura_id: string
+          comissao_paga?: boolean
+          comissao_paga_em?: string | null
+          created_at?: string
+          cupom_id: string
+          id?: string
+          imobiliaria_id?: string | null
+          user_id?: string | null
+          valor_comissao?: number
+          valor_desconto: number
+          valor_original: number
+        }
+        Update: {
+          assinatura_id?: string
+          comissao_paga?: boolean
+          comissao_paga_em?: string | null
+          created_at?: string
+          cupom_id?: string
+          id?: string
+          imobiliaria_id?: string | null
+          user_id?: string | null
+          valor_comissao?: number
+          valor_desconto?: number
+          valor_original?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cupons_usos_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cupons_usos_cupom_id_fkey"
+            columns: ["cupom_id"]
+            isOneToOne: false
+            referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cupons_usos_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cupons_usos_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
         ]
@@ -1150,6 +1307,19 @@ export type Database = {
       user_belongs_to_imobiliaria: {
         Args: { _imobiliaria_id: string; _user_id: string }
         Returns: boolean
+      }
+      validar_cupom: {
+        Args: { codigo_cupom: string }
+        Returns: {
+          afiliado_id: string
+          afiliado_nome: string
+          comissao_percentual: number
+          cupom_id: string
+          mensagem: string
+          tipo_desconto: string
+          valido: boolean
+          valor_desconto: number
+        }[]
       }
     }
     Enums: {
