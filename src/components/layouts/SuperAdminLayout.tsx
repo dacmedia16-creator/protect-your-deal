@@ -25,7 +25,10 @@ import {
   UserCircle,
   TrendingUp,
   Archive,
-  Image
+  Image,
+  UserCheck,
+  Ticket,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -41,6 +44,9 @@ const navItems = [
   { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
   { href: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
   { href: '/admin/financeiro', icon: TrendingUp, label: 'Financeiro' },
+  { href: '/admin/afiliados', icon: UserCheck, label: 'Afiliados' },
+  { href: '/admin/cupons', icon: Ticket, label: 'Cupons' },
+  { href: '/admin/comissoes', icon: DollarSign, label: 'Comissões' },
   { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
   { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
   { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },

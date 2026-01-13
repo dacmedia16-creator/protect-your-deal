@@ -79,6 +79,9 @@ import AdminFichas from "./pages/admin/AdminFichas";
 import AdminRelatoriosFinanceiros from "./pages/admin/AdminRelatoriosFinanceiros";
 import AdminBackups from "./pages/admin/AdminBackups";
 import AdminMarketingImages from "./pages/admin/AdminMarketingImages";
+import AdminAfiliados from "./pages/admin/AdminAfiliados";
+import AdminCupons from "./pages/admin/AdminCupons";
+import AdminComissoes from "./pages/admin/AdminComissoes";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
@@ -222,6 +225,21 @@ const App = () => (
                 <Route path="/admin/marketing" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminMarketingImages />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/afiliados" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminAfiliados />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/cupons" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminCupons />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/comissoes" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminComissoes />
                   </ProtectedRoute>
                 } />
 

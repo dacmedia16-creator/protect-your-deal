@@ -1,0 +1,367 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface Afiliado {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  pix_chave: string | null;
+  ativo: boolean;
+  created_at: string;
+  total_cupons?: number;
+  total_usos?: number;
+  comissao_pendente?: number;
+}
+
+export default function AdminAfiliados() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAfiliado, setEditingAfiliado] = useState<Afiliado | null>(null);
+  const [formData, setFormData] = useState({
+    nome: "",
+    email: "",
+    telefone: "",
+    pix_chave: "",
+  });
+
+  const { data: afiliados, isLoading } = useQuery({
+    queryKey: ["admin-afiliados"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch stats for each afiliado
+      const afiliadosWithStats = await Promise.all(
+        (data || []).map(async (afiliado) => {
+          // Count cupons
+          const { count: totalCupons } = await supabase
+            .from("cupons")
+            .select("*", { count: "exact", head: true })
+            .eq("afiliado_id", afiliado.id);
+
+          // Sum uses and pending commissions
+          const { data: cuponsData } = await supabase
+            .from("cupons")
+            .select("id")
+            .eq("afiliado_id", afiliado.id);
+
+          let totalUsos = 0;
+          let comissaoPendente = 0;
+
+          if (cuponsData && cuponsData.length > 0) {
+            const cupomIds = cuponsData.map((c) => c.id);
+            
+            const { data: usosData } = await supabase
+              .from("cupons_usos")
+              .select("valor_comissao, comissao_paga")
+              .in("cupom_id", cupomIds);
+
+            if (usosData) {
+              totalUsos = usosData.length;
+              comissaoPendente = usosData
+                .filter((u) => !u.comissao_paga)
+                .reduce((sum, u) => sum + Number(u.valor_comissao), 0);
+            }
+          }
+
+          return {
+            ...afiliado,
+            total_cupons: totalCupons || 0,
+            total_usos: totalUsos,
+            comissao_pendente: comissaoPendente,
+          };
+        })
+      );
+
+      return afiliadosWithStats as Afiliado[];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const { error } = await supabase.from("afiliados").insert({
+        nome: data.nome,
+        email: data.email,
+        telefone: data.telefone || null,
+        pix_chave: data.pix_chave || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
+      toast({ title: "Afiliado criado com sucesso!" });
+      setDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao criar afiliado",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const { error } = await supabase
+        .from("afiliados")
+        .update({
+          nome: data.nome,
+          email: data.email,
+          telefone: data.telefone || null,
+          pix_chave: data.pix_chave || null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
+      toast({ title: "Afiliado atualizado com sucesso!" });
+      setDialogOpen(false);
+      resetForm();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar afiliado",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, ativo }: { id: string; ativo: boolean }) => {
+      const { error } = await supabase
+        .from("afiliados")
+        .update({ ativo })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
+      toast({ title: "Status atualizado!" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({ nome: "", email: "", telefone: "", pix_chave: "" });
+    setEditingAfiliado(null);
+  };
+
+  const handleEdit = (afiliado: Afiliado) => {
+    setEditingAfiliado(afiliado);
+    setFormData({
+      nome: afiliado.nome,
+      email: afiliado.email,
+      telefone: afiliado.telefone || "",
+      pix_chave: afiliado.pix_chave || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingAfiliado) {
+      updateMutation.mutate({ id: editingAfiliado.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  return (
+    <SuperAdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Afiliados</h1>
+            <p className="text-muted-foreground">
+              Gerencie os afiliados do programa de indicação
+            </p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Afiliado
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingAfiliado ? "Editar Afiliado" : "Novo Afiliado"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome *</Label>
+                  <Input
+                    id="nome"
+                    value={formData.nome}
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone/WhatsApp</Label>
+                  <Input
+                    id="telefone"
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pix_chave">Chave PIX</Label>
+                  <Input
+                    id="pix_chave"
+                    value={formData.pix_chave}
+                    onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
+                    placeholder="CPF, Email, Telefone ou Chave aleatória"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {editingAfiliado ? "Salvar" : "Criar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Lista de Afiliados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Carregando...
+              </div>
+            ) : !afiliados || afiliados.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum afiliado cadastrado
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Telefone</TableHead>
+                    <TableHead className="text-center">Cupons</TableHead>
+                    <TableHead className="text-center">Usos</TableHead>
+                    <TableHead className="text-right">Comissão Pendente</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {afiliados.map((afiliado) => (
+                    <TableRow key={afiliado.id}>
+                      <TableCell className="font-medium">{afiliado.nome}</TableCell>
+                      <TableCell>{afiliado.email}</TableCell>
+                      <TableCell>{afiliado.telefone || "-"}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="gap-1">
+                          <Ticket className="h-3 w-3" />
+                          {afiliado.total_cupons}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">{afiliado.total_usos}</TableCell>
+                      <TableCell className="text-right">
+                        {afiliado.comissao_pendente && afiliado.comissao_pendente > 0 ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            R$ {afiliado.comissao_pendente.toFixed(2)}
+                          </Badge>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={afiliado.ativo ? "default" : "secondary"}>
+                          {afiliado.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(afiliado)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => toggleStatusMutation.mutate({
+                              id: afiliado.id,
+                              ativo: !afiliado.ativo,
+                            })}
+                          >
+                            {afiliado.ativo ? (
+                              <UserX className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <UserCheck className="h-4 w-4 text-green-600" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </SuperAdminLayout>
+  );
+}

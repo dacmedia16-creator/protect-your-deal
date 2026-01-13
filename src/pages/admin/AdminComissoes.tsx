@@ -1,0 +1,344 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { Check, DollarSign, Clock, User, Ticket, Copy } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface Afiliado {
+  id: string;
+  nome: string;
+  email: string;
+  pix_chave: string | null;
+}
+
+interface CupomUso {
+  id: string;
+  cupom_id: string;
+  assinatura_id: string;
+  imobiliaria_id: string | null;
+  user_id: string | null;
+  valor_original: number;
+  valor_desconto: number;
+  valor_comissao: number;
+  comissao_paga: boolean;
+  comissao_paga_em: string | null;
+  created_at: string;
+  cupons: {
+    codigo: string;
+    afiliado_id: string;
+    afiliados: {
+      id: string;
+      nome: string;
+      email: string;
+      pix_chave: string | null;
+    };
+  };
+  imobiliarias?: { nome: string } | null;
+}
+
+export default function AdminComissoes() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [filtroAfiliado, setFiltroAfiliado] = useState<string>("todos");
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+
+  const { data: afiliados } = useQuery({
+    queryKey: ["afiliados-lista"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, pix_chave")
+        .order("nome");
+      if (error) throw error;
+      return data as Afiliado[];
+    },
+  });
+
+  const { data: comissoes, isLoading } = useQuery({
+    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus],
+    queryFn: async () => {
+      let query = supabase
+        .from("cupons_usos")
+        .select(`
+          *,
+          cupons(codigo, afiliado_id, afiliados(id, nome, email, pix_chave)),
+          imobiliarias(nome)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (filtroStatus === "pendente") {
+        query = query.eq("comissao_paga", false);
+      } else if (filtroStatus === "pago") {
+        query = query.eq("comissao_paga", true);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Filter by afiliado if needed
+      let filtered = data as CupomUso[];
+      if (filtroAfiliado !== "todos") {
+        filtered = filtered.filter(
+          (c) => c.cupons?.afiliados?.id === filtroAfiliado
+        );
+      }
+
+      return filtered;
+    },
+  });
+
+  const marcarPagoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("cupons_usos")
+        .update({
+          comissao_paga: true,
+          comissao_paga_em: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-comissoes"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-afiliados"] });
+      toast({ title: "Comissão marcada como paga!" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao marcar como pago",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const totalPendente = comissoes
+    ?.filter((c) => !c.comissao_paga)
+    .reduce((sum, c) => sum + Number(c.valor_comissao), 0) || 0;
+
+  const totalPago = comissoes
+    ?.filter((c) => c.comissao_paga)
+    .reduce((sum, c) => sum + Number(c.valor_comissao), 0) || 0;
+
+  const copyPixKey = (key: string) => {
+    navigator.clipboard.writeText(key);
+    toast({ title: "Chave PIX copiada!" });
+  };
+
+  return (
+    <SuperAdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Comissões</h1>
+            <p className="text-muted-foreground">
+              Gerencie as comissões dos afiliados
+            </p>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Comissões Pendentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-amber-500" />
+                <span className="text-2xl font-bold">
+                  R$ {totalPendente.toFixed(2)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Comissões Pagas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-500" />
+                <span className="text-2xl font-bold">
+                  R$ {totalPago.toFixed(2)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total de Usos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Ticket className="h-5 w-5 text-primary" />
+                <span className="text-2xl font-bold">
+                  {comissoes?.length || 0}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4">
+          <div className="w-[200px]">
+            <Select value={filtroAfiliado} onValueChange={setFiltroAfiliado}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por afiliado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os afiliados</SelectItem>
+                {afiliados?.map((afiliado) => (
+                  <SelectItem key={afiliado.id} value={afiliado.id}>
+                    {afiliado.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-[200px]">
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="pago">Pago</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Registro de Comissões
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Carregando...
+              </div>
+            ) : !comissoes || comissoes.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhuma comissão encontrada
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Afiliado</TableHead>
+                    <TableHead>Cupom</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead className="text-right">Valor Original</TableHead>
+                    <TableHead className="text-right">Desconto</TableHead>
+                    <TableHead className="text-right">Comissão</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comissoes.map((comissao) => (
+                    <TableRow key={comissao.id}>
+                      <TableCell>
+                        {format(new Date(comissao.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {comissao.cupons?.afiliados?.nome || "-"}
+                          </span>
+                          {comissao.cupons?.afiliados?.pix_chave && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                              onClick={() => copyPixKey(comissao.cupons.afiliados.pix_chave!)}
+                            >
+                              <Copy className="h-3 w-3 mr-1" />
+                              Copiar PIX
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <code className="bg-muted px-2 py-1 rounded font-mono text-xs">
+                          {comissao.cupons?.codigo || "-"}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        {comissao.imobiliarias?.nome || "Corretor Autônomo"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        R$ {Number(comissao.valor_original).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600">
+                        - R$ {Number(comissao.valor_desconto).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        R$ {Number(comissao.valor_comissao).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {comissao.comissao_paga ? (
+                          <Badge variant="default" className="bg-green-600">
+                            <Check className="h-3 w-3 mr-1" />
+                            Pago
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pendente
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {!comissao.comissao_paga && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => marcarPagoMutation.mutate(comissao.id)}
+                            disabled={marcarPagoMutation.isPending}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Marcar Pago
+                          </Button>
+                        )}
+                        {comissao.comissao_paga && comissao.comissao_paga_em && (
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(comissao.comissao_paga_em), "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </SuperAdminLayout>
+  );
+}

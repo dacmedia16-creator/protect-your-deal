@@ -21,6 +21,7 @@ interface RegistroRequest {
     senha: string;
   };
   plano_id: string;
+  codigo_cupom?: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -37,7 +38,30 @@ Deno.serve(async (req) => {
     );
 
     const body: RegistroRequest = await req.json();
-    const { imobiliaria, admin, plano_id } = body;
+    const { imobiliaria, admin, plano_id, codigo_cupom } = body;
+
+    console.log("Starting registration for:", admin.email);
+    console.log("Cupom code:", codigo_cupom || "none");
+
+    // Validate coupon if provided
+    let cupomData: { cupom_id: string; valor_desconto: number; tipo_desconto: string; comissao_percentual: number } | null = null;
+    if (codigo_cupom) {
+      const { data: cupomResult, error: cupomError } = await supabaseAdmin.rpc('validar_cupom', {
+        codigo_cupom: codigo_cupom
+      });
+
+      if (cupomError) {
+        console.error("Cupom validation error:", cupomError);
+      } else if (cupomResult && cupomResult.length > 0 && cupomResult[0].valido) {
+        cupomData = {
+          cupom_id: cupomResult[0].cupom_id,
+          valor_desconto: cupomResult[0].valor_desconto,
+          tipo_desconto: cupomResult[0].tipo_desconto,
+          comissao_percentual: cupomResult[0].comissao_percentual
+        };
+        console.log("Valid coupon found:", cupomData);
+      }
+    }
 
     console.log("Starting registration for:", admin.email);
 
@@ -159,18 +183,54 @@ Deno.serve(async (req) => {
     // 5. Create subscription
     if (plano_id) {
       console.log("Creating subscription...");
-      const { error: assinError } = await supabaseAdmin
+      
+      // Get plan value
+      const { data: planoData } = await supabaseAdmin
+        .from("planos")
+        .select("valor_mensal")
+        .eq("id", plano_id)
+        .single();
+
+      const valorOriginal = planoData?.valor_mensal || 0;
+      
+      const { data: assinData, error: assinError } = await supabaseAdmin
         .from("assinaturas")
         .insert({
           imobiliaria_id: imobData.id,
           plano_id: plano_id,
           status: "trial",
           data_inicio: new Date().toISOString().split("T")[0],
-        });
+        })
+        .select()
+        .single();
 
       if (assinError) {
         console.error("Subscription error:", assinError);
         // Non-critical, continue
+      } else if (cupomData && assinData) {
+        // Register coupon usage
+        console.log("Registering coupon usage...");
+        
+        let valorDesconto = 0;
+        if (cupomData.tipo_desconto === 'percentual') {
+          valorDesconto = valorOriginal * (cupomData.valor_desconto / 100);
+        } else {
+          valorDesconto = Math.min(cupomData.valor_desconto, valorOriginal);
+        }
+        
+        const valorComissao = valorOriginal * (cupomData.comissao_percentual / 100);
+
+        await supabaseAdmin.from("cupons_usos").insert({
+          cupom_id: cupomData.cupom_id,
+          assinatura_id: assinData.id,
+          imobiliaria_id: imobData.id,
+          valor_original: valorOriginal,
+          valor_desconto: valorDesconto,
+          valor_comissao: valorComissao,
+        });
+
+        // Increment coupon usage count
+        await supabaseAdmin.rpc('increment_cupom_usos', { cupom_uuid: cupomData.cupom_id });
       }
     }
 
