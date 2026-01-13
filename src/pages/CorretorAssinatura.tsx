@@ -72,15 +72,7 @@ export default function CorretorAssinatura() {
           .eq('ativo', true)
           .order('valor_mensal');
 
-        // Reordenar: Enterprise vai para o final
-        const planosOrdenados = (planosData || []).sort((a, b) => {
-          const aIsEnterprise = a.nome.toLowerCase() === 'enterprise';
-          const bIsEnterprise = b.nome.toLowerCase() === 'enterprise';
-          if (aIsEnterprise && !bIsEnterprise) return 1;
-          if (!aIsEnterprise && bIsEnterprise) return -1;
-          return a.valor_mensal - b.valor_mensal;
-        });
-        setPlanos(planosOrdenados);
+        setPlanos(planosData || []);
 
         // Fetch usage stats
         const currentMonth = new Date();

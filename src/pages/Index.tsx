@@ -53,16 +53,7 @@ const Index = () => {
         .select('*')
         .eq('ativo', true)
         .order('valor_mensal', { ascending: true });
-      
-      // Reordenar: Enterprise vai para o final
-      const planosOrdenados = (data || []).sort((a, b) => {
-        const aIsEnterprise = a.nome.toLowerCase() === 'enterprise';
-        const bIsEnterprise = b.nome.toLowerCase() === 'enterprise';
-        if (aIsEnterprise && !bIsEnterprise) return 1;
-        if (!aIsEnterprise && bIsEnterprise) return -1;
-        return a.valor_mensal - b.valor_mensal;
-      });
-      setPlanos(planosOrdenados);
+      setPlanos(data || []);
     }
     fetchPlanos();
   }, []);
