@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
@@ -73,12 +73,6 @@ const Index = () => {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
-  }
-
-  // Redirecionar usuário logado para seu dashboard
-  if (user && !roleLoading) {
-    const redirectPath = getRedirectPathByRole(role);
-    return <Navigate to={redirectPath} replace />;
   }
 
   const features = [
