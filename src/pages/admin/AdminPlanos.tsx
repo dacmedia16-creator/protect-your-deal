@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Loader2, Check, Trash2 } from 'lucide-react';
+import { Plus, Edit, Loader2, Check, Trash2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Plano {
@@ -39,6 +39,7 @@ interface Plano {
   valor_mensal: number;
   ativo: boolean;
   asaas_plan_id: string | null;
+  tipo_cadastro: string | null;
 }
 
 interface PlanoForm {
@@ -329,83 +330,122 @@ export default function AdminPlanos() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {planos.map((plano) => (
-            <Card key={plano.id} className={`relative overflow-hidden ${!plano.ativo ? 'opacity-60' : ''}`}>
-              {plano.valor_mensal === 0 && (
-                <div className="absolute top-3 right-14">
-                  <Badge variant="success">Grátis</Badge>
-                </div>
-              )}
-              <CardHeader className="flex flex-row items-start justify-between">
-                <div className="pr-16">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    {plano.nome}
-                    {!plano.ativo && (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Inativo
-                      </Badge>
-                    )}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(plano)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => {
-                      setPlanoToDelete(plano);
-                      setDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-3xl font-bold">
-                  {plano.valor_mensal === 0 ? (
-                    'Grátis'
-                  ) : (
-                    <>
-                      R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
-                      <span className="text-base font-normal text-muted-foreground">/mês</span>
-                    </>
-                  )}
-                </div>
-
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span>{plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span>{plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span>{plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span>{plano.max_corretores === 999 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}</span>
-                  </li>
-                </ul>
-
-                {plano.asaas_plan_id && (
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-xs text-muted-foreground">
-                      Asaas ID: <code className="bg-muted px-1 rounded">{plano.asaas_plan_id}</code>
-                    </p>
+          {planos.map((plano) => {
+            const isGratuitoCpf = plano.nome.toLowerCase().includes('gratuito') && plano.tipo_cadastro === 'cpf';
+            const isEnterprise = plano.valor_mensal === 0 && plano.max_corretores === 999;
+            
+            return (
+              <Card 
+                key={plano.id} 
+                className={`relative overflow-hidden flex flex-col ${
+                  !plano.ativo ? 'opacity-60' : ''
+                } ${
+                  isGratuitoCpf ? 'border-2 border-green-500' : ''
+                }`}
+              >
+                {/* Banner "Recomendado para começar" */}
+                {isGratuitoCpf && (
+                  <div className="bg-green-500 text-white text-xs font-medium px-3 py-1.5 flex items-center justify-center gap-1.5">
+                    <Sparkles className="h-3 w-3" />
+                    Recomendado para começar
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                
+                <CardHeader className="flex flex-row items-start justify-between pb-2">
+                  <div className="flex-1">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                      {plano.nome}
+                      {!plano.ativo && (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Inativo
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(plano)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        setPlanoToDelete(plano);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  {/* Preço em verde */}
+                  <div className="text-3xl font-bold text-green-600">
+                    {isEnterprise ? (
+                      'Sob consulta'
+                    ) : plano.valor_mensal === 0 ? (
+                      'Grátis'
+                    ) : (
+                      <>
+                        R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
+                        <span className="text-base font-normal text-muted-foreground">/mês</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Lista de recursos */}
+                  <ul className="space-y-2 text-sm flex-1">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span>{plano.max_corretores === 999 ? 'Corretores ilimitados' : `Até ${plano.max_corretores} corretor(es)`}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span>{plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span>{plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span>{plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}</span>
+                    </li>
+                  </ul>
+
+                  {/* Asaas ID (mantido para admin) */}
+                  {plano.asaas_plan_id && (
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground">
+                        Asaas ID: <code className="bg-muted px-1 rounded">{plano.asaas_plan_id}</code>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Botão de ação */}
+                  <Button 
+                    variant={isGratuitoCpf ? 'default' : 'outline'}
+                    className={`w-full mt-auto ${
+                      isGratuitoCpf ? 'bg-green-500 hover:bg-green-600 text-white' : ''
+                    }`}
+                    onClick={() => openEdit(plano)}
+                  >
+                    {isGratuitoCpf ? (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Começar Grátis
+                      </>
+                    ) : (
+                      'Escolher Plano'
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
