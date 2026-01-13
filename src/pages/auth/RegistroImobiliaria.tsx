@@ -36,6 +36,7 @@ export default function RegistroImobiliaria() {
   const [imobiliariaForm, setImobiliariaForm] = useState({
     nome: '',
     cnpj: '',
+    creci_juridico: '',
     email: '',
     telefone: '',
     endereco: '',
@@ -175,6 +176,7 @@ export default function RegistroImobiliaria() {
           imobiliaria: {
             nome: imobiliariaForm.nome,
             cnpj: imobiliariaForm.cnpj || null,
+            creci_juridico: imobiliariaForm.creci_juridico || null,
             email: imobiliariaForm.email,
             telefone: imobiliariaForm.telefone || null,
             endereco: imobiliariaForm.endereco || null,
@@ -451,6 +453,15 @@ export default function RegistroImobiliaria() {
                       value={imobiliariaForm.cnpj}
                       onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, cnpj: formatCNPJ(e.target.value) })}
                       maxLength={18}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="creci_juridico">CRECI Jurídico</Label>
+                    <Input
+                      id="creci_juridico"
+                      placeholder="Ex: J-12345"
+                      value={imobiliariaForm.creci_juridico}
+                      onChange={(e) => setImobiliariaForm({ ...imobiliariaForm, creci_juridico: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">

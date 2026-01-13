@@ -788,6 +788,7 @@ export type Database = {
           cnpj: string | null
           codigo: number | null
           created_at: string
+          creci_juridico: string | null
           email: string
           endereco: string | null
           estado: string | null
@@ -803,6 +804,7 @@ export type Database = {
           cnpj?: string | null
           codigo?: number | null
           created_at?: string
+          creci_juridico?: string | null
           email: string
           endereco?: string | null
           estado?: string | null
@@ -818,6 +820,7 @@ export type Database = {
           cnpj?: string | null
           codigo?: number | null
           created_at?: string
+          creci_juridico?: string | null
           email?: string
           endereco?: string | null
           estado?: string | null
