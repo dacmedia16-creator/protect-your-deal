@@ -4,10 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Shield, 
   FileCheck, 
@@ -28,35 +26,11 @@ import {
   Phone,
 } from 'lucide-react';
 
-interface Plano {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  max_corretores: number;
-  max_fichas_mes: number;
-  max_clientes: number;
-  max_imoveis: number;
-  valor_mensal: number;
-}
-
 const Index = () => {
   const { user, loading } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
-  const [planos, setPlanos] = useState<Plano[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    async function fetchPlanos() {
-      const { data } = await supabase
-        .from('planos')
-        .select('*')
-        .eq('ativo', true)
-        .order('valor_mensal', { ascending: true });
-      setPlanos(data || []);
-    }
-    fetchPlanos();
-  }, []);
 
   useEffect(() => {
     if (!loading && !roleLoading && user && role) {
@@ -161,12 +135,6 @@ const Index = () => {
             >
               Como Funciona
             </Link>
-            <a 
-              href="#planos" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Ver Planos
-            </a>
             <Link 
               to="/instalar" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
@@ -218,13 +186,6 @@ const Index = () => {
                     >
                       Como Funciona
                     </Link>
-                    <a 
-                      href="#planos" 
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                    >
-                      Ver Planos
-                    </a>
                     <Link 
                       to="/instalar" 
                       onClick={() => setMobileMenuOpen(false)}
@@ -361,110 +322,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="planos" className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Planos e Preços
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Escolha o plano ideal para o seu negócio. Comece gratuitamente!
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {planos.slice(0, 6).map((plano) => {
-              const isEnterprise = plano.nome.toLowerCase() === 'enterprise';
-              const isFreePlan = plano.nome.toLowerCase() === 'gratuito' || (plano.valor_mensal === 0 && !isEnterprise);
-              const isAutonomo = plano.max_corretores === 1;
-              
-              return (
-                <Card 
-                  key={plano.id} 
-                  className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl ${
-                    isFreePlan 
-                      ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-gradient-to-b from-emerald-50/80 to-transparent dark:from-emerald-950/30 dark:to-transparent scale-105 z-10' 
-                      : 'hover:border-primary/50'
-                  }`}
-                >
-                  {isFreePlan && (
-                    <div className="absolute top-0 left-0 right-0 px-4 py-1.5 bg-emerald-500 text-white text-xs font-medium text-center flex items-center justify-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Recomendado para começar
-                    </div>
-                  )}
-                  <CardHeader className={isFreePlan ? 'pt-10' : ''}>
-                    <CardTitle className={isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : ''}>
-                      {plano.nome}
-                    </CardTitle>
-                    <CardDescription>{plano.descricao}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className={`text-3xl font-bold ${isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}`}>
-                      {isFreePlan ? (
-                        'Grátis'
-                      ) : plano.valor_mensal === 0 ? (
-                        'Sob consulta'
-                      ) : (
-                        <>
-                          R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
-                          <span className="text-sm font-normal text-muted-foreground">/mês</span>
-                        </>
-                      )}
-                    </div>
-
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-primary'}`} />
-                        {plano.max_corretores === 999 ? 'Corretores ilimitados' : `Até ${plano.max_corretores} corretor${plano.max_corretores > 1 ? 'es' : ''}`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-primary'}`} />
-                        {plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-primary'}`} />
-                        {plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-primary'}`} />
-                        {plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}
-                      </li>
-                    </ul>
-
-                    <Button 
-                      className={`w-full ${isFreePlan ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}`}
-                      variant={isFreePlan ? 'default' : 'outline'}
-                      asChild
-                    >
-                      <Link to={`/registro/tipo?plano=${plano.nome.toLowerCase()}`}>
-                        {isFreePlan ? (
-                          <>
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Começar Grátis
-                          </>
-                        ) : (
-                          'Escolher Plano'
-                        )}
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-          {planos.length > 4 && (
-            <div className="text-center mt-8">
-              <Button variant="outline" asChild>
-                <Link to="/registro">
-                  Ver todos os planos
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* FAQ Section */}
       <section id="faq" className="py-20">
