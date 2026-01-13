@@ -117,6 +117,7 @@ export default function RegistroImobiliaria() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .eq('tipo_cadastro', 'cnpj')
           .order('valor_mensal', { ascending: true });
 
         if (error) throw error;
@@ -315,33 +316,7 @@ export default function RegistroImobiliaria() {
                   )}
                 </div>
 
-                <RadioGroup value={selectedPlano} onValueChange={(value) => {
-                  if (value === 'cpf-gratuito') {
-                    navigate('/registro-autonomo?plano=gratuito');
-                  } else {
-                    setSelectedPlano(value);
-                  }
-                }}>
-                  {/* Opção Gratuito CPF - redireciona para registro autônomo */}
-                  {planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
-                    <label
-                      className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors border-border hover:border-primary/50"
-                      onClick={() => navigate('/registro-autonomo?plano=gratuito')}
-                    >
-                      <RadioGroupItem value="cpf-gratuito" className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">Gratuito CPF</span>
-                          <span className="font-bold text-primary">Grátis</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">Para corretores autônomos (pessoa física)</p>
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>1 corretor</span>
-                          <span>2 registros/mês</span>
-                        </div>
-                      </div>
-                    </label>
-                  )}
+                <RadioGroup value={selectedPlano} onValueChange={setSelectedPlano}>
                   
                   {planos.map((plano) => {
                     // Calcular preço com desconto
