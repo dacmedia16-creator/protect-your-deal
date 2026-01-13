@@ -671,7 +671,10 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           )}
         </Button>
         {hasNewSuggestion && (
-          <div className="absolute bottom-20 sm:bottom-16 right-0 bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in">
+          <div className={cn(
+            "absolute bottom-20 sm:bottom-16 bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in",
+            userContext.isLoggedIn ? "left-0 sm:left-auto sm:right-0" : "right-0"
+          )}>
             <p className="text-xs text-muted-foreground">💬 Posso te ajudar?</p>
           </div>
         )}
