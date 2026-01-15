@@ -49,7 +49,7 @@ const QRCodeMockup = () => {
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ExternalLink className="h-3.5 w-3.5" />
-            <span className="truncate">protect-your-deal.lovable.app/verificar/VS-2024-001234</span>
+            <span className="truncate">visitaseguras.com.br/verificar/VS-2024-001234</span>
           </div>
         </div>
 
