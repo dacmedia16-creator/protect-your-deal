@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
+import { APP_URL } from '@/lib/appConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -298,14 +299,13 @@ export default function NovaFicha() {
 
       // Enviar OTP usando a fila de processamento
       if (enviarWhatsappAutomatico) {
-        const currentAppUrl = window.location.origin;
         const queueItems = [];
 
         if (incluiProprietario) {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'proprietario',
-            app_url: currentAppUrl,
+            app_url: APP_URL,
             user_id: user.id,
             prioridade: 10, // Alta prioridade para envio imediato
           });
@@ -315,7 +315,7 @@ export default function NovaFicha() {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'comprador',
-            app_url: currentAppUrl,
+            app_url: APP_URL,
             user_id: user.id,
             prioridade: 10,
           });
