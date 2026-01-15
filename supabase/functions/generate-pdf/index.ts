@@ -163,7 +163,7 @@ serve(async (req) => {
     }
 
     // Generate verification URL using app_url from frontend or fallback
-    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://visitasegura.lovable.app';
+    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://protect-your-deal.lovable.app';
     const verificationUrl = `${baseUrl}/verificar/${ficha.protocolo}`;
     console.log('Generated verification URL:', verificationUrl);
     console.log('Generating PDF - isPartial:', isPartial, 'proprietarioConfirmado:', proprietarioConfirmado, 'compradorConfirmado:', compradorConfirmado);
