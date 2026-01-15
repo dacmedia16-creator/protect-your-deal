@@ -226,7 +226,7 @@ serve(async (req) => {
       const minutosRestantes = Math.ceil((expiraEm.getTime() - now.getTime()) / 60000);
 
       // Build the app URL for verification link
-      const baseUrl = Deno.env.get('APP_URL') || 'https://preview--visitasegura.lovable.app';
+      const baseUrl = Deno.env.get('APP_URL') || 'https://protect-your-deal.lovable.app';
       const verificationUrl = `${baseUrl}/confirmar/${otp.token}`;
 
       // Build reminder message
