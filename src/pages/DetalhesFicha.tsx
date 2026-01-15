@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { supabase } from '@/integrations/supabase/client';
+import { APP_URL } from '@/lib/appConfig';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -412,7 +413,7 @@ export default function DetalhesFicha() {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { ficha_id: ficha.id, tipo, app_url: window.location.origin },
+        body: { ficha_id: ficha.id, tipo, app_url: APP_URL },
       });
 
       // Handle rate limit - check both data and error context
@@ -541,7 +542,7 @@ export default function DetalhesFicha() {
         },
         body: JSON.stringify({ 
           ficha_id: ficha.id, 
-          app_url: window.location.origin, 
+          app_url: APP_URL, 
           force_partial: forcePartial 
         }),
       });
@@ -693,7 +694,7 @@ export default function DetalhesFicha() {
         .insert({
           ficha_id: ficha.id,
           tipo,
-          app_url: window.location.origin,
+          app_url: APP_URL,
           user_id: user.id,
           prioridade: 10,
           status: 'pendente',
@@ -965,7 +966,7 @@ export default function DetalhesFicha() {
           ficha_id: ficha.id,
           telefone_parceiro: telefoneParceiro.replace(/\D/g, ''),
           parte_faltante: parteFaltante,
-          app_url: window.location.origin,
+          app_url: APP_URL,
           permite_externo: parceiroExterno,
         },
       });

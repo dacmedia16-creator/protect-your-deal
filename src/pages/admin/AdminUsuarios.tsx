@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatPhone } from "@/lib/phone";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { APP_URL } from "@/lib/appConfig";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -406,7 +407,7 @@ export default function AdminUsuarios() {
     setIsSendingWhatsApp(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      const message = `Olá ${createdUser.nome}! 🎉\n\nSua conta foi criada com sucesso!\n\n📧 *Email:* ${createdUser.email}\n🔑 *Senha:* ${createdUser.password}\n\nAcesse: ${window.location.origin}\n\nRecomendamos que você altere sua senha após o primeiro acesso.`;
+      const message = `Olá ${createdUser.nome}! 🎉\n\nSua conta foi criada com sucesso!\n\n📧 *Email:* ${createdUser.email}\n🔑 *Senha:* ${createdUser.password}\n\nAcesse: ${APP_URL}\n\nRecomendamos que você altere sua senha após o primeiro acesso.`;
 
       const response = await supabase.functions.invoke("send-whatsapp", {
         body: {
