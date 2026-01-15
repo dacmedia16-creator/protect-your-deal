@@ -52,6 +52,39 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const asaasWebhookToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN');
+
+    // ========================================
+    // VALIDAÇÃO DE SEGURANÇA DO WEBHOOK
+    // ========================================
+    // A Asaas envia o token de autenticação no header 'asaas-access-token'
+    // Este token é configurado no painel da Asaas em Integrações > Webhooks
+    const receivedToken = req.headers.get('asaas-access-token');
+    
+    if (asaasWebhookToken) {
+      // Se o token está configurado, validar obrigatoriamente
+      if (!receivedToken) {
+        console.error('Webhook rejected: Missing asaas-access-token header');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Missing authentication token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (receivedToken !== asaasWebhookToken) {
+        console.error('Webhook rejected: Invalid asaas-access-token');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('Webhook authentication successful');
+    } else {
+      // Token não configurado - log de alerta mas continua processando
+      console.warn('⚠️ SECURITY WARNING: ASAAS_WEBHOOK_TOKEN not configured. Webhook validation disabled!');
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const webhookData = await req.json();
