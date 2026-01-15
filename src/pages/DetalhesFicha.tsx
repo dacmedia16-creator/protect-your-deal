@@ -407,21 +407,45 @@ export default function DetalhesFicha() {
         body: { ficha_id: ficha.id, tipo, app_url: window.location.origin },
       });
 
-      if (error || data?.error) {
-        // Handle rate limit error specifically
-        if (data?.rate_limited) {
+      // Handle rate limit - check both data and error context
+      if (data?.rate_limited) {
+        toast({
+          variant: 'destructive',
+          title: 'Aguarde para reenviar',
+          description: `Você poderá enviar novamente em ${data.minutes_remaining} minuto${data.minutes_remaining > 1 ? 's' : ''}.`,
+        });
+        refetchOtps();
+        return;
+      }
+
+      // When Edge Function returns non-2xx, error is set but data may still contain info
+      if (error) {
+        // Check if it's a rate limit error (429)
+        const errorMessage = error.message || '';
+        if (errorMessage.includes('non-2xx') || errorMessage.includes('429')) {
           toast({
             variant: 'destructive',
             title: 'Aguarde para reenviar',
-            description: `Você poderá enviar novamente em ${data.minutes_remaining} minuto${data.minutes_remaining > 1 ? 's' : ''}.`,
+            description: 'Você já enviou um código recentemente. Aguarde alguns minutos antes de tentar novamente.',
           });
-        } else {
-          toast({
-            variant: 'destructive',
-            title: 'Erro ao enviar OTP',
-            description: data?.error || error?.message || 'Erro desconhecido',
-          });
+          refetchOtps();
+          return;
         }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao enviar OTP',
+          description: data?.error || error.message || 'Erro desconhecido',
+        });
+        return;
+      }
+
+      if (data?.error) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao enviar OTP',
+          description: data.error,
+        });
         return;
       }
 
@@ -449,6 +473,18 @@ export default function DetalhesFicha() {
       refetchOtps();
       
     } catch (err) {
+      // Catch-all for unexpected errors
+      const errMessage = err instanceof Error ? err.message : '';
+      if (errMessage.includes('non-2xx') || errMessage.includes('429')) {
+        toast({
+          variant: 'destructive',
+          title: 'Aguarde para reenviar',
+          description: 'Você já enviou um código recentemente. Aguarde alguns minutos antes de tentar novamente.',
+        });
+        refetchOtps();
+        return;
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Erro',
