@@ -101,10 +101,17 @@ export default function DetalhesFicha() {
     verification_url?: string;
   } | null>(null);
 
-  // Rate limit state for OTP buttons
+  // Rate limit state for OTP buttons (stores remaining SECONDS for precise countdown)
   const RATE_LIMIT_MINUTES = 30;
   const [rateLimitProprietario, setRateLimitProprietario] = useState<number | null>(null);
   const [rateLimitComprador, setRateLimitComprador] = useState<number | null>(null);
+  
+  // Helper to format seconds as MM:SS
+  const formatRateLimitTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // State for completing missing party data
   const [showCompletarProprietario, setShowCompletarProprietario] = useState(false);
@@ -293,7 +300,7 @@ export default function DetalhesFicha() {
   const failedOtpItems = otpQueueItems?.filter(item => item.status === 'falhou') || [];
   const pendingOtpItems = otpQueueItems?.filter(item => item.status === 'pendente' || item.status === 'processando') || [];
 
-  // Calculate rate limit remaining time
+  // Calculate rate limit remaining time (in SECONDS for precise countdown)
   useEffect(() => {
     if (role !== 'corretor' || !lastOtps) {
       setRateLimitProprietario(null);
@@ -301,26 +308,27 @@ export default function DetalhesFicha() {
       return;
     }
 
-    const calculateRemainingMinutes = (tipo: string): number | null => {
+    const calculateRemainingSeconds = (tipo: string): number | null => {
       const lastOtp = lastOtps.find(otp => otp.tipo === tipo);
       if (!lastOtp) return null;
       
       const lastSentTime = new Date(lastOtp.created_at).getTime();
       const nextAvailable = lastSentTime + RATE_LIMIT_MINUTES * 60 * 1000;
-      const remaining = Math.ceil((nextAvailable - Date.now()) / 60000);
+      const remainingMs = nextAvailable - Date.now();
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
       
-      return remaining > 0 ? remaining : null;
+      return remainingSeconds > 0 ? remainingSeconds : null;
     };
 
     const updateLimits = () => {
-      setRateLimitProprietario(calculateRemainingMinutes('proprietario'));
-      setRateLimitComprador(calculateRemainingMinutes('comprador'));
+      setRateLimitProprietario(calculateRemainingSeconds('proprietario'));
+      setRateLimitComprador(calculateRemainingSeconds('comprador'));
     };
 
     updateLimits();
     
-    // Update every minute
-    const interval = setInterval(updateLimits, 60000);
+    // Update every second for smooth countdown
+    const interval = setInterval(updateLimits, 1000);
     
     return () => clearInterval(interval);
   }, [lastOtps, role]);
@@ -1760,13 +1768,13 @@ export default function DetalhesFicha() {
                         <Send className="h-4 w-4" />
                       )}
                       {rateLimitProprietario !== null 
-                        ? `Aguarde ${rateLimitProprietario} min`
+                        ? `Aguarde ${formatRateLimitTime(rateLimitProprietario)}`
                         : 'Enviar para Proprietário'
                       }
                     </Button>
                     {rateLimitProprietario !== null && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        Disponível em {rateLimitProprietario} minuto{rateLimitProprietario > 1 ? 's' : ''}
+                      <p className="text-xs text-muted-foreground text-center animate-pulse">
+                        ⏱️ Disponível em {formatRateLimitTime(rateLimitProprietario)}
                       </p>
                     )}
                   </div>
@@ -1787,13 +1795,13 @@ export default function DetalhesFicha() {
                         <Send className="h-4 w-4" />
                       )}
                       {rateLimitComprador !== null 
-                        ? `Aguarde ${rateLimitComprador} min`
+                        ? `Aguarde ${formatRateLimitTime(rateLimitComprador)}`
                         : 'Enviar para Comprador'
                       }
                     </Button>
                     {rateLimitComprador !== null && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        Disponível em {rateLimitComprador} minuto{rateLimitComprador > 1 ? 's' : ''}
+                      <p className="text-xs text-muted-foreground text-center animate-pulse">
+                        ⏱️ Disponível em {formatRateLimitTime(rateLimitComprador)}
                       </p>
                     )}
                   </div>
