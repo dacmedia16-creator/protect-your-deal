@@ -299,7 +299,7 @@ export default function EmpresaConfiguracoes() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-3">
                     Corretores podem usar este código ao se cadastrarem em{' '}
-                    <span className="font-medium">protect-your-deal.lovable.app/auth/registro-autonomo</span>{' '}
+                    <span className="font-medium">visitaseguras.com.br/auth/registro-autonomo</span>{' '}
                     para se vincular automaticamente à sua imobiliária.
                   </p>
                 </CardContent>

@@ -798,7 +798,7 @@ serve(async (req) => {
 
       // Linha 1: Verificação (formato original da imagem)
       const verificationLabel = 'Verifique a autenticidade deste documento:';
-      const verificationUrlFooter = `protect-your-deal.lovable.app/verificar/${ficha.protocolo}`;
+      const verificationUrlFooter = `visitaseguras.com.br/verificar/${ficha.protocolo}`;
       const labelWidth = helveticaBold.widthOfTextAtSize(verificationLabel, 8);
       
       targetPage.drawText(verificationLabel, {
