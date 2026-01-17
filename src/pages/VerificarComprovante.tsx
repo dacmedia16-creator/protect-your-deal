@@ -21,13 +21,17 @@ import {
   Copy,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface VerificationData {
   valid: boolean;
+  confirmacao_completa?: boolean;
+  confirmacao_parcial?: boolean;
   protocolo?: string;
   data_visita?: string;
   imovel_tipo?: string;
@@ -222,22 +226,40 @@ export default function VerificarComprovante() {
       <main className="flex-1 container mx-auto px-4 py-8 max-w-lg">
         {data?.valid ? (
           <div className="space-y-6">
-            {/* Status de Sucesso */}
-            <Card className="border-success/50 bg-success/5">
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center text-center space-y-3">
-                  <div className="h-16 w-16 rounded-full bg-success/20 flex items-center justify-center">
-                    <CheckCircle className="h-10 w-10 text-success" />
+            {/* Status Card - Different for complete vs partial */}
+            {data.confirmacao_completa ? (
+              <Card className="border-success/50 bg-success/5">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="h-16 w-16 rounded-full bg-success/20 flex items-center justify-center">
+                      <CheckCircle className="h-10 w-10 text-success" />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-success">Comprovante Válido</h1>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Este documento é autêntico e foi verificado com sucesso.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-success">Comprovante Válido</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Este documento é autêntico e foi verificado com sucesso.
-                    </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-amber-500/50 bg-amber-50 dark:bg-amber-900/10">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                      <AlertTriangle className="h-10 w-10 text-amber-600 dark:text-amber-500" />
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold text-amber-600 dark:text-amber-500">Confirmação Parcial</h1>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Este documento possui confirmação de apenas uma das partes.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Dados do Comprovante */}
             <Card>
@@ -271,10 +293,15 @@ export default function VerificarComprovante() {
                         <User className="h-4 w-4 text-muted-foreground" />
                         {maskName(data.proprietario_nome || '')}
                       </p>
-                      {data.proprietario_confirmado_em && (
+                      {data.proprietario_confirmado_em ? (
                         <p className="text-xs text-success flex items-center gap-1 mt-1">
                           <CheckCircle className="h-3 w-3" />
                           Confirmado em {format(new Date(data.proprietario_confirmado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3" />
+                          Aguardando confirmação
                         </p>
                       )}
                     </div>
@@ -285,10 +312,15 @@ export default function VerificarComprovante() {
                         <User className="h-4 w-4 text-muted-foreground" />
                         {maskName(data.comprador_nome || '')}
                       </p>
-                      {data.comprador_confirmado_em && (
+                      {data.comprador_confirmado_em ? (
                         <p className="text-xs text-success flex items-center gap-1 mt-1">
                           <CheckCircle className="h-3 w-3" />
                           Confirmado em {format(new Date(data.comprador_confirmado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-600 dark:text-amber-500 flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3" />
+                          Aguardando confirmação
                         </p>
                       )}
                     </div>
