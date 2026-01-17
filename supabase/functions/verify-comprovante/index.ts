@@ -51,13 +51,19 @@ serve(async (req) => {
       );
     }
 
-    // Check if both parties confirmed
-    if (!ficha.proprietario_confirmado_em || !ficha.comprador_confirmado_em) {
-      console.log('Ficha ainda não confirmada por ambas as partes');
+    // Determine confirmation status
+    const proprietarioConfirmado = !!ficha.proprietario_confirmado_em;
+    const compradorConfirmado = !!ficha.comprador_confirmado_em;
+    const confirmacaoCompleta = proprietarioConfirmado && compradorConfirmado;
+    const confirmacaoParcial = proprietarioConfirmado || compradorConfirmado;
+
+    // If no one confirmed, return invalid
+    if (!confirmacaoParcial) {
+      console.log('Ficha sem nenhuma confirmação');
       return new Response(
         JSON.stringify({ 
           valid: false, 
-          error: 'Visita ainda não confirmada por ambas as partes' 
+          error: 'Visita ainda não possui nenhuma confirmação' 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -70,12 +76,15 @@ serve(async (req) => {
       .eq('user_id', ficha.user_id)
       .maybeSingle();
 
-    console.log('Comprovante válido para protocolo:', protocolo);
+    console.log('Comprovante válido para protocolo:', protocolo, '- Completo:', confirmacaoCompleta);
 
     // Return sanitized data (no CPF, no phone numbers) with integrity info
+    // Now supports partial confirmations with clear indication
     return new Response(
       JSON.stringify({
         valid: true,
+        confirmacao_completa: confirmacaoCompleta,
+        confirmacao_parcial: confirmacaoParcial && !confirmacaoCompleta,
         protocolo: ficha.protocolo,
         data_visita: ficha.data_visita,
         imovel_tipo: ficha.imovel_tipo,
