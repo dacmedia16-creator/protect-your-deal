@@ -10,8 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis } from 'recharts';
 
 interface DashboardStats {
   totalCorretores: number;
@@ -22,9 +28,15 @@ interface DashboardStats {
   pesquisasPendentes: number;
 }
 
+interface MonthlyData {
+  month: string;
+  fichas: number;
+}
+
 export default function EmpresaDashboard() {
   const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Hook para verificar se pesquisa pós-visita está habilitada
@@ -54,16 +66,42 @@ export default function EmpresaDashboard() {
           .eq('imobiliaria_id', imobiliariaId);
 
         // Count fichas this month
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
+        const currentMonthStart = new Date();
+        currentMonthStart.setDate(1);
+        currentMonthStart.setHours(0, 0, 0, 0);
         
         const { count: fichasMes } = await supabase
           .from('fichas_visita')
           .select('*', { count: 'exact', head: true })
           .eq('imobiliaria_id', imobiliariaId)
-          .gte('created_at', startOfMonth.toISOString());
+          .gte('created_at', currentMonthStart.toISOString());
 
+        // Fetch all fichas for monthly chart (last 6 months)
+        const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
+        const { data: fichasData } = await supabase
+          .from('fichas_visita')
+          .select('created_at')
+          .eq('imobiliaria_id', imobiliariaId)
+          .gte('created_at', sixMonthsAgo.toISOString());
+
+        // Process monthly data
+        const monthlyChartData = Array.from({ length: 6 }, (_, i) => {
+          const date = subMonths(new Date(), 5 - i);
+          const start = startOfMonth(date);
+          const end = endOfMonth(date);
+          
+          const count = fichasData?.filter(f => {
+            const createdAt = new Date(f.created_at);
+            return createdAt >= start && createdAt <= end;
+          }).length || 0;
+
+          return {
+            month: format(date, 'MMM', { locale: ptBR }),
+            fichas: count,
+          };
+        });
+
+        setMonthlyData(monthlyChartData);
 
         // Count surveys (only if feature is enabled)
         let totalPesquisas = 0;
@@ -114,6 +152,14 @@ export default function EmpresaDashboard() {
   // Calculate usage percentages
   const corretoresPercent = plano ? (stats?.totalCorretores || 0) / plano.max_corretores * 100 : 0;
   const fichasPercent = plano ? (stats?.fichasMes || 0) / plano.max_fichas_mes * 100 : 0;
+
+  // Chart config
+  const chartConfig = {
+    fichas: {
+      label: 'Registros',
+      color: 'hsl(var(--primary))',
+    },
+  };
 
   return (
     <ImobiliariaLayout>
@@ -215,6 +261,43 @@ export default function EmpresaDashboard() {
             </Link>
           )}
         </div>
+
+        {/* Monthly chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-medium">Registros por Mês</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monthlyData.some(d => d.fichas > 0) ? (
+              <ChartContainer config={chartConfig} className="h-[200px]">
+                <BarChart data={monthlyData}>
+                  <XAxis 
+                    dataKey="month" 
+                    tickLine={false} 
+                    axisLine={false}
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    tickLine={false} 
+                    axisLine={false}
+                    fontSize={12}
+                    allowDecimals={false}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar 
+                    dataKey="fichas" 
+                    fill="hsl(var(--primary))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                Nenhum registro ainda
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Quick actions and subscription info */}
         <div className="grid gap-6 md:grid-cols-2">
