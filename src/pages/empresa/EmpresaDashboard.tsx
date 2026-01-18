@@ -246,24 +246,26 @@ export default function EmpresaDashboard() {
           </Card>
 
           {surveyEnabled && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pesquisas Respondidas</CardTitle>
-                <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  de {stats?.totalPesquisas || 0} enviadas
-                </p>
-                {stats?.totalPesquisas && stats.totalPesquisas > 0 && (
-                  <Progress
-                    value={(stats.pesquisasRespondidas / stats.totalPesquisas) * 100}
-                    className="h-1 mt-2"
-                  />
-                )}
-              </CardContent>
-            </Card>
+            <Link to="/empresa/pesquisas">
+              <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pesquisas Respondidas</CardTitle>
+                  <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    de {stats?.totalPesquisas || 0} enviadas
+                  </p>
+                  {stats?.totalPesquisas && stats.totalPesquisas > 0 && (
+                    <Progress
+                      value={(stats.pesquisasRespondidas / stats.totalPesquisas) * 100}
+                      className="h-1 mt-2"
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
           )}
         </div>
 
