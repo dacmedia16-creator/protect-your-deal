@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { useToast } from '@/hooks/use-toast';
 import { Building2, User, Users, Calendar, FileText, Loader2, MessageCircle, AlertTriangle, Send } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { validateCPF, formatCPF } from '@/lib/cpf';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
-import { ImovelSelector } from '@/components/ImovelSelector';
+
 
 type ModoCriacao = 'completo' | 'proprietario' | 'comprador';
 
@@ -156,11 +156,6 @@ export default function NovaFicha() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   
-  // Modos de entrada: selecionar existente ou cadastrar novo (apenas para imóvel)
-  const [modoImovel, setModoImovel] = useState<'selecionar' | 'novo'>('selecionar');
-  
-  // Entidades selecionadas (apenas imóvel mantém seletor)
-  const [imovelSelecionado, setImovelSelecionado] = useState<ImovelSelecionado | null>(null);
   
   const [enviarWhatsappAutomatico, setEnviarWhatsappAutomatico] = useState(true);
   
@@ -467,94 +462,45 @@ export default function NovaFicha() {
           {/* Dados do Imóvel */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
-                    <CardDescription>Informações sobre o imóvel visitado</CardDescription>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <Tabs value={modoImovel} onValueChange={(v) => setModoImovel(v as 'selecionar' | 'novo')}>
-                  <TabsList className="h-8">
-                    <TabsTrigger value="selecionar" className="text-xs px-2">Selecionar</TabsTrigger>
-                    <TabsTrigger value="novo" className="text-xs px-2">Novo</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <div>
+                  <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
+                  <CardDescription>Informações sobre o imóvel visitado</CardDescription>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {modoImovel === 'selecionar' ? (
-                <ImovelSelector
-                  imovelSelecionado={imovelSelecionado}
-                  onSelect={(imovel) => {
-                    setImovelSelecionado(imovel);
-                    setFormData({
-                      ...formData,
-                      imovel_endereco: imovel.endereco,
-                      imovel_tipo: imovel.tipo
-                    });
-                  }}
-                  onClear={() => {
-                    setImovelSelecionado(null);
-                    setFormData({
-                      ...formData,
-                      imovel_endereco: '',
-                      imovel_tipo: ''
-                    });
-                  }}
-                  onModoChange={setModoImovel}
-                  onProprietarioVinculado={(proprietario) => {
-                    // Preencher dados do proprietário automaticamente
-                    if (showProprietario) {
-                      setFormData(prev => ({
-                        ...prev,
-                        proprietario_nome: proprietario.nome,
-                        proprietario_cpf: proprietario.cpf ? formatCPF(proprietario.cpf) : '',
-                        proprietario_telefone: formatPhone(proprietario.telefone),
-                        proprietario_autopreenchimento: false
-                      }));
-                      toast({
-                        title: 'Proprietário vinculado',
-                        description: `${proprietario.nome} foi preenchido automaticamente`,
-                      });
-                    }
-                  }}
+              <div className="space-y-2">
+                <Label htmlFor="imovel_endereco">Endereço completo *</Label>
+                <Input
+                  id="imovel_endereco"
+                  placeholder="Rua, número, bairro, cidade"
+                  value={formData.imovel_endereco}
+                  onChange={(e) => setFormData({ ...formData, imovel_endereco: e.target.value })}
+                  required
                 />
-              ) : (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="imovel_endereco">Endereço completo *</Label>
-                    <Input
-                      id="imovel_endereco"
-                      placeholder="Rua, número, bairro, cidade"
-                      value={formData.imovel_endereco}
-                      onChange={(e) => setFormData({ ...formData, imovel_endereco: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="imovel_tipo">Tipo do imóvel *</Label>
-                    <Select
-                      value={formData.imovel_tipo}
-                      onValueChange={(value) => setFormData({ ...formData, imovel_tipo: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {tiposImovel.map((tipo) => (
-                          <SelectItem key={tipo} value={tipo}>
-                            {tipo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="imovel_tipo">Tipo do imóvel *</Label>
+                <Select
+                  value={formData.imovel_tipo}
+                  onValueChange={(value) => setFormData({ ...formData, imovel_tipo: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tiposImovel.map((tipo) => (
+                      <SelectItem key={tipo} value={tipo}>
+                        {tipo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
 
