@@ -1134,6 +1134,131 @@ export type Database = {
           },
         ]
       }
+      survey_responses: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          liked_least: string | null
+          liked_most: string | null
+          rating_common_areas: number
+          rating_conservation: number
+          rating_finishes: number
+          rating_layout: number
+          rating_location: number
+          rating_price: number
+          rating_size: number
+          survey_id: string
+          user_agent: string | null
+          would_buy: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          liked_least?: string | null
+          liked_most?: string | null
+          rating_common_areas: number
+          rating_conservation: number
+          rating_finishes: number
+          rating_layout: number
+          rating_location: number
+          rating_price: number
+          rating_size: number
+          survey_id: string
+          user_agent?: string | null
+          would_buy: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          liked_least?: string | null
+          liked_most?: string | null
+          rating_common_areas?: number
+          rating_conservation?: number
+          rating_finishes?: number
+          rating_layout?: number
+          rating_location?: number
+          rating_price?: number
+          rating_size?: number
+          survey_id?: string
+          user_agent?: string | null
+          would_buy?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: true
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      surveys: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          corretor_id: string
+          created_at: string
+          expires_at: string
+          ficha_id: string
+          id: string
+          imobiliaria_id: string | null
+          responded_at: string | null
+          sent_at: string | null
+          status: string
+          token: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          corretor_id: string
+          created_at?: string
+          expires_at?: string
+          ficha_id: string
+          id?: string
+          imobiliaria_id?: string | null
+          responded_at?: string | null
+          sent_at?: string | null
+          status?: string
+          token?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          corretor_id?: string
+          created_at?: string
+          expires_at?: string
+          ficha_id?: string
+          id?: string
+          imobiliaria_id?: string | null
+          responded_at?: string | null
+          sent_at?: string | null
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surveys_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: true
+            referencedRelation: "fichas_visita"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surveys_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates_mensagem: {
         Row: {
           ativo: boolean
@@ -1177,6 +1302,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_feature_flags: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          feature_key: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          feature_key: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          feature_key?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
