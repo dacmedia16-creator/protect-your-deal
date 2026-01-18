@@ -371,37 +371,39 @@ export function useSurveyExport() {
         <title>Pesquisa - ${clientName}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; color: #333; padding: 40px; background: #fff; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 20px; }
-          .header h1 { color: #6366f1; font-size: 22px; margin-bottom: 5px; }
-          .header p { color: #666; font-size: 13px; }
-          .info-box { background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
-          .info-box h2 { font-size: 14px; color: #666; margin-bottom: 10px; }
-          .info-box .value { font-size: 16px; font-weight: bold; color: #333; }
-          .info-box .sub { font-size: 12px; color: #666; margin-top: 4px; }
-          .ratings { background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
-          .ratings h2 { font-size: 16px; margin-bottom: 15px; color: #333; }
-          .rating-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-          .rating-row:last-child { border-bottom: none; }
-          .rating-row span { font-size: 14px; }
-          .rating-value { font-weight: bold; color: #6366f1; font-size: 16px; }
-          .stars { color: #f59e0b; margin-right: 8px; }
-          .average { background: #6366f1; color: white; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 25px; }
-          .average h3 { font-size: 36px; margin-bottom: 5px; }
-          .average p { font-size: 14px; opacity: 0.9; }
-          .would-buy { padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 25px; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; color: #333; padding: 20px; background: #fff; }
+          .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #6366f1; padding-bottom: 12px; }
+          .header h1 { color: #6366f1; font-size: 18px; margin-bottom: 3px; }
+          .header p { color: #666; font-size: 11px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+          .info-box { background: #f8fafc; border-radius: 6px; padding: 10px; }
+          .info-box h2 { font-size: 10px; color: #666; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .info-box .value { font-size: 13px; font-weight: bold; color: #333; }
+          .info-box .sub { font-size: 10px; color: #666; margin-top: 2px; }
+          .summary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+          .average { background: #6366f1; color: white; border-radius: 6px; padding: 12px; text-align: center; }
+          .average h3 { font-size: 24px; margin-bottom: 2px; }
+          .average p { font-size: 10px; opacity: 0.9; }
+          .would-buy { padding: 12px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
           .would-buy.yes { background: #dcfce7; }
           .would-buy.no { background: #fef2f2; }
-          .would-buy h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
-          .would-buy p { font-size: 24px; font-weight: bold; }
+          .would-buy h3 { font-size: 10px; color: #666; margin-bottom: 4px; }
+          .would-buy p { font-size: 16px; font-weight: bold; }
           .would-buy.yes p { color: #16a34a; }
           .would-buy.no p { color: #dc2626; }
-          .comments { margin-bottom: 25px; }
-          .comment { background: #f8fafc; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
-          .comment h4 { font-size: 12px; color: #666; margin-bottom: 8px; }
-          .comment p { font-size: 14px; line-height: 1.5; }
-          .footer { text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #999; font-size: 11px; }
-          @media print { body { padding: 20px; } }
+          .ratings { background: #f8fafc; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+          .ratings h2 { font-size: 11px; margin-bottom: 8px; color: #333; text-transform: uppercase; letter-spacing: 0.5px; }
+          .ratings-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+          .rating-item { text-align: center; }
+          .rating-item .value { font-size: 18px; font-weight: bold; color: #6366f1; }
+          .rating-item .bar { height: 4px; background: #e2e8f0; border-radius: 2px; margin: 4px 0; }
+          .rating-item .bar-fill { height: 100%; background: #6366f1; border-radius: 2px; }
+          .rating-item .label { font-size: 8px; color: #666; line-height: 1.2; }
+          .comments { margin-bottom: 10px; }
+          .comment { background: #f8fafc; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+          .comment h4 { font-size: 10px; color: #666; margin-bottom: 4px; }
+          .comment p { font-size: 11px; line-height: 1.4; }
+          .footer { text-align: center; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #999; font-size: 9px; }
         </style>
       </head>
       <body>
@@ -410,39 +412,44 @@ export function useSurveyExport() {
           <p>${imobiliariaName} • ${format(new Date(response.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
         </div>
 
-        <div class="info-box">
-          <h2>Cliente</h2>
-          <div class="value">${clientName}</div>
-          ${survey.client_phone ? `<div class="sub">📱 ${survey.client_phone}</div>` : ''}
+        <div class="info-grid">
+          <div class="info-box">
+            <h2>Cliente</h2>
+            <div class="value">${clientName}</div>
+            ${survey.client_phone ? `<div class="sub">${survey.client_phone}</div>` : ''}
+          </div>
+          <div class="info-box">
+            <h2>Imóvel Visitado</h2>
+            <div class="value">${propertyAddress}</div>
+            <div class="sub">Protocolo: ${protocol}</div>
+          </div>
         </div>
 
-        <div class="info-box">
-          <h2>Imóvel Visitado</h2>
-          <div class="value">${propertyAddress}</div>
-          <div class="sub">Protocolo: ${protocol}</div>
-        </div>
-
-        <div class="average">
-          <h3>${avg.toFixed(1)}</h3>
-          <p>Média Geral das Avaliações</p>
+        <div class="summary-row">
+          <div class="average">
+            <h3>${avg.toFixed(1)}</h3>
+            <p>Média Geral</p>
+          </div>
+          <div class="would-buy ${response.would_buy ? 'yes' : 'no'}">
+            <h3>Compraria?</h3>
+            <p>${response.would_buy ? '✓ Sim' : '✗ Não'}</p>
+          </div>
         </div>
 
         <div class="ratings">
-          <h2>Avaliações Detalhadas</h2>
-          ${Object.entries(ratingLabels).map(([key, label]) => `
-            <div class="rating-row">
-              <span>${label}</span>
-              <div>
-                <span class="stars">${'★'.repeat(response[key as keyof SurveyResponse] as number)}${'☆'.repeat(5 - (response[key as keyof SurveyResponse] as number))}</span>
-                <span class="rating-value">${response[key as keyof SurveyResponse]}/5</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-
-        <div class="would-buy ${response.would_buy ? 'yes' : 'no'}">
-          <h3>Compraria este imóvel?</h3>
-          <p>${response.would_buy ? '✓ Sim, compraria' : '✗ Não compraria'}</p>
+          <h2>Avaliações</h2>
+          <div class="ratings-grid">
+            ${Object.entries(ratingLabels).map(([key, label]) => {
+              const value = response[key as keyof SurveyResponse] as number;
+              return `
+                <div class="rating-item">
+                  <div class="value">${value}</div>
+                  <div class="bar"><div class="bar-fill" style="width: ${(value / 5) * 100}%"></div></div>
+                  <div class="label">${label}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
         </div>
 
         ${(response.liked_most || response.liked_least) ? `
@@ -463,7 +470,7 @@ export function useSurveyExport() {
         ` : ''}
 
         <div class="footer">
-          Gerado automaticamente pelo sistema VisitaSegura
+          Gerado pelo VisitaSegura
         </div>
       </body>
       </html>
@@ -475,7 +482,7 @@ export function useSurveyExport() {
     document.body.appendChild(container);
 
     const options = {
-      margin: 10,
+      margin: 5,
       filename: `pesquisa_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
