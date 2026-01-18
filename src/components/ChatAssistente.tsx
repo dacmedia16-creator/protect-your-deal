@@ -652,16 +652,16 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
   // Adjust position based on user state - for logged-in users on mobile, position top-right
   const buttonPositionClass = userContext.isLoggedIn
-    ? "fixed top-20 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
+    ? "fixed top-4 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
   const chatPositionClass = userContext.isLoggedIn
-    ? "fixed top-20 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
+    ? "fixed top-4 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
   if (!isOpen) {
     return (
-      <div className={cn(buttonPositionClass, "animate-in fade-in-0 slide-in-from-top-4 sm:slide-in-from-bottom-4 duration-500")}>
+      <div className={cn(buttonPositionClass, "animate-in fade-in-0 slide-in-from-top-2 sm:slide-in-from-bottom-4 duration-500")}>
         <Button
           onClick={() => setIsOpen(true)}
           className={cn(
