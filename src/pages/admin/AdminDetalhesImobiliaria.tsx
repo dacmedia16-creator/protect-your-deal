@@ -50,9 +50,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound, UserCircle, Home, FileText, Phone, Mail, Upload, Trash2, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, Building2, Users, CreditCard, Save, MoreVertical, KeyRound, UserCircle, Home, FileText, Phone, Mail, Upload, Trash2, ImageIcon, Settings2, ClipboardList } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -161,6 +162,10 @@ export default function AdminDetalhesImobiliaria() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
+  // Feature flags state
+  const [surveyFeatureEnabled, setSurveyFeatureEnabled] = useState(false);
+  const [loadingFeatures, setLoadingFeatures] = useState(false);
+  const [savingFeatures, setSavingFeatures] = useState(false);
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -291,6 +296,17 @@ export default function AdminDetalhesImobiliaria() {
           .order('created_at', { ascending: false });
 
         setFichas(fichasData || []);
+
+        // Fetch feature flags
+        const { data: featureFlagsData } = await supabase
+          .from('imobiliaria_feature_flags')
+          .select('feature_key, enabled')
+          .eq('imobiliaria_id', id);
+        
+        if (featureFlagsData) {
+          const surveyFlag = featureFlagsData.find(f => f.feature_key === 'post_visit_survey');
+          setSurveyFeatureEnabled(surveyFlag?.enabled ?? false);
+        }
       } catch (error: any) {
         console.error('Error fetching data:', error);
         toast.error('Erro ao carregar dados');
@@ -596,6 +612,7 @@ export default function AdminDetalhesImobiliaria() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="dados">Dados</TabsTrigger>
             <TabsTrigger value="assinatura">Assinatura</TabsTrigger>
+            <TabsTrigger value="features">Features</TabsTrigger>
             <TabsTrigger value="corretores">Corretores ({corretores.length})</TabsTrigger>
             <TabsTrigger value="clientes">Clientes ({clientes.length})</TabsTrigger>
             <TabsTrigger value="imoveis">Imóveis ({imoveis.length})</TabsTrigger>
@@ -892,6 +909,84 @@ export default function AdminDetalhesImobiliaria() {
                     {assinatura ? 'Alterar Plano' : 'Atribuir Plano'}
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Features Tab */}
+          <TabsContent value="features">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Settings2 className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle>Features da Imobiliária</CardTitle>
+                    <CardDescription>
+                      Habilite ou desabilite funcionalidades opcionais para todos os corretores desta imobiliária
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {loadingFeatures ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                          <ClipboardList className="h-5 w-5 text-purple-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Pesquisa Pós-Visita</p>
+                          <p className="text-sm text-muted-foreground">
+                            Permite que corretores enviem pesquisas de feedback para clientes após visitas confirmadas
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={surveyFeatureEnabled}
+                        onCheckedChange={setSurveyFeatureEnabled}
+                      />
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                      <Button 
+                        onClick={async () => {
+                          if (!id) return;
+                          setSavingFeatures(true);
+                          try {
+                            const { error } = await supabase
+                              .from('imobiliaria_feature_flags')
+                              .upsert({
+                                imobiliaria_id: id,
+                                feature_key: 'post_visit_survey',
+                                enabled: surveyFeatureEnabled,
+                                updated_at: new Date().toISOString(),
+                              }, {
+                                onConflict: 'imobiliaria_id,feature_key',
+                              });
+
+                            if (error) throw error;
+                            toast.success('Features atualizadas com sucesso!');
+                          } catch (error: any) {
+                            console.error('Error saving features:', error);
+                            toast.error(error.message || 'Erro ao salvar features');
+                          } finally {
+                            setSavingFeatures(false);
+                          }
+                        }}
+                        disabled={savingFeatures}
+                      >
+                        {savingFeatures && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Features
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
