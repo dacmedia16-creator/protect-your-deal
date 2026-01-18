@@ -367,53 +367,72 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
   // Buffer to accumulate streamed content before displaying with typing effect
   const streamBufferRef = useRef<string>('');
   const displayedContentRef = useRef<string>('');
-  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Typing effect: displays characters from buffer gradually
+  // Typing effect: displays characters from buffer gradually with human-like variation
+  const scheduleNextType = useCallback(() => {
+    const buffer = streamBufferRef.current;
+    const displayed = displayedContentRef.current;
+    
+    if (displayed.length < buffer.length) {
+      // Calculate how many characters to add
+      let charsToAdd = Math.min(2, buffer.length - displayed.length);
+      const nextChunk = buffer.slice(displayed.length, displayed.length + charsToAdd);
+      
+      displayedContentRef.current = displayed + nextChunk;
+      
+      // Apply spacing fix and update message
+      const fixedContent = fixTextSpacing(displayedContentRef.current);
+      const { text: processedText, images } = processMessageWithImages(fixedContent);
+      
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastMsg = updated[updated.length - 1];
+        if (lastMsg && lastMsg.role === 'assistant') {
+          updated[updated.length - 1] = {
+            ...lastMsg,
+            content: processedText,
+            images: images.length > 0 ? images : undefined
+          };
+        }
+        return updated;
+      });
+      
+      // Calculate next delay with human-like variation
+      const lastChar = nextChunk[nextChunk.length - 1];
+      let baseDelay = 35;
+      
+      // Add longer pauses after punctuation
+      if (lastChar === '.' || lastChar === '!' || lastChar === '?') {
+        baseDelay = 120 + Math.random() * 80; // 120-200ms pause after sentences
+      } else if (lastChar === ',' || lastChar === ';' || lastChar === ':') {
+        baseDelay = 60 + Math.random() * 40; // 60-100ms pause after clauses
+      } else if (lastChar === '\n') {
+        baseDelay = 80 + Math.random() * 40; // 80-120ms pause after line breaks
+      } else {
+        // Random variation for normal typing (25-45ms)
+        baseDelay = 25 + Math.random() * 20;
+      }
+      
+      typingIntervalRef.current = setTimeout(scheduleNextType, baseDelay);
+    } else if (!isTyping && displayed.length >= buffer.length) {
+      // Done typing
+      typingIntervalRef.current = null;
+    } else {
+      // Buffer not yet filled, check again soon
+      typingIntervalRef.current = setTimeout(scheduleNextType, 35);
+    }
+  }, [isTyping]);
+
   const startTypingEffect = useCallback(() => {
     if (typingIntervalRef.current) return; // Already running
-    
-    typingIntervalRef.current = setInterval(() => {
-      const buffer = streamBufferRef.current;
-      const displayed = displayedContentRef.current;
-      
-      if (displayed.length < buffer.length) {
-        // Calculate how many characters to add (2-4 for speed, but stop at word boundaries when possible)
-        let charsToAdd = Math.min(2, buffer.length - displayed.length);
-        const nextChunk = buffer.slice(displayed.length, displayed.length + charsToAdd);
-        
-        displayedContentRef.current = displayed + nextChunk;
-        
-        // Apply spacing fix and update message
-        const fixedContent = fixTextSpacing(displayedContentRef.current);
-        const { text: processedText, images } = processMessageWithImages(fixedContent);
-        
-        setMessages(prev => {
-          const updated = [...prev];
-          const lastMsg = updated[updated.length - 1];
-          if (lastMsg && lastMsg.role === 'assistant') {
-            updated[updated.length - 1] = {
-              ...lastMsg,
-              content: processedText,
-              images: images.length > 0 ? images : undefined
-            };
-          }
-          return updated;
-        });
-      } else if (!isTyping && displayed.length >= buffer.length) {
-        // Done typing, clear interval
-        if (typingIntervalRef.current) {
-          clearInterval(typingIntervalRef.current);
-          typingIntervalRef.current = null;
-        }
-      }
-    }, 35); // 35ms per batch = slower, more natural typing effect
-  }, [isTyping]);
+    scheduleNextType();
+  }, [scheduleNextType]);
 
   // Stop typing effect
   const stopTypingEffect = useCallback(() => {
     if (typingIntervalRef.current) {
-      clearInterval(typingIntervalRef.current);
+      clearTimeout(typingIntervalRef.current);
       typingIntervalRef.current = null;
     }
   }, []);
