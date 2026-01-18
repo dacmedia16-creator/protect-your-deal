@@ -31,6 +31,7 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { PWAInstallFAB } from '@/components/PWAInstallFAB';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
+import { PlanUsageCard } from '@/components/PlanUsageCard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -314,6 +315,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Plan Usage Card - Compact version for Dashboard */}
+        <PlanUsageCard compact className="mb-6 animate-fade-in" />
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
