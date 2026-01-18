@@ -148,7 +148,7 @@ export default function RegistroVinculado() {
         throw new Error(data.error);
       }
 
-      toast.success('Cadastro realizado com sucesso! Você foi vinculado à imobiliária.');
+      toast.success('Cadastro realizado com sucesso! Aguarde a ativação pelo administrador da imobiliária.', { duration: 6000 });
       navigate('/cadastro-concluido');
     } catch (error: any) {
       console.error('Error during registration:', error);
