@@ -194,36 +194,50 @@ export function PWAInstallModal() {
           Instalar VisitaSegura
         </h2>
         <p className="text-muted-foreground">
-          Siga os passos abaixo
+          Siga os 3 passos abaixo
         </p>
       </div>
 
       <div className="space-y-4">
-        {/* Step 1 */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/10 ring-2 ring-primary">
-          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+        {/* Passo 1 - 3 pontinhos */}
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
+          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 text-lg font-bold">
             1
           </div>
           <div className="flex-1">
-            <p className="font-medium text-foreground">Toque no menu do navegador</p>
-            <p className="text-sm text-muted-foreground">Os 3 pontinhos no canto superior</p>
+            <p className="font-medium text-foreground">Toque nos 3 pontinhos</p>
+            <p className="text-sm text-muted-foreground">No canto superior direito do Chrome</p>
           </div>
           <div className="bg-primary/20 p-2 rounded-lg">
             <MoreVertical className="h-6 w-6 text-primary" />
           </div>
         </div>
 
-        {/* Step 2 */}
+        {/* Passo 2 - Adicionar à tela inicial */}
         <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-          <div className="w-10 h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 text-lg font-bold">
             2
           </div>
           <div className="flex-1">
-            <p className="font-medium text-foreground">Toque em "Instalar aplicativo"</p>
-            <p className="text-sm text-muted-foreground">Ou "Adicionar à tela inicial"</p>
+            <p className="font-medium text-foreground">Adicionar à tela inicial</p>
+            <p className="text-sm text-muted-foreground">Role o menu e toque nessa opção</p>
           </div>
           <div className="bg-primary/20 p-2 rounded-lg">
             <Download className="h-6 w-6 text-primary" />
+          </div>
+        </div>
+
+        {/* Passo 3 - Instalar */}
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/10 ring-2 ring-primary">
+          <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 text-lg font-bold">
+            3
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-foreground">Toque em "Instalar"</p>
+            <p className="text-sm text-muted-foreground">Na caixa de confirmação</p>
+          </div>
+          <div className="bg-green-500/20 p-2 rounded-lg">
+            <Check className="h-6 w-6 text-green-500" />
           </div>
         </div>
       </div>
