@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2, Power, CreditCard } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2, Power, CreditCard, ClipboardCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -57,6 +57,7 @@ interface Imobiliaria {
   assinatura_id?: string;
   assinatura_plano_id?: string;
   assinatura_plano_nome?: string;
+  survey_enabled?: boolean;
 }
 
 interface Plano {
@@ -71,6 +72,7 @@ export default function AdminImobiliarias() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isTogglingAssinatura, setIsTogglingAssinatura] = useState<string | null>(null);
+  const [isTogglingFeature, setIsTogglingFeature] = useState<string | null>(null);
   
   // Estados para alterar plano
   const [planos, setPlanos] = useState<Plano[]>([]);
@@ -122,6 +124,14 @@ export default function AdminImobiliarias() {
             .limit(1)
             .maybeSingle();
 
+          // Get survey feature flag
+          const { data: featureData } = await supabase
+            .from('imobiliaria_feature_flags')
+            .select('enabled')
+            .eq('imobiliaria_id', imob.id)
+            .eq('feature_key', 'post_visit_survey')
+            .maybeSingle();
+
           const planoData = assData?.plano as { nome: string } | null;
 
           return {
@@ -131,6 +141,7 @@ export default function AdminImobiliarias() {
             assinatura_id: assData?.id,
             assinatura_plano_id: assData?.plano_id,
             assinatura_plano_nome: planoData?.nome,
+            survey_enabled: featureData?.enabled ?? false,
           };
         })
       );
@@ -264,6 +275,38 @@ export default function AdminImobiliarias() {
       toast.error(error.message || "Erro ao alterar plano");
     } finally {
       setIsChangingPlano(false);
+    }
+  }
+
+  async function toggleSurveyFeature(imob: Imobiliaria) {
+    setIsTogglingFeature(imob.id);
+    try {
+      const newValue = !imob.survey_enabled;
+
+      const { error } = await supabase
+        .from('imobiliaria_feature_flags')
+        .upsert({
+          imobiliaria_id: imob.id,
+          feature_key: 'post_visit_survey',
+          enabled: newValue,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'imobiliaria_id,feature_key',
+        });
+
+      if (error) throw error;
+
+      toast.success(
+        newValue
+          ? 'Pesquisa Pós-Visita habilitada!'
+          : 'Pesquisa Pós-Visita desabilitada!'
+      );
+      fetchImobiliarias();
+    } catch (error) {
+      console.error('Error toggling survey feature:', error);
+      toast.error('Erro ao alterar feature');
+    } finally {
+      setIsTogglingFeature(null);
     }
   }
 
@@ -418,6 +461,13 @@ export default function AdminImobiliarias() {
                               <DropdownMenuItem onClick={() => openPlanoDialog(imob)}>
                                 <CreditCard className="h-4 w-4 mr-2" />
                                 Alterar Plano
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => toggleSurveyFeature(imob)}
+                                disabled={isTogglingFeature === imob.id}
+                              >
+                                <ClipboardCheck className="h-4 w-4 mr-2" />
+                                {imob.survey_enabled ? 'Desabilitar Pesquisa' : 'Habilitar Pesquisa'}
                               </DropdownMenuItem>
                               {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
                                 <DropdownMenuItem 
