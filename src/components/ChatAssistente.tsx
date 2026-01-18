@@ -650,13 +650,13 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     
   if (shouldHide || roleLoading) return null;
 
-  // Adjust position based on user state - for logged-in users on mobile, position left to avoid FAB conflict
+  // Adjust position based on user state - for logged-in users on mobile, position top-right
   const buttonPositionClass = userContext.isLoggedIn
-    ? "fixed bottom-24 sm:bottom-6 left-4 sm:left-auto sm:right-6 z-[9999]"
+    ? "fixed top-20 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
   const chatPositionClass = userContext.isLoggedIn
-    ? "fixed bottom-24 sm:bottom-6 left-4 sm:left-auto sm:right-6 z-[9999]"
+    ? "fixed top-20 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
   if (!isOpen) {
@@ -682,8 +682,10 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
         </Button>
         {hasNewSuggestion && (
           <div className={cn(
-            "absolute bottom-20 sm:bottom-16 bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in",
-            userContext.isLoggedIn ? "left-0 sm:left-auto sm:right-0" : "right-0"
+            "absolute bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in",
+            userContext.isLoggedIn 
+              ? "top-20 right-0 sm:bottom-16 sm:top-auto sm:left-auto sm:right-0" 
+              : "bottom-20 right-0"
           )}>
             <p className="text-xs text-muted-foreground">💬 Posso te ajudar?</p>
           </div>
