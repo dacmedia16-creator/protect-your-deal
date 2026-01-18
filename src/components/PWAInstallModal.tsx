@@ -9,6 +9,8 @@ import {
   MoreVertical,
   Plus,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +32,7 @@ export function PWAInstallModal() {
   
   const [isVisible, setIsVisible] = useState(false);
   const [step, setStep] = useState(1);
+  const [androidStep, setAndroidStep] = useState(0);
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
@@ -213,6 +216,22 @@ export function PWAInstallModal() {
       },
     ];
 
+    const currentStep = steps[androidStep];
+    const isLastStep = androidStep === steps.length - 1;
+    const isFirstStep = androidStep === 0;
+
+    const goNext = () => {
+      if (!isLastStep) {
+        setAndroidStep((prev) => prev + 1);
+      }
+    };
+
+    const goPrev = () => {
+      if (!isFirstStep) {
+        setAndroidStep((prev) => prev - 1);
+      }
+    };
+
     return (
       <div className="space-y-4">
         <div className="text-center space-y-2">
@@ -220,52 +239,100 @@ export function PWAInstallModal() {
             Instalar VisitaSegura
           </h2>
           <p className="text-muted-foreground">
-            Siga os 3 passos abaixo
+            Passo {androidStep + 1} de {steps.length}
           </p>
         </div>
 
-        <div className="space-y-3">
-          {steps.map((stepItem) => (
-            <motion.div
-              key={stepItem.number}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: stepItem.number * 0.1 }}
-              className={`rounded-xl overflow-hidden border ${
-                stepItem.isLast ? 'ring-2 ring-primary' : ''
+        {/* Progress dots */}
+        <div className="flex justify-center gap-2">
+          {steps.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setAndroidStep(idx)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                idx === androidStep
+                  ? 'bg-primary w-6'
+                  : idx < androidStep
+                  ? 'bg-green-500'
+                  : 'bg-muted-foreground/30'
               }`}
+            />
+          ))}
+        </div>
+
+        {/* Carrossel */}
+        <div className="relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={androidStep}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-xl overflow-hidden border"
             >
               {/* Header do passo */}
-              <div className={`flex items-center gap-3 p-3 ${
-                stepItem.isLast ? 'bg-primary/10' : 'bg-muted/50'
+              <div className={`flex items-center gap-3 p-4 ${
+                currentStep.isLast ? 'bg-primary/10' : 'bg-muted/50'
               }`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${
-                  stepItem.isLast 
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-lg font-bold ${
+                  currentStep.isLast 
                     ? 'bg-green-500 text-white' 
                     : 'bg-primary text-primary-foreground'
                 }`}>
-                  {stepItem.number}
+                  {currentStep.number}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground text-sm">{stepItem.title}</p>
-                  <p className="text-xs text-muted-foreground">{stepItem.description}</p>
+                  <p className="font-semibold text-foreground">{currentStep.title}</p>
+                  <p className="text-sm text-muted-foreground">{currentStep.description}</p>
                 </div>
-                <stepItem.icon className={`h-5 w-5 shrink-0 ${
-                  stepItem.isLast ? 'text-green-500' : 'text-primary'
+                <currentStep.icon className={`h-6 w-6 shrink-0 ${
+                  currentStep.isLast ? 'text-green-500' : 'text-primary'
                 }`} />
               </div>
               
               {/* Screenshot */}
               <div className="relative bg-black/5">
                 <img 
-                  src={stepItem.image} 
-                  alt={`Passo ${stepItem.number}: ${stepItem.title}`}
-                  className="w-full h-auto max-h-48 object-contain"
+                  src={currentStep.image} 
+                  alt={`Passo ${currentStep.number}: ${currentStep.title}`}
+                  className="w-full h-auto max-h-64 object-contain"
                   loading="lazy"
                 />
               </div>
             </motion.div>
-          ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={goPrev}
+            disabled={isFirstStep}
+            className="flex-1 h-12"
+          >
+            <ChevronLeft className="h-5 w-5 mr-1" />
+            Anterior
+          </Button>
+          
+          {isLastStep ? (
+            <Button
+              onClick={handleDismiss}
+              className="flex-1 h-12 bg-green-500 hover:bg-green-600"
+            >
+              <Check className="h-5 w-5 mr-1" />
+              Entendi
+            </Button>
+          ) : (
+            <Button
+              onClick={goNext}
+              className="flex-1 h-12"
+            >
+              Próximo
+              <ChevronRight className="h-5 w-5 ml-1" />
+            </Button>
+          )}
         </div>
       </div>
     );
