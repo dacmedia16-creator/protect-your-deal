@@ -51,7 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2, MessageCircle, Loader2, Settings2, ClipboardList } from "lucide-react";
+import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2, MessageCircle, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -131,12 +131,6 @@ export default function AdminUsuarios() {
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Feature flags dialog
-  const [isFeaturesDialogOpen, setIsFeaturesDialogOpen] = useState(false);
-  const [userForFeatures, setUserForFeatures] = useState<UserWithRole | null>(null);
-  const [surveyFeatureEnabled, setSurveyFeatureEnabled] = useState(false);
-  const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
-  const [isSavingFeatures, setIsSavingFeatures] = useState(false);
 
   // Fetch all users with their roles and emails
   const { data: users, isLoading, refetch } = useQuery({
@@ -454,58 +448,6 @@ export default function AdminUsuarios() {
     setIsCreateDialogOpen(true);
   };
 
-  const openFeaturesDialog = async (user: UserWithRole) => {
-    setUserForFeatures(user);
-    setIsLoadingFeatures(true);
-    setIsFeaturesDialogOpen(true);
-
-    try {
-      const { data, error } = await supabase
-        .from('user_feature_flags')
-        .select('enabled')
-        .eq('user_id', user.user_id)
-        .eq('feature_key', 'post_visit_survey')
-        .maybeSingle();
-
-      if (error) throw error;
-      setSurveyFeatureEnabled(data?.enabled ?? false);
-    } catch (error) {
-      console.error('Error loading feature flags:', error);
-      toast.error('Erro ao carregar configurações');
-    } finally {
-      setIsLoadingFeatures(false);
-    }
-  };
-
-  const handleSaveFeatures = async () => {
-    if (!userForFeatures) return;
-
-    setIsSavingFeatures(true);
-    try {
-      // Upsert the feature flag
-      const { error } = await supabase
-        .from('user_feature_flags')
-        .upsert({
-          user_id: userForFeatures.user_id,
-          feature_key: 'post_visit_survey',
-          enabled: surveyFeatureEnabled,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,feature_key',
-        });
-
-      if (error) throw error;
-
-      toast.success('Configurações salvas com sucesso!');
-      setIsFeaturesDialogOpen(false);
-      setUserForFeatures(null);
-    } catch (error: any) {
-      console.error('Error saving feature flags:', error);
-      toast.error(error.message || 'Erro ao salvar configurações');
-    } finally {
-      setIsSavingFeatures(false);
-    }
-  };
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -700,10 +642,6 @@ export default function AdminUsuarios() {
                               >
                                 <KeyRound className="h-4 w-4 mr-2" />
                                 Redefinir Senha
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openFeaturesDialog(user)}>
-                                <Settings2 className="h-4 w-4 mr-2" />
-                                Features do Usuário
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -1157,67 +1095,6 @@ export default function AdminUsuarios() {
         </DialogContent>
       </Dialog>
 
-      {/* Features Dialog */}
-      <Dialog open={isFeaturesDialogOpen} onOpenChange={setIsFeaturesDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              {userForFeatures && (
-                <UserAvatar name={userForFeatures.profile?.nome} role={userForFeatures.role} size="md" />
-              )}
-              Features do Usuário
-            </DialogTitle>
-            <DialogDescription>
-              Habilite ou desabilite features opcionais para{" "}
-              <strong>{userForFeatures?.profile?.nome}</strong>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {isLoadingFeatures ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                      <ClipboardList className="h-5 w-5 text-purple-500" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Pesquisa Pós-Visita</p>
-                      <p className="text-sm text-muted-foreground">
-                        Permite enviar pesquisas de feedback para clientes
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={surveyFeatureEnabled}
-                    onCheckedChange={setSurveyFeatureEnabled}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsFeaturesDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveFeatures} disabled={isSavingFeatures || isLoadingFeatures}>
-              {isSavingFeatures ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "Salvar"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </SuperAdminLayout>
   );
 }

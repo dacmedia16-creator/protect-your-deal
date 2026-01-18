@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useUserFeatureFlag } from '@/hooks/useUserFeatureFlag';
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -76,7 +76,7 @@ export default function DetalhesFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { role, imobiliariaId } = useUserRole();
-  const { enabled: surveyFeatureEnabled } = useUserFeatureFlag('post_visit_survey');
+  const { enabled: surveyFeatureEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { toast } = useToast();
   
   // Dynamic return URL based on user role
