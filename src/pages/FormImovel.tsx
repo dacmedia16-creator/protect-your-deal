@@ -141,13 +141,36 @@ export default function FormImovel() {
       });
       navigate('/imoveis');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Erro ao salvar imóvel:', error);
+      
+      // Verificar se é erro de limite atingido
+      if (error?.message?.includes('Limite de') && error?.message?.includes('imóveis atingido')) {
+        toast({
+          variant: 'destructive',
+          title: 'Limite do plano atingido',
+          description: 'Você atingiu o limite de imóveis. Faça upgrade do seu plano para continuar.',
+        });
+        navigate('/empresa/assinatura');
+        return;
+      }
+      
+      // Verificar se é erro de assinatura inativa
+      if (error?.message?.includes('Assinatura inativa')) {
+        toast({
+          variant: 'destructive',
+          title: 'Assinatura inativa',
+          description: 'Você precisa de uma assinatura ativa para cadastrar imóveis.',
+        });
+        navigate('/empresa/assinatura');
+        return;
+      }
+
       toast({
         variant: 'destructive',
         title: 'Erro',
         description: 'Não foi possível salvar o imóvel.',
       });
-      console.error(error);
     },
   });
 
