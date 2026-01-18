@@ -57,22 +57,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Check if feature is enabled for this user
-    const { data: featureFlag } = await supabaseAdmin
-      .from('user_feature_flags')
-      .select('enabled')
-      .eq('user_id', userId)
-      .eq('feature_key', 'post_visit_survey')
-      .maybeSingle();
-
-    if (!featureFlag?.enabled) {
-      return new Response(
-        JSON.stringify({ error: 'Esta funcionalidade não está habilitada para você' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Fetch ficha and validate
+    // Fetch ficha FIRST to get imobiliaria_id
     const { data: ficha, error: fichaError } = await supabaseAdmin
       .from('fichas_visita')
       .select('id, status, user_id, imobiliaria_id, comprador_nome, comprador_telefone, comprador_cpf')
@@ -83,6 +68,29 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Ficha não encontrada' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if feature is enabled for the FICHA's imobiliaria (not the user)
+    if (ficha.imobiliaria_id) {
+      const { data: featureFlag } = await supabaseAdmin
+        .from('imobiliaria_feature_flags')
+        .select('enabled')
+        .eq('imobiliaria_id', ficha.imobiliaria_id)
+        .eq('feature_key', 'post_visit_survey')
+        .maybeSingle();
+
+      if (!featureFlag?.enabled) {
+        return new Response(
+          JSON.stringify({ error: 'Esta funcionalidade não está habilitada para esta imobiliária' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      // Ficha sem imobiliária não pode enviar pesquisa
+      return new Response(
+        JSON.stringify({ error: 'Esta ficha não está vinculada a uma imobiliária' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
