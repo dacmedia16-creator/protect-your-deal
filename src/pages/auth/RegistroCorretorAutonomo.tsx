@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Shield, Loader2, ArrowLeft, Check, User, Building2, Ticket, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
+import { formatCPF } from '@/lib/cpf';
 
 interface Plano {
   id: string;
@@ -39,6 +40,7 @@ export default function RegistroCorretorAutonomo() {
     nome: '',
     email: '',
     telefone: '',
+    cpf: '',
     creci: '',
     senha: '',
     confirmarSenha: '',
@@ -224,6 +226,7 @@ export default function RegistroCorretorAutonomo() {
             nome: corretorForm.nome,
             email: corretorForm.email,
             telefone: corretorForm.telefone || null,
+            cpf: corretorForm.cpf?.replace(/\D/g, '') || null,
             creci: corretorForm.creci || null,
             senha: corretorForm.senha,
           },
@@ -411,6 +414,17 @@ export default function RegistroCorretorAutonomo() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      inputMode="numeric"
+                      value={corretorForm.cpf}
+                      onChange={(e) => setCorretorForm({ ...corretorForm, cpf: formatCPF(e.target.value) })}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
                     <Label htmlFor="creci">CRECI</Label>
                     <Input
                       id="creci"
