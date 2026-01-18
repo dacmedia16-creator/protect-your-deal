@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { IOSInstallMockup } from "@/components/mockups/IOSInstallMockup";
-import { AndroidInstallMockup } from "@/components/mockups/AndroidInstallMockup";
 import { 
   Smartphone, 
   Download, 
@@ -461,11 +460,33 @@ export default function InstalarApp() {
               {/* Android Instructions */}
               <TabsContent value="android">
                 <div className="grid md:grid-cols-2 gap-6">
-                  {/* Mockup */}
+                  {/* Carrossel com Screenshots Reais */}
                   <div className="flex flex-col items-center">
+                    {/* Header do passo atual */}
+                    <div className="text-center mb-4">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Passo {androidStep} de 3
+                      </p>
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        {[1, 2, 3].map((step) => (
+                          <button
+                            key={step}
+                            onClick={() => handleStepClick(step as 1 | 2 | 3, androidStep, setAndroidStep)}
+                            className={cn(
+                              "w-2.5 h-2.5 rounded-full transition-all",
+                              androidStep === step
+                                ? 'bg-primary w-6'
+                                : 'bg-muted hover:bg-muted-foreground/30'
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Screenshot do passo atual */}
                     <div 
                       className={cn(
-                        "transition-all duration-300 ease-out",
+                        "relative overflow-hidden rounded-xl border transition-all duration-300 ease-out w-full max-w-xs",
                         isTransitioning 
                           ? transitionDirection === 'right'
                             ? "opacity-0 -translate-x-4"
@@ -473,8 +494,46 @@ export default function InstalarApp() {
                           : "opacity-100 translate-x-0"
                       )}
                     >
-                      <AndroidInstallMockup step={androidStep} />
+                      {/* Header do card */}
+                      <div className={cn(
+                        "flex items-center gap-3 p-4",
+                        androidStep === 3 ? 'bg-green-500/10' : 'bg-primary/10'
+                      )}>
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                          androidStep === 3 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-primary text-primary-foreground'
+                        )}>
+                          {androidStep}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {androidStep === 1 && 'Toque nos 3 pontinhos'}
+                            {androidStep === 2 && 'Adicionar à tela inicial'}
+                            {androidStep === 3 && 'Toque em "Instalar"'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {androidStep === 1 && 'No canto superior direito do Chrome'}
+                            {androidStep === 2 && 'Role o menu e toque nessa opção'}
+                            {androidStep === 3 && 'Na caixa de confirmação'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Screenshot */}
+                      <div className="relative bg-black/5">
+                        <img 
+                          src={`/help-images/android-passo-${androidStep}.jpg`}
+                          alt={`Passo ${androidStep}`}
+                          className="w-full h-auto max-h-64 object-contain"
+                          loading="lazy"
+                          draggable={false}
+                        />
+                      </div>
                     </div>
+
+                    {/* Controles de navegação */}
                     <div className="flex items-center gap-3 mt-4">
                       <Button
                         variant="outline"
@@ -486,33 +545,9 @@ export default function InstalarApp() {
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       
-                      {/* Step indicators with progress */}
-                      <div className="flex items-center gap-2">
-                        {[1, 2, 3].map((step) => (
-                          <button
-                            key={step}
-                            onClick={() => handleStepClick(step as 1 | 2 | 3, androidStep, setAndroidStep)}
-                            className={cn(
-                              "relative w-8 h-2 rounded-full transition-all duration-300 overflow-hidden",
-                              androidStep === step 
-                                ? "bg-primary/30" 
-                                : "bg-muted hover:bg-muted-foreground/30"
-                            )}
-                          >
-                            {androidStep === step && isAutoplayEnabled && (
-                              <div 
-                                className="absolute inset-0 bg-primary rounded-full"
-                                style={{ 
-                                  animation: 'progress 3s linear infinite',
-                                }}
-                              />
-                            )}
-                            {androidStep === step && !isAutoplayEnabled && (
-                              <div className="absolute inset-0 bg-primary rounded-full" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        ← Arraste para navegar →
+                      </span>
                       
                       <Button
                         variant="outline"
@@ -524,12 +559,9 @@ export default function InstalarApp() {
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
-                    <span className="text-xs text-muted-foreground mt-2">
-                      Passo {androidStep} de 3
-                    </span>
                   </div>
 
-                  {/* Steps */}
+                  {/* Steps - Descrição textual */}
                   <div className="space-y-4">
                     <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg animate-fade-in">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -556,9 +588,9 @@ export default function InstalarApp() {
                         "transition-opacity duration-300",
                         androidStep === 1 ? "opacity-100" : "opacity-70"
                       )}>
-                        <p className="font-medium">Abra o menu do Chrome</p>
+                        <p className="font-medium">Toque nos 3 pontinhos</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Toque nos três pontos (⋮) no canto superior direito da tela
+                          No canto superior direito do Chrome (⋮)
                         </p>
                       </div>
                     </div>
@@ -583,14 +615,14 @@ export default function InstalarApp() {
                         androidStep === 2 ? "opacity-100" : "opacity-70"
                       )}>
                         <p className="font-medium flex items-center gap-2">
-                          Toque em "Instalar app"
+                          Adicionar à tela inicial
                           <Download className={cn(
                             "h-4 w-4 transition-all duration-300",
                             androidStep === 2 ? "text-primary animate-pulse" : "text-muted-foreground"
                           )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Ou toque em "Adicionar à tela inicial" se a opção "Instalar" não aparecer
+                          Role o menu e toque nessa opção
                         </p>
                       </div>
                     </div>
@@ -599,14 +631,14 @@ export default function InstalarApp() {
                       className={cn(
                         "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
                         androidStep === 3 
-                          ? 'bg-primary/10 border-2 border-primary shadow-md scale-[1.02]' 
+                          ? 'bg-green-500/10 border-2 border-green-500 shadow-md scale-[1.02]' 
                           : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
                       )}
                       onClick={() => handleStepClick(3, androidStep, setAndroidStep)}
                     >
                       <span className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
-                        androidStep === 3 ? 'bg-primary text-primary-foreground scale-110' : 'bg-muted text-muted-foreground'
+                        androidStep === 3 ? 'bg-green-500 text-white scale-110' : 'bg-muted text-muted-foreground'
                       )}>
                         3
                       </span>
@@ -615,14 +647,14 @@ export default function InstalarApp() {
                         androidStep === 3 ? "opacity-100" : "opacity-70"
                       )}>
                         <p className="font-medium flex items-center gap-2">
-                          Confirme a instalação
+                          Toque em "Instalar"
                           <CheckCircle2 className={cn(
                             "h-4 w-4 transition-all duration-300",
                             androidStep === 3 ? "text-green-500 animate-pulse" : "text-muted-foreground"
                           )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Toque em "Instalar" na janela de confirmação que aparecer
+                          Na caixa de confirmação que aparece
                         </p>
                       </div>
                     </div>
