@@ -199,4 +199,18 @@
   .animate-sofia-glow {
     animation: sofia-glow 2s ease-in-out infinite;
   }
+
+  /* Sofia button pulse animation */
+  @keyframes sofia-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-sofia-pulse {
+    animation: sofia-pulse 2s ease-in-out infinite;
+  }
 }

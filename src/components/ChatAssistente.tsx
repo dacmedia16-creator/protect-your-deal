@@ -665,8 +665,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
         <Button
           onClick={() => setIsOpen(true)}
           className={cn(
-            "h-16 w-16 sm:h-14 sm:w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 relative border-2 border-primary-foreground/20 transition-transform hover:scale-105",
-            !userContext.isLoggedIn && "animate-sofia-glow"
+            "h-16 w-16 sm:h-14 sm:w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 relative border-2 border-primary-foreground/20 hover:scale-110 transition-transform",
+            userContext.isLoggedIn ? "animate-sofia-pulse" : "animate-sofia-glow"
           )}
           size="icon"
         >
