@@ -354,8 +354,6 @@ export default function RegistroCorretorAutonomo() {
                             <p className="text-sm text-muted-foreground mt-1">{plano.descricao}</p>
                             <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
                               <span>{plano.max_fichas_mes} registros/mês</span>
-                              <span>{plano.max_clientes} clientes</span>
-                              <span>{plano.max_imoveis} imóveis</span>
                             </div>
                           </div>
                         </label>

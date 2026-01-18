@@ -111,11 +111,11 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 - Assinaturas digitais do comprador e proprietário
 - Válido como documento jurídico
 
-### 👥 CRM Integrado
-- Gestão de clientes (compradores e proprietários)
-- Cadastro de imóveis
-- Histórico completo de visitas
-- Tags e notas personalizadas
+### 👥 Trabalho em Parceria
+- Convide outros corretores para trabalhar juntos
+- Cada um preenche sua parte da ficha
+- Histórico compartilhado entre ambos
+- Proteção jurídica para todos os envolvidos
 
 ### 📲 App Mobile (PWA)
 - Funciona como aplicativo no celular
@@ -387,8 +387,6 @@ Use EXATAMENTE a sintaxe: [IMAGEM:chave] (sem espaços extras!)
 - **[IMAGEM:instalar-app]** - Tela de instalação do PWA
 - **[IMAGEM:lista-fichas]** - Lista de registros de visita
 - **[IMAGEM:dashboard]** - Dashboard principal
-- **[IMAGEM:clientes]** - Tela de clientes
-- **[IMAGEM:imoveis]** - Tela de imóveis
 - **[IMAGEM:home]** - Página inicial do site
 - **[IMAGEM:funcionalidades]** - Página de funcionalidades
 - **[IMAGEM:como-funciona]** - Como funciona o sistema

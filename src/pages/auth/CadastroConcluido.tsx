@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Shield, CheckCircle2, FileText, Users, Building2, ArrowRight, Sparkles } from 'lucide-react';
+import { Shield, CheckCircle2, FileText, ArrowRight, Sparkles } from 'lucide-react';
 
 const steps = [
   {
@@ -10,20 +10,6 @@ const steps = [
     description: 'Registre visitas a imóveis com segurança jurídica e confirmação via WhatsApp.',
     action: '/fichas/nova',
     actionText: 'Criar Registro',
-  },
-  {
-    icon: Users,
-    title: 'Cadastre seus clientes',
-    description: 'Mantenha um registro organizado de compradores e proprietários.',
-    action: '/clientes/novo',
-    actionText: 'Adicionar Cliente',
-  },
-  {
-    icon: Building2,
-    title: 'Registre seus imóveis',
-    description: 'Cadastre os imóveis que você está trabalhando para facilitar o preenchimento dos registros.',
-    action: '/imoveis/novo',
-    actionText: 'Adicionar Imóvel',
   },
 ];
 
@@ -65,22 +51,14 @@ export default function CadastroConcluido() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 gap-4 text-center">
               <div className="p-3 rounded-lg bg-muted/50">
                 <div className="text-2xl font-bold text-primary">2</div>
                 <div className="text-xs text-muted-foreground">Registros/mês</div>
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold text-primary">8</div>
-                <div className="text-xs text-muted-foreground">Clientes</div>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
                 <div className="text-2xl font-bold text-primary">1</div>
                 <div className="text-xs text-muted-foreground">Corretor</div>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold text-primary">5</div>
-                <div className="text-xs text-muted-foreground">Imóveis</div>
               </div>
             </div>
           </CardContent>
@@ -88,7 +66,7 @@ export default function CadastroConcluido() {
 
         {/* Next Steps */}
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-lg font-semibold mb-4 text-center">Próximos passos</h2>
+          <h2 className="text-lg font-semibold mb-4 text-center">Próximo passo</h2>
           <div className="space-y-4">
             {steps.map((step, index) => (
               <Card key={index} className="overflow-hidden">
