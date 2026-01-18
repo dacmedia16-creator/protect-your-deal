@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -178,6 +179,7 @@ export function ChatAssistente() {
   const { role, imobiliaria, assinatura, loading: roleLoading } = useUserRole();
   const { playNotificationSound } = useNotificationSound();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [profileName, setProfileName] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -637,8 +639,16 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
   const showTypingIndicator = isTyping && messages[messages.length - 1]?.content === '';
 
   // Hide on sensitive routes
-  const shouldHide = HIDDEN_ROUTES.some(route => location.pathname.startsWith(route));
-  if (shouldHide) return null;
+  const isHiddenRoute = HIDDEN_ROUTES.some(route => location.pathname.startsWith(route));
+  
+  // On mobile: only show on dashboard
+  // On desktop: show everywhere except hidden routes
+  const MOBILE_VISIBLE_ROUTES = ['/dashboard'];
+  const shouldHide = isMobile 
+    ? !MOBILE_VISIBLE_ROUTES.includes(location.pathname)
+    : isHiddenRoute;
+    
+  if (shouldHide || roleLoading) return null;
 
   // Adjust position based on user state - for logged-in users on mobile, position left to avoid FAB conflict
   const buttonPositionClass = userContext.isLoggedIn
