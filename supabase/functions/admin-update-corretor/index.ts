@@ -10,6 +10,8 @@ interface UpdateCorretorRequest {
   nome?: string;
   telefone?: string | null;
   creci?: string | null;
+  cpf?: string | null;
+  email?: string | null;
   ativo?: boolean;
 }
 
@@ -90,9 +92,9 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: UpdateCorretorRequest = await req.json();
-    const { user_id, nome, telefone, creci, ativo } = body;
+    const { user_id, nome, telefone, creci, cpf, email, ativo } = body;
 
-    console.log('admin-update-corretor: Request body:', { user_id, nome, telefone, creci, ativo });
+    console.log('admin-update-corretor: Request body:', { user_id, nome, telefone, creci, cpf, email, ativo });
 
     if (!user_id) {
       return new Response(
@@ -132,6 +134,8 @@ Deno.serve(async (req) => {
     if (nome !== undefined) updateData.nome = nome;
     if (telefone !== undefined) updateData.telefone = telefone;
     if (creci !== undefined) updateData.creci = creci;
+    if (cpf !== undefined) updateData.cpf = cpf;
+    if (email !== undefined) updateData.email = email;
     if (ativo !== undefined) updateData.ativo = ativo;
 
     if (Object.keys(updateData).length === 0) {

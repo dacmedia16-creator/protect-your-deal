@@ -1119,8 +1119,10 @@ export type Database = {
       profiles: {
         Row: {
           ativo: boolean
+          cpf: string | null
           created_at: string
           creci: string | null
+          email: string | null
           foto_url: string | null
           id: string
           imobiliaria: string | null
@@ -1133,8 +1135,10 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          cpf?: string | null
           created_at?: string
           creci?: string | null
+          email?: string | null
           foto_url?: string | null
           id?: string
           imobiliaria?: string | null
@@ -1147,8 +1151,10 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          cpf?: string | null
           created_at?: string
           creci?: string | null
+          email?: string | null
           foto_url?: string | null
           id?: string
           imobiliaria?: string | null
