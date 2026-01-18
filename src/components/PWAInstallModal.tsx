@@ -191,6 +191,8 @@ export function PWAInstallModal() {
 
   // Android instructions for manual install (when prompt doesn't fire)
   const AndroidManualInstructions = () => {
+    const [direction, setDirection] = useState(0);
+    
     const steps = [
       {
         number: 1,
@@ -222,13 +224,31 @@ export function PWAInstallModal() {
 
     const goNext = () => {
       if (!isLastStep) {
+        setDirection(1);
         setAndroidStep((prev) => prev + 1);
       }
     };
 
     const goPrev = () => {
       if (!isFirstStep) {
+        setDirection(-1);
         setAndroidStep((prev) => prev - 1);
+      }
+    };
+
+    const handleDragEnd = (
+      _e: MouseEvent | TouchEvent | PointerEvent,
+      { offset, velocity }: { offset: { x: number }; velocity: { x: number } }
+    ) => {
+      const swipe = Math.abs(offset.x) * velocity.x;
+      const threshold = 500;
+      
+      if (swipe < -threshold && !isLastStep) {
+        // Swipe para esquerda → próximo
+        goNext();
+      } else if (swipe > threshold && !isFirstStep) {
+        // Swipe para direita → anterior
+        goPrev();
       }
     };
 
@@ -248,7 +268,10 @@ export function PWAInstallModal() {
           {steps.map((_, idx) => (
             <button
               key={idx}
-              onClick={() => setAndroidStep(idx)}
+              onClick={() => {
+                setDirection(idx > androidStep ? 1 : -1);
+                setAndroidStep(idx);
+              }}
               className={`w-2.5 h-2.5 rounded-full transition-all ${
                 idx === androidStep
                   ? 'bg-primary w-6'
@@ -260,16 +283,20 @@ export function PWAInstallModal() {
           ))}
         </div>
 
-        {/* Carrossel */}
-        <div className="relative overflow-hidden">
-          <AnimatePresence mode="wait">
+        {/* Carrossel com swipe */}
+        <div className="relative overflow-hidden touch-pan-y">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={androidStep}
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: direction >= 0 ? 100 : -100 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.2 }}
-              className="rounded-xl overflow-hidden border"
+              exit={{ opacity: 0, x: direction >= 0 ? -100 : 100 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleDragEnd}
+              className="rounded-xl overflow-hidden border cursor-grab active:cursor-grabbing select-none"
             >
               {/* Header do passo */}
               <div className={`flex items-center gap-3 p-4 ${
@@ -292,17 +319,23 @@ export function PWAInstallModal() {
               </div>
               
               {/* Screenshot */}
-              <div className="relative bg-black/5">
+              <div className="relative bg-black/5 pointer-events-none">
                 <img 
                   src={currentStep.image} 
                   alt={`Passo ${currentStep.number}: ${currentStep.title}`}
                   className="w-full h-auto max-h-64 object-contain"
                   loading="lazy"
+                  draggable={false}
                 />
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Swipe hint */}
+        <p className="text-xs text-muted-foreground text-center">
+          ← Arraste para navegar →
+        </p>
 
         {/* Navigation buttons */}
         <div className="flex gap-3">
