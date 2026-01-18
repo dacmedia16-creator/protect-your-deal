@@ -61,10 +61,12 @@ const AppLanding = () => {
                     <span className="text-lg">🤖</span>
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">Android</p>
-                    <p className="text-sm text-muted-foreground">
-                      Toque em <span className="font-mono bg-muted px-1 rounded">⋮</span> → <span className="font-medium">Adicionar à tela inicial</span>
-                    </p>
+                    <p className="font-medium text-foreground mb-1">Android</p>
+                    <ol className="text-sm text-muted-foreground space-y-0.5">
+                      <li>1. Toque em <span className="font-mono bg-muted px-1 rounded">⋮</span> (3 pontinhos)</li>
+                      <li>2. <span className="font-medium">Adicionar à tela inicial</span></li>
+                      <li>3. Toque em <span className="font-medium">"Instalar"</span></li>
+                    </ol>
                   </div>
                 </div>
               </div>
