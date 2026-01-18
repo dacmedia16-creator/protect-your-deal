@@ -1,7 +1,7 @@
-import { Share, Plus, Check } from "lucide-react";
+import { Share, Plus, Check, MoreHorizontal } from "lucide-react";
 
 interface IOSInstallMockupProps {
-  step: 1 | 2 | 3;
+  step: 1 | 2 | 3 | 4;
 }
 
 export function IOSInstallMockup({ step }: IOSInstallMockupProps) {
@@ -54,10 +54,10 @@ export function IOSInstallMockup({ step }: IOSInstallMockupProps) {
         {/* Step-specific content */}
         {step === 1 && (
           <>
-            {/* Share sheet trigger highlight */}
+            {/* 3 dots highlight */}
             <div className="absolute bottom-16 left-1/2 -translate-x-1/2">
               <div className="animate-pulse bg-primary rounded-full p-2">
-                <Share className="w-4 h-4 text-primary-foreground" />
+                <MoreHorizontal className="w-4 h-4 text-primary-foreground" />
               </div>
             </div>
             {/* Safari bottom bar */}
@@ -65,7 +65,7 @@ export function IOSInstallMockup({ step }: IOSInstallMockupProps) {
               <div className="w-4 h-4 bg-muted rounded" />
               <div className="w-4 h-4 bg-muted rounded" />
               <div className="relative">
-                <Share className="w-5 h-5 text-primary" />
+                <MoreHorizontal className="w-5 h-5 text-primary" />
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-ping" />
               </div>
               <div className="w-4 h-4 bg-muted rounded" />
@@ -75,6 +75,30 @@ export function IOSInstallMockup({ step }: IOSInstallMockupProps) {
         )}
 
         {step === 2 && (
+          <>
+            {/* Menu with Share option highlighted */}
+            <div className="absolute inset-x-0 bottom-0 h-48 bg-white dark:bg-slate-900 rounded-t-2xl border-t shadow-lg">
+              <div className="w-10 h-1 bg-muted rounded-full mx-auto mt-2" />
+              <div className="p-3 space-y-2">
+                {/* Menu options */}
+                <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg border-2 border-primary">
+                  <Share className="w-5 h-5 text-primary" />
+                  <span className="text-[9px] font-medium text-primary">Compartilhar</span>
+                </div>
+                <div className="flex items-center gap-2 p-2">
+                  <div className="w-5 h-5 bg-muted rounded" />
+                  <span className="text-[8px] text-muted-foreground">Copiar Link</span>
+                </div>
+                <div className="flex items-center gap-2 p-2">
+                  <div className="w-5 h-5 bg-muted rounded" />
+                  <span className="text-[8px] text-muted-foreground">Favoritos</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 3 && (
           <>
             {/* Share sheet overlay */}
             <div className="absolute inset-x-0 bottom-0 h-48 bg-white dark:bg-slate-900 rounded-t-2xl border-t shadow-lg">
@@ -108,7 +132,7 @@ export function IOSInstallMockup({ step }: IOSInstallMockupProps) {
           </>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <>
             {/* Add to Home Screen confirmation */}
             <div className="absolute inset-x-2 top-20 bg-white dark:bg-slate-900 rounded-xl border shadow-xl p-3">

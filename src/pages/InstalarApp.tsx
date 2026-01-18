@@ -31,7 +31,7 @@ export default function InstalarApp() {
   const { isInstallable, isInstalled, isIOS, isAndroid, isDesktop, install } = usePWAInstall();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'left' | 'right'>('right');
-  const [iosStep, setIosStep] = useState<1 | 2 | 3>(1);
+  const [iosStep, setIosStep] = useState<1 | 2 | 3 | 4>(1);
   const [androidStep, setAndroidStep] = useState<1 | 2 | 3>(1);
   const [isAutoplayEnabled, setIsAutoplayEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<string>(isIOS ? "ios" : isAndroid ? "android" : "ios");
@@ -46,7 +46,7 @@ export default function InstalarApp() {
         setTransitionDirection('right');
         setIsTransitioning(true);
         setTimeout(() => {
-          setIosStep(prev => prev === 3 ? 1 : (prev + 1) as 1 | 2 | 3);
+          setIosStep(prev => prev === 4 ? 1 : (prev + 1) as 1 | 2 | 3 | 4);
           setIsTransitioning(false);
         }, 150);
       } else if (activeTab === 'android') {
@@ -67,28 +67,29 @@ export default function InstalarApp() {
     setIsAutoplayEnabled(false);
   };
 
-  const handleStepChange = (
-    currentStep: 1 | 2 | 3,
+  const handleStepChange = <T extends number>(
+    currentStep: T,
     direction: 'prev' | 'next',
-    setter: React.Dispatch<React.SetStateAction<1 | 2 | 3>>
+    setter: React.Dispatch<React.SetStateAction<T>>,
+    maxStep: T
   ) => {
     pauseAutoplay();
     if (direction === 'prev' && currentStep === 1) return;
-    if (direction === 'next' && currentStep === 3) return;
+    if (direction === 'next' && currentStep === maxStep) return;
 
     setTransitionDirection(direction === 'next' ? 'right' : 'left');
     setIsTransitioning(true);
 
     setTimeout(() => {
-      setter(prev => direction === 'next' ? (prev + 1) as 1 | 2 | 3 : (prev - 1) as 1 | 2 | 3);
+      setter(prev => (direction === 'next' ? prev + 1 : prev - 1) as T);
       setIsTransitioning(false);
     }, 150);
   };
 
-  const handleStepClick = (
-    targetStep: 1 | 2 | 3,
-    currentStep: 1 | 2 | 3,
-    setter: React.Dispatch<React.SetStateAction<1 | 2 | 3>>
+  const handleStepClick = <T extends number>(
+    targetStep: T,
+    currentStep: T,
+    setter: React.Dispatch<React.SetStateAction<T>>
   ) => {
     pauseAutoplay();
     if (targetStep === currentStep) return;
@@ -285,11 +286,33 @@ export default function InstalarApp() {
               {/* iOS Instructions */}
               <TabsContent value="ios">
                 <div className="grid md:grid-cols-2 gap-6">
-                  {/* Mockup */}
+                  {/* Carrossel com Screenshots Reais */}
                   <div className="flex flex-col items-center">
+                    {/* Header do passo atual */}
+                    <div className="text-center mb-4">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Passo {iosStep} de 4
+                      </p>
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        {[1, 2, 3, 4].map((step) => (
+                          <button
+                            key={step}
+                            onClick={() => handleStepClick(step as 1 | 2 | 3 | 4, iosStep, setIosStep)}
+                            className={cn(
+                              "w-2.5 h-2.5 rounded-full transition-all",
+                              iosStep === step
+                                ? 'bg-primary w-6'
+                                : 'bg-muted hover:bg-muted-foreground/30'
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Screenshot do passo atual */}
                     <div 
                       className={cn(
-                        "transition-all duration-300 ease-out",
+                        "relative overflow-hidden rounded-xl border transition-all duration-300 ease-out w-full max-w-xs",
                         isTransitioning 
                           ? transitionDirection === 'right'
                             ? "opacity-0 -translate-x-4"
@@ -297,63 +320,84 @@ export default function InstalarApp() {
                           : "opacity-100 translate-x-0"
                       )}
                     >
-                      <IOSInstallMockup step={iosStep} />
+                      {/* Header do card */}
+                      <div className={cn(
+                        "flex items-center gap-3 p-4",
+                        iosStep === 4 ? 'bg-green-500/10' : 'bg-primary/10'
+                      )}>
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                          iosStep === 4 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-primary text-primary-foreground'
+                        )}>
+                          {iosStep}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {iosStep === 1 && 'Toque nos 3 pontinhos'}
+                            {iosStep === 2 && 'Toque em Compartilhar'}
+                            {iosStep === 3 && 'Adicionar à Tela de Início'}
+                            {iosStep === 4 && 'Toque em "Adicionar"'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {iosStep === 1 && 'Na barra inferior do Safari'}
+                            {iosStep === 2 && 'No menu que apareceu'}
+                            {iosStep === 3 && 'Role e toque na opção'}
+                            {iosStep === 4 && 'No canto superior direito'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Screenshot - clicável para zoom */}
+                      <div 
+                        className="relative bg-black/5 cursor-zoom-in"
+                        onClick={() => {
+                          setZoomedImage(`/help-images/ios-passo-${iosStep}.jpg`);
+                        }}
+                      >
+                        <img 
+                          src={`/help-images/ios-passo-${iosStep}.jpg`}
+                          alt={`Passo ${iosStep}`}
+                          className="w-full h-auto max-h-64 object-contain"
+                          loading="lazy"
+                          draggable={false}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+                          <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">Toque para ampliar</span>
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Controles de navegação */}
                     <div className="flex items-center gap-3 mt-4">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleStepChange(iosStep, 'prev', setIosStep)}
+                        onClick={() => handleStepChange(iosStep, 'prev', setIosStep, 4 as 1 | 2 | 3 | 4)}
                         disabled={iosStep === 1}
                         className="transition-transform hover:scale-105 active:scale-95"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       
-                      {/* Step indicators with progress */}
-                      <div className="flex items-center gap-2">
-                        {[1, 2, 3].map((step) => (
-                          <button
-                            key={step}
-                            onClick={() => handleStepClick(step as 1 | 2 | 3, iosStep, setIosStep)}
-                            className={cn(
-                              "relative w-8 h-2 rounded-full transition-all duration-300 overflow-hidden",
-                              iosStep === step 
-                                ? "bg-primary/30" 
-                                : "bg-muted hover:bg-muted-foreground/30"
-                            )}
-                          >
-                            {iosStep === step && isAutoplayEnabled && (
-                              <div 
-                                className="absolute inset-0 bg-primary rounded-full animate-[progress_3s_linear_infinite]"
-                                style={{ 
-                                  animation: 'progress 3s linear infinite',
-                                }}
-                              />
-                            )}
-                            {iosStep === step && !isAutoplayEnabled && (
-                              <div className="absolute inset-0 bg-primary rounded-full" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        ← Arraste para navegar →
+                      </span>
                       
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleStepChange(iosStep, 'next', setIosStep)}
-                        disabled={iosStep === 3}
+                        onClick={() => handleStepChange(iosStep, 'next', setIosStep, 4 as 1 | 2 | 3 | 4)}
+                        disabled={iosStep === 4}
                         className="transition-transform hover:scale-105 active:scale-95"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
-                    <span className="text-xs text-muted-foreground mt-2">
-                      Passo {iosStep} de 3
-                    </span>
                   </div>
 
-                  {/* Steps */}
+                  {/* Steps - Descrição textual */}
                   <div className="space-y-4">
                     <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg animate-fade-in">
                       <p className="text-sm text-amber-800 dark:text-amber-200">
@@ -380,15 +424,9 @@ export default function InstalarApp() {
                         "transition-opacity duration-300",
                         iosStep === 1 ? "opacity-100" : "opacity-70"
                       )}>
-                        <p className="font-medium flex items-center gap-2">
-                          Toque no ícone de Compartilhar
-                          <Share2 className={cn(
-                            "h-4 w-4 transition-all duration-300",
-                            iosStep === 1 ? "text-primary animate-pulse" : "text-muted-foreground"
-                          )} />
-                        </p>
+                        <p className="font-medium">Toque nos 3 pontinhos</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Na barra inferior do Safari, toque no ícone de compartilhamento (quadrado com seta para cima)
+                          Na barra inferior do Safari (•••)
                         </p>
                       </div>
                     </div>
@@ -413,14 +451,14 @@ export default function InstalarApp() {
                         iosStep === 2 ? "opacity-100" : "opacity-70"
                       )}>
                         <p className="font-medium flex items-center gap-2">
-                          Adicionar à Tela de Início
-                          <PlusSquare className={cn(
+                          Toque em "Compartilhar"
+                          <Share2 className={cn(
                             "h-4 w-4 transition-all duration-300",
                             iosStep === 2 ? "text-primary animate-pulse" : "text-muted-foreground"
                           )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Role para baixo no menu e toque em "Adicionar à Tela de Início"
+                          No menu que apareceu, selecione Compartilhar
                         </p>
                       </div>
                     </div>
@@ -445,10 +483,42 @@ export default function InstalarApp() {
                         iosStep === 3 ? "opacity-100" : "opacity-70"
                       )}>
                         <p className="font-medium flex items-center gap-2">
+                          Adicionar à Tela de Início
+                          <PlusSquare className={cn(
+                            "h-4 w-4 transition-all duration-300",
+                            iosStep === 3 ? "text-primary animate-pulse" : "text-muted-foreground"
+                          )} />
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Role para baixo e toque em "Adicionar à Tela de Início"
+                        </p>
+                      </div>
+                    </div>
+
+                    <div 
+                      className={cn(
+                        "flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all duration-300 ease-out",
+                        iosStep === 4 
+                          ? 'bg-green-500/10 border-2 border-green-500 shadow-md scale-[1.02]' 
+                          : 'bg-muted/50 hover:bg-muted/70 border-2 border-transparent'
+                      )}
+                      onClick={() => handleStepClick(4, iosStep, setIosStep)}
+                    >
+                      <span className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium flex-shrink-0 transition-all duration-300",
+                        iosStep === 4 ? 'bg-green-500 text-white scale-110' : 'bg-muted text-muted-foreground'
+                      )}>
+                        4
+                      </span>
+                      <div className={cn(
+                        "transition-opacity duration-300",
+                        iosStep === 4 ? "opacity-100" : "opacity-70"
+                      )}>
+                        <p className="font-medium flex items-center gap-2">
                           Confirme a instalação
                           <CheckCircle2 className={cn(
                             "h-4 w-4 transition-all duration-300",
-                            iosStep === 3 ? "text-green-500 animate-pulse" : "text-muted-foreground"
+                            iosStep === 4 ? "text-green-500 animate-pulse" : "text-muted-foreground"
                           )} />
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -550,7 +620,7 @@ export default function InstalarApp() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleStepChange(androidStep, 'prev', setAndroidStep)}
+                        onClick={() => handleStepChange(androidStep, 'prev', setAndroidStep, 3 as 1 | 2 | 3)}
                         disabled={androidStep === 1}
                         className="transition-transform hover:scale-105 active:scale-95"
                       >
@@ -564,7 +634,7 @@ export default function InstalarApp() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleStepChange(androidStep, 'next', setAndroidStep)}
+                        onClick={() => handleStepChange(androidStep, 'next', setAndroidStep, 3 as 1 | 2 | 3)}
                         disabled={androidStep === 3}
                         className="transition-transform hover:scale-105 active:scale-95"
                       >
