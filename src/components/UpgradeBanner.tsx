@@ -8,8 +8,6 @@ import { X, Sparkles, TrendingUp, AlertTriangle } from 'lucide-react';
 
 interface UsageLimits {
   fichasMes: { current: number; max: number };
-  clientes: { current: number; max: number };
-  imoveis: { current: number; max: number };
 }
 
 interface UpgradeBannerProps {
@@ -38,26 +36,14 @@ export function UpgradeBanner({ className = '' }: UpgradeBannerProps) {
         startOfMonth.setHours(0, 0, 0, 0);
 
         // Contar do log de uso (fichas deletadas continuam contando)
-        const [fichasRes, clientesRes, imoveisRes] = await Promise.all([
-          supabase
-            .from('ficha_usage_log')
-            .select('*', { count: 'exact', head: true })
-            .eq('imobiliaria_id', imobiliariaId)
-            .gte('created_at', startOfMonth.toISOString()),
-          supabase
-            .from('clientes')
-            .select('*', { count: 'exact', head: true })
-            .eq('imobiliaria_id', imobiliariaId),
-          supabase
-            .from('imoveis')
-            .select('*', { count: 'exact', head: true })
-            .eq('imobiliaria_id', imobiliariaId),
-        ]);
+        const fichasRes = await supabase
+          .from('ficha_usage_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('imobiliaria_id', imobiliariaId)
+          .gte('created_at', startOfMonth.toISOString());
 
         setUsage({
           fichasMes: { current: fichasRes.count || 0, max: plano.max_fichas_mes },
-          clientes: { current: clientesRes.count || 0, max: plano.max_clientes },
-          imoveis: { current: imoveisRes.count || 0, max: plano.max_imoveis },
         });
       } catch (error) {
         console.error('Error fetching usage:', error);
@@ -76,12 +62,10 @@ export function UpgradeBanner({ className = '' }: UpgradeBannerProps) {
 
   // Calculate usage percentages
   const fichasPercent = (usage.fichasMes.current / usage.fichasMes.max) * 100;
-  const clientesPercent = (usage.clientes.current / usage.clientes.max) * 100;
-  const imoveisPercent = (usage.imoveis.current / usage.imoveis.max) * 100;
 
-  // Determine if any limit is approaching (>= 80%) or reached (>= 100%)
-  const isApproaching = fichasPercent >= 80 || clientesPercent >= 80 || imoveisPercent >= 80;
-  const isReached = fichasPercent >= 100 || clientesPercent >= 100 || imoveisPercent >= 100;
+  // Determine if limit is approaching (>= 80%) or reached (>= 100%)
+  const isApproaching = fichasPercent >= 80;
+  const isReached = fichasPercent >= 100;
 
   // Don't show if usage is low
   if (!isApproaching && !isReached) {
@@ -135,7 +119,7 @@ export function UpgradeBanner({ className = '' }: UpgradeBannerProps) {
               : 'Considere fazer upgrade para evitar interrupções no seu trabalho.'}
           </p>
 
-          {/* Usage bars */}
+          {/* Usage bar */}
           <div className="space-y-2 mb-3">
             {fichasPercent >= 70 && (
               <div className="space-y-1">
@@ -148,34 +132,6 @@ export function UpgradeBanner({ className = '' }: UpgradeBannerProps) {
                 <Progress 
                   value={Math.min(fichasPercent, 100)} 
                   className={`h-1.5 ${fichasPercent >= 100 ? '[&>div]:bg-destructive' : fichasPercent >= 80 ? '[&>div]:bg-amber-500' : ''}`}
-                />
-              </div>
-            )}
-            {clientesPercent >= 70 && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Clientes</span>
-                  <span className={clientesPercent >= 100 ? 'text-destructive font-medium' : ''}>
-                    {usage.clientes.current}/{usage.clientes.max}
-                  </span>
-                </div>
-                <Progress 
-                  value={Math.min(clientesPercent, 100)} 
-                  className={`h-1.5 ${clientesPercent >= 100 ? '[&>div]:bg-destructive' : clientesPercent >= 80 ? '[&>div]:bg-amber-500' : ''}`}
-                />
-              </div>
-            )}
-            {imoveisPercent >= 70 && (
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Imóveis</span>
-                  <span className={imoveisPercent >= 100 ? 'text-destructive font-medium' : ''}>
-                    {usage.imoveis.current}/{usage.imoveis.max}
-                  </span>
-                </div>
-                <Progress 
-                  value={Math.min(imoveisPercent, 100)} 
-                  className={`h-1.5 ${imoveisPercent >= 100 ? '[&>div]:bg-destructive' : imoveisPercent >= 80 ? '[&>div]:bg-amber-500' : ''}`}
                 />
               </div>
             )}

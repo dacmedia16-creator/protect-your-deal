@@ -22,7 +22,6 @@ import {
   WhatsAppOTPMockup,
   QRCodeMockup,
   PDFComprovanteMockup,
-  CRMMockup,
   MobileAppMockup
 } from '@/components/mockups';
 import AnimatedSection from '@/components/AnimatedSection';
@@ -91,16 +90,16 @@ const Funcionalidades = () => {
       reverse: true
     },
     {
-      id: 'crm',
+      id: 'parceria',
       icon: Users,
-      title: 'CRM Integrado',
-      subtitle: 'Gerencie clientes, proprietários e imóveis',
-      description: 'Mantenha uma base organizada de todos os seus contatos. Cadastre clientes (compradores e proprietários), imóveis e acompanhe o histórico de interações com cada um.',
+      title: 'Trabalho em Parceria',
+      subtitle: 'Divida visitas com outros corretores',
+      description: 'Convide outros corretores para trabalhar juntos em um mesmo registro de visita. Ideal quando cada corretor representa uma parte diferente da negociação.',
       benefits: [
-        'Cadastro completo de clientes',
-        'Catálogo de imóveis',
-        'Tags e categorização',
-        'Busca e filtros avançados'
+        'Convite via WhatsApp',
+        'Cada um preenche sua parte',
+        'Histórico compartilhado',
+        'Proteção jurídica para ambos'
       ],
       screenshot: '/placeholder.svg',
       reverse: false
@@ -337,7 +336,7 @@ const Funcionalidades = () => {
                       {feature.id === 'confirmacao-otp' && <WhatsAppOTPMockup />}
                       {feature.id === 'qrcode' && <QRCodeMockup />}
                       {feature.id === 'comprovante-pdf' && <PDFComprovanteMockup />}
-                      {feature.id === 'crm' && <CRMMockup />}
+                      {feature.id === 'parceria' && <WhatsAppOTPMockup />}
                       {feature.id === 'app-mobile' && <MobileAppMockup />}
                     </div>
                   </div>

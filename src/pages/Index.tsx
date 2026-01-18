@@ -93,8 +93,8 @@ const Index = () => {
     },
     {
       icon: Users,
-      title: 'CRM Integrado',
-      description: 'Gerencie seus clientes, proprietários e compradores em um só lugar.'
+      title: 'Trabalho em Parceria',
+      description: 'Convide outros corretores para trabalhar juntos em um mesmo registro de visita.'
     },
     {
       icon: Shield,
@@ -429,14 +429,6 @@ const Index = () => {
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-primary" />
                         {plano.max_fichas_mes === -1 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        {plano.max_clientes === -1 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        {plano.max_imoveis === -1 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}
                       </li>
                       {plano.max_corretores > 1 && (
                         <li className="flex items-center gap-2">

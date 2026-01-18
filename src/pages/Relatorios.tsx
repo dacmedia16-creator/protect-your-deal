@@ -9,14 +9,9 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   FileText, 
-  Users, 
-  Home, 
   CheckCircle2, 
   Clock, 
   TrendingUp,
-  Building2,
-  UserCheck,
-  UserPlus,
   CalendarDays
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -52,34 +47,6 @@ export default function Relatorios() {
     enabled: !!user?.id,
   });
 
-  // Fetch clientes data
-  const { data: clientes = [], isLoading: clientesLoading } = useQuery({
-    queryKey: ['relatorios-clientes', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('user_id', user!.id);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user?.id,
-  });
-
-  // Fetch imoveis data
-  const { data: imoveis = [], isLoading: imoveisLoading } = useQuery({
-    queryKey: ['relatorios-imoveis', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('imoveis')
-        .select('*')
-        .eq('user_id', user!.id);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user?.id,
-  });
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -88,7 +55,7 @@ export default function Relatorios() {
     );
   }
 
-  const isLoading = fichasLoading || clientesLoading || imoveisLoading;
+  const isLoading = fichasLoading;
 
   // Calculate metrics
   const totalFichas = fichas.length;
@@ -96,21 +63,10 @@ export default function Relatorios() {
   const fichasPendentes = fichas.filter(f => f.status === 'pendente').length;
   const taxaConfirmacao = totalFichas > 0 ? Math.round((fichasConfirmadas / totalFichas) * 100) : 0;
 
-  const totalClientes = clientes.length;
-  const compradores = clientes.filter(c => c.tipo === 'comprador').length;
-  const proprietarios = clientes.filter(c => c.tipo === 'proprietario').length;
-
-  const totalImoveis = imoveis.length;
-
   // Data for charts
   const statusData = [
     { name: 'Confirmadas', value: fichasConfirmadas, color: 'hsl(var(--success))' },
     { name: 'Pendentes', value: fichasPendentes, color: 'hsl(var(--warning))' },
-  ].filter(d => d.value > 0);
-
-  const clientesData = [
-    { name: 'Compradores', value: compradores, color: 'hsl(var(--primary))' },
-    { name: 'Proprietários', value: proprietarios, color: 'hsl(215 60% 60%)' },
   ].filter(d => d.value > 0);
 
   // Monthly fichas data (last 6 months)
@@ -211,56 +167,26 @@ export default function Relatorios() {
               </Card>
             </div>
 
-            {/* Secondary metrics */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-secondary">
-                      <Users className="h-5 w-5 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{totalClientes}</p>
-                      <p className="text-xs text-muted-foreground">Clientes</p>
-                    </div>
+            {/* Secondary metric - Este mês */}
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-secondary">
+                    <CalendarDays className="h-5 w-5 text-secondary-foreground" />
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-secondary">
-                      <Building2 className="h-5 w-5 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{totalImoveis}</p>
-                      <p className="text-xs text-muted-foreground">Imóveis</p>
-                    </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {fichas.filter(f => {
+                        const date = new Date(f.created_at);
+                        const now = new Date();
+                        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                      }).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Registros este mês</p>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-secondary">
-                      <CalendarDays className="h-5 w-5 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">
-                        {fichas.filter(f => {
-                          const date = new Date(f.created_at);
-                          const now = new Date();
-                          return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                        }).length}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Este mês</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Charts */}
             <div className="grid sm:grid-cols-2 gap-6">
@@ -347,49 +273,6 @@ export default function Relatorios() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Client breakdown */}
-            {totalClientes > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium">Distribuição de Clientes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <UserPlus className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xl font-bold">{compradores}</p>
-                        <p className="text-xs text-muted-foreground">Compradores</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-secondary">
-                        <UserCheck className="h-5 w-5 text-secondary-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-xl font-bold">{proprietarios}</p>
-                        <p className="text-xs text-muted-foreground">Proprietários</p>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all"
-                          style={{ width: `${totalClientes > 0 ? (compradores / totalClientes) * 100 : 0}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                        <span>Compradores {totalClientes > 0 ? Math.round((compradores / totalClientes) * 100) : 0}%</span>
-                        <span>Proprietários {totalClientes > 0 ? Math.round((proprietarios / totalClientes) * 100) : 0}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
       </main>
