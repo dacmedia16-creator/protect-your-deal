@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import html2pdf from 'html2pdf.js';
 
 interface SurveyResponse {
   id: string;
@@ -324,16 +325,22 @@ export function useSurveyExport() {
       </html>
     `;
 
-    // Open in new window for printing
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      // Wait for content to load then trigger print
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-    }
+    // Generate PDF directly
+    const container = document.createElement('div');
+    container.innerHTML = htmlContent;
+    document.body.appendChild(container);
+
+    const options = {
+      margin: 10,
+      filename: `pesquisas_${imobiliariaName}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+    };
+
+    html2pdf().from(container).set(options).save().then(() => {
+      document.body.removeChild(container);
+    });
   };
 
   const exportSingleToPDF = (survey: Survey, imobiliariaName: string) => {
@@ -462,14 +469,22 @@ export function useSurveyExport() {
       </html>
     `;
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-    }
+    // Generate PDF directly
+    const container = document.createElement('div');
+    container.innerHTML = htmlContent;
+    document.body.appendChild(container);
+
+    const options = {
+      margin: 10,
+      filename: `pesquisa_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+    };
+
+    html2pdf().from(container).set(options).save().then(() => {
+      document.body.removeChild(container);
+    });
   };
 
   return { exportToExcel, exportToPDF, exportSingleToPDF };
