@@ -204,28 +204,28 @@ export default function Pesquisas() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
+        <div className="grid gap-2 grid-cols-3">
+          <Card className="text-center">
+            <CardHeader className="pb-1 pt-3 px-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">Total</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-3 pt-0">
               <p className="text-2xl font-bold">{totalSurveys}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Respondidas</CardTitle>
+          <Card className="text-center">
+            <CardHeader className="pb-1 pt-3 px-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">Respondidas</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-3 pt-0">
               <p className="text-2xl font-bold text-green-600">{respondedSurveys}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Pendentes</CardTitle>
+          <Card className="text-center">
+            <CardHeader className="pb-1 pt-3 px-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground">Pendentes</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-3 pt-0">
               <p className="text-2xl font-bold text-amber-600">{pendingSurveys}</p>
             </CardContent>
           </Card>
