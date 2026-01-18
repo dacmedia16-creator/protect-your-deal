@@ -336,5 +336,141 @@ export function useSurveyExport() {
     }
   };
 
-  return { exportToExcel, exportToPDF };
+  const exportSingleToPDF = (survey: Survey, imobiliariaName: string) => {
+    if (survey.status !== 'responded' || survey.survey_responses.length === 0) {
+      throw new Error('Esta pesquisa ainda não foi respondida');
+    }
+
+    const response = survey.survey_responses[0];
+    const avg = (
+      response.rating_location +
+      response.rating_size +
+      response.rating_layout +
+      response.rating_finishes +
+      response.rating_conservation +
+      response.rating_common_areas +
+      response.rating_price
+    ) / 7;
+
+    const clientName = survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente';
+    const propertyAddress = survey.fichas_visita?.imovel_endereco || '-';
+    const protocol = survey.fichas_visita?.protocolo || '-';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Pesquisa - ${clientName}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; color: #333; padding: 40px; background: #fff; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 20px; }
+          .header h1 { color: #6366f1; font-size: 22px; margin-bottom: 5px; }
+          .header p { color: #666; font-size: 13px; }
+          .info-box { background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+          .info-box h2 { font-size: 14px; color: #666; margin-bottom: 10px; }
+          .info-box .value { font-size: 16px; font-weight: bold; color: #333; }
+          .info-box .sub { font-size: 12px; color: #666; margin-top: 4px; }
+          .ratings { background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+          .ratings h2 { font-size: 16px; margin-bottom: 15px; color: #333; }
+          .rating-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+          .rating-row:last-child { border-bottom: none; }
+          .rating-row span { font-size: 14px; }
+          .rating-value { font-weight: bold; color: #6366f1; font-size: 16px; }
+          .stars { color: #f59e0b; margin-right: 8px; }
+          .average { background: #6366f1; color: white; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 25px; }
+          .average h3 { font-size: 36px; margin-bottom: 5px; }
+          .average p { font-size: 14px; opacity: 0.9; }
+          .would-buy { padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 25px; }
+          .would-buy.yes { background: #dcfce7; }
+          .would-buy.no { background: #fef2f2; }
+          .would-buy h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
+          .would-buy p { font-size: 24px; font-weight: bold; }
+          .would-buy.yes p { color: #16a34a; }
+          .would-buy.no p { color: #dc2626; }
+          .comments { margin-bottom: 25px; }
+          .comment { background: #f8fafc; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+          .comment h4 { font-size: 12px; color: #666; margin-bottom: 8px; }
+          .comment p { font-size: 14px; line-height: 1.5; }
+          .footer { text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #999; font-size: 11px; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Pesquisa Pós-Visita</h1>
+          <p>${imobiliariaName} • ${format(new Date(response.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+        </div>
+
+        <div class="info-box">
+          <h2>Cliente</h2>
+          <div class="value">${clientName}</div>
+          ${survey.client_phone ? `<div class="sub">📱 ${survey.client_phone}</div>` : ''}
+        </div>
+
+        <div class="info-box">
+          <h2>Imóvel Visitado</h2>
+          <div class="value">${propertyAddress}</div>
+          <div class="sub">Protocolo: ${protocol}</div>
+        </div>
+
+        <div class="average">
+          <h3>${avg.toFixed(1)}</h3>
+          <p>Média Geral das Avaliações</p>
+        </div>
+
+        <div class="ratings">
+          <h2>Avaliações Detalhadas</h2>
+          ${Object.entries(ratingLabels).map(([key, label]) => `
+            <div class="rating-row">
+              <span>${label}</span>
+              <div>
+                <span class="stars">${'★'.repeat(response[key as keyof SurveyResponse] as number)}${'☆'.repeat(5 - (response[key as keyof SurveyResponse] as number))}</span>
+                <span class="rating-value">${response[key as keyof SurveyResponse]}/5</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="would-buy ${response.would_buy ? 'yes' : 'no'}">
+          <h3>Compraria este imóvel?</h3>
+          <p>${response.would_buy ? '✓ Sim, compraria' : '✗ Não compraria'}</p>
+        </div>
+
+        ${(response.liked_most || response.liked_least) ? `
+          <div class="comments">
+            ${response.liked_most ? `
+              <div class="comment">
+                <h4>👍 O que mais gostou</h4>
+                <p>${response.liked_most}</p>
+              </div>
+            ` : ''}
+            ${response.liked_least ? `
+              <div class="comment">
+                <h4>👎 O que menos gostou</h4>
+                <p>${response.liked_least}</p>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        <div class="footer">
+          Gerado automaticamente pelo sistema VisitaSegura
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+  };
+
+  return { exportToExcel, exportToPDF, exportSingleToPDF };
 }

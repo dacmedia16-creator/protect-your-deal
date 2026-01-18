@@ -86,7 +86,7 @@ export default function EmpresaPesquisas() {
   const { imobiliariaId, imobiliaria } = useUserRole();
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
-  const { exportToExcel, exportToPDF } = useSurveyExport();
+  const { exportToExcel, exportToPDF, exportSingleToPDF } = useSurveyExport();
 
   const { data: surveys, isLoading } = useQuery({
     queryKey: ['empresa-surveys', imobiliariaId, filter],
@@ -198,6 +198,14 @@ export default function EmpresaPesquisas() {
     if (!surveys) return;
     try {
       exportToPDF(surveys, imobiliaria?.nome || 'Imobiliaria');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
+    }
+  };
+
+  const handleExportSinglePDF = (survey: Survey) => {
+    try {
+      exportSingleToPDF(survey, imobiliaria?.nome || 'Imobiliaria');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
     }
@@ -320,13 +328,23 @@ export default function EmpresaPesquisas() {
                       <TableCell>
                         <div className="flex gap-2">
                           {survey.status === 'responded' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedSurvey(survey)}
-                            >
-                              Ver respostas
-                            </Button>
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedSurvey(survey)}
+                              >
+                                Ver respostas
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleExportSinglePDF(survey)}
+                                title="Exportar PDF"
+                              >
+                                <FileText className="h-4 w-4 text-primary" />
+                              </Button>
+                            </>
                           )}
                           {survey.fichas_visita && (
                             <Link to={`/fichas/${survey.ficha_id}`}>
