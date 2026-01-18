@@ -31,8 +31,29 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const body: RegistroCorretorRequest = await req.json();
+    // Parse body with error handling
+    let body: RegistroCorretorRequest;
+    try {
+      body = await req.json();
+      console.log("Received body:", JSON.stringify(body));
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { corretor, plano_id, codigo_imobiliaria, codigo_cupom } = body;
+
+    // Validate corretor object exists
+    if (!corretor) {
+      console.error("Missing corretor object in request body. Body received:", body);
+      return new Response(
+        JSON.stringify({ error: "Dados do corretor não informados" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log("Starting autonomous broker registration for:", corretor.email);
     console.log("Codigo imobiliaria:", codigo_imobiliaria);
