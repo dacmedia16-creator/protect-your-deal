@@ -379,7 +379,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       
       if (displayed.length < buffer.length) {
         // Calculate how many characters to add (2-4 for speed, but stop at word boundaries when possible)
-        let charsToAdd = Math.min(3, buffer.length - displayed.length);
+        let charsToAdd = Math.min(2, buffer.length - displayed.length);
         const nextChunk = buffer.slice(displayed.length, displayed.length + charsToAdd);
         
         displayedContentRef.current = displayed + nextChunk;
@@ -407,7 +407,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           typingIntervalRef.current = null;
         }
       }
-    }, 20); // 20ms per batch = smooth typing effect
+    }, 35); // 35ms per batch = slower, more natural typing effect
   }, [isTyping]);
 
   // Stop typing effect
