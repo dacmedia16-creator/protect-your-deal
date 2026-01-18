@@ -33,8 +33,11 @@ import {
   ExternalLink,
   Star,
   ArrowLeft,
+  FileText,
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
+import { useSurveyExport } from '@/hooks/useSurveyExport';
+import { toast } from 'sonner';
 
 interface SurveyResponse {
   id: string;
@@ -76,6 +79,15 @@ export default function Pesquisas() {
   const { user } = useAuth();
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const { exportSingleToPDF } = useSurveyExport();
+
+  const handleExportSinglePDF = (survey: Survey) => {
+    try {
+      exportSingleToPDF(survey as any, 'Corretor');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao exportar PDF');
+    }
+  };
 
   const { data: surveys, isLoading } = useQuery({
     queryKey: ['corretor-surveys', user?.id, filter],
@@ -265,13 +277,23 @@ export default function Pesquisas() {
                       <TableCell>
                         <div className="flex gap-2">
                           {survey.status === 'responded' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedSurvey(survey)}
-                            >
-                              Ver respostas
-                            </Button>
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedSurvey(survey)}
+                              >
+                                Ver respostas
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleExportSinglePDF(survey)}
+                                title="Exportar PDF"
+                              >
+                                <FileText className="h-4 w-4 text-primary" />
+                              </Button>
+                            </>
                           )}
                           {survey.fichas_visita && (
                             <Link to={`/fichas/${survey.ficha_id}`}>
