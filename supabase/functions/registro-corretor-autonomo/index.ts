@@ -32,10 +32,10 @@ Deno.serve(async (req) => {
     );
 
     // Parse body with error handling
-    let body: RegistroCorretorRequest;
+    let rawBody: any;
     try {
-      body = await req.json();
-      console.log("Received body:", JSON.stringify(body));
+      rawBody = await req.json();
+      console.log("Received body:", JSON.stringify(rawBody));
     } catch (parseError) {
       console.error("Error parsing request body:", parseError);
       return new Response(
@@ -44,15 +44,44 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { corretor, plano_id, codigo_imobiliaria, codigo_cupom } = body;
+    // Normalize body to support both nested (corretor: {...}) and flat format
+    let corretor: RegistroCorretorRequest["corretor"];
+    let plano_id: string | undefined;
+    let codigo_imobiliaria: number | null | undefined;
+    let codigo_cupom: string | null | undefined;
 
-    // Validate corretor object exists
-    if (!corretor) {
-      console.error("Missing corretor object in request body. Body received:", body);
+    if (rawBody.corretor) {
+      // New format: { corretor: {...}, plano_id, codigo_imobiliaria, codigo_cupom }
+      corretor = rawBody.corretor;
+      plano_id = rawBody.plano_id;
+      codigo_imobiliaria = rawBody.codigo_imobiliaria;
+      codigo_cupom = rawBody.codigo_cupom;
+    } else if (rawBody.email) {
+      // Old flat format: { nome, email, senha, codigo_imobiliaria, codigo_cupom }
+      corretor = {
+        nome: rawBody.nome,
+        email: rawBody.email,
+        senha: rawBody.senha || rawBody.password,
+        telefone: rawBody.telefone,
+        creci: rawBody.creci,
+      };
+      plano_id = rawBody.plano_id;
+      codigo_imobiliaria = rawBody.codigo_imobiliaria;
+      codigo_cupom = rawBody.codigo_cupom;
+    } else {
+      console.error("Invalid request format. Body received:", rawBody);
       return new Response(
         JSON.stringify({ error: "Dados do corretor não informados" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Normalize codigo_imobiliaria to number if it's a string
+    if (codigo_imobiliaria && typeof codigo_imobiliaria === 'string') {
+      codigo_imobiliaria = parseInt(codigo_imobiliaria, 10);
+      if (isNaN(codigo_imobiliaria)) {
+        codigo_imobiliaria = null;
+      }
     }
 
     console.log("Starting autonomous broker registration for:", corretor.email);

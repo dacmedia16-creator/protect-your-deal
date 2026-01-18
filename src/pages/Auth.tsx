@@ -277,16 +277,20 @@ export default function Auth() {
       if (vincularImobiliaria && imobiliariaEncontrada) {
         const { data, error } = await supabase.functions.invoke('registro-corretor-autonomo', {
           body: {
-            nome: signupData.nome,
-            email: signupData.email,
-            senha: signupData.password,
-            codigo_imobiliaria: codigoImobiliaria,
+            corretor: {
+              nome: signupData.nome,
+              email: signupData.email,
+              senha: signupData.password,
+            },
+            codigo_imobiliaria: parseInt(codigoImobiliaria, 10),
             codigo_cupom: cupomInfo?.valido ? codigoCupom : null,
           },
         });
 
         if (error) {
-          throw new Error(error.message || 'Erro ao criar conta');
+          // Try to extract the real error message from the response
+          const errorMsg = error.message || 'Erro ao criar conta';
+          throw new Error(errorMsg);
         }
 
         if (data?.error) {
