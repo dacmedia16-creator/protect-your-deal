@@ -4,11 +4,12 @@ import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, FileText, Building2, Home, Plus, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Users, FileText, Building2, Home, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -18,12 +19,18 @@ interface DashboardStats {
   fichasMes: number;
   totalClientes: number;
   totalImoveis: number;
+  totalPesquisas: number;
+  pesquisasRespondidas: number;
+  pesquisasPendentes: number;
 }
 
 export default function EmpresaDashboard() {
   const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Hook para verificar se pesquisa pós-visita está habilitada
+  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
 
   // Hook de notificação para fichas confirmadas
   useFichaNotification();
@@ -71,12 +78,31 @@ export default function EmpresaDashboard() {
           .select('*', { count: 'exact', head: true })
           .eq('imobiliaria_id', imobiliariaId);
 
+        // Count surveys (only if feature is enabled)
+        let totalPesquisas = 0;
+        let pesquisasRespondidas = 0;
+        let pesquisasPendentes = 0;
+
+        if (surveyEnabled) {
+          const { data: surveysData } = await supabase
+            .from('surveys')
+            .select('status')
+            .eq('imobiliaria_id', imobiliariaId);
+
+          totalPesquisas = surveysData?.length || 0;
+          pesquisasRespondidas = surveysData?.filter(s => s.status === 'responded').length || 0;
+          pesquisasPendentes = surveysData?.filter(s => s.status === 'pending').length || 0;
+        }
+
         setStats({
           totalCorretores: totalCorretores || 0,
           totalFichas: totalFichas || 0,
           fichasMes: fichasMes || 0,
           totalClientes: totalClientes || 0,
           totalImoveis: totalImoveis || 0,
+          totalPesquisas,
+          pesquisasRespondidas,
+          pesquisasPendentes,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -86,7 +112,7 @@ export default function EmpresaDashboard() {
     }
 
     fetchStats();
-  }, [imobiliariaId]);
+  }, [imobiliariaId, surveyEnabled]);
 
   if (loading) {
     return (
@@ -218,6 +244,27 @@ export default function EmpresaDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {surveyEnabled && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pesquisas Respondidas</CardTitle>
+                <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  de {stats?.totalPesquisas || 0} enviadas
+                </p>
+                {stats?.totalPesquisas && stats.totalPesquisas > 0 && (
+                  <Progress
+                    value={(stats.pesquisasRespondidas / stats.totalPesquisas) * 100}
+                    className="h-1 mt-2"
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Quick actions and subscription info */}
