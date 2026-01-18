@@ -35,7 +35,7 @@ export function MobileNav() {
     { path: '/dashboard', label: 'Início', icon: Home },
     { path: '/fichas', label: 'Registros', icon: FileText },
     { path: '/convites', label: 'Convites', icon: Handshake },
-    ...(surveyEnabled ? [{ path: '/empresa/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+    ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
   ];
   
   const handleInstallApp = async () => {
