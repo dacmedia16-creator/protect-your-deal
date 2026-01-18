@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Shield, Loader2, ArrowLeft, Check, Building2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
+import { formatCPF } from '@/lib/cpf';
 
 export default function RegistroVinculado() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function RegistroVinculado() {
     nome: '',
     email: '',
     telefone: '',
+    cpf: '',
     creci: '',
     senha: '',
     confirmarSenha: '',
@@ -129,6 +131,7 @@ export default function RegistroVinculado() {
             nome: corretorForm.nome,
             email: corretorForm.email,
             telefone: corretorForm.telefone || null,
+            cpf: corretorForm.cpf?.replace(/\D/g, '') || null,
             creci: corretorForm.creci || null,
             senha: corretorForm.senha,
           },
@@ -328,6 +331,17 @@ export default function RegistroVinculado() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      inputMode="numeric"
+                      value={corretorForm.cpf}
+                      onChange={(e) => setCorretorForm({ ...corretorForm, cpf: formatCPF(e.target.value) })}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                    />
+                  </div>
+                  <div className="sm:col-span-2 space-y-2">
                     <Label htmlFor="creci">CRECI</Label>
                     <Input
                       id="creci"
