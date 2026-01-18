@@ -399,19 +399,26 @@ export default function Pesquisas() {
             </div>
           )}
 
-          <DialogFooter>
-            {selectedSurvey?.fichas_visita && (
-              <Link to={`/fichas/${selectedSurvey.ficha_id}`}>
-                <Button variant="outline">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Ver Ficha
-                </Button>
-              </Link>
-            )}
-            <Button onClick={() => setSelectedSurvey(null)}>
-              Fechar
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button 
+                variant="outline"
+                onClick={() => handleExportSinglePDF(selectedSurvey!)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar PDF
+              </Button>
+              {selectedSurvey?.fichas_visita && (
+                <Link to={`/fichas/${selectedSurvey.ficha_id}`}>
+                  <Button variant="outline">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Ver Ficha
+                  </Button>
+                </Link>
+              )}
+              <Button onClick={() => setSelectedSurvey(null)}>
+                Fechar
+              </Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
 
