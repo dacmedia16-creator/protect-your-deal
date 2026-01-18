@@ -9,7 +9,7 @@ import { UserRoleProvider } from "@/hooks/useUserRole";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SmartRedirect } from "@/components/SmartRedirect";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
-import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { ChatAssistente } from "@/components/ChatAssistente";
 
 // Public pages
@@ -113,7 +113,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <PWAUpdatePrompt />
-              <PWAInstallPrompt />
+              <PWAInstallModal />
               <ChatAssistente />
               <Routes>
               {/* Public routes */}
