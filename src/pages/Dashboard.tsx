@@ -39,7 +39,8 @@ import { PlanUsageCard } from '@/components/PlanUsageCard';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { imobiliaria, role } = useUserRole();
+  const { imobiliaria, role, imobiliariaId } = useUserRole();
+  const isCorretorVinculado = role === 'corretor' && !!imobiliariaId;
   const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
   const [showDebug, setShowDebug] = useState(false);
@@ -199,8 +200,8 @@ export default function Dashboard() {
         {/* PWA Install Banner */}
         <PWAInstallBanner />
 
-        {/* Upgrade Banner for free plan users */}
-        <UpgradeBanner className="mb-4" />
+        {/* Upgrade Banner for free plan users - hide for linked brokers */}
+        {!isCorretorVinculado && <UpgradeBanner className="mb-4" />}
 
         {/* Convites Pendentes Alert */}
         {convitesPendentes > 0 && (
@@ -365,8 +366,8 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Plan Usage Card - Compact version for Dashboard */}
-        <PlanUsageCard compact className="mb-6 animate-fade-in" />
+        {/* Plan Usage Card - Compact version for Dashboard - hide for linked brokers */}
+        {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
