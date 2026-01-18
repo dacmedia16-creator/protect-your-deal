@@ -661,11 +661,11 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
   if (!isOpen) {
     return (
-      <div className={buttonPositionClass}>
+      <div className={cn(buttonPositionClass, "animate-in fade-in-0 slide-in-from-top-4 sm:slide-in-from-bottom-4 duration-500")}>
         <Button
           onClick={() => setIsOpen(true)}
           className={cn(
-            "h-16 w-16 sm:h-14 sm:w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 relative border-2 border-primary-foreground/20",
+            "h-16 w-16 sm:h-14 sm:w-14 rounded-full shadow-xl bg-primary hover:bg-primary/90 relative border-2 border-primary-foreground/20 transition-transform hover:scale-105",
             !userContext.isLoggedIn && "animate-sofia-glow"
           )}
           size="icon"
