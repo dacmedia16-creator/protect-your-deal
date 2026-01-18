@@ -216,6 +216,8 @@ Deno.serve(async (req) => {
     console.log("User role created");
 
   // 3. Update profile with additional data (profile is created by trigger)
+    // Se vinculado a imobiliária, começa desativado (admin precisa ativar)
+    // Se autônomo, permanece ativo
     console.log("Updating profile...");
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -225,7 +227,8 @@ Deno.serve(async (req) => {
         creci: corretor.creci || null,
         cpf: corretor.cpf || null,
         email: corretor.email || null,
-        imobiliaria_id: imobiliariaId, // null se autônomo, ID se vinculado
+        imobiliaria_id: imobiliariaId,
+        ativo: imobiliariaId ? false : true,
       })
       .eq("user_id", userId);
 
@@ -314,10 +317,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true,
         message: imobiliariaId 
-          ? "Cadastro realizado com sucesso! Você foi vinculado à imobiliária."
+          ? "Cadastro realizado com sucesso! Aguarde a ativação pelo administrador da imobiliária."
           : "Cadastro realizado com sucesso!",
         user_id: userId,
         linked_to_imobiliaria: !!imobiliariaId,
+        requires_activation: !!imobiliariaId,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
