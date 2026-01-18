@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, FileText, Building2, Home, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck } from 'lucide-react';
+import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -17,8 +17,6 @@ interface DashboardStats {
   totalCorretores: number;
   totalFichas: number;
   fichasMes: number;
-  totalClientes: number;
-  totalImoveis: number;
   totalPesquisas: number;
   pesquisasRespondidas: number;
   pesquisasPendentes: number;
@@ -66,17 +64,6 @@ export default function EmpresaDashboard() {
           .eq('imobiliaria_id', imobiliariaId)
           .gte('created_at', startOfMonth.toISOString());
 
-        // Count clientes
-        const { count: totalClientes } = await supabase
-          .from('clientes')
-          .select('*', { count: 'exact', head: true })
-          .eq('imobiliaria_id', imobiliariaId);
-
-        // Count imoveis
-        const { count: totalImoveis } = await supabase
-          .from('imoveis')
-          .select('*', { count: 'exact', head: true })
-          .eq('imobiliaria_id', imobiliariaId);
 
         // Count surveys (only if feature is enabled)
         let totalPesquisas = 0;
@@ -98,8 +85,6 @@ export default function EmpresaDashboard() {
           totalCorretores: totalCorretores || 0,
           totalFichas: totalFichas || 0,
           fichasMes: fichasMes || 0,
-          totalClientes: totalClientes || 0,
-          totalImoveis: totalImoveis || 0,
           totalPesquisas,
           pesquisasRespondidas,
           pesquisasPendentes,
@@ -129,8 +114,6 @@ export default function EmpresaDashboard() {
   // Calculate usage percentages
   const corretoresPercent = plano ? (stats?.totalCorretores || 0) / plano.max_corretores * 100 : 0;
   const fichasPercent = plano ? (stats?.fichasMes || 0) / plano.max_fichas_mes * 100 : 0;
-  const clientesPercent = plano ? (stats?.totalClientes || 0) / plano.max_clientes * 100 : 0;
-  const imoveisPercent = plano ? (stats?.totalImoveis || 0) / plano.max_imoveis * 100 : 0;
 
   return (
     <ImobiliariaLayout>
@@ -172,7 +155,7 @@ export default function EmpresaDashboard() {
         )}
 
         {/* Stats grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Corretores</CardTitle>
@@ -203,42 +186,6 @@ export default function EmpresaDashboard() {
                   <Progress value={fichasPercent} className="h-1 mt-2" />
                   <p className="text-xs text-muted-foreground mt-1">
                     de {plano.max_fichas_mes} permitidos
-                  </p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Clientes</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalClientes}</div>
-              {plano && (
-                <>
-                  <Progress value={clientesPercent} className="h-1 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    de {plano.max_clientes} permitidos
-                  </p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Imóveis</CardTitle>
-              <Home className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalImoveis}</div>
-              {plano && (
-                <>
-                  <Progress value={imoveisPercent} className="h-1 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    de {plano.max_imoveis} permitidos
                   </p>
                 </>
               )}
