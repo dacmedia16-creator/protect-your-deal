@@ -40,8 +40,6 @@ interface Plano {
 interface UsageStats {
   corretores: number;
   fichasMes: number;
-  clientes: number;
-  imoveis: number;
 }
 
 export default function EmpresaAssinatura() {
@@ -82,21 +80,9 @@ export default function EmpresaAssinatura() {
           .eq('imobiliaria_id', imobiliariaId)
           .gte('created_at', startOfMonth.toISOString());
 
-        const { count: clientes } = await supabase
-          .from('clientes')
-          .select('*', { count: 'exact', head: true })
-          .eq('imobiliaria_id', imobiliariaId);
-
-        const { count: imoveis } = await supabase
-          .from('imoveis')
-          .select('*', { count: 'exact', head: true })
-          .eq('imobiliaria_id', imobiliariaId);
-
         setUsage({
           corretores: corretores || 0,
           fichasMes: fichasMes || 0,
-          clientes: clientes || 0,
-          imoveis: imoveis || 0,
         });
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -271,26 +257,6 @@ export default function EmpresaAssinatura() {
                       </div>
                       <Progress value={(usage.fichasMes / currentPlano.max_fichas_mes) * 100} className="h-2" />
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          Clientes
-                        </span>
-                        <span>{usage.clientes} / {currentPlano.max_clientes}</span>
-                      </div>
-                      <Progress value={(usage.clientes / currentPlano.max_clientes) * 100} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="flex items-center gap-2">
-                          <Home className="h-4 w-4 text-muted-foreground" />
-                          Imóveis
-                        </span>
-                        <span>{usage.imoveis} / {currentPlano.max_imoveis}</span>
-                      </div>
-                      <Progress value={(usage.imoveis / currentPlano.max_imoveis) * 100} className="h-2" />
-                    </div>
                   </div>
                 </div>
               )}
@@ -361,14 +327,6 @@ export default function EmpresaAssinatura() {
                       <li className="flex items-center gap-2">
                         <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
                         {plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
-                        {plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
-                        {plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}
                       </li>
                     </ul>
 

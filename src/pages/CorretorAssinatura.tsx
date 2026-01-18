@@ -39,8 +39,6 @@ interface Plano {
 
 interface UsageStats {
   fichas_mes: number;
-  clientes: number;
-  imoveis: number;
 }
 
 export default function CorretorAssinatura() {
@@ -78,26 +76,14 @@ export default function CorretorAssinatura() {
         const currentMonth = new Date();
         const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
         
-        const [fichasRes, clientesRes, imoveisRes] = await Promise.all([
-          supabase
-            .from('fichas_visita')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .gte('created_at', firstDay.toISOString()),
-          supabase
-            .from('clientes')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id),
-          supabase
-            .from('imoveis')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', user.id),
-        ]);
+        const fichasRes = await supabase
+          .from('fichas_visita')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .gte('created_at', firstDay.toISOString());
 
         setUsage({
           fichas_mes: fichasRes.count || 0,
-          clientes: clientesRes.count || 0,
-          imoveis: imoveisRes.count || 0,
         });
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -249,54 +235,20 @@ export default function CorretorAssinatura() {
                   </div>
                 )}
 
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <FileText className="h-4 w-4" />
-                        Registros/mês
-                      </span>
-                      <span className="font-medium">
-                        {usage.fichas_mes} / {assinatura.plano.max_fichas_mes}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={(usage.fichas_mes / assinatura.plano.max_fichas_mes) * 100} 
-                      className="h-2"
-                    />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <FileText className="h-4 w-4" />
+                      Registros/mês
+                    </span>
+                    <span className="font-medium">
+                      {usage.fichas_mes} / {assinatura.plano.max_fichas_mes}
+                    </span>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        Clientes
-                      </span>
-                      <span className="font-medium">
-                        {usage.clientes} / {assinatura.plano.max_clientes}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={(usage.clientes / assinatura.plano.max_clientes) * 100} 
-                      className="h-2"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Home className="h-4 w-4" />
-                        Imóveis
-                      </span>
-                      <span className="font-medium">
-                        {usage.imoveis} / {assinatura.plano.max_imoveis}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={(usage.imoveis / assinatura.plano.max_imoveis) * 100} 
-                      className="h-2"
-                    />
-                  </div>
+                  <Progress 
+                    value={(usage.fichas_mes / assinatura.plano.max_fichas_mes) * 100} 
+                    className="h-2"
+                  />
                 </div>
 
                 {assinatura.proxima_cobranca && (
@@ -341,14 +293,6 @@ export default function CorretorAssinatura() {
                         <li className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-success" />
                           {plano.max_fichas_mes} registros/mês
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-success" />
-                          {plano.max_clientes} clientes
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-success" />
-                          {plano.max_imoveis} imóveis
                         </li>
                       </ul>
 
