@@ -14,8 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { 
   FileText, 
-  Users, 
-  Building2, 
   Plus,
   CheckCircle,
   Clock,
@@ -246,8 +244,8 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Stats Grid - 2x2 on mobile, 4 cols on desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        {/* Stats Grid - 3 cols on desktop */}
+        <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
             className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all"
             onClick={() => navigate('/fichas')}
@@ -292,22 +290,6 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-xl md:text-2xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all" 
-            style={{ animationDelay: '0.3s' }}
-            onClick={() => navigate('/clientes')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Clientes
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-xl md:text-2xl font-bold">{stats?.totalClientes || 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -370,7 +352,7 @@ export default function Dashboard() {
         {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
-        <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
             onClick={() => navigate('/fichas/nova')}
@@ -388,30 +370,30 @@ export default function Dashboard() {
 
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => navigate('/clientes')}
+            onClick={() => navigate('/fichas')}
           >
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Users className="h-6 w-6 text-secondary-foreground" />
+                <FileText className="h-6 w-6 text-secondary-foreground" />
               </div>
-              <CardTitle>Gerenciar Clientes</CardTitle>
+              <CardTitle>Ver Registros</CardTitle>
               <CardDescription>
-                Cadastre e organize seus clientes
+                Visualize e gerencie seus registros
               </CardDescription>
             </CardHeader>
           </Card>
 
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => navigate('/imoveis')}
+            onClick={() => navigate('/convites')}
           >
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Building2 className="h-6 w-6 text-secondary-foreground" />
+                <Handshake className="h-6 w-6 text-secondary-foreground" />
               </div>
-              <CardTitle>Imóveis</CardTitle>
+              <CardTitle>Convites</CardTitle>
               <CardDescription>
-                Cadastre imóveis para agilizar registros
+                Gerencie convites de parceria
               </CardDescription>
             </CardHeader>
           </Card>
@@ -439,30 +421,15 @@ export default function Dashboard() {
 
           <Card 
             className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/clientes')}
+            onClick={() => navigate('/fichas')}
           >
             <CardContent className="p-3 flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <Users className="h-5 w-5 text-secondary-foreground" />
+                <FileText className="h-5 w-5 text-secondary-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="font-medium text-sm">Gerenciar Clientes</p>
-                <p className="text-xs text-muted-foreground truncate">Cadastrar e organizar clientes</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/imoveis')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <Building2 className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Imóveis</p>
-                <p className="text-xs text-muted-foreground truncate">Cadastrar e gerenciar imóveis</p>
+                <p className="font-medium text-sm">Ver Registros</p>
+                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
               </div>
             </CardContent>
           </Card>

@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   LayoutDashboard, 
   FileText, 
-  Users, 
   LogOut, 
   User,
   ChevronDown,
@@ -46,7 +45,6 @@ export function DesktopNav() {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/fichas', label: 'Registros', icon: FileText },
     { to: '/convites', label: 'Convites', icon: Handshake },
-    { to: '/clientes', label: 'Clientes', icon: Users },
     ...(surveyEnabled ? [{ to: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
   ];
   
