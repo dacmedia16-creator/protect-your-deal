@@ -187,62 +187,89 @@ export function PWAInstallModal() {
   );
 
   // Android instructions for manual install (when prompt doesn't fire)
-  const AndroidManualInstructions = () => (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">
-          Instalar VisitaSegura
-        </h2>
-        <p className="text-muted-foreground">
-          Siga os 3 passos abaixo
-        </p>
-      </div>
+  const AndroidManualInstructions = () => {
+    const steps = [
+      {
+        number: 1,
+        title: 'Toque nos 3 pontinhos',
+        description: 'No canto superior direito do Chrome',
+        image: '/help-images/android-passo-1.jpg',
+        icon: MoreVertical,
+      },
+      {
+        number: 2,
+        title: 'Adicionar à tela inicial',
+        description: 'Role o menu e toque nessa opção',
+        image: '/help-images/android-passo-2.jpg',
+        icon: Download,
+      },
+      {
+        number: 3,
+        title: 'Toque em "Instalar"',
+        description: 'Na caixa de confirmação',
+        image: '/help-images/android-passo-3.jpg',
+        icon: Check,
+        isLast: true,
+      },
+    ];
 
+    return (
       <div className="space-y-4">
-        {/* Passo 1 - 3 pontinhos */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 text-lg font-bold">
-            1
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Toque nos 3 pontinhos</p>
-            <p className="text-sm text-muted-foreground">No canto superior direito do Chrome</p>
-          </div>
-          <div className="bg-primary/20 p-2 rounded-lg">
-            <MoreVertical className="h-6 w-6 text-primary" />
-          </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">
+            Instalar VisitaSegura
+          </h2>
+          <p className="text-muted-foreground">
+            Siga os 3 passos abaixo
+          </p>
         </div>
 
-        {/* Passo 2 - Adicionar à tela inicial */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/50">
-          <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 text-lg font-bold">
-            2
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Adicionar à tela inicial</p>
-            <p className="text-sm text-muted-foreground">Role o menu e toque nessa opção</p>
-          </div>
-          <div className="bg-primary/20 p-2 rounded-lg">
-            <Download className="h-6 w-6 text-primary" />
-          </div>
-        </div>
-
-        {/* Passo 3 - Instalar */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/10 ring-2 ring-primary">
-          <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center shrink-0 text-lg font-bold">
-            3
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Toque em "Instalar"</p>
-            <p className="text-sm text-muted-foreground">Na caixa de confirmação</p>
-          </div>
-          <div className="bg-green-500/20 p-2 rounded-lg">
-            <Check className="h-6 w-6 text-green-500" />
-          </div>
+        <div className="space-y-3">
+          {steps.map((stepItem) => (
+            <motion.div
+              key={stepItem.number}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: stepItem.number * 0.1 }}
+              className={`rounded-xl overflow-hidden border ${
+                stepItem.isLast ? 'ring-2 ring-primary' : ''
+              }`}
+            >
+              {/* Header do passo */}
+              <div className={`flex items-center gap-3 p-3 ${
+                stepItem.isLast ? 'bg-primary/10' : 'bg-muted/50'
+              }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${
+                  stepItem.isLast 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-primary text-primary-foreground'
+                }`}>
+                  {stepItem.number}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground text-sm">{stepItem.title}</p>
+                  <p className="text-xs text-muted-foreground">{stepItem.description}</p>
+                </div>
+                <stepItem.icon className={`h-5 w-5 shrink-0 ${
+                  stepItem.isLast ? 'text-green-500' : 'text-primary'
+                }`} />
+              </div>
+              
+              {/* Screenshot */}
+              <div className="relative bg-black/5">
+                <img 
+                  src={stepItem.image} 
+                  alt={`Passo ${stepItem.number}: ${stepItem.title}`}
+                  className="w-full h-auto max-h-48 object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Android one-click install
   const AndroidInstall = () => (
