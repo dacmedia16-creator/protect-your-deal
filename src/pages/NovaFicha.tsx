@@ -364,6 +364,30 @@ export default function NovaFicha() {
 
       navigate(`/fichas/${data.id}`);
     } catch (error: any) {
+      console.error('Erro ao criar ficha:', error);
+      
+      // Verificar se é erro de limite atingido
+      if (error?.message?.includes('Limite de') && error?.message?.includes('fichas/mês atingido')) {
+        toast({
+          variant: 'destructive',
+          title: 'Limite do plano atingido',
+          description: 'Você atingiu o limite de fichas do mês. Faça upgrade do seu plano para continuar.',
+        });
+        navigate(imobiliariaId ? '/empresa/assinatura' : '/minha-assinatura');
+        return;
+      }
+      
+      // Verificar se é erro de assinatura inativa
+      if (error?.message?.includes('Assinatura inativa ou inexistente')) {
+        toast({
+          variant: 'destructive',
+          title: 'Assinatura inativa',
+          description: 'Você precisa de uma assinatura ativa para criar fichas.',
+        });
+        navigate(imobiliariaId ? '/empresa/assinatura' : '/minha-assinatura');
+        return;
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Erro ao criar registro',
