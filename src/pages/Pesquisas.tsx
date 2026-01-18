@@ -240,83 +240,140 @@ export default function Pesquisas() {
           </TabsList>
         </Tabs>
 
-        {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : surveys && surveys.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="hidden md:table-cell">Imóvel</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden sm:table-cell">Data Envio</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {surveys.map((survey) => (
-                    <TableRow key={survey.id}>
-                      <TableCell className="font-medium">
-                        {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell max-w-[200px] truncate">
-                        {survey.fichas_visita?.imovel_endereco || '-'}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(survey.status)}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {survey.sent_at 
-                          ? format(new Date(survey.sent_at), 'dd/MM/yyyy', { locale: ptBR })
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {survey.status === 'responded' && (
-                            <>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setSelectedSurvey(survey)}
-                              >
-                                Ver respostas
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleExportSinglePDF(survey)}
-                                title="Exportar PDF"
-                              >
-                                <FileText className="h-4 w-4 text-primary" />
-                              </Button>
-                            </>
-                          )}
-                          {survey.fichas_visita && (
-                            <Link to={`/fichas/${survey.ficha_id}`}>
-                              <Button variant="ghost" size="sm">
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                          )}
-                        </div>
-                      </TableCell>
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : surveys && surveys.length > 0 ? (
+          <>
+            {/* Mobile Cards */}
+            <div className="block md:hidden space-y-3">
+              {surveys.map((survey) => (
+                <Card key={survey.id} className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-medium truncate flex-1 mr-2">
+                      {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                    </span>
+                    {getStatusBadge(survey.status)}
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate mb-1">
+                    {survey.fichas_visita?.imovel_endereco || 'Endereço não informado'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Enviado: {survey.sent_at 
+                      ? format(new Date(survey.sent_at), 'dd/MM/yyyy', { locale: ptBR })
+                      : '-'
+                    }
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {survey.status === 'responded' && (
+                      <>
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => setSelectedSurvey(survey)}
+                        >
+                          Ver respostas
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleExportSinglePDF(survey)}
+                          title="Exportar PDF"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                    {survey.fichas_visita && (
+                      <Link to={`/fichas/${survey.ficha_id}`}>
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Ver ficha
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <Card className="hidden md:block">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Imóvel</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Data Envio</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <ClipboardCheck className="h-12 w-12 mb-4 opacity-50" />
-                <p>Nenhuma pesquisa encontrada</p>
-                <p className="text-sm">As pesquisas criadas nas fichas aparecerão aqui</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {surveys.map((survey) => (
+                      <TableRow key={survey.id}>
+                        <TableCell className="font-medium">
+                          {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {survey.fichas_visita?.imovel_endereco || '-'}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(survey.status)}</TableCell>
+                        <TableCell>
+                          {survey.sent_at 
+                            ? format(new Date(survey.sent_at), 'dd/MM/yyyy', { locale: ptBR })
+                            : '-'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {survey.status === 'responded' && (
+                              <>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setSelectedSurvey(survey)}
+                                >
+                                  Ver respostas
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleExportSinglePDF(survey)}
+                                  title="Exportar PDF"
+                                >
+                                  <FileText className="h-4 w-4 text-primary" />
+                                </Button>
+                              </>
+                            )}
+                            {survey.fichas_visita && (
+                              <Link to={`/fichas/${survey.ficha_id}`}>
+                                <Button variant="ghost" size="sm">
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <ClipboardCheck className="h-12 w-12 mb-4 opacity-50" />
+              <p>Nenhuma pesquisa encontrada</p>
+              <p className="text-sm">As pesquisas criadas nas fichas aparecerão aqui</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Response Dialog */}
