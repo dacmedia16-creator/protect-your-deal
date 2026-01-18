@@ -688,8 +688,14 @@ serve(async (req) => {
         yPosition -= 15;
       }
       yPosition = drawField('Nome', profile.nome, yPosition);
+      if (profile.cpf) {
+        yPosition = drawField('CPF', formatCPF(profile.cpf), yPosition);
+      }
       if (profile.creci) {
         yPosition = drawField('CRECI', profile.creci, yPosition);
+      }
+      if (profile.email) {
+        yPosition = drawField('Email', profile.email, yPosition);
       }
       const imobNomePrincipal = corretorPrincipalImobiliaria || profile.imobiliaria;
       if (imobNomePrincipal) {
@@ -713,8 +719,14 @@ serve(async (req) => {
         });
         yPosition -= 15;
         yPosition = drawField('Nome', partnerProfile.nome, yPosition);
+        if (partnerProfile.cpf) {
+          yPosition = drawField('CPF', formatCPF(partnerProfile.cpf), yPosition);
+        }
         if (partnerProfile.creci) {
           yPosition = drawField('CRECI', partnerProfile.creci, yPosition);
+        }
+        if (partnerProfile.email) {
+          yPosition = drawField('Email', partnerProfile.email, yPosition);
         }
         const imobNomeParceiro = partnerImobiliaria || partnerProfile.imobiliaria;
         if (imobNomeParceiro) {

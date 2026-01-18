@@ -16,6 +16,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import { formatPhone, unformatPhone, isValidPhone } from '@/lib/phone';
+import { formatCPF, validateCPF } from '@/lib/cpf';
 import { forceAppRefresh, getAppExecutionModeLabel, getBuildVersion } from '@/lib/forceAppRefresh';
 
 interface Profile {
@@ -24,6 +25,8 @@ interface Profile {
   nome: string;
   creci: string | null;
   telefone: string | null;
+  cpf: string | null;
+  email: string | null;
   foto_url: string | null;
   imobiliaria: string | null;
 }
@@ -60,11 +63,17 @@ export default function Perfil() {
   const [nome, setNome] = useState('');
   const [creci, setCreci] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [email, setEmail] = useState('');
   const [imobiliaria, setImobiliaria] = useState('');
 
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTelefone(formatPhone(e.target.value));
+  };
+  
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCpf(formatCPF(e.target.value));
   };
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
@@ -94,6 +103,8 @@ export default function Perfil() {
       setNome(data.nome || '');
       setCreci(data.creci || '');
       setTelefone(formatPhone(data.telefone || ''));
+      setCpf(formatCPF(data.cpf || ''));
+      setEmail(data.email || user!.email || '');
       setImobiliaria(data.imobiliaria || '');
       setFotoUrl(data.foto_url);
     } catch (error) {
@@ -171,6 +182,8 @@ export default function Perfil() {
           nome: nome.trim(),
           creci: creci.trim() || null,
           telefone: unformatPhone(telefone) || null,
+          cpf: cpf.replace(/\D/g, '') || null,
+          email: email.trim() || null,
           imobiliaria: imobiliaria.trim() || null,
         })
         .eq('user_id', user.id);
@@ -300,6 +313,45 @@ export default function Perfil() {
               {telefone.length > 0 && !isValidPhone(telefone) && (
                 <p className="text-xs text-destructive">Mínimo 10 dígitos</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cpf">CPF</Label>
+              <div className="relative">
+                <Input
+                  id="cpf"
+                  type="text"
+                  inputMode="numeric"
+                  value={cpf}
+                  onChange={handleCpfChange}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  className={cpf.length > 0 ? (validateCPF(cpf) ? 'border-green-500 pr-10' : 'border-destructive pr-10') : ''}
+                />
+                {cpf.length > 0 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {validateCPF(cpf) ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {cpf.length > 0 && !validateCPF(cpf) && (
+                <p className="text-xs text-destructive">CPF inválido</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+              />
             </div>
 
             <div className="space-y-2">

@@ -11,6 +11,7 @@ interface CreateCorretorRequest {
   senha: string;
   telefone?: string;
   creci?: string;
+  cpf?: string;
   autonomo?: boolean; // Flag to create autonomous corretor
 }
 
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CreateCorretorRequest = await req.json();
-    const { nome, email, senha, telefone, creci, autonomo } = body;
+    const { nome, email, senha, telefone, creci, cpf, autonomo } = body;
 
     console.log("Creating corretor:", email, "autonomo:", autonomo);
 
@@ -192,6 +193,8 @@ Deno.serve(async (req) => {
         nome: nome,
         telefone: telefone || null,
         creci: creci || null,
+        cpf: cpf || null,
+        email: email || null,
         ativo: true,
       })
       .eq("user_id", userId);

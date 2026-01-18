@@ -11,6 +11,7 @@ interface RegistroCorretorRequest {
     email: string;
     telefone?: string;
     creci?: string;
+    cpf?: string;
     senha: string;
   };
   plano_id: string;
@@ -214,7 +215,7 @@ Deno.serve(async (req) => {
 
     console.log("User role created");
 
-    // 3. Update profile with additional data (profile is created by trigger)
+  // 3. Update profile with additional data (profile is created by trigger)
     console.log("Updating profile...");
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -222,6 +223,8 @@ Deno.serve(async (req) => {
         nome: corretor.nome,
         telefone: corretor.telefone || null,
         creci: corretor.creci || null,
+        cpf: corretor.cpf || null,
+        email: corretor.email || null,
         imobiliaria_id: imobiliariaId, // null se autônomo, ID se vinculado
       })
       .eq("user_id", userId);
