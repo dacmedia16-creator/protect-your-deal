@@ -24,6 +24,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -34,7 +40,12 @@ import {
   ExternalLink,
   Star,
   ArrowLeft,
+  Download,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
+import { useSurveyExport } from '@/hooks/useSurveyExport';
+import { toast } from 'sonner';
 
 interface SurveyResponse {
   id: string;
@@ -72,9 +83,10 @@ interface Survey {
 type FilterStatus = 'all' | 'pending' | 'responded';
 
 export default function EmpresaPesquisas() {
-  const { imobiliariaId } = useUserRole();
+  const { imobiliariaId, imobiliaria } = useUserRole();
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const { exportToExcel, exportToPDF } = useSurveyExport();
 
   const { data: surveys, isLoading } = useQuery({
     queryKey: ['empresa-surveys', imobiliariaId, filter],
@@ -172,6 +184,27 @@ export default function EmpresaPesquisas() {
   const respondedSurveys = surveys?.filter(s => s.status === 'responded').length || 0;
   const pendingSurveys = surveys?.filter(s => s.status === 'pending' || s.status === 'sent').length || 0;
 
+  const handleExportExcel = () => {
+    if (!surveys) return;
+    try {
+      exportToExcel(surveys, imobiliaria?.nome || 'Imobiliaria');
+      toast.success('Relatório exportado com sucesso!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!surveys) return;
+    try {
+      exportToPDF(surveys, imobiliaria?.nome || 'Imobiliaria');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
+    }
+  };
+
+  const hasRespondedSurveys = surveys?.some(s => s.status === 'responded') || false;
+
   return (
     <ImobiliariaLayout>
       <div className="space-y-6">
@@ -189,6 +222,28 @@ export default function EmpresaPesquisas() {
               </p>
             </div>
           </div>
+          
+          {/* Export Button */}
+          {hasRespondedSurveys && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-popover">
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4" />
+                  Exportar PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Exportar Excel (CSV)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Stats Cards */}
