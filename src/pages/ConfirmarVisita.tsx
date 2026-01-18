@@ -97,6 +97,13 @@ export default function ConfirmarVisita() {
         setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
       }
 
+      // Servidor respondeu com erro de validação (token inválido)
+      if (data?.error && data?.valid === false && !data?.expired && !data?.already_confirmed) {
+        setError(data.error);
+        setLoading(false);
+        return;
+      }
+
       // Erro de rede real (não conseguiu conectar ao servidor)
       if (error && !data) {
         // Retry automático se ainda não atingiu o máximo
@@ -118,13 +125,6 @@ export default function ConfirmarVisita() {
       // Código expirado ou tentativas esgotadas
       if (data?.expired || data?.max_attempts_exceeded) {
         setExpired(true);
-      }
-
-      // Link realmente inválido (sem dados úteis)
-      if (!data?.valid && !data?.expired && !data?.max_attempts_exceeded && !data?.already_confirmed) {
-        setError(data?.error || 'Link inválido');
-        setLoading(false);
-        return;
       }
     } catch (err) {
       // Retry automático em caso de exceção

@@ -35,8 +35,8 @@ serve(async (req) => {
 
     if (otpError || !otp) {
       return new Response(
-        JSON.stringify({ error: 'Link inválido', valid: false }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Link inválido ou expirado', valid: false }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
