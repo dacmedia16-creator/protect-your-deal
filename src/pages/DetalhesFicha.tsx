@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -76,7 +75,6 @@ export default function DetalhesFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { role, imobiliariaId } = useUserRole();
-  const { enabled: surveyFeatureEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { toast } = useToast();
   
   // Dynamic return URL based on user role
@@ -179,7 +177,30 @@ export default function DetalhesFicha() {
     enabled: !!user && !!id,
   });
 
-  // Realtime subscription para notificação sonora quando OTP é confirmado
+  // Buscar feature flag de pesquisa baseada na imobiliaria_id da FICHA (não do usuário logado)
+  const { data: surveyFeatureData } = useQuery({
+    queryKey: ['ficha-survey-feature', ficha?.imobiliaria_id],
+    queryFn: async () => {
+      if (!ficha?.imobiliaria_id) return { enabled: false };
+      
+      const { data, error } = await supabase
+        .from('imobiliaria_feature_flags')
+        .select('enabled')
+        .eq('imobiliaria_id', ficha.imobiliaria_id)
+        .eq('feature_key', 'post_visit_survey')
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Erro ao buscar feature flag da ficha:', error);
+        return { enabled: false };
+      }
+      
+      return { enabled: data?.enabled ?? false };
+    },
+    enabled: !!ficha?.imobiliaria_id,
+  });
+
+  const surveyFeatureEnabled = surveyFeatureData?.enabled ?? false;
   useEffect(() => {
     if (!id || !user) return;
 
