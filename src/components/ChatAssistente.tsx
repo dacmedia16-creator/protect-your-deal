@@ -698,7 +698,10 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     <div
       className={cn(
         chatPositionClass,
-        "bg-background border rounded-2xl shadow-2xl animate-chat-slide-up",
+        "bg-background border rounded-2xl shadow-2xl",
+        userContext.isLoggedIn 
+          ? "animate-in fade-in-0 slide-in-from-top-4 sm:slide-in-from-bottom-4 duration-300"
+          : "animate-chat-slide-up",
         isMinimized 
           ? "w-72 h-14" 
           : "w-[calc(100vw-2rem)] sm:w-[380px] h-[70vh] sm:h-[550px] max-h-[80vh] flex flex-col"
