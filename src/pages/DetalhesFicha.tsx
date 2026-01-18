@@ -76,6 +76,7 @@ export default function DetalhesFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { role, imobiliariaId } = useUserRole();
+  const { enabled: surveyFeatureEnabled } = useUserFeatureFlag('post_visit_survey');
   const { toast } = useToast();
   
   // Dynamic return URL based on user role
@@ -2105,8 +2106,17 @@ export default function DetalhesFicha() {
                   <p className="font-medium">{ficha.observacoes}</p>
                 </div>
               )}
-            </CardContent>
+          </CardContent>
           </Card>
+
+          {/* Pesquisa Pós-Visita - Only when complete or finalized partial AND feature enabled */}
+          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && surveyFeatureEnabled && (
+            <SurveySection 
+              fichaId={ficha.id} 
+              compradorNome={ficha.comprador_nome} 
+              imovelEndereco={ficha.imovel_endereco}
+            />
+          )}
 
           {/* Dados Jurídicos - Only when complete or finalized partial */}
           {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (confirmacaoProprietario || confirmacaoComprador) && (
