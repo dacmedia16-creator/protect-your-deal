@@ -42,6 +42,7 @@ import ConviteParceiroExterno from "./pages/ConviteParceiroExterno";
 import TermosDeUso from "./pages/TermosDeUso";
 import AceitarTermos from "./pages/AceitarTermos";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import SurveyPublic from "./pages/SurveyPublic";
 
 // Corretor pages
 import Dashboard from "./pages/Dashboard";
@@ -140,6 +141,7 @@ const App = () => (
                 <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
                 <Route path="/auth/recuperar-senha" element={<RecuperarSenha />} />
                 <Route path="/auth/redefinir-senha" element={<RedefinirSenha />} />
+                <Route path="/survey/:token" element={<SurveyPublic />} />
                 
                 {/* Protected route for terms acceptance */}
                 <Route path="/aceitar-termos" element={

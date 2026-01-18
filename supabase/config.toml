@@ -113,3 +113,21 @@ verify_jwt = true
 
 [functions.process-otp-queue]
 verify_jwt = false
+
+[functions.admin-promote-corretor]
+verify_jwt = true
+
+[functions.asaas-webhook-test]
+verify_jwt = false
+
+[functions.admin-criar-acesso-afiliado]
+verify_jwt = true
+
+[functions.get-survey-by-token]
+verify_jwt = false
+
+[functions.submit-survey-response]
+verify_jwt = false
+
+[functions.create-survey]
+verify_jwt = false
