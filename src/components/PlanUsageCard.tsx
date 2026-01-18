@@ -57,8 +57,9 @@ export function PlanUsageCard({ compact = false, className = '', showUpgradeButt
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
+      // Contar do log de uso (fichas deletadas continuam contando)
       const { count: fichasMes } = await supabase
-        .from('fichas_visita')
+        .from('ficha_usage_log')
         .select('*', { count: 'exact', head: true })
         .eq('imobiliaria_id', imobiliariaId)
         .gte('created_at', startOfMonth.toISOString());
