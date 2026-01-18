@@ -17,31 +17,35 @@ import {
   CreditCard,
   Menu,
   X,
-  UserCircle
+  UserCircle,
+  ClipboardCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 
 interface ImobiliariaLayoutProps {
   children: ReactNode;
 }
-
-const navItems = [
-  { href: '/empresa', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/empresa/corretores', icon: Users, label: 'Corretores' },
-  { href: '/empresa/equipes', icon: Users2, label: 'Equipes' },
-  { href: '/empresa/fichas', icon: FileText, label: 'Registros de Visita' },
-  { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
-  { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
-  { href: '/empresa/configuracoes', icon: Settings, label: 'Configurações' },
-];
 
 export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { imobiliaria, assinatura } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+
+  const navItems = [
+    { href: '/empresa', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/empresa/corretores', icon: Users, label: 'Corretores' },
+    { href: '/empresa/equipes', icon: Users2, label: 'Equipes' },
+    { href: '/empresa/fichas', icon: FileText, label: 'Registros de Visita' },
+    ...(surveyEnabled ? [{ href: '/empresa/pesquisas', icon: ClipboardCheck, label: 'Pesquisas' }] : []),
+    { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
+    { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
+    { href: '/empresa/configuracoes', icon: Settings, label: 'Configurações' },
+  ];
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
