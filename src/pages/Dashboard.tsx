@@ -5,11 +5,13 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { 
   FileText, 
   Users, 
@@ -20,6 +22,7 @@ import {
   Handshake,
   RefreshCw,
   Bug,
+  ClipboardCheck,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
@@ -40,6 +43,9 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
   const [showDebug, setShowDebug] = useState(false);
+  
+  // Verificar se pesquisa pós-visita está habilitada
+  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
 
   // Hook de notificação para fichas confirmadas
   useFichaNotification();
@@ -98,12 +104,12 @@ export default function Dashboard() {
   });
 
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard-stats', user?.id],
+    queryKey: ['dashboard-stats', user?.id, surveyEnabled],
     queryFn: async () => {
       if (!user) return null;
       
-      // Buscar fichas (dono + parceiro) e clientes em paralelo
-      const [fichasResult, clientes] = await Promise.all([
+      // Buscar fichas (dono + parceiro), clientes e pesquisas em paralelo
+      const [fichasResult, clientes, surveysResult] = await Promise.all([
         supabase
           .from('fichas_visita')
           .select('status, corretor_parceiro_id, user_id')
@@ -112,9 +118,17 @@ export default function Dashboard() {
           .from('clientes')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id),
+        // Buscar pesquisas apenas se a feature estiver habilitada
+        surveyEnabled 
+          ? supabase
+              .from('surveys')
+              .select('status')
+              .eq('corretor_id', user.id)
+          : Promise.resolve({ data: [] }),
       ]);
 
       const todasFichas = fichasResult.data || [];
+      const surveysData = surveysResult.data || [];
       
       // Separar fichas onde o usuário é parceiro
       const fichasComoParceiro = todasFichas.filter(f => f.corretor_parceiro_id === user.id);
@@ -128,6 +142,12 @@ export default function Dashboard() {
         fichasParceiro: {
           total: fichasComoParceiro.length,
           pendentes: fichasComoParceiro.filter(f => isFichaPendente(f.status)).length,
+        },
+        // Stats de pesquisas (só se feature habilitada)
+        surveys: {
+          total: surveysData.length,
+          respondidas: surveysData.filter(s => s.status === 'responded').length,
+          pendentes: surveysData.filter(s => s.status === 'pending' || s.status === 'sent').length,
         },
       };
     },
@@ -311,6 +331,35 @@ export default function Dashboard() {
                     ? `${fichasParceiro.pendentes} pendente${fichasParceiro.pendentes > 1 ? 's' : ''} de confirmação`
                     : 'Todas confirmadas'}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Card de Pesquisas Pós-Visita */}
+        {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
+          <Card 
+            className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6"
+            style={{ animationDelay: '0.5s' }}
+            onClick={() => navigate('/empresa/pesquisas')}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
+                <ClipboardCheck className="h-6 w-6 text-purple-500 dark:text-purple-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-purple-600 dark:text-purple-400">
+                  {stats.surveys.respondidas} de {stats.surveys.total} pesquisas respondidas
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {stats.surveys.pendentes > 0 
+                    ? `${stats.surveys.pendentes} aguardando resposta`
+                    : 'Todas respondidas'}
+                </p>
+                <Progress 
+                  value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0}
+                  className="h-1.5 mt-2"
+                />
               </div>
             </CardContent>
           </Card>
