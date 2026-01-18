@@ -198,7 +198,7 @@ export function PWAInstallModal() {
         number: 1,
         title: 'Toque nos 3 pontinhos',
         description: 'No canto superior direito do Chrome',
-        image: '/help-images/android-passo-1.jpg',
+        image: '/help-images/android-passo-1-v2.jpg',
         icon: MoreVertical,
       },
       {
