@@ -342,7 +342,7 @@ export default function Dashboard() {
           <Card 
             className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6"
             style={{ animationDelay: '0.5s' }}
-            onClick={() => navigate('/empresa/pesquisas')}
+            onClick={() => navigate('/pesquisas')}
           >
             <CardContent className="p-4 flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
