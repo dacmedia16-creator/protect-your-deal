@@ -687,6 +687,30 @@ export type Database = {
           },
         ]
       }
+      ficha_usage_log: {
+        Row: {
+          created_at: string
+          ficha_id: string
+          id: string
+          imobiliaria_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_id: string
+          id?: string
+          imobiliaria_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ficha_id?: string
+          id?: string
+          imobiliaria_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       fichas_visita: {
         Row: {
           backup_gerado_em: string | null

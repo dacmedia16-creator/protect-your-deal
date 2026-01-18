@@ -37,9 +37,10 @@ export function UpgradeBanner({ className = '' }: UpgradeBannerProps) {
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
+        // Contar do log de uso (fichas deletadas continuam contando)
         const [fichasRes, clientesRes, imoveisRes] = await Promise.all([
           supabase
-            .from('fichas_visita')
+            .from('ficha_usage_log')
             .select('*', { count: 'exact', head: true })
             .eq('imobiliaria_id', imobiliariaId)
             .gte('created_at', startOfMonth.toISOString()),
