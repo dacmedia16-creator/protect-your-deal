@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { IOSInstallMockup } from "@/components/mockups/IOSInstallMockup";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import { 
   Smartphone, 
   Download, 
@@ -33,6 +35,7 @@ export default function InstalarApp() {
   const [androidStep, setAndroidStep] = useState<1 | 2 | 3>(1);
   const [isAutoplayEnabled, setIsAutoplayEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<string>(isIOS ? "ios" : isAndroid ? "android" : "ios");
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   // Autoplay effect
   useEffect(() => {
@@ -521,8 +524,14 @@ export default function InstalarApp() {
                         </div>
                       </div>
                       
-                      {/* Screenshot */}
-                      <div className="relative bg-black/5">
+                      {/* Screenshot - clicável para zoom */}
+                      <div 
+                        className="relative bg-black/5 cursor-zoom-in"
+                        onClick={() => {
+                          const imgSrc = androidStep === 1 ? '/help-images/android-passo-1-v2.jpg' : `/help-images/android-passo-${androidStep}.jpg`;
+                          setZoomedImage(imgSrc);
+                        }}
+                      >
                         <img 
                           src={androidStep === 1 ? '/help-images/android-passo-1-v2.jpg' : `/help-images/android-passo-${androidStep}.jpg`}
                           alt={`Passo ${androidStep}`}
@@ -530,6 +539,9 @@ export default function InstalarApp() {
                           loading="lazy"
                           draggable={false}
                         />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+                          <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">Toque para ampliar</span>
+                        </div>
                       </div>
                     </div>
 
@@ -749,6 +761,37 @@ export default function InstalarApp() {
           </Link>
         </div>
       </main>
+
+      {/* Modal de Zoom */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setZoomedImage(null)}
+          >
+            <motion.img
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              src={zoomedImage}
+              alt="Imagem ampliada"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <button 
+              className="absolute top-4 right-4 text-white/80 hover:text-white p-2 bg-black/50 rounded-full"
+              onClick={() => setZoomedImage(null)}
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+              Toque para fechar
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

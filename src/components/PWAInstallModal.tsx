@@ -191,6 +191,7 @@ export function PWAInstallModal() {
 
   // Android instructions for manual install (when prompt doesn't fire)
   const AndroidManualInstructions = () => {
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [direction, setDirection] = useState(0);
     
     const steps = [
@@ -318,8 +319,14 @@ export function PWAInstallModal() {
                 }`} />
               </div>
               
-              {/* Screenshot */}
-              <div className="relative bg-black/5 pointer-events-none">
+              {/* Screenshot - clicável para zoom */}
+              <div 
+                className="relative bg-black/5 cursor-zoom-in"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomedImage(currentStep.image);
+                }}
+              >
                 <img 
                   src={currentStep.image} 
                   alt={`Passo ${currentStep.number}: ${currentStep.title}`}
@@ -327,6 +334,9 @@ export function PWAInstallModal() {
                   loading="lazy"
                   draggable={false}
                 />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+                  <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">Toque para ampliar</span>
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -367,6 +377,36 @@ export function PWAInstallModal() {
             </Button>
           )}
         </div>
+        {/* Modal de Zoom */}
+        <AnimatePresence>
+          {zoomedImage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4"
+              onClick={() => setZoomedImage(null)}
+            >
+              <motion.img
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                src={zoomedImage}
+                alt="Imagem ampliada"
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+              <button 
+                className="absolute top-4 right-4 text-white/80 hover:text-white p-2 bg-black/50 rounded-full"
+                onClick={() => setZoomedImage(null)}
+              >
+                <X className="h-6 w-6" />
+              </button>
+              <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+                Toque para fechar
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };
