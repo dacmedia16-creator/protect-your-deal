@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, FileCheck, Users, Loader2, Building2, Check, Ticket, X } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+import { formatPhone } from '@/lib/phone';
+import { formatCPF } from '@/lib/cpf';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -41,7 +43,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ email: '', password: '', nome: '' });
+  const [signupData, setSignupData] = useState({ email: '', password: '', nome: '', telefone: '', cpf: '' });
   
   // Estado para dados da imobiliária (login)
   const [imobiliariaData, setImobiliariaData] = useState<ImobiliariaData | null>(null);
@@ -281,6 +283,8 @@ export default function Auth() {
               nome: signupData.nome,
               email: signupData.email,
               senha: signupData.password,
+              telefone: signupData.telefone.replace(/\D/g, ''),
+              cpf: signupData.cpf.replace(/\D/g, ''),
             },
             codigo_imobiliaria: parseInt(codigoImobiliaria, 10),
             codigo_cupom: cupomInfo?.valido ? codigoCupom : null,
@@ -303,7 +307,7 @@ export default function Auth() {
         });
         
         // Limpar formulário e mudar para aba de login
-        setSignupData({ email: '', password: '', nome: '' });
+        setSignupData({ email: '', password: '', nome: '', telefone: '', cpf: '' });
         setVincularImobiliaria(false);
         setCodigoImobiliaria('');
         setImobiliariaEncontrada(null);
@@ -521,6 +525,36 @@ export default function Auth() {
                         value={signupData.nome}
                         onChange={(e) => setSignupData({ ...signupData, nome: e.target.value })}
                         required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-telefone">Telefone (WhatsApp)</Label>
+                      <Input
+                        id="signup-telefone"
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="(00) 00000-0000"
+                        value={signupData.telefone}
+                        onChange={(e) => setSignupData({ 
+                          ...signupData, 
+                          telefone: formatPhone(e.target.value) 
+                        })}
+                        maxLength={15}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-cpf">CPF</Label>
+                      <Input
+                        id="signup-cpf"
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="000.000.000-00"
+                        value={signupData.cpf}
+                        onChange={(e) => setSignupData({ 
+                          ...signupData, 
+                          cpf: formatCPF(e.target.value) 
+                        })}
+                        maxLength={14}
                       />
                     </div>
                     <div className="space-y-2">
