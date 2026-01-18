@@ -524,7 +524,7 @@ export default function InstalarApp() {
                       {/* Screenshot */}
                       <div className="relative bg-black/5">
                         <img 
-                          src={`/help-images/android-passo-${androidStep}.jpg`}
+                          src={androidStep === 1 ? '/help-images/android-passo-1-v2.jpg' : `/help-images/android-passo-${androidStep}.jpg`}
                           alt={`Passo ${androidStep}`}
                           className="w-full h-auto max-h-64 object-contain"
                           loading="lazy"
