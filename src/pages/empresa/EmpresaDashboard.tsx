@@ -352,8 +352,44 @@ export default function EmpresaDashboard() {
                       </span>
                     </div>
                   )}
+
+                  {/* Uso do Plano */}
+                  <div className="border-t pt-4 mt-2 space-y-3">
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1.5">
+                          <FileText className="h-3.5 w-3.5" />
+                          Registros/Mês
+                        </span>
+                        <span className="font-medium">
+                          {stats?.fichasMes || 0} / {plano.max_fichas_mes >= 99999 ? '∞' : plano.max_fichas_mes}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={Math.min(fichasPercent, 100)} 
+                        className={`h-2 ${fichasPercent >= 100 ? '[&>div]:bg-destructive' : fichasPercent >= 80 ? '[&>div]:bg-warning' : ''}`} 
+                      />
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" />
+                          Corretores
+                        </span>
+                        <span className="font-medium">
+                          {stats?.totalCorretores || 0} / {plano.max_corretores >= 99999 ? '∞' : plano.max_corretores}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={Math.min(corretoresPercent, 100)} 
+                        className={`h-2 ${corretoresPercent >= 100 ? '[&>div]:bg-destructive' : corretoresPercent >= 80 ? '[&>div]:bg-warning' : ''}`} 
+                      />
+                    </div>
+                  </div>
+
                   <Link to="/empresa/assinatura">
-                    <Button variant="outline" className="w-full mt-4">
+                    <Button variant="outline" className="w-full mt-2">
                       Gerenciar assinatura
                     </Button>
                   </Link>
