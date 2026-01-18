@@ -14,7 +14,8 @@ import {
   ChevronDown,
   CreditCard,
   Handshake,
-  Download
+  Download,
+  ClipboardCheck
 } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
@@ -30,21 +31,24 @@ import {
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/fichas', label: 'Registros', icon: FileText },
-  { to: '/convites', label: 'Convites', icon: Handshake },
-  { to: '/clientes', label: 'Clientes', icon: Users },
-];
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 
 export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliaria, imobiliariaId } = useUserRole();
   const { isInstalled, isIOS, install } = usePWAInstall();
+  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
+
+  const navItems = [
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/fichas', label: 'Registros', icon: FileText },
+    { to: '/convites', label: 'Convites', icon: Handshake },
+    { to: '/clientes', label: 'Clientes', icon: Users },
+    ...(surveyEnabled ? [{ to: '/empresa/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+  ];
   
   const handleInstallApp = async () => {
     if (isIOS) {

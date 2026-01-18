@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -18,12 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
-
-const navItems = [
-  { path: '/dashboard', label: 'Início', icon: Home },
-  { path: '/fichas', label: 'Registros', icon: FileText },
-  { path: '/convites', label: 'Convites', icon: Handshake },
-];
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 
 export function MobileNav() {
   const location = useLocation();
@@ -31,9 +26,17 @@ export function MobileNav() {
   const { user, signOut } = useAuth();
   const { role, imobiliariaId } = useUserRole();
   const { isInstalled, isIOS, install } = usePWAInstall();
+  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
+
+  const navItems = [
+    { path: '/dashboard', label: 'Início', icon: Home },
+    { path: '/fichas', label: 'Registros', icon: FileText },
+    { path: '/convites', label: 'Convites', icon: Handshake },
+    ...(surveyEnabled ? [{ path: '/empresa/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+  ];
   
   const handleInstallApp = async () => {
     if (isIOS) {
