@@ -723,7 +723,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           : "animate-chat-slide-up",
         isMinimized 
           ? "w-72 h-14" 
-          : "w-[calc(100vw-2rem)] sm:w-[380px] h-[70vh] sm:h-[550px] max-h-[80vh] flex flex-col"
+          : "w-[calc(100vw-2rem)] sm:w-[380px] h-[calc(100dvh-10rem)] sm:h-[550px] max-h-[500px] sm:max-h-[80vh] flex flex-col"
       )}
     >
       {/* Header */}
