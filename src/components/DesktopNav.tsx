@@ -47,7 +47,7 @@ export function DesktopNav() {
     { to: '/fichas', label: 'Registros', icon: FileText },
     { to: '/convites', label: 'Convites', icon: Handshake },
     { to: '/clientes', label: 'Clientes', icon: Users },
-    ...(surveyEnabled ? [{ to: '/empresa/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+    ...(surveyEnabled ? [{ to: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
   ];
   
   const handleInstallApp = async () => {
