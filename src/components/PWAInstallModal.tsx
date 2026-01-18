@@ -5,10 +5,7 @@ import {
   Download, 
   X, 
   Smartphone, 
-  Share,
   MoreVertical,
-  Plus,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Check
@@ -25,15 +22,15 @@ export function PWAInstallModal() {
     isInstalled, 
     isIOS, 
     isAndroid, 
-    isSafari,
     isIOSWrongBrowser,
     install 
   } = usePWAInstall();
   
   const [isVisible, setIsVisible] = useState(false);
-  const [step, setStep] = useState(1);
+  const [iosStep, setIosStep] = useState(0);
   const [androidStep, setAndroidStep] = useState(0);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   useEffect(() => {
     // Don't show if already installed
@@ -89,109 +86,197 @@ export function PWAInstallModal() {
     }
   }, [isInstallable, install]);
 
-  const nextStep = useCallback(() => {
-    setStep((prev) => Math.min(prev + 1, 3));
-  }, []);
+  // iOS Instructions component with 4 steps and real screenshots
+  const IOSInstructions = () => {
+    const [direction, setDirection] = useState(0);
+    
+    const steps = [
+      {
+        number: 1,
+        title: 'Toque nos 3 pontinhos',
+        description: 'Na barra inferior do Safari',
+        image: '/help-images/ios-passo-1.jpg',
+      },
+      {
+        number: 2,
+        title: 'Toque em "Compartilhar"',
+        description: 'No menu que apareceu',
+        image: '/help-images/ios-passo-2.jpg',
+      },
+      {
+        number: 3,
+        title: 'Adicionar à Tela de Início',
+        description: 'Role e toque na opção',
+        image: '/help-images/ios-passo-3.jpg',
+      },
+      {
+        number: 4,
+        title: 'Toque em "Adicionar"',
+        description: 'No canto superior direito',
+        image: '/help-images/ios-passo-4.jpg',
+        isLast: true,
+      },
+    ];
 
-  // iOS Instructions component
-  const IOSInstructions = () => (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">
-          Instalar VisitaSegura
-        </h2>
-        <p className="text-muted-foreground">
-          Siga os passos abaixo
-        </p>
-      </div>
+    const currentStep = steps[iosStep];
+    const isLastStep = iosStep === steps.length - 1;
+    const isFirstStep = iosStep === 0;
 
+    const goNext = () => {
+      if (!isLastStep) {
+        setDirection(1);
+        setIosStep((prev) => prev + 1);
+      }
+    };
+
+    const goPrev = () => {
+      if (!isFirstStep) {
+        setDirection(-1);
+        setIosStep((prev) => prev - 1);
+      }
+    };
+
+    const handleDragEnd = (
+      _e: MouseEvent | TouchEvent | PointerEvent,
+      { offset, velocity }: { offset: { x: number }; velocity: { x: number } }
+    ) => {
+      const swipe = Math.abs(offset.x) * velocity.x;
+      const threshold = 500;
+      
+      if (swipe < -threshold && !isLastStep) {
+        goNext();
+      } else if (swipe > threshold && !isFirstStep) {
+        goPrev();
+      }
+    };
+
+    return (
       <div className="space-y-4">
-        {/* Step 1 */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
-            step === 1 ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/50'
-          }`}
-        >
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-            step > 1 ? 'bg-green-500 text-white' : step === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-          }`}>
-            {step > 1 ? <Check className="h-5 w-5" /> : '1'}
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Toque no ícone de compartilhar</p>
-            <p className="text-sm text-muted-foreground">Na barra inferior do Safari</p>
-          </div>
-          <div className="bg-primary/20 p-2 rounded-lg">
-            <Share className="h-6 w-6 text-primary" />
-          </div>
-        </motion.div>
-
-        {/* Step 2 */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
-            step === 2 ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/50'
-          }`}
-        >
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-            step > 2 ? 'bg-green-500 text-white' : step === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-          }`}>
-            {step > 2 ? <Check className="h-5 w-5" /> : '2'}
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Role e toque em "Adicionar à Tela de Início"</p>
-            <p className="text-sm text-muted-foreground">No menu que aparecerá</p>
-          </div>
-          <div className="bg-primary/20 p-2 rounded-lg">
-            <Plus className="h-6 w-6 text-primary" />
-          </div>
-        </motion.div>
-
-        {/* Step 3 */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
-            step === 3 ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/50'
-          }`}
-        >
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-            step === 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-          }`}>
-            3
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">Confirme tocando em "Adicionar"</p>
-            <p className="text-sm text-muted-foreground">No canto superior direito</p>
-          </div>
-          <div className="bg-primary/20 p-2 rounded-lg">
-            <Check className="h-6 w-6 text-primary" />
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Animated arrow pointing down */}
-      <motion.div 
-        className="flex justify-center pt-4"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ repeat: Infinity, duration: 1.5 }}
-      >
-        <div className="flex flex-col items-center gap-2 text-primary">
-          <ChevronDown className="h-8 w-8" />
-          <span className="text-sm font-medium">Toque abaixo para começar</span>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">
+            Instalar VisitaSegura
+          </h2>
+          <p className="text-muted-foreground">
+            Passo {iosStep + 1} de {steps.length}
+          </p>
         </div>
-      </motion.div>
-    </div>
-  );
+
+        {/* Progress dots */}
+        <div className="flex justify-center gap-2">
+          {steps.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setDirection(idx > iosStep ? 1 : -1);
+                setIosStep(idx);
+              }}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                idx === iosStep
+                  ? 'bg-primary w-6'
+                  : idx < iosStep
+                  ? 'bg-green-500'
+                  : 'bg-muted-foreground/30'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Carrossel com swipe */}
+        <div className="relative overflow-hidden touch-pan-y">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={iosStep}
+              initial={{ opacity: 0, x: direction >= 0 ? 100 : -100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction >= 0 ? -100 : 100 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleDragEnd}
+              className="rounded-xl overflow-hidden border cursor-grab active:cursor-grabbing select-none"
+            >
+              {/* Header do passo */}
+              <div className={`flex items-center gap-3 p-4 ${
+                currentStep.isLast ? 'bg-green-500/10' : 'bg-primary/10'
+              }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-lg font-bold ${
+                  currentStep.isLast 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-primary text-primary-foreground'
+                }`}>
+                  {currentStep.number}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground">{currentStep.title}</p>
+                  <p className="text-sm text-muted-foreground">{currentStep.description}</p>
+                </div>
+              </div>
+              
+              {/* Screenshot - clicável para zoom */}
+              <div 
+                className="relative bg-black/5 cursor-zoom-in"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setZoomedImage(currentStep.image);
+                }}
+              >
+                <img 
+                  src={currentStep.image} 
+                  alt={`Passo ${currentStep.number}: ${currentStep.title}`}
+                  className="w-full h-auto max-h-64 object-contain"
+                  loading="lazy"
+                  draggable={false}
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+                  <span className="text-white text-xs bg-black/50 px-2 py-1 rounded">Toque para ampliar</span>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Swipe hint */}
+        <p className="text-xs text-muted-foreground text-center">
+          ← Arraste para navegar →
+        </p>
+
+        {/* Navigation buttons */}
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={goPrev}
+            disabled={isFirstStep}
+            className="flex-1 h-12"
+          >
+            <ChevronLeft className="h-5 w-5 mr-1" />
+            Anterior
+          </Button>
+          
+          {isLastStep ? (
+            <Button
+              onClick={handleDismiss}
+              className="flex-1 h-12 bg-green-500 hover:bg-green-600"
+            >
+              <Check className="h-5 w-5 mr-1" />
+              Entendi
+            </Button>
+          ) : (
+            <Button
+              onClick={goNext}
+              className="flex-1 h-12"
+            >
+              Próximo
+              <ChevronRight className="h-5 w-5 ml-1" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // Android instructions for manual install (when prompt doesn't fire)
   const AndroidManualInstructions = () => {
-    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [direction, setDirection] = useState(0);
     
     const steps = [
@@ -377,36 +462,6 @@ export function PWAInstallModal() {
             </Button>
           )}
         </div>
-        {/* Modal de Zoom */}
-        <AnimatePresence>
-          {zoomedImage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4"
-              onClick={() => setZoomedImage(null)}
-            >
-              <motion.img
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
-                src={zoomedImage}
-                alt="Imagem ampliada"
-                className="max-w-full max-h-full object-contain rounded-lg"
-              />
-              <button 
-                className="absolute top-4 right-4 text-white/80 hover:text-white p-2 bg-black/50 rounded-full"
-                onClick={() => setZoomedImage(null)}
-              >
-                <X className="h-6 w-6" />
-              </button>
-              <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-                Toque para fechar
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     );
   };
@@ -459,54 +514,87 @@ export function PWAInstallModal() {
   );
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <>
-          {/* Backdrop */}
+    <>
+      <AnimatePresence>
+        {isVisible && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/95 backdrop-blur-sm z-[100]"
+              onClick={handleDismiss}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[100] max-w-md mx-auto"
+            >
+              <div className="relative bg-card rounded-3xl shadow-2xl border p-6 overflow-hidden">
+                {/* Close button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleDismiss}
+                  className="absolute top-4 right-4 h-8 w-8 rounded-full"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+
+                {/* Content based on platform */}
+                {isIOS && <IOSInstructions />}
+                {isAndroid && isInstallable && <AndroidInstall />}
+                {isAndroid && !isInstallable && <AndroidManualInstructions />}
+
+                {/* Skip button */}
+                <Button
+                  variant="ghost"
+                  onClick={handleDismiss}
+                  className="w-full mt-4 text-muted-foreground"
+                >
+                  Pular por agora
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Zoom */}
+      <AnimatePresence>
+        {zoomedImage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/95 backdrop-blur-sm z-[100]"
-            onClick={handleDismiss}
-          />
-
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[100] max-w-md mx-auto"
+            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setZoomedImage(null)}
           >
-            <div className="relative bg-card rounded-3xl shadow-2xl border p-6 overflow-hidden">
-              {/* Close button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDismiss}
-                className="absolute top-4 right-4 h-8 w-8 rounded-full"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-
-              {/* Content based on platform */}
-              {isIOS && <IOSInstructions />}
-              {isAndroid && isInstallable && <AndroidInstall />}
-              {isAndroid && !isInstallable && <AndroidManualInstructions />}
-
-              {/* Skip button */}
-              <Button
-                variant="ghost"
-                className="w-full mt-4 text-muted-foreground"
-                onClick={handleDismiss}
-              >
-                Agora não
-              </Button>
-            </div>
+            <motion.img
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              src={zoomedImage}
+              alt="Imagem ampliada"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+            <button 
+              className="absolute top-4 right-4 text-white/80 hover:text-white p-2 bg-black/50 rounded-full"
+              onClick={() => setZoomedImage(null)}
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+              Toque para fechar
+            </p>
           </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
