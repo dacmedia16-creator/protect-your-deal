@@ -264,26 +264,6 @@ export default function AdminPlanos() {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="max_clientes">Máx. Clientes</Label>
-                    <Input
-                      id="max_clientes"
-                      type="number"
-                      value={form.max_clientes}
-                      onChange={(e) => setForm({ ...form, max_clientes: parseInt(e.target.value) })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="max_imoveis">Máx. Imóveis</Label>
-                    <Input
-                      id="max_imoveis"
-                      type="number"
-                      value={form.max_imoveis}
-                      onChange={(e) => setForm({ ...form, max_imoveis: parseInt(e.target.value) })}
-                      required
-                    />
-                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -405,14 +385,6 @@ export default function AdminPlanos() {
                     <li className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                       <span>{plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>{plano.max_clientes >= 99999 ? 'Clientes ilimitados' : `${plano.max_clientes} clientes`}</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>{plano.max_imoveis >= 99999 ? 'Imóveis ilimitados' : `${plano.max_imoveis} imóveis`}</span>
                     </li>
                   </ul>
 
