@@ -30,7 +30,12 @@ export function PWAInstallModal() {
   const [iosStep, setIosStep] = useState(0);
   const [androidStep, setAndroidStep] = useState(0);
   const [isInstalling, setIsInstalling] = useState(false);
-  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<{
+    image: string;
+    platform: 'ios' | 'android';
+    step: number;
+    maxStep: number;
+  } | null>(null);
 
   useEffect(() => {
     // Don't show if already installed
@@ -218,7 +223,12 @@ export function PWAInstallModal() {
                 className="relative bg-black/5 cursor-zoom-in"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setZoomedImage(currentStep.image);
+                  setZoomedImage({
+                    image: currentStep.image,
+                    platform: 'ios',
+                    step: iosStep,
+                    maxStep: steps.length - 1,
+                  });
                 }}
               >
                 <img 
@@ -409,7 +419,12 @@ export function PWAInstallModal() {
                 className="relative bg-black/5 cursor-zoom-in"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setZoomedImage(currentStep.image);
+                  setZoomedImage({
+                    image: currentStep.image,
+                    platform: 'android',
+                    step: androidStep,
+                    maxStep: steps.length - 1,
+                  });
                 }}
               >
                 <img 
@@ -565,7 +580,7 @@ export function PWAInstallModal() {
         )}
       </AnimatePresence>
 
-      {/* Modal de Zoom */}
+      {/* Modal de Zoom com navegação */}
       <AnimatePresence>
         {zoomedImage && (
           <motion.div
@@ -575,23 +590,113 @@ export function PWAInstallModal() {
             className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4"
             onClick={() => setZoomedImage(null)}
           >
+            {/* Seta esquerda */}
+            {zoomedImage.step > 0 && (
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 bg-black/50 hover:bg-black/70 rounded-full transition-all z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newStep = zoomedImage.step - 1;
+                  const getImage = () => {
+                    if (zoomedImage.platform === 'ios') {
+                      return `/help-images/ios-passo-${newStep + 1}.jpg`;
+                    } else {
+                      return newStep === 0 ? '/help-images/android-passo-1-v2.jpg' : `/help-images/android-passo-${newStep + 1}.jpg`;
+                    }
+                  };
+                  setZoomedImage({ ...zoomedImage, step: newStep, image: getImage() });
+                  if (zoomedImage.platform === 'ios') {
+                    setIosStep(newStep);
+                  } else {
+                    setAndroidStep(newStep);
+                  }
+                }}
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+            )}
+
+            {/* Imagem */}
             <motion.img
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              src={zoomedImage}
+              key={zoomedImage.image}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              src={zoomedImage.image}
               alt="Imagem ampliada"
-              className="max-w-full max-h-full object-contain rounded-lg"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
             />
+
+            {/* Seta direita */}
+            {zoomedImage.step < zoomedImage.maxStep && (
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-3 bg-black/50 hover:bg-black/70 rounded-full transition-all z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newStep = zoomedImage.step + 1;
+                  const getImage = () => {
+                    if (zoomedImage.platform === 'ios') {
+                      return `/help-images/ios-passo-${newStep + 1}.jpg`;
+                    } else {
+                      return newStep === 0 ? '/help-images/android-passo-1-v2.jpg' : `/help-images/android-passo-${newStep + 1}.jpg`;
+                    }
+                  };
+                  setZoomedImage({ ...zoomedImage, step: newStep, image: getImage() });
+                  if (zoomedImage.platform === 'ios') {
+                    setIosStep(newStep);
+                  } else {
+                    setAndroidStep(newStep);
+                  }
+                }}
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            )}
+
+            {/* Botão fechar */}
             <button 
-              className="absolute top-4 right-4 text-white/80 hover:text-white p-2 bg-black/50 rounded-full"
+              className="absolute top-4 right-4 text-white/80 hover:text-white p-2 bg-black/50 hover:bg-black/70 rounded-full transition-all"
               onClick={() => setZoomedImage(null)}
             >
               <X className="h-6 w-6" />
             </button>
-            <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-              Toque para fechar
-            </p>
+
+            {/* Indicador de posição */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+              <div className="flex gap-2">
+                {Array.from({ length: zoomedImage.maxStep + 1 }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const getImage = () => {
+                        if (zoomedImage.platform === 'ios') {
+                          return `/help-images/ios-passo-${i + 1}.jpg`;
+                        } else {
+                          return i === 0 ? '/help-images/android-passo-1-v2.jpg' : `/help-images/android-passo-${i + 1}.jpg`;
+                        }
+                      };
+                      setZoomedImage({ ...zoomedImage, step: i, image: getImage() });
+                      if (zoomedImage.platform === 'ios') {
+                        setIosStep(i);
+                      } else {
+                        setAndroidStep(i);
+                      }
+                    }}
+                    className={`w-2.5 h-2.5 rounded-full transition-all ${
+                      zoomedImage.step === i
+                        ? 'bg-white w-6'
+                        : 'bg-white/40 hover:bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="text-white/60 text-sm">
+                Passo {zoomedImage.step + 1} de {zoomedImage.maxStep + 1} • Toque na imagem para fechar
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
