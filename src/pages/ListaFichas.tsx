@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
@@ -67,6 +68,7 @@ export default function ListaFichas() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { role } = useUserRole();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -247,8 +249,8 @@ export default function ListaFichas() {
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
-                          {/* Backup indicator - mobile */}
-                          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
+                          {/* Backup indicator - mobile - apenas para super_admin */}
+                          {role === 'super_admin' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -312,8 +314,8 @@ export default function ListaFichas() {
                               <StatusIcon className="h-3 w-3" />
                               {status.label}
                             </Badge>
-                            {/* Backup indicator - desktop */}
-                            {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
+                            {/* Backup indicator - desktop - apenas para super_admin */}
+                            {role === 'super_admin' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
