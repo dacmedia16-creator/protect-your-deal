@@ -31,15 +31,18 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
+import { useUserFeatureFlag } from '@/hooks/useUserFeatureFlag';
 
 export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliaria, imobiliariaId } = useUserRole();
   const { isInstalled, isIOS, install } = usePWAInstall();
-  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+  const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+  const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
+  const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

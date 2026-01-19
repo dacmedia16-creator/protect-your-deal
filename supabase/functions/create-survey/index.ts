@@ -71,8 +71,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if feature is enabled for the FICHA's imobiliaria (not the user)
+    // Check if feature is enabled
     if (ficha.imobiliaria_id) {
+      // Imobiliária: check imobiliaria_feature_flags
       const { data: featureFlag } = await supabaseAdmin
         .from('imobiliaria_feature_flags')
         .select('enabled')
@@ -87,11 +88,20 @@ Deno.serve(async (req) => {
         );
       }
     } else {
-      // Ficha sem imobiliária não pode enviar pesquisa
-      return new Response(
-        JSON.stringify({ error: 'Esta ficha não está vinculada a uma imobiliária' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Corretor autônomo: check user_feature_flags
+      const { data: userFlag } = await supabaseAdmin
+        .from('user_feature_flags')
+        .select('enabled')
+        .eq('user_id', userId)
+        .eq('feature_key', 'post_visit_survey')
+        .maybeSingle();
+
+      if (!userFlag?.enabled) {
+        return new Response(
+          JSON.stringify({ error: 'Esta funcionalidade não está habilitada para este usuário' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Verify user owns the ficha
