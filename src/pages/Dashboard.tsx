@@ -401,7 +401,7 @@ export default function Dashboard() {
 
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => window.open('https://wa.me/5511999999999?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
           >
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -452,7 +452,7 @@ export default function Dashboard() {
 
           <Card 
             className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => window.open('https://wa.me/5511999999999?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
           >
             <CardContent className="p-3 flex items-center gap-3">
               <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
