@@ -87,6 +87,7 @@ export default function AdminUsuarios() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   
   // Reset password dialog
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
@@ -212,7 +213,11 @@ export default function AdminUsuarios() {
       imobiliariaFilter === "all" ||
       (imobiliariaFilter === "autonomos" && user.imobiliaria_id === null) ||
       user.imobiliaria_id === imobiliariaFilter;
-    return matchesSearch && matchesRole && matchesImobiliaria;
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "ativo" && user.profile?.ativo !== false) ||
+      (statusFilter === "inativo" && user.profile?.ativo === false);
+    return matchesSearch && matchesRole && matchesImobiliaria && matchesStatus;
   });
 
   const handleResetPassword = async () => {
@@ -535,6 +540,16 @@ export default function AdminUsuarios() {
                       {imob.nome}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="ativo">Ativos</SelectItem>
+                  <SelectItem value="inativo">Inativos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
