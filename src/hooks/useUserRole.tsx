@@ -108,7 +108,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
               data_inicio,
               data_fim,
               proxima_cobranca,
-              plano:planos (
+              plano:planos!assinaturas_plano_id_fkey (
                 id,
                 nome,
                 max_corretores,
@@ -138,7 +138,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
               data_inicio,
               data_fim,
               proxima_cobranca,
-              plano:planos (
+              plano:planos!assinaturas_plano_id_fkey (
                 id,
                 nome,
                 max_corretores,

@@ -112,7 +112,7 @@ export default function AdminAssinaturas() {
         .select(`
           *,
           imobiliarias(id, nome),
-          planos(id, nome, valor_mensal)
+          planos!assinaturas_plano_id_fkey(id, nome, valor_mensal)
         `)
         .order("created_at", { ascending: false });
 

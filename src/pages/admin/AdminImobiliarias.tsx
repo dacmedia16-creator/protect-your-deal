@@ -118,7 +118,7 @@ export default function AdminImobiliarias() {
           // Get subscription with plan info
           const { data: assData } = await supabase
             .from('assinaturas')
-            .select('id, status, plano_id, plano:planos(nome)')
+            .select('id, status, plano_id, plano:planos!assinaturas_plano_id_fkey(nome)')
             .eq('imobiliaria_id', imob.id)
             .order('created_at', { ascending: false })
             .limit(1)

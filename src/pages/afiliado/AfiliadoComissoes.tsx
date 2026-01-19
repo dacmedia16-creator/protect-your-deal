@@ -81,7 +81,7 @@ export default function AfiliadoComissoes() {
           cupom:cupons (codigo, comissao_percentual),
           imobiliaria:imobiliarias (nome),
           assinatura:assinaturas (
-            plano:planos (nome, valor_mensal)
+            plano:planos!assinaturas_plano_id_fkey (nome, valor_mensal)
           )
         `)
         .in("cupom_id", cupomIds)
