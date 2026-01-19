@@ -15,14 +15,18 @@ import {
   ClipboardList,
   BarChart3,
   Lock,
-  Menu
+  Menu,
+  Star,
+  Wand2
 } from 'lucide-react';
 import {
   FichaDigitalMockup,
   WhatsAppOTPMockup,
   QRCodeMockup,
   PDFComprovanteMockup,
-  MobileAppMockup
+  MobileAppMockup,
+  SurveyMockup,
+  SofiaMockup
 } from '@/components/mockups';
 import AnimatedSection from '@/components/AnimatedSection';
 
@@ -118,6 +122,36 @@ const Funcionalidades = () => {
       ],
       screenshot: '/placeholder.svg',
       reverse: true
+    },
+    {
+      id: 'pesquisas',
+      icon: Star,
+      title: 'Pesquisas Pós-Visita',
+      subtitle: 'Receba feedback automático dos seus compradores',
+      description: 'Após cada visita confirmada, o comprador recebe automaticamente um link via WhatsApp para avaliar o imóvel. São 7 critérios de avaliação (Localização, Tamanho, Layout, Acabamento, Manutenção, Áreas Comuns e Preço) com notas de 1 a 5 estrelas, além de pergunta sobre intenção de compra.',
+      benefits: [
+        'Envio automático via WhatsApp',
+        'Avaliação com 7 critérios',
+        'Pergunta de intenção de compra',
+        'Exportação para PDF e Excel'
+      ],
+      screenshot: '/placeholder.svg',
+      reverse: false
+    },
+    {
+      id: 'assistente-ia',
+      icon: Wand2,
+      title: 'Assistente Sofia (IA)',
+      subtitle: 'Ajuda inteligente sempre que você precisar',
+      description: 'Nossa assistente virtual conhece todo o sistema e está disponível a qualquer momento. Ela sabe em qual tela você está e oferece ajuda contextual, responde dúvidas e sugere próximos passos.',
+      benefits: [
+        'Ajuda contextual por página',
+        'Respostas rápidas pré-sugeridas',
+        'Disponível 24/7',
+        'Explica funcionalidades do sistema'
+      ],
+      screenshot: '/placeholder.svg',
+      reverse: true
     }
   ];
 
@@ -136,6 +170,11 @@ const Funcionalidades = () => {
       icon: Lock,
       title: 'Segurança',
       description: 'Dados criptografados, backups automáticos e conformidade com LGPD.'
+    },
+    {
+      icon: Download,
+      title: 'Instalação Fácil',
+      description: 'Guias visuais passo-a-passo para instalar o app no Android e iPhone, otimizados para cada plataforma.'
     }
   ];
 
@@ -338,6 +377,8 @@ const Funcionalidades = () => {
                       {feature.id === 'comprovante-pdf' && <PDFComprovanteMockup />}
                       {feature.id === 'parceria' && <WhatsAppOTPMockup />}
                       {feature.id === 'app-mobile' && <MobileAppMockup />}
+                      {feature.id === 'pesquisas' && <SurveyMockup />}
+                      {feature.id === 'assistente-ia' && <SofiaMockup />}
                     </div>
                   </div>
                 </AnimatedSection>
