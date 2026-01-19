@@ -19,6 +19,7 @@ import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
+import { useUserFeatureFlag } from '@/hooks/useUserFeatureFlag';
 
 export function MobileNav() {
   const location = useLocation();
@@ -26,9 +27,11 @@ export function MobileNav() {
   const { user, signOut } = useAuth();
   const { role, imobiliariaId } = useUserRole();
   const { isInstalled, isIOS, install } = usePWAInstall();
-  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+  const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+  const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
+  const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
 
   const navItems = [

@@ -62,7 +62,8 @@ import {
   Home,
   UserPlus,
   CreditCard,
-  Power
+  Power,
+  ClipboardList
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -90,6 +91,7 @@ interface CorretorAutonomo {
     status: string;
     plano_nome: string;
   } | null;
+  survey_enabled?: boolean;
 }
 
 interface Plano {
@@ -146,6 +148,9 @@ export default function AdminCorretoresAutonomos() {
 
   // Toggle subscription status
   const [isTogglingStatus, setIsTogglingStatus] = useState<string | null>(null);
+
+  // Toggle survey feature
+  const [isTogglingSurvey, setIsTogglingSurvey] = useState<string | null>(null);
 
   // Fetch corretores autônomos
   const { data: corretores, isLoading, refetch } = useQuery({
@@ -233,6 +238,17 @@ export default function AdminCorretoresAutonomos() {
         ]) || []
       );
 
+      // Fetch user feature flags for survey
+      const { data: userFlags } = await supabase
+        .from("user_feature_flags")
+        .select("user_id, enabled")
+        .in("user_id", userIds)
+        .eq("feature_key", "post_visit_survey");
+
+      const flagsMap = new Map(
+        userFlags?.map((f) => [f.user_id, f.enabled]) || []
+      );
+
       return userRoles.map((ur) => ({
         id: ur.id,
         user_id: ur.user_id,
@@ -242,6 +258,7 @@ export default function AdminCorretoresAutonomos() {
         email: emailMap.get(ur.user_id) || null,
         stats: statsMap.get(ur.user_id) || { fichas: 0, fichasConfirmadas: 0, clientes: 0, imoveis: 0 },
         assinatura: assinaturaMap.get(ur.user_id) || null,
+        survey_enabled: flagsMap.get(ur.user_id) ?? false,
       })) as CorretorAutonomo[];
     },
   });
@@ -440,6 +457,37 @@ export default function AdminCorretoresAutonomos() {
     }
   };
 
+  const handleToggleSurvey = async (corretor: CorretorAutonomo) => {
+    setIsTogglingSurvey(corretor.user_id);
+    try {
+      const newValue = !corretor.survey_enabled;
+      
+      const { error } = await supabase
+        .from('user_feature_flags')
+        .upsert({
+          user_id: corretor.user_id,
+          feature_key: 'post_visit_survey',
+          enabled: newValue,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,feature_key',
+        });
+
+      if (error) throw error;
+
+      toast.success(
+        newValue
+          ? 'Pesquisa Pós-Visita habilitada!'
+          : 'Pesquisa Pós-Visita desabilitada!'
+      );
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao alterar feature');
+    } finally {
+      setIsTogglingSurvey(null);
+    }
+  };
+
   const handleAssignPlano = async () => {
     if (!corretorToAssign || !selectedPlanoId) {
       toast.error("Selecione um plano");
@@ -584,6 +632,7 @@ export default function AdminCorretoresAutonomos() {
                   <TableHead>Corretor</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead>Assinatura</TableHead>
+                  <TableHead className="text-center">Pesquisa</TableHead>
                   <TableHead className="text-center">Fichas</TableHead>
                   <TableHead className="text-center">Clientes</TableHead>
                   <TableHead className="text-center">Imóveis</TableHead>
@@ -594,13 +643,13 @@ export default function AdminCorretoresAutonomos() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
+                    <TableCell colSpan={9} className="text-center py-8">
                       Carregando...
                     </TableCell>
                   </TableRow>
                 ) : filteredCorretores?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       Nenhum corretor autônomo encontrado
                     </TableCell>
                   </TableRow>
@@ -642,6 +691,20 @@ export default function AdminCorretoresAutonomos() {
                             Sem plano
                           </Badge>
                         )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <button
+                          onClick={() => handleToggleSurvey(corretor)}
+                          disabled={isTogglingSurvey === corretor.user_id}
+                          className={`inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                            corretor.survey_enabled
+                              ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          } ${isTogglingSurvey === corretor.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <ClipboardList className="h-3 w-3" />
+                          {isTogglingSurvey === corretor.user_id ? '...' : corretor.survey_enabled ? 'Ativa' : 'Inativa'}
+                        </button>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex flex-col items-center gap-1">
