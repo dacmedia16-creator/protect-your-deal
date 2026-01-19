@@ -1260,8 +1260,8 @@ export default function DetalhesFicha() {
             </Card>
           )}
 
-          {/* Alerta de Backup Faltante */}
-          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && !ficha.backup_gerado_em && (
+          {/* Alerta de Backup Faltante - apenas para super_admin */}
+          {role === 'super_admin' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && !ficha.backup_gerado_em && (
             <Card className="border-destructive/30 bg-destructive/5">
               <CardContent className="pt-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
