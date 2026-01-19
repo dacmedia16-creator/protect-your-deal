@@ -70,23 +70,25 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingAssinatura) {
-      // Atualizar assinatura existente
+      // Apenas registrar qual plano o usuário deseja - NÃO muda o plano atual
+      // O plano só será alterado quando o pagamento for confirmado via webhook
       const { error: updateError } = await supabase
         .from('assinaturas')
         .update({
-          plano_id: planoId,
-          status: 'pendente',
+          plano_pendente_id: planoId, // Armazena o plano desejado
           updated_at: new Date().toISOString(),
+          // NÃO ATUALIZAR: plano_id (mantém plano atual)
+          // NÃO ATUALIZAR: status (mantém status atual)
         })
         .eq('id', existingAssinatura.id);
 
       if (updateError) {
-        console.error('Error updating subscription:', updateError);
-        throw new Error('Erro ao atualizar assinatura');
+        console.error('Error updating pending plan:', updateError);
+        throw new Error('Erro ao registrar plano pendente');
       }
 
       assinaturaId = existingAssinatura.id;
-      console.log('Updated existing subscription:', assinaturaId);
+      console.log('Pending plan registered:', planoId, 'for subscription:', assinaturaId);
     } else {
       // Criar nova assinatura
       const { data: newAssinatura, error: insertError } = await supabase

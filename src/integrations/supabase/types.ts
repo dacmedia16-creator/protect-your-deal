@@ -66,6 +66,7 @@ export type Database = {
           id: string
           imobiliaria_id: string | null
           plano_id: string
+          plano_pendente_id: string | null
           proxima_cobranca: string | null
           status: string
           stripe_customer_id: string | null
@@ -85,6 +86,7 @@ export type Database = {
           id?: string
           imobiliaria_id?: string | null
           plano_id: string
+          plano_pendente_id?: string | null
           proxima_cobranca?: string | null
           status?: string
           stripe_customer_id?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           id?: string
           imobiliaria_id?: string | null
           plano_id?: string
+          plano_pendente_id?: string | null
           proxima_cobranca?: string | null
           status?: string
           stripe_customer_id?: string | null
@@ -136,6 +139,13 @@ export type Database = {
           {
             foreignKeyName: "assinaturas_plano_id_fkey"
             columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_plano_pendente_id_fkey"
+            columns: ["plano_pendente_id"]
             isOneToOne: false
             referencedRelation: "planos"
             referencedColumns: ["id"]

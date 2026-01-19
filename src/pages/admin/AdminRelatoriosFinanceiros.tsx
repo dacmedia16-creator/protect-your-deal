@@ -94,7 +94,7 @@ export default function AdminRelatoriosFinanceiros() {
         // Fetch all subscriptions with plan info
         const { data: allSubscriptions } = await supabase
           .from('assinaturas')
-          .select('status, created_at, plano_id, plano:planos(nome, valor_mensal)');
+          .select('status, created_at, plano_id, plano:planos!assinaturas_plano_id_fkey(nome, valor_mensal)');
 
         // Calculate stats
         const activeSubscriptions = allSubscriptions?.filter(s => s.status === 'ativa') || [];

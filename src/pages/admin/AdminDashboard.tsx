@@ -70,7 +70,7 @@ export default function AdminDashboard() {
         // Calculate monthly revenue (sum of active subscriptions)
         const { data: activeSubscriptions } = await supabase
           .from('assinaturas')
-          .select('plano:planos(valor_mensal)')
+          .select('plano:planos!assinaturas_plano_id_fkey(valor_mensal)')
           .eq('status', 'ativa');
 
         const receitaMensal = activeSubscriptions?.reduce((total, sub) => {

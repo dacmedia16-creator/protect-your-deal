@@ -224,7 +224,7 @@ export default function AdminCorretoresAutonomos() {
       // Fetch subscriptions for these users
       const { data: assinaturas } = await supabase
         .from("assinaturas")
-        .select("id, user_id, status, plano:planos(nome)")
+        .select("id, user_id, status, plano:planos!assinaturas_plano_id_fkey(nome)")
         .in("user_id", userIds);
 
       const assinaturaMap = new Map(

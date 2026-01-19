@@ -120,10 +120,10 @@ serve(async (req) => {
     if (payment) {
       const { subscription: subscriptionId, status, externalReference, value } = payment;
 
-      // Buscar assinatura pelo asaas_subscription_id - incluindo campos de afiliado
+      // Buscar assinatura pelo asaas_subscription_id - incluindo campos de afiliado e plano pendente
       const { data: assinatura, error: assinaturaError } = await supabase
         .from('assinaturas')
-        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual')
+        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
@@ -144,6 +144,14 @@ serve(async (req) => {
             // Pagamento confirmado - ativar assinatura
             newStatus = 'ativa';
             updateData.status = newStatus;
+            
+            // Se há um plano pendente (upgrade/downgrade), aplicar agora
+            if ((assinatura as any).plano_pendente_id) {
+              updateData.plano_id = (assinatura as any).plano_pendente_id;
+              updateData.plano_pendente_id = null; // Limpar plano pendente
+              console.log(`Applying pending plan ${(assinatura as any).plano_pendente_id} for subscription ${subscriptionId}`);
+            }
+            
             // Atualizar próxima cobrança (30 dias)
             const nextPayment = new Date();
             nextPayment.setDate(nextPayment.getDate() + 30);
