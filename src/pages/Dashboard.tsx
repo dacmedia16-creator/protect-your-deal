@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Bug,
   ClipboardCheck,
+  Scale,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
@@ -398,6 +399,21 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
 
+          <Card 
+            className="cursor-pointer hover:shadow-medium transition-shadow group"
+            onClick={() => window.open('https://wa.me/5511999999999?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+          >
+            <CardHeader>
+              <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Scale className="h-6 w-6 text-amber-600" />
+              </div>
+              <CardTitle>Ajuda Jurídica</CardTitle>
+              <CardDescription>
+                Consulte um advogado especializado
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
         </div>
 
         {/* Mobile Quick Actions - Compact list */}
@@ -430,6 +446,21 @@ export default function Dashboard() {
               <div className="min-w-0">
                 <p className="font-medium text-sm">Ver Registros</p>
                 <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => window.open('https://wa.me/5511999999999?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <Scale className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Ajuda Jurídica</p>
+                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
               </div>
             </CardContent>
           </Card>
