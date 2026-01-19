@@ -209,7 +209,9 @@ export default function AdminUsuarios() {
       user.user_id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     const matchesImobiliaria =
-      imobiliariaFilter === "all" || user.imobiliaria_id === imobiliariaFilter;
+      imobiliariaFilter === "all" ||
+      (imobiliariaFilter === "autonomos" && user.imobiliaria_id === null) ||
+      user.imobiliaria_id === imobiliariaFilter;
     return matchesSearch && matchesRole && matchesImobiliaria;
   });
 
@@ -527,6 +529,7 @@ export default function AdminUsuarios() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as imobiliárias</SelectItem>
+                  <SelectItem value="autonomos">Autônomos (sem imobiliária)</SelectItem>
                   {imobiliarias?.map((imob) => (
                     <SelectItem key={imob.id} value={imob.id}>
                       {imob.nome}
