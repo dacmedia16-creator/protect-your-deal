@@ -29,6 +29,8 @@ import {
   MapPin,
   Phone,
   Building2,
+  Star,
+  Wand2,
 } from 'lucide-react';
 
 interface Plano {
@@ -110,6 +112,16 @@ const Index = () => {
       icon: Smartphone,
       title: 'App para Celular',
       description: 'Instale o app no seu celular e acesse seus registros rapidamente, de qualquer lugar.'
+    },
+    {
+      icon: Star,
+      title: 'Pesquisas Pós-Visita',
+      description: 'Receba feedback automático dos compradores após cada visita confirmada, direto no WhatsApp.'
+    },
+    {
+      icon: Wand2,
+      title: 'Assistente Sofia',
+      description: 'Nossa IA te ajuda a usar o sistema, responde dúvidas e sugere ações em tempo real.'
     }
   ];
 
