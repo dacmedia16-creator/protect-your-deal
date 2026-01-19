@@ -519,9 +519,27 @@ export default function AdminUsuarios() {
               <UserPlus className="h-4 w-4 mr-2" />
               Novo Usuário
             </Button>
-            <div className="flex items-center gap-2">
-              <Users className="h-8 w-8 text-muted-foreground" />
-              <span className="text-2xl font-bold">{users?.length || 0}</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-muted-foreground" />
+                <div className="text-right">
+                  <span className="text-2xl font-bold">{users?.length || 0}</span>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+              </div>
+              <Separator orientation="vertical" className="h-10" />
+              <div className="text-right">
+                <span className="text-xl font-bold text-green-600">
+                  {users?.filter(u => u.profile?.ativo !== false).length || 0}
+                </span>
+                <p className="text-xs text-muted-foreground">Ativos</p>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-bold text-muted-foreground">
+                  {users?.filter(u => u.profile?.ativo === false).length || 0}
+                </span>
+                <p className="text-xs text-muted-foreground">Inativos</p>
+              </div>
             </div>
           </div>
         </div>
