@@ -135,6 +135,18 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 - Taxa de confirmação
 - Exportação de dados
 
+### 📝 Pesquisas Pós-Visita (NOVIDADE!)
+- Envio automático de pesquisa de satisfação após visita confirmada
+- Cliente recebe link por WhatsApp para avaliar o imóvel
+- Avaliação em 7 critérios com notas de 1 a 5 estrelas:
+  - Localização, Tamanho, Planta/Layout, Acabamentos, Conservação, Áreas comuns, Preço
+- Campo "Compraria este imóvel?" (Sim/Não)
+- Comentários opcionais: "O que mais gostou?" e "O que menos gostou?"
+- Exportação de pesquisas em PDF (individual) e Excel (relatório completo)
+- Estatísticas: total de pesquisas, respondidas, pendentes
+- Acesso: Menu → Pesquisas (corretores autônomos) ou Menu → Pesquisas (imobiliárias)
+- Expiração: pesquisa válida por 7 dias após envio
+
 ## Como Funciona (Passo a Passo)
 
 1. **Corretor cadastra a visita** - Preenche dados do comprador, proprietário e imóvel
@@ -555,6 +567,11 @@ serve(async (req) => {
         } else if (userContext.currentPage.includes('/instalar')) {
           dynamicContext += `- O usuário quer instalar o app\n`;
           dynamicContext += `- Dê instruções claras para Android e iOS\n`;
+        } else if (userContext.currentPage.includes('/pesquisas') || userContext.currentPage.includes('/empresa/pesquisas')) {
+          dynamicContext += `- O usuário está vendo as pesquisas pós-visita\n`;
+          dynamicContext += `- Ajude com: como funciona a pesquisa, interpretar avaliações, exportar dados\n`;
+          dynamicContext += `- Explique que a pesquisa é enviada automaticamente após a visita ser confirmada\n`;
+          dynamicContext += `- O cliente avalia 7 critérios do imóvel e diz se compraria ou não\n`;
         }
       }
 

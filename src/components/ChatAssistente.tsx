@@ -157,6 +157,14 @@ const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[]
   '/instalar': {
     context: 'Página de instalação do app PWA',
     quickReplies: ['Como instalar no Android?', 'Como instalar no iPhone?', 'Funciona offline?']
+  },
+  '/pesquisas': {
+    context: 'Pesquisas pós-visita do corretor',
+    quickReplies: ['Como funciona a pesquisa?', 'Exportar respostas', 'Por que cliente não respondeu?']
+  },
+  '/empresa/pesquisas': {
+    context: 'Pesquisas pós-visita da imobiliária',
+    quickReplies: ['Ver estatísticas', 'Exportar relatório', 'Filtrar por corretor']
   }
 };
 
