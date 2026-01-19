@@ -107,11 +107,12 @@ export default function EmpresaAssinatura() {
       if (error) throw error;
 
       if (data?.paymentLinkUrl) {
-        window.open(data.paymentLinkUrl, '_blank');
-        toast.success('Link de pagamento aberto!', {
-          description: 'Complete o pagamento para ativar sua assinatura.',
-          duration: 5000,
+        toast.success('Redirecionando para pagamento...', {
+          description: 'Você será levado para a página de pagamento.',
+          duration: 3000,
         });
+        // Usar location.href ao invés de window.open para funcionar em mobile
+        window.location.href = data.paymentLinkUrl;
       } else if (data?.error) {
         throw new Error(data.error);
       } else {
