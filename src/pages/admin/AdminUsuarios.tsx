@@ -131,6 +131,7 @@ export default function AdminUsuarios() {
   const [createdUser, setCreatedUser] = useState<{ email: string; password: string; nome: string; telefone?: string } | null>(null);
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
 
 
   // Fetch all users with their roles and emails
@@ -455,6 +456,29 @@ export default function AdminUsuarios() {
     setIsCreateDialogOpen(true);
   };
 
+  const handleToggleStatus = async (user: UserWithRole) => {
+    if (user.role === "super_admin") return;
+    
+    setTogglingUserId(user.user_id);
+    try {
+      const newStatus = user.profile?.ativo === false ? true : false;
+      
+      const { error } = await supabase
+        .from("profiles")
+        .update({ ativo: newStatus })
+        .eq("user_id", user.user_id);
+
+      if (error) throw error;
+
+      toast.success(newStatus ? "Usuário ativado" : "Usuário desativado");
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao alterar status");
+    } finally {
+      setTogglingUserId(null);
+    }
+  };
+
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -567,6 +591,7 @@ export default function AdminUsuarios() {
                     <TableHead>Role</TableHead>
                     <TableHead>Imobiliária</TableHead>
                     <TableHead>Contato</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Criado em</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -574,13 +599,13 @@ export default function AdminUsuarios() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
+                      <TableCell colSpan={8} className="text-center py-8">
                         Carregando...
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
@@ -633,6 +658,18 @@ export default function AdminUsuarios() {
                           ) : (
                             <span className="text-muted-foreground">-</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={user.profile?.ativo !== false}
+                              onCheckedChange={() => handleToggleStatus(user)}
+                              disabled={user.role === "super_admin" || togglingUserId === user.user_id}
+                            />
+                            <span className={`text-xs ${user.profile?.ativo !== false ? 'text-green-600' : 'text-muted-foreground'}`}>
+                              {user.profile?.ativo !== false ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {format(new Date(user.created_at), "dd/MM/yyyy", {
