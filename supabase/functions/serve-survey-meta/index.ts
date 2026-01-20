@@ -9,10 +9,10 @@ const corsHeaders = {
 const DEFAULT_OG_IMAGE = 'https://visitaprova.com.br/pwa-512x512.png';
 const APP_URL = 'https://visitaprova.com.br';
 
-console.log('[survey-og-page] v1.0.1 - Function initialized');
+console.log('[serve-survey-meta] v1.0.0 - Function loaded');
 
 Deno.serve(async (req) => {
-  console.log('[survey-og-page] Request received');
+  console.log('[serve-survey-meta] Request received');
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -31,8 +31,8 @@ Deno.serve(async (req) => {
     const userAgent = req.headers.get('user-agent') || '';
     const isCrawler = /WhatsApp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Pinterest|Googlebot/i.test(userAgent);
 
-    console.log('User-Agent:', userAgent);
-    console.log('Is Crawler:', isCrawler);
+    console.log('[serve-survey-meta] User-Agent:', userAgent);
+    console.log('[serve-survey-meta] Is Crawler:', isCrawler);
 
     // If not a crawler, redirect to the SPA
     if (!isCrawler) {
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (surveyError || !survey) {
-      console.error('Survey not found:', surveyError);
+      console.error('[serve-survey-meta] Survey not found:', surveyError);
       return Response.redirect(`${APP_URL}/survey/${token}`, 302);
     }
 
@@ -123,6 +123,10 @@ Deno.serve(async (req) => {
         .replace(/'/g, '&#039;');
     };
 
+    console.log('[serve-survey-meta] Generating HTML with OG tags');
+    console.log('[serve-survey-meta] Title:', ogTitle);
+    console.log('[serve-survey-meta] Image:', ogImage);
+
     // Generate HTML with personalized OG tags
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -167,7 +171,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro inesperado:', error);
+    console.error('[serve-survey-meta] Erro inesperado:', error);
     return new Response('Erro interno', { status: 500 });
   }
 });
