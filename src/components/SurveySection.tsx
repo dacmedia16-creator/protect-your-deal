@@ -150,7 +150,13 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
     },
   });
 
-  const surveyLink = survey ? `${APP_URL}/survey/${survey.token}` : null;
+  // Link para compartilhamento (com OG tags personalizadas via edge function)
+  const shareLink = survey 
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-survey-by-token?token=${survey.token}` 
+    : null;
+  
+  // Link direto para visualização (SPA)
+  const viewLink = survey ? `${APP_URL}/survey/${survey.token}` : null;
 
   const handleCreateAndSend = async () => {
     if (!survey) {
@@ -160,8 +166,10 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
   };
 
   const handleCopyLink = () => {
-    if (surveyLink) {
-      navigator.clipboard.writeText(surveyLink);
+    if (shareLink) {
+      // Adiciona cache-buster para forçar atualização da prévia do WhatsApp
+      const linkWithCacheBuster = `${shareLink}&v=${Date.now()}`;
+      navigator.clipboard.writeText(linkWithCacheBuster);
       toast({
         title: 'Link copiado!',
         description: 'O link da pesquisa foi copiado para a área de transferência.',
@@ -170,13 +178,16 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
   };
 
   const handleSendWhatsApp = () => {
-    if (!surveyLink) return;
+    if (!shareLink) return;
+    
+    // Adiciona cache-buster para forçar atualização da prévia do WhatsApp
+    const linkWithCacheBuster = `${shareLink}&v=${Date.now()}`;
     
     const message = `Olá! 😊
 
 Você pode responder uma pesquisa rápida sobre o imóvel que visitou? Leva menos de 1 minuto:
 
-${surveyLink}
+${linkWithCacheBuster}
 
 Agradecemos seu feedback!`;
 
@@ -282,7 +293,7 @@ Agradecemos seu feedback!`;
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Reenviar via WhatsApp
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => window.open(surveyLink!, '_blank')}>
+                <Button variant="ghost" size="sm" onClick={() => window.open(viewLink!, '_blank')}>
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Visualizar
                 </Button>
