@@ -1,5 +1,6 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="180" height="180" rx="40" fill="#1565c0"/>
-  <path d="M45 50L90 130L135 50" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <path d="M67 90L90 118L130 56" stroke="#22c55e" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- VisitaProva Logo - V with checkmark representing verified visits -->
+  <rect width="180" height="180" rx="40" fill="#0B3C5D"/>
+  <path d="M40 45L90 135L140 45" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M60 85L85 115L135 50" stroke="#22c55e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
