@@ -24,8 +24,9 @@ import SemPermissao from "./pages/SemPermissao";
 import InstalarApp from "./pages/InstalarApp";
 import Funcionalidades from "./pages/Funcionalidades";
 import ComoFunciona from "./pages/ComoFunciona";
-// Disabled: Tour and Demo pages
-// import TourAudio from "./pages/TourAudio";
+// Tour pages
+import TourAudio from "./pages/TourAudio";
+import TourAudioLanding from "./pages/TourAudioLanding";
 // import DemoAnimado from "./pages/DemoAnimado";
 
 // Auth pages
@@ -134,8 +135,9 @@ const App = () => (
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/como-funciona" element={<ComoFunciona />} />
                 <Route path="/app" element={<AppLanding />} />
-                {/* Disabled: Tour and Demo routes */}
-                {/* <Route path="/tour-audio" element={<TourAudio />} /> */}
+{/* Tour routes */}
+                <Route path="/tour" element={<TourAudioLanding />} />
+                <Route path="/tour-audio" element={<TourAudio />} />
                 {/* <Route path="/demo" element={<DemoAnimado />} /> */}
                 <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
                 <Route path="/convite-externo/:token" element={<ConviteParceiroExterno />} />
