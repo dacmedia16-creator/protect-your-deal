@@ -2,14 +2,14 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import AnimatedSection from '@/components/AnimatedSection';
 import videoThumbnail from '@/assets/video-thumbnail.jpg';
+import { LogoIcon } from '@/components/LogoIcon';
 import { 
   ArrowLeft, 
   ArrowRight,
   ClipboardCheck, 
   Send, 
   CheckCircle2, 
-  Download,
-  Shield
+  Download
 } from 'lucide-react';
 
 const ComoFunciona = () => {
@@ -52,7 +52,7 @@ const ComoFunciona = () => {
             </Link>
           </Button>
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-heading text-lg font-bold">VisitaSegura</span>
           </div>
           <div className="w-20" /> {/* Spacer for centering */}

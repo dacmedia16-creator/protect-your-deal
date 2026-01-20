@@ -16,7 +16,7 @@ import {
   UserPlus,
   Settings,
   LogOut,
-  Shield,
+  
   Menu,
   Stethoscope,
   X,
@@ -31,6 +31,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LogoIcon } from '@/components/LogoIcon';
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
@@ -201,7 +202,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-primary" />
+          <LogoIcon size={24} />
           <span className="font-display font-bold text-lg">Super Admin</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -217,7 +218,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center gap-2 px-4 border-b border-sidebar-border">
-            <Shield className="h-6 w-6 text-sidebar-primary" />
+            <LogoIcon size={24} />
             <span className="font-display font-bold text-lg text-sidebar-foreground">Super Admin</span>
           </div>
 

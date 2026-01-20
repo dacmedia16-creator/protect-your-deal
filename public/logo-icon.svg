@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <!-- Shield -->
+  <path d="M256 28C312 72 372 84 432 92V252c0 118-74 200-176 232C154 452 80 370 80 252V92c60-8 120-20 176-64Z" fill="#0B2B6F"></path>
+  <path d="M256 58c50 34 104 44 156 52v142c0 102-62 172-156 202C162 424 100 354 100 252V110c52-8 106-18 156-52Z" fill="#FFFFFF"></path>
+
+  <!-- Document -->
+  <rect x="156" y="132" width="200" height="250" rx="16" fill="#F2F4F7" stroke="#0B2B6F" stroke-width="8"></rect>
+  <path d="M312 132h-56c-8 0-14 6-14 14v56h70v-70Z" fill="#DCE3EE"></path>
+  <path d="M256 146h50v50h-50v-50Z" fill="#FFFFFF" opacity="0.65"></path>
+
+  <!-- Lines on document -->
+  <path d="M186 230h140" stroke="#9AA6B2" stroke-width="10" stroke-linecap="round"></path>
+  <path d="M186 260h120" stroke="#9AA6B2" stroke-width="10" stroke-linecap="round"></path>
+  <path d="M186 290h140" stroke="#9AA6B2" stroke-width="10" stroke-linecap="round"></path>
+  <path d="M186 320h100" stroke="#9AA6B2" stroke-width="10" stroke-linecap="round"></path>
+
+  <!-- House mark -->
+  <path d="M236 210l20-16 20 16v28c0 6-4 10-10 10h-20c-6 0-10-4-10-10v-28Z" fill="#18A957"></path>
+  <path d="M246 238h20v16h-20v-16Z" fill="#0B2B6F" opacity="0.2"></path>
+
+  <!-- QR (simplified) -->
+  <rect x="174" y="340" width="54" height="54" rx="6" fill="#0B2B6F"></rect>
+  <rect x="184" y="350" width="14" height="14" fill="#FFFFFF"></rect>
+  <rect x="206" y="350" width="12" height="12" fill="#FFFFFF" opacity="0.9"></rect>
+  <rect x="184" y="372" width="12" height="12" fill="#FFFFFF" opacity="0.9"></rect>
+  <rect x="202" y="372" width="16" height="16" fill="#FFFFFF"></rect>
+
+  <!-- Check badge -->
+  <circle cx="360" cy="356" r="56" fill="#18A957" stroke="#FFFFFF" stroke-width="10"></circle>
+  <path d="M338 356l14 14 30-34" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>

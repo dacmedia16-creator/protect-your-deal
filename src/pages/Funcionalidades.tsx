@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { LogoIcon } from '@/components/LogoIcon';
 import { 
-  Shield, 
   FileCheck, 
   MessageSquare, 
   QrCode, 
@@ -184,7 +184,7 @@ const Funcionalidades = () => {
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <Shield className="h-7 w-7 text-primary" />
+            <LogoIcon size={28} />
             <span className="font-heading text-xl font-bold">VisitaSegura</span>
           </Link>
           
@@ -237,7 +237,7 @@ const Funcionalidades = () => {
               <SheetContent side="right" className="w-[280px] sm:w-[320px]">
                 <div className="flex flex-col gap-6 mt-6">
                   <div className="flex items-center gap-2 pb-4 border-b">
-                    <Shield className="h-6 w-6 text-primary" />
+                    <LogoIcon size={24} />
                     <span className="font-heading text-lg font-bold">VisitaSegura</span>
                   </div>
                   
@@ -295,7 +295,7 @@ const Funcionalidades = () => {
         <div className="container mx-auto px-4 text-center">
           <AnimatedSection>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Shield className="h-4 w-4" />
+              <LogoIcon size={16} />
               Conheça todos os recursos
             </div>
           </AnimatedSection>
@@ -454,7 +454,7 @@ const Funcionalidades = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-primary" />
+              <LogoIcon size={24} />
               <span className="font-heading font-bold">VisitaSegura</span>
             </Link>
             <p className="text-sm text-muted-foreground">

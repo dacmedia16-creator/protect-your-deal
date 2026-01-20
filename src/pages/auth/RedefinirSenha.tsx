@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 import { z } from 'zod';
 
 const passwordSchema = z
@@ -106,7 +107,7 @@ export default function RedefinirSenha() {
       <div className="min-h-screen flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
           <div className="flex items-center gap-3 mb-8 justify-center">
-            <Shield className="h-8 w-8 text-primary" />
+            <LogoIcon size={32} />
             <span className="font-display text-xl font-bold">VisitaSegura</span>
           </div>
 
@@ -136,7 +137,7 @@ export default function RedefinirSenha() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <Shield className="h-8 w-8 text-primary" />
+          <LogoIcon size={32} />
           <span className="font-display text-xl font-bold">VisitaSegura</span>
         </div>
 

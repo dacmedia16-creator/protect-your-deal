@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Shield, Loader2, Building2, ArrowLeft, Check, Ticket, X, UserPlus } from 'lucide-react';
+import { Loader2, Building2, ArrowLeft, Check, Ticket, X, UserPlus } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
 import { formatCNPJ } from '@/lib/cnpj';
@@ -247,7 +248,7 @@ export default function RegistroImobiliaria() {
             Voltar
           </Link>
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-display font-bold text-xl">VisitaSegura</span>
           </div>
         </div>

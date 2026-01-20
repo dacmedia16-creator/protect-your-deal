@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Shield, Loader2, ArrowLeft, Check, User, Building2, Ticket, X } from 'lucide-react';
+import { Loader2, ArrowLeft, Check, User, Building2, Ticket, X } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
 import { formatCPF } from '@/lib/cpf';
@@ -277,7 +278,7 @@ export default function RegistroCorretorAutonomo() {
             Voltar
           </Link>
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-display font-bold text-xl">VisitaSegura</span>
           </div>
         </div>
