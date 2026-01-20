@@ -1,25 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
-  <!-- Dark background -->
-  <rect width="512" height="512" rx="96" fill="#0F172A"/>
+  <!-- Moldura externa -->
+  <rect x="56" y="56" width="400" height="400" rx="48" stroke="#0F172A" stroke-width="16" fill="none"/>
   
-  <!-- Outer frame -->
-  <rect x="88" y="88" width="336" height="336" rx="40" stroke="white" stroke-width="14" fill="none"/>
+  <!-- Linhas horizontais do grid -->
+  <path d="M136 176h240" stroke="#0F172A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M136 256h240" stroke="#0F172A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M136 336h240" stroke="#0F172A" stroke-width="12" stroke-linecap="round"/>
   
-  <!-- Inner grid lines -->
-  <path d="M148 188h216" stroke="white" stroke-width="12" stroke-linecap="round"/>
-  <path d="M148 256h216" stroke="white" stroke-width="12" stroke-linecap="round"/>
-  <path d="M148 324h216" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <!-- Linhas verticais -->
+  <path d="M216 96v320" stroke="#0F172A" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  <path d="M256 96v320" stroke="#0F172A" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
+  <path d="M296 96v320" stroke="#0F172A" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
   
-  <!-- Vertical hash lines -->
-  <path d="M216 148v216" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
-  <path d="M256 148v216" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
-  <path d="M296 148v216" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
-  
-  <!-- Nodes -->
-  <circle cx="148" cy="188" r="12" fill="white"/>
-  <circle cx="364" cy="256" r="12" fill="white"/>
-  <circle cx="216" cy="324" r="12" fill="white"/>
-  
-  <!-- Accent -->
-  <circle cx="296" cy="188" r="10" fill="#60A5FA"/>
+  <!-- Nós -->
+  <circle cx="136" cy="176" r="14" fill="#0F172A"/>
+  <circle cx="376" cy="256" r="14" fill="#0F172A"/>
+  <circle cx="216" cy="336" r="14" fill="#0F172A"/>
 </svg>
