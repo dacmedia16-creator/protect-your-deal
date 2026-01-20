@@ -42,7 +42,7 @@ export function IOSInstallMockup({ step }: IOSInstallMockupProps) {
               <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
                 <span className="text-[8px] text-primary-foreground font-bold">V</span>
               </div>
-              <span className="text-[8px] font-medium">VisitaSegura</span>
+              <span className="text-[8px] font-medium">VisitaProva</span>
             </div>
             <div className="space-y-1">
               <div className="h-1.5 bg-muted rounded w-full" />

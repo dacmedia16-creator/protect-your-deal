@@ -69,7 +69,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({ 
         ficha_id,
-        app_url: 'https://visitaseguras.com.br',
+        app_url: 'https://visitaprova.com.br',
         force_partial: ficha.status === 'finalizado_parcial'
       }),
     });

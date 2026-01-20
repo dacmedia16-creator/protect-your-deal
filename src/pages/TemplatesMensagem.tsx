@@ -27,7 +27,7 @@ const defaultTemplates: Record<TemplateType, Template> = {
   criacao_proprietario: {
     tipo: 'criacao_proprietario',
     nome: 'Criação - Proprietário',
-    conteudo: `🏠 *VisitaSegura*
+    conteudo: `🏠 *VisitaProva*
 
 Olá {nome}!
 
@@ -53,7 +53,7 @@ _Não compartilhe este código com ninguém._`,
   criacao_comprador: {
     tipo: 'criacao_comprador',
     nome: 'Criação - Comprador',
-    conteudo: `🏠 *VisitaSegura*
+    conteudo: `🏠 *VisitaProva*
 
 Olá {nome}!
 
@@ -79,7 +79,7 @@ _Não compartilhe este código com ninguém._`,
   lembrete: {
     tipo: 'lembrete',
     nome: 'Lembrete de Visita',
-    conteudo: `🏠 *VisitaSegura - Lembrete*
+    conteudo: `🏠 *VisitaProva - Lembrete*
 
 Olá {nome}!
 
@@ -97,7 +97,7 @@ Não se esqueça de confirmar sua presença!
   confirmacao_completa: {
     tipo: 'confirmacao_completa',
     nome: 'Confirmação Completa',
-    conteudo: `🏠 *VisitaSegura*
+    conteudo: `🏠 *VisitaProva*
 
 ✅ *Visita Confirmada!*
 
@@ -111,7 +111,7 @@ A visita ao imóvel foi confirmada por ambas as partes:
 
 O comprovante de visita está disponível para download.
 
-Obrigado por usar o VisitaSegura!`,
+Obrigado por usar o VisitaProva!`,
     ativo: true
   }
 };

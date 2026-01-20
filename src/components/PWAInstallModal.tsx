@@ -159,7 +159,7 @@ export function PWAInstallModal() {
       <div className="space-y-4">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-foreground">
-            Instalar VisitaSegura
+            Instalar VisitaProva
           </h2>
           <p className="text-muted-foreground">
             Passo {iosStep + 1} de {steps.length}

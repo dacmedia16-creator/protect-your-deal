@@ -469,7 +469,7 @@ serve(async (req) => {
               `Olá${userName ? `, ${userName}` : ''}!\n\n` +
               `Sua assinatura do plano *${planoNome}* foi encerrada.\n\n` +
               `Você pode reativar sua assinatura a qualquer momento pelo app.\n\n` +
-              `Obrigado por usar o Visita Segura!`;
+              `Obrigado por usar o VisitaProva!`;
             break;
 
           case 'SUBSCRIPTION_RENEWED':

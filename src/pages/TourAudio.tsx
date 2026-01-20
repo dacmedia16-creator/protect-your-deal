@@ -16,7 +16,7 @@ const SCRIPT_SECTIONS = [
   {
     id: 'intro',
     title: 'Introdução',
-    text: 'Olá! Bem-vindo ao VisitaSegura, a plataforma que revoluciona a segurança nas visitas imobiliárias. Vou te mostrar como nossa solução protege corretores, proprietários e compradores em cada etapa do processo.',
+    text: 'Olá! Bem-vindo ao VisitaProva, a plataforma que revoluciona a segurança nas visitas imobiliárias. Vou te mostrar como nossa solução protege corretores, proprietários e compradores em cada etapa do processo.',
     mockup: null,
   },
   {
@@ -52,13 +52,13 @@ const SCRIPT_SECTIONS = [
   {
     id: 'pwa',
     title: 'App Mobile',
-    text: 'Instale o VisitaSegura como um aplicativo no seu celular. Funciona offline, envia notificações e está sempre disponível quando você precisar. Tudo isso sem precisar baixar nada da loja de aplicativos.',
+    text: 'Instale o VisitaProva como um aplicativo no seu celular. Funciona offline, envia notificações e está sempre disponível quando você precisar. Tudo isso sem precisar baixar nada da loja de aplicativos.',
     mockup: MobileAppMockup,
   },
   {
     id: 'conclusao',
     title: 'Conclusão',
-    text: 'Com o VisitaSegura, você tem segurança jurídica, praticidade e profissionalismo em cada visita. Comece gratuitamente e descubra como transformar sua rotina imobiliária.',
+    text: 'Com o VisitaProva, você tem segurança jurídica, praticidade e profissionalismo em cada visita. Comece gratuitamente e descubra como transformar sua rotina imobiliária.',
     mockup: null,
   },
 ];

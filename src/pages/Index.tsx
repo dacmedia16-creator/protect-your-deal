@@ -548,10 +548,10 @@ const Index = () => {
 
               <AccordionItem value="item-7" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  O VisitaSegura tem aplicativo para celular?
+                  O VisitaProva tem aplicativo para celular?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Sim! O VisitaSegura pode ser instalado no seu celular como um app. Basta acessar pelo 
+                  Sim! O VisitaProva pode ser instalado no seu celular como um app. Basta acessar pelo 
                   navegador e seguir as instruções para adicionar à tela inicial. Funciona em Android, 
                   iPhone e também no computador, com acesso rápido às suas fichas de visita.
                 </AccordionContent>

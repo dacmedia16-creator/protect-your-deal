@@ -46,7 +46,7 @@ export default function AssinaturaSuspensa() {
             )}
             
             <Button variant="outline" className="w-full" asChild>
-              <a href="mailto:suporte@visitasegura.com.br">
+              <a href="mailto:suporte@visitaprova.com.br">
                 <Phone className="h-4 w-4 mr-2" />
                 Contatar Suporte
               </a>
