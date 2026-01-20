@@ -218,7 +218,7 @@ async function processQueueItem(
     }
 
     // Build verification URL
-    const baseUrl = item.app_url || Deno.env.get('APP_URL') || 'https://visitaprova.com.br';
+    const baseUrl = item.app_url || Deno.env.get('APP_URL') || 'https://visitaseguras.com.br';
     const verificationUrl = `${baseUrl}/confirmar/${token}`;
 
     // Format visit date

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { APP_URL } from '@/lib/appConfig';
+import { OTP_URL } from '@/lib/appConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -330,7 +330,7 @@ export default function ConfirmarVisita() {
         body: { 
           ficha_id: otpInfo.ficha_id, 
           tipo: otpInfo.tipo,
-          app_url: APP_URL
+          app_url: OTP_URL
         },
       });
 

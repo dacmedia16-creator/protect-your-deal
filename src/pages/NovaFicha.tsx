@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
-import { APP_URL } from '@/lib/appConfig';
+import { OTP_URL } from '@/lib/appConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -300,7 +300,7 @@ export default function NovaFicha() {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'proprietario',
-            app_url: APP_URL,
+            app_url: OTP_URL,
             user_id: user.id,
             prioridade: 10, // Alta prioridade para envio imediato
           });
@@ -310,7 +310,7 @@ export default function NovaFicha() {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'comprador',
-            app_url: APP_URL,
+            app_url: OTP_URL,
             user_id: user.id,
             prioridade: 10,
           });
