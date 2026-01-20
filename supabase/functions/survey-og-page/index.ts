@@ -10,6 +10,8 @@ const DEFAULT_OG_IMAGE = 'https://visitaprova.com.br/pwa-512x512.png';
 const APP_URL = 'https://visitaprova.com.br';
 
 Deno.serve(async (req) => {
+  console.log('[serve-survey-page] Request received');
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -109,6 +111,16 @@ Deno.serve(async (req) => {
 
     const surveyUrl = `${APP_URL}/survey/${token}`;
 
+    // Helper function to escape HTML entities
+    const escapeHtml = (text: string): string => {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     // Generate HTML with personalized OG tags
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -148,7 +160,7 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        'Cache-Control': 'public, max-age=300',
       },
     });
 
@@ -157,13 +169,3 @@ Deno.serve(async (req) => {
     return new Response('Erro interno', { status: 500 });
   }
 });
-
-// Helper function to escape HTML entities
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
