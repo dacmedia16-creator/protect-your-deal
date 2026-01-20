@@ -743,7 +743,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           <div>
             <h3 className="font-semibold text-sm">Sofia - Assistente</h3>
             {!isMinimized && (
-              <p className="text-xs opacity-80">VisitaSegura</p>
+              <p className="text-xs opacity-80">VisitaProva</p>
             )}
           </div>
         </div>

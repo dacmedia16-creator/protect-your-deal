@@ -284,7 +284,7 @@ serve(async (req) => {
     }
 
     // Build verification URL - use app_url from request or fallback to env/default
-    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://protect-your-deal.lovable.app';
+    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://visitaprova.com.br';
     const verificationUrl = `${baseUrl}/confirmar/${token}`;
 
     // Format visit date

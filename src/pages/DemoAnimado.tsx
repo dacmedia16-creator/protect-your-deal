@@ -1117,7 +1117,7 @@ export default function DemoAnimado() {
               <div className="w-3 h-3 rounded-full bg-green-500" />
             </div>
             <div className="flex-1 text-center">
-              <span className="text-xs text-muted-foreground">app.visitasegura.com.br</span>
+              <span className="text-xs text-muted-foreground">visitaprova.com.br</span>
             </div>
           </div>
           <CardContent className="p-0 relative overflow-hidden min-h-[400px]">

@@ -475,17 +475,17 @@ const Index = () => {
               Perguntas Frequentes
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Encontre respostas para as dúvidas mais comuns sobre o VisitaSegura.
+              Encontre respostas para as dúvidas mais comuns sobre o VisitaProva.
             </p>
           </div>
           <div className="max-w-3xl mx-auto">
             <Accordion type="single" collapsible className="w-full space-y-4">
               <AccordionItem value="item-1" className="border rounded-lg px-6 bg-card">
                 <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  O que é o VisitaSegura?
+                  O que é o VisitaProva?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  O VisitaSegura é uma plataforma digital para corretores de imóveis criarem registros de visita 
+                  O VisitaProva é uma plataforma digital para corretores de imóveis criarem registros de visita 
                   com confirmação via WhatsApp. Proprietários e compradores confirmam a visita através de um 
                   código OTP, gerando um comprovante PDF com QR Code para verificação de autenticidade.
                 </AccordionContent>
@@ -569,7 +569,7 @@ const Index = () => {
               <Smartphone className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">
-              Leve o VisitaSegura no seu bolso
+              Leve o VisitaProva no seu bolso
             </h2>
             <p className="text-muted-foreground text-lg mb-6 max-w-xl mx-auto">
               Instale nosso app e tenha acesso instantâneo às suas fichas de visita. 
@@ -606,7 +606,7 @@ const Index = () => {
             Pronto para modernizar suas visitas?
           </h2>
           <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
-            Junte-se a centenas de corretores que já utilizam o VisitaSegura para 
+            Junte-se a centenas de corretores que já utilizam o VisitaProva para 
             garantir segurança e profissionalismo em cada visita.
           </p>
           <Button size="lg" variant="secondary" className="text-base" asChild>
@@ -626,7 +626,7 @@ const Index = () => {
             <div className="flex flex-col items-center md:items-start gap-2">
               <div className="flex items-center gap-2">
                 <LogoIcon size={24} />
-                <span className="font-heading font-bold">VisitaSegura</span>
+                <span className="font-heading font-bold">VisitaProva</span>
               </div>
               <p className="text-sm text-muted-foreground text-center md:text-left">
                 Segurança e praticidade para corretores de imóveis
@@ -676,7 +676,7 @@ const Index = () => {
           {/* Copyright */}
           <div className="pt-8 border-t border-border text-center">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} VisitaSegura. Todos os direitos reservados.
+              © {new Date().getFullYear()} VisitaProva. Todos os direitos reservados.
             </p>
           </div>
         </div>

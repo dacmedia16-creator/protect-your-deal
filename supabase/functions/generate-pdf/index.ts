@@ -163,7 +163,7 @@ serve(async (req) => {
     }
 
     // Generate verification URL using app_url from frontend or fallback
-    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://protect-your-deal.lovable.app';
+    const baseUrl = app_url || Deno.env.get('APP_URL') || 'https://visitaprova.com.br';
     const verificationUrl = `${baseUrl}/verificar/${ficha.protocolo}`;
     console.log('Generated verification URL:', verificationUrl);
     console.log('Generating PDF - isPartial:', isPartial, 'proprietarioConfirmado:', proprietarioConfirmado, 'compradorConfirmado:', compradorConfirmado);
@@ -810,7 +810,7 @@ serve(async (req) => {
 
       // Linha 1: Verificação (formato original da imagem)
       const verificationLabel = 'Verifique a autenticidade deste documento:';
-      const verificationUrlFooter = `visitaseguras.com.br/verificar/${ficha.protocolo}`;
+      const verificationUrlFooter = `visitaprova.com.br/verificar/${ficha.protocolo}`;
       const labelWidth = helveticaBold.widthOfTextAtSize(verificationLabel, 8);
       
       targetPage.drawText(verificationLabel, {
