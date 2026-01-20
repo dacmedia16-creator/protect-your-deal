@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="420" viewBox="0 0 1400 420" fill="none">
+  <!-- SYMBOL (abstract record/hash) -->
+  <g transform="translate(40,40)">
+    <rect x="0" y="0" width="300" height="300" rx="28" stroke="#0F172A" stroke-width="10"></rect>
+    <path d="M60 80h180" stroke="#0F172A" stroke-width="8" stroke-linecap="round"></path>
+    <path d="M60 140h180" stroke="#0F172A" stroke-width="8" stroke-linecap="round"></path>
+    <path d="M60 200h180" stroke="#0F172A" stroke-width="8" stroke-linecap="round"></path>
+    <circle cx="60" cy="80" r="10" fill="#0F172A"></circle>
+    <circle cx="240" cy="140" r="10" fill="#0F172A"></circle>
+    <circle cx="120" cy="200" r="10" fill="#0F172A"></circle>
+    <path d="M140 40v220" stroke="#0F172A" stroke-width="6" stroke-linecap="round" opacity="0.8"></path>
+    <path d="M100 40v220" stroke="#0F172A" stroke-width="6" stroke-linecap="round" opacity="0.4"></path>
+    <path d="M180 40v220" stroke="#0F172A" stroke-width="6" stroke-linecap="round" opacity="0.4"></path>
+  </g>
+
+  <!-- TEXT (single line, stable) -->
+  <text x="380" y="190" font-family="Inter, Arial, sans-serif" font-size="120" font-weight="800" fill="#0F172A" dominant-baseline="alphabetic">
+    Visita<tspan fill="#2563EB">Prova</tspan>
+  </text>
+
+  <!-- SUBTITLE (removed "técnico") -->
+  <text x="380" y="270" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="500" fill="#475569" dominant-baseline="alphabetic">Registro de intermediação</text>
+</svg>

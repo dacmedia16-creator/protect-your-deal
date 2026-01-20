@@ -6,8 +6,8 @@ interface LogoFullProps {
 export const LogoFull = ({ className, showTagline = true }: LogoFullProps) => {
   return (
     <img 
-      src="/logo-full.png" 
-      alt="VisitaProva - Prova de intermediação" 
+      src="/logo-full.svg" 
+      alt="VisitaProva - Registro de intermediação" 
       className={className}
     />
   );
