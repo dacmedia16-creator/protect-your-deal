@@ -167,7 +167,7 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
   const handleCopyLink = () => {
     if (shareLink) {
       // Adiciona cache-buster para forçar atualização da prévia do WhatsApp
-      const linkWithCacheBuster = `${shareLink}&v=${Date.now()}`;
+      const linkWithCacheBuster = `${shareLink}?v=${Date.now()}`;
       navigator.clipboard.writeText(linkWithCacheBuster);
       toast({
         title: 'Link copiado!',
@@ -180,7 +180,7 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
     if (!shareLink) return;
     
     // Adiciona cache-buster para forçar atualização da prévia do WhatsApp
-    const linkWithCacheBuster = `${shareLink}&v=${Date.now()}`;
+    const linkWithCacheBuster = `${shareLink}?v=${Date.now()}`;
     
     const message = `Olá! 😊
 
