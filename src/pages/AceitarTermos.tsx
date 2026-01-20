@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Shield, FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -146,7 +147,7 @@ const AceitarTermos = () => {
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center pb-4 sm:pb-6">
           <div className="flex justify-center mb-3 sm:mb-4">
-            <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+            <LogoIcon size={48} className="sm:w-12 sm:h-12" />
           </div>
           <CardTitle className="text-xl sm:text-2xl font-heading">Termos de Uso</CardTitle>
           <CardDescription className="text-sm">
@@ -165,7 +166,7 @@ const AceitarTermos = () => {
               <li className="flex gap-2">
                 <span>•</span>
                 <span>
-                  <span className="hidden sm:inline">O VisitaSegura é uma ferramenta tecnológica para registro de visitas imobiliárias</span>
+                  <span className="hidden sm:inline">O VisitaProva é uma ferramenta tecnológica para registro de visitas imobiliárias</span>
                   <span className="sm:hidden">Ferramenta para registro de visitas</span>
                 </span>
               </li>
@@ -242,7 +243,7 @@ const AceitarTermos = () => {
                 >
                   Política de Responsabilidade
                 </Link>{' '}
-                da plataforma VisitaSegura
+                da plataforma VisitaProva
               </span>
               <span className="sm:hidden">
                 Aceito os{' '}
