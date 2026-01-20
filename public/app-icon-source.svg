@@ -1,28 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Background -->
-  <rect width="1024" height="1024" rx="0" fill="#0F172A"/>
-
-  <!-- Icon group (centered, safe margins) -->
-  <g transform="translate(256,256)">
-    <!-- Outer frame -->
-    <rect x="0" y="0" width="512" height="512" rx="64" stroke="#FFFFFF" stroke-width="20" fill="none"/>
-
-    <!-- Horizontal grid lines -->
-    <path d="M96 176h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
-    <path d="M96 256h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
-    <path d="M96 336h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
-
-    <!-- Vertical hash lines -->
-    <path d="M192 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.8"/>
-    <path d="M256 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.5"/>
-    <path d="M296 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.5"/>
-
-    <!-- Nodes -->
-    <circle cx="96" cy="176" r="18" fill="#FFFFFF"/>
-    <circle cx="416" cy="256" r="18" fill="#FFFFFF"/>
-    <circle cx="192" cy="336" r="18" fill="#FFFFFF"/>
-
-    <!-- Blue accent -->
-    <circle cx="296" cy="176" r="14" fill="#60A5FA"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512" fill="none">
+  <!-- Dark background -->
+  <rect width="512" height="512" rx="0" fill="#0F172A"/>
+  
+  <!-- Moldura externa -->
+  <rect x="56" y="56" width="400" height="400" rx="48" stroke="white" stroke-width="16" fill="none"/>
+  
+  <!-- Linhas horizontais do grid -->
+  <path d="M136 176h240" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <path d="M136 256h240" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <path d="M136 336h240" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  
+  <!-- Linhas verticais -->
+  <path d="M216 136v240" stroke="white" stroke-width="10" stroke-linecap="round" opacity="0.8"/>
+  <path d="M256 136v240" stroke="white" stroke-width="10" stroke-linecap="round" opacity="0.5"/>
+  <path d="M296 136v240" stroke="white" stroke-width="10" stroke-linecap="round" opacity="0.5"/>
+  
+  <!-- Nós -->
+  <circle cx="136" cy="176" r="14" fill="white"/>
+  <circle cx="376" cy="256" r="14" fill="white"/>
+  <circle cx="216" cy="336" r="14" fill="white"/>
+  
+  <!-- Acento azul -->
+  <circle cx="296" cy="176" r="10" fill="#60A5FA"/>
 </svg>

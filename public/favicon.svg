@@ -18,5 +18,5 @@
   <circle cx="216" cy="336" r="14" fill="#0F172A"/>
   
   <!-- Acento azul -->
-  <circle cx="296" cy="176" r="12" fill="#2563EB"/>
+  <circle cx="296" cy="176" r="10" fill="#2563EB"/>
 </svg>
