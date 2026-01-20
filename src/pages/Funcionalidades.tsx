@@ -429,7 +429,7 @@ const Funcionalidades = () => {
           </AnimatedSection>
           <AnimatedSection delay={100}>
             <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
-              Comece gratuitamente e descubra como o VisitaSegura pode 
+              Comece gratuitamente e descubra como o VisitaProva pode 
               transformar a forma como você trabalha.
             </p>
           </AnimatedSection>
@@ -455,10 +455,10 @@ const Funcionalidades = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <Link to="/" className="flex items-center gap-2">
               <LogoIcon size={24} />
-              <span className="font-heading font-bold">VisitaSegura</span>
+              <span className="font-heading font-bold">VisitaProva</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} VisitaSegura. Todos os direitos reservados.
+              © {new Date().getFullYear()} VisitaProva. Todos os direitos reservados.
             </p>
           </div>
         </div>

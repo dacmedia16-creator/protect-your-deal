@@ -648,7 +648,7 @@ export default function ConviteParceiroExterno() {
               <div className="flex items-start gap-3">
                 <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">Sobre o VisitaSegura</p>
+                  <p className="font-medium text-foreground mb-1">Sobre o VisitaProva</p>
                   <p>
                     Esta ficha digital substitui a antiga ficha de papel com a mesma validade jurídica. 
                     Todas as confirmações são registradas com data, hora e localização para sua proteção.

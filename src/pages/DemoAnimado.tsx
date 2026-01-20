@@ -611,7 +611,7 @@ export default function DemoAnimado() {
               <div className="bg-[#E5DDD5] dark:bg-[#0B141A] p-4 rounded-b-xl space-y-3 min-h-[200px]">
                 <div className={`bg-white dark:bg-[#1F2C34] p-3 rounded-lg shadow-sm max-w-[80%] transition-all duration-500 ${stepProgress > 20 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                   <p className="text-sm text-foreground">
-                    🔐 <strong>VisitaSegura</strong>
+                    🔐 <strong>VisitaProva</strong>
                   </p>
                   <p className="text-sm text-foreground mt-1">
                     Seu código de confirmação: <strong>847291</strong>
@@ -809,7 +809,7 @@ export default function DemoAnimado() {
             <div className="bg-white dark:bg-muted border rounded-lg shadow-lg p-6 w-64 transform transition-transform hover:scale-105">
               <div className="flex items-center gap-2 mb-4 pb-4 border-b">
                 <Shield className="h-5 w-5 text-primary" />
-                <span className="font-semibold text-sm">VisitaSegura</span>
+                <span className="font-semibold text-sm">VisitaProva</span>
               </div>
               <div className="space-y-2 text-xs text-muted-foreground">
                 <p><strong>Protocolo:</strong> VS25A3B4C5</p>
@@ -1075,7 +1075,7 @@ export default function DemoAnimado() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-primary flex items-center gap-2">
             <Shield className="h-6 w-6" />
-            VisitaSegura
+            VisitaProva
           </Link>
           <Link to="/">
             <Button variant="outline" size="sm">
@@ -1092,7 +1092,7 @@ export default function DemoAnimado() {
             Demo Animado com Narração
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Veja como o VisitaSegura funciona na prática com narração em áudio sincronizada.
+            Veja como o VisitaProva funciona na prática com narração em áudio sincronizada.
           </p>
         </div>
 
