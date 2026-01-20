@@ -259,7 +259,7 @@ async function processQueueItem(
         ? '\n\n📝 *Você precisará preencher seus dados (nome e CPF) ao confirmar.*'
         : '';
       
-      message = `🏠 *VisitaProva*\n\n${saudacao}\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}${instrucaoExtra}\n\n⏰ Este código expira em 1 hora.\n\n_Não compartilhe este código com ninguém._`;
+      message = `🏠 *Confirmação de Visita*\n\n${saudacao}\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}${instrucaoExtra}\n\n⏰ Este código expira em 1 hora.\n\n_Não compartilhe este código com ninguém._`;
     }
 
     // Try to send via providers
