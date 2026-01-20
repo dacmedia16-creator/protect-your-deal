@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ArrowLeft, Mail, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Email inválido');
@@ -67,7 +68,7 @@ export default function RecuperarSenha() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <Shield className="h-8 w-8 text-primary" />
+          <LogoIcon size={32} />
           <span className="font-display text-xl font-bold">VisitaSegura</span>
         </div>
 

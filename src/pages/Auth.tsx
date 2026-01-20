@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, FileCheck, Users, Loader2, Building2, Check, Ticket, X } from 'lucide-react';
+import { FileCheck, Users, Loader2, Building2, Check, Ticket, X } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPhone } from '@/lib/phone';
@@ -374,7 +375,7 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 gradient-primary p-12 flex-col justify-between">
         <div>
           <div className="flex items-center gap-3 text-primary-foreground">
-            <Shield className="h-10 w-10" />
+            <LogoIcon size={40} className="brightness-0 invert" />
             <span className="font-display text-2xl font-bold">VisitaSegura</span>
           </div>
         </div>
@@ -421,7 +422,7 @@ export default function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <Shield className="h-8 w-8 text-primary" />
+            <LogoIcon size={32} />
             <span className="font-display text-xl font-bold">VisitaSegura</span>
           </div>
 

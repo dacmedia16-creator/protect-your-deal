@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { Shield, Rocket, Smartphone, MessageCircle, ExternalLink } from "lucide-react";
+import { Rocket, Smartphone, MessageCircle, ExternalLink } from "lucide-react";
+import { LogoIcon } from '@/components/LogoIcon';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -28,7 +29,7 @@ const AppLanding = () => {
           {/* Logo e Título */}
           <div className="text-center space-y-3">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-2">
-              <Shield className="h-10 w-10 text-primary" />
+              <LogoIcon size={40} />
             </div>
             <h1 className="text-3xl font-bold text-foreground">VisitaSegura</h1>
             <p className="text-muted-foreground text-lg">

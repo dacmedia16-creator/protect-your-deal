@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, User, Building2, UserPlus, ArrowLeft } from 'lucide-react';
+import { User, Building2, UserPlus, ArrowLeft } from 'lucide-react';
+import { LogoIcon } from '@/components/LogoIcon';
 
 const RegistroTipo = () => {
   const { user, loading } = useAuth();
@@ -31,7 +32,7 @@ const RegistroTipo = () => {
       <header className="border-b border-border/40 bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 h-16 flex items-center">
           <Link to="/" className="flex items-center gap-2">
-            <Shield className="h-7 w-7 text-primary" />
+            <LogoIcon size={28} />
             <span className="font-heading text-xl font-bold">VisitaSegura</span>
           </Link>
         </div>

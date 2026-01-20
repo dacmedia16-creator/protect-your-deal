@@ -10,8 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { LogoIcon } from '@/components/LogoIcon';
 import {
-  Shield, 
   FileCheck, 
   MessageSquare, 
   QrCode, 
@@ -99,7 +99,7 @@ const Index = () => {
       description: 'Convide outros corretores para trabalhar juntos em um mesmo registro de visita.'
     },
     {
-      icon: Shield,
+      icon: FileCheck,
       title: 'Protocolo Único',
       description: 'Cada visita recebe um protocolo exclusivo para rastreabilidade completa.'
     },
@@ -158,7 +158,7 @@ const Index = () => {
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="h-7 w-7 text-primary" />
+            <LogoIcon size={28} />
             <span className="font-heading text-xl font-bold">VisitaSegura</span>
           </div>
           
@@ -222,7 +222,7 @@ const Index = () => {
               <SheetContent side="right" className="w-[280px] sm:w-[320px]">
                 <div className="flex flex-col gap-6 mt-6">
                   <div className="flex items-center gap-2 pb-4 border-b">
-                    <Shield className="h-6 w-6 text-primary" />
+                    <LogoIcon size={24} />
                     <span className="font-heading text-lg font-bold">VisitaSegura</span>
                   </div>
                   
@@ -295,7 +295,7 @@ const Index = () => {
           <div className="max-w-3xl mx-auto text-center">
             <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                <Shield className="h-4 w-4" />
+                <LogoIcon size={16} />
                 Segurança e praticidade para corretores
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
@@ -625,7 +625,7 @@ const Index = () => {
             {/* Logo e nome */}
             <div className="flex flex-col items-center md:items-start gap-2">
               <div className="flex items-center gap-2">
-                <Shield className="h-6 w-6 text-primary" />
+                <LogoIcon size={24} />
                 <span className="font-heading font-bold">VisitaSegura</span>
               </div>
               <p className="text-sm text-muted-foreground text-center md:text-left">
