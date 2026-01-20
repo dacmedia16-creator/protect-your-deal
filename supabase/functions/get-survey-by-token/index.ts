@@ -84,19 +84,21 @@ Deno.serve(async (req) => {
     // Fetch corretor profile
     const { data: corretorProfile } = await supabase
       .from('profiles')
-      .select('nome')
+      .select('nome, foto_url')
       .eq('user_id', survey.corretor_id)
       .maybeSingle();
 
-    // Fetch imobiliaria name
+    // Fetch imobiliaria name and logo
     let imobiliariaNome = null;
+    let imobiliariaLogoUrl = null;
     if (survey.imobiliaria_id) {
       const { data: imobiliaria } = await supabase
         .from('imobiliarias')
-        .select('nome')
+        .select('nome, logo_url')
         .eq('id', survey.imobiliaria_id)
         .maybeSingle();
       imobiliariaNome = imobiliaria?.nome;
+      imobiliariaLogoUrl = imobiliaria?.logo_url;
     }
 
     console.log('Survey encontrada com sucesso');
@@ -115,7 +117,9 @@ Deno.serve(async (req) => {
           comprador_nome: ficha.comprador_nome,
         } : null,
         corretor_nome: corretorProfile?.nome || null,
+        corretor_foto_url: corretorProfile?.foto_url || null,
         imobiliaria_nome: imobiliariaNome,
+        imobiliaria_logo_url: imobiliariaLogoUrl,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
