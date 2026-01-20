@@ -132,5 +132,5 @@ verify_jwt = false
 [functions.create-survey]
 verify_jwt = false
 
-[functions.serve-survey-page]
+[functions.survey-og-page]
 verify_jwt = false
