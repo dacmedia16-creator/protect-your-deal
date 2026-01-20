@@ -68,6 +68,9 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
   // Fetch existing survey for this ficha
   const { data: survey, isLoading } = useQuery({
     queryKey: ['survey', fichaId],
+    refetchInterval: 30000,      // Revalidar a cada 30 segundos
+    staleTime: 10000,            // Dados ficam "frescos" por 10 segundos
+    refetchOnWindowFocus: true,  // Revalidar ao voltar para a aba
     queryFn: async () => {
       const { data, error } = await supabase
         .from('surveys')
