@@ -1,5 +1,22 @@
-<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="36" fill="#1565c0"/>
-  <path d="M48 54L96 138L144 54" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <path d="M72 96L96 126L138 60" stroke="#22c55e" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <!-- Outer frame -->
+  <rect x="56" y="56" width="400" height="400" rx="48" stroke="#0F172A" stroke-width="16"></rect>
+
+  <!-- Inner grid lines -->
+  <path d="M136 176h240" stroke="#0F172A" stroke-width="14" stroke-linecap="round"></path>
+  <path d="M136 256h240" stroke="#0F172A" stroke-width="14" stroke-linecap="round"></path>
+  <path d="M136 336h240" stroke="#0F172A" stroke-width="14" stroke-linecap="round"></path>
+
+  <!-- Vertical hash lines -->
+  <path d="M216 136v240" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.8"></path>
+  <path d="M256 136v240" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.5"></path>
+  <path d="M296 136v240" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.5"></path>
+
+  <!-- Nodes -->
+  <circle cx="136" cy="176" r="14" fill="#0F172A"></circle>
+  <circle cx="376" cy="256" r="14" fill="#0F172A"></circle>
+  <circle cx="216" cy="336" r="14" fill="#0F172A"></circle>
+
+  <!-- Accent -->
+  <circle cx="296" cy="176" r="10" fill="#2563EB"></circle>
 </svg>

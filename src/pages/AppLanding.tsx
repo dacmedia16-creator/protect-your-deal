@@ -33,7 +33,7 @@ const AppLanding = () => {
             </div>
             <h1 className="text-3xl font-bold text-foreground">VisitaProva</h1>
             <p className="text-muted-foreground text-lg">
-              Prova de Intermediação Imobiliária com Confirmação Segura via WhatsApp
+              Registro de Intermediação Imobiliária com Confirmação Segura via WhatsApp
             </p>
           </div>
 

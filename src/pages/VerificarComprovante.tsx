@@ -545,7 +545,7 @@ export default function VerificarComprovante() {
       <footer className="border-t py-4">
         <div className="container mx-auto px-4 text-center">
           <p className="text-xs text-muted-foreground">
-            VisitaProva - Sistema de Prova de Intermediação Imobiliária
+            VisitaProva - Sistema de Registro de Intermediação Imobiliária
           </p>
         </div>
       </footer>
