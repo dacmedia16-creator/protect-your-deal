@@ -22,7 +22,7 @@ const MobileAppMockup = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary-foreground" />
-                  <span className="font-bold text-sm text-primary-foreground">VisitaSegura</span>
+                  <span className="font-bold text-sm text-primary-foreground">VisitaProva</span>
                 </div>
                 <Bell className="h-4 w-4 text-primary-foreground/80" />
               </div>

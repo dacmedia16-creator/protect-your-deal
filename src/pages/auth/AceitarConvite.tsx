@@ -195,7 +195,7 @@ export default function AceitarConvite() {
           <div className="flex justify-center mb-4">
             <Shield className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl">VisitaSegura</CardTitle>
+          <CardTitle className="text-2xl">VisitaProva</CardTitle>
           {error ? (
             <CardDescription className="text-destructive flex items-center justify-center gap-2">
               <XCircle className="h-4 w-4" />

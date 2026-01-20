@@ -17,7 +17,7 @@ const WhatsAppOTPMockup = () => {
               <Shield className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">VisitaSegura</p>
+              <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300">VisitaProva</p>
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Verificado ✓</p>
             </div>
           </div>

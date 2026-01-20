@@ -129,7 +129,7 @@ export default function InstalarApp() {
             </div>
             <CardTitle className="text-2xl">App Instalado!</CardTitle>
             <CardDescription>
-              O VisitaSegura já está instalado no seu dispositivo.
+              O VisitaProva já está instalado no seu dispositivo.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -168,7 +168,7 @@ export default function InstalarApp() {
           <div className="mx-auto mb-4 h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Shield className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Instalar VisitaSegura</h1>
+          <h1 className="text-3xl font-bold mb-2">Instalar VisitaProva</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
             Tenha acesso rápido ao app direto da sua tela inicial, sem precisar abrir o navegador
           </p>
@@ -221,7 +221,7 @@ export default function InstalarApp() {
             <CardContent>
               <Button onClick={handleInstall} size="lg" className="w-full">
                 <Download className="mr-2 h-5 w-5" />
-                Instalar VisitaSegura Agora
+                Instalar VisitaProva Agora
               </Button>
             </CardContent>
           </Card>

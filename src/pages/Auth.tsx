@@ -376,7 +376,7 @@ export default function Auth() {
         <div>
           <div className="flex items-center gap-3 text-primary-foreground">
             <LogoIcon size={40} className="brightness-0 invert" />
-            <span className="font-display text-2xl font-bold">VisitaSegura</span>
+            <span className="font-display text-2xl font-bold">VisitaProva</span>
           </div>
         </div>
         
@@ -413,7 +413,7 @@ export default function Auth() {
         </div>
         
         <p className="text-primary-foreground/60 text-sm">
-          © 2024 VisitaSegura. Todos os direitos reservados.
+          © 2024 VisitaProva. Todos os direitos reservados.
         </p>
       </div>
 
@@ -423,7 +423,7 @@ export default function Auth() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
             <LogoIcon size={32} />
-            <span className="font-display text-xl font-bold">VisitaSegura</span>
+            <span className="font-display text-xl font-bold">VisitaProva</span>
           </div>
 
           <Tabs defaultValue="login" className="w-full">

@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifest: {
-        name: 'VisitaSegura - Fichas de Visita Digitais',
-        short_name: 'VisitaSegura',
-        description: 'Crie fichas de visita digitais com confirmação segura via WhatsApp e comprovantes PDF com QR Code',
+        name: 'VisitaProva - Prova de Intermediação',
+        short_name: 'VisitaProva',
+        description: 'Crie fichas de visita digitais com confirmação segura via WhatsApp e comprovantes PDF com QR Code. Prova de intermediação imobiliária.',
         theme_color: '#0B3C5D',
         background_color: '#0B3C5D',
         display: 'standalone',

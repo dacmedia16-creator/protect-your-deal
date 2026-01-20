@@ -23,7 +23,7 @@ const PDFComprovanteMockup = () => {
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
               <div>
-                <p className="font-bold text-sm">VisitaSegura</p>
+                <p className="font-bold text-sm">VisitaProva</p>
                 <p className="text-[10px] text-gray-500">Comprovante de Visita</p>
               </div>
             </div>

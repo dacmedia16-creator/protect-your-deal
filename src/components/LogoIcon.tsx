@@ -7,7 +7,7 @@ export const LogoIcon = ({ className, size = 32 }: LogoIconProps) => {
   return (
     <img 
       src="/logo-icon.svg" 
-      alt="VisitaSegura" 
+      alt="VisitaProva" 
       width={size} 
       height={size}
       className={className}

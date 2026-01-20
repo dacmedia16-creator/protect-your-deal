@@ -53,7 +53,7 @@ const ComoFunciona = () => {
           </Button>
           <div className="flex items-center gap-2">
             <LogoIcon size={24} />
-            <span className="font-heading text-lg font-bold">VisitaSegura</span>
+            <span className="font-heading text-lg font-bold">VisitaProva</span>
           </div>
           <div className="w-20" /> {/* Spacer for centering */}
         </div>
@@ -64,7 +64,7 @@ const ComoFunciona = () => {
         {/* Title */}
         <AnimatedSection className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-bold mb-4">
-            Como Funciona o <span className="text-primary">VisitaSegura</span>
+            Como Funciona o <span className="text-primary">VisitaProva</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Veja na prática como é simples garantir a segurança jurídica das suas visitas.

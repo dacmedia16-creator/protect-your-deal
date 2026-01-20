@@ -20,7 +20,7 @@ export default function CadastroConcluido() {
         {/* Header */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <Shield className="h-8 w-8 text-primary" />
-          <span className="font-display font-bold text-2xl">VisitaSegura</span>
+          <span className="font-display font-bold text-2xl">VisitaProva</span>
         </div>
 
         {/* Success Card */}
