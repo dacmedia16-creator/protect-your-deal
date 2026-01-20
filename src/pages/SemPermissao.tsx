@@ -46,9 +46,9 @@ export default function SemPermissao() {
               Entre em contato com o suporte para resolver:
             </p>
             <Button variant="outline" className="w-full" asChild>
-              <a href="mailto:suporte@visitasegura.com.br">
+              <a href="mailto:suporte@visitaprova.com.br">
                 <Mail className="h-4 w-4 mr-2" />
-                suporte@visitasegura.com.br
+                suporte@visitaprova.com.br
               </a>
             </Button>
           </div>

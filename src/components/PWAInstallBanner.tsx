@@ -143,7 +143,7 @@ export function PWAInstallBanner() {
           
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm md:text-base mb-0.5">
-              Instale o VisitaSegura
+              Instale o VisitaProva
             </h3>
             <p className="text-xs md:text-sm text-muted-foreground mb-2 md:mb-3">
               {showManualInstructions 

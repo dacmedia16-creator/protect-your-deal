@@ -317,7 +317,7 @@ export default function ConviteParceiroExterno() {
 
     if (!phone) return;
 
-    const message = `🏠 *VisitaSegura*\n\nOlá ${nome || ''}!\n\nVocê está confirmando uma visita ao imóvel:\n📍 ${ficha.imovel_endereco}\n\nSeu código de confirmação é:\n\n🔐 *${lastOtpResult.codigo}*\n\nOu acesse o link:\n${lastOtpResult.verification_url}\n\n⏰ Este código expira em 30 minutos.`;
+    const message = `🏠 *VisitaProva*\n\nOlá ${nome || ''}!\n\nVocê está confirmando uma visita ao imóvel:\n📍 ${ficha.imovel_endereco}\n\nSeu código de confirmação é:\n\n🔐 *${lastOtpResult.codigo}*\n\nOu acesse o link:\n${lastOtpResult.verification_url}\n\n⏰ Este código expira em 30 minutos.`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/55${phone}?text=${encodedMessage}`, '_blank');
@@ -360,7 +360,7 @@ export default function ConviteParceiroExterno() {
               <Shield className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-display text-xl font-bold">VisitaSegura</h1>
+              <h1 className="font-display text-xl font-bold">VisitaProva</h1>
               <p className="text-sm text-muted-foreground">
                 Convite de Parceria
               </p>

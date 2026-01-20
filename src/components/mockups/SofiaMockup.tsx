@@ -24,7 +24,7 @@ const SofiaMockup = () => {
             <div className="bg-muted rounded-lg rounded-tl-none p-3">
               <p className="text-xs leading-relaxed">
                 Olá! 👋 Eu sou a <strong>Sofia</strong>, sua assistente virtual. 
-                Estou aqui para ajudar você a usar o VisitaSegura. 
+                Estou aqui para ajudar você a usar o VisitaProva. 
                 O que você gostaria de saber?
               </p>
             </div>

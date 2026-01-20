@@ -276,7 +276,7 @@ export function ChatAssistente() {
               role: 'assistant', 
               content: `Bem-vindo de volta, ${firstName}! 🎉
 
-Você está no **VisitaSegura**. Posso te ajudar com alguma coisa?
+Você está no **VisitaProva**. Posso te ajudar com alguma coisa?
 
 Por exemplo:
 • 📋 Criar um novo registro de visita
@@ -337,7 +337,7 @@ Por exemplo:
     
     // Visitor on home page - sales focused
     if (isHomePage) {
-      return `Oi! 👋 Sou a Sofia, assistente do **VisitaSegura**.
+      return `Oi! 👋 Sou a Sofia, assistente do **VisitaProva**.
 
 Nosso sistema protege corretores em visitas imobiliárias com:
 • 📱 Registros digitais com confirmação via WhatsApp
@@ -348,7 +348,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     }
     
     // Visitor on other pages
-    return 'Olá! 👋 Sou a Sofia, assistente virtual do VisitaSegura. Posso te ajudar com dúvidas sobre o sistema, mostrar como funciona ou dar suporte técnico. Como posso te ajudar hoje?';
+    return 'Olá! 👋 Sou a Sofia, assistente virtual do VisitaProva. Posso te ajudar com dúvidas sobre o sistema, mostrar como funciona ou dar suporte técnico. Como posso te ajudar hoje?';
   };
 
   // Initialize messages with personalized greeting

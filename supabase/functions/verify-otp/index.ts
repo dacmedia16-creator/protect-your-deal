@@ -39,7 +39,7 @@ async function generateBackupPDF(supabase: any, fichaId: string, isPartial: bool
       },
       body: JSON.stringify({ 
         ficha_id: fichaId,
-        app_url: 'https://visitaseguras.com.br',
+        app_url: 'https://visitaprova.com.br',
         force_partial: isPartial
       }),
     });
