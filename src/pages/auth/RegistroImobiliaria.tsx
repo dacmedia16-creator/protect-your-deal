@@ -249,7 +249,7 @@ export default function RegistroImobiliaria() {
           </Link>
           <div className="flex items-center gap-2">
             <LogoIcon size={24} />
-            <span className="font-display font-bold text-xl">VisitaSegura</span>
+            <span className="font-display font-bold text-xl">VisitaProva</span>
           </div>
         </div>
 

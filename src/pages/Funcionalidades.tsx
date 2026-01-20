@@ -113,7 +113,7 @@ const Funcionalidades = () => {
       icon: Smartphone,
       title: 'App para Celular',
       subtitle: 'Acesse de qualquer lugar, a qualquer hora',
-      description: 'Instale o VisitaSegura no seu celular como um aplicativo. Acesse seus registros, crie novas visitas e gere comprovantes diretamente do seu smartphone, mesmo offline.',
+      description: 'Instale o VisitaProva no seu celular como um aplicativo. Acesse seus registros, crie novas visitas e gere comprovantes diretamente do seu smartphone, mesmo offline.',
       benefits: [
         'Instalação simples pelo navegador',
         'Funciona em Android e iPhone',
@@ -185,7 +185,7 @@ const Funcionalidades = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <LogoIcon size={28} />
-            <span className="font-heading text-xl font-bold">VisitaSegura</span>
+            <span className="font-heading text-xl font-bold">VisitaProva</span>
           </Link>
           
           {/* Navigation Links - Desktop */}
@@ -238,7 +238,7 @@ const Funcionalidades = () => {
                 <div className="flex flex-col gap-6 mt-6">
                   <div className="flex items-center gap-2 pb-4 border-b">
                     <LogoIcon size={24} />
-                    <span className="font-heading text-lg font-bold">VisitaSegura</span>
+                    <span className="font-heading text-lg font-bold">VisitaProva</span>
                   </div>
                   
                   <nav className="flex flex-col gap-4">
@@ -302,7 +302,7 @@ const Funcionalidades = () => {
           <AnimatedSection delay={100}>
             <h1 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-6">
               Funcionalidades do{' '}
-              <span className="text-primary">VisitaSegura</span>
+              <span className="text-primary">VisitaProva</span>
             </h1>
           </AnimatedSection>
           <AnimatedSection delay={200}>

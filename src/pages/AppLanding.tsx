@@ -19,7 +19,7 @@ const AppLanding = () => {
   };
 
   const handleWhatsApp = () => {
-    window.open("https://wa.me/5511999999999?text=Olá! Gostaria de saber mais sobre o VisitaSegura.", "_blank");
+    window.open("https://wa.me/5511999999999?text=Olá! Gostaria de saber mais sobre o VisitaProva.", "_blank");
   };
 
   return (
@@ -31,9 +31,9 @@ const AppLanding = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-2">
               <LogoIcon size={40} />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">VisitaSegura</h1>
+            <h1 className="text-3xl font-bold text-foreground">VisitaProva</h1>
             <p className="text-muted-foreground text-lg">
-              Fichas de Visita Digitais com Confirmação Segura via WhatsApp
+              Prova de Intermediação Imobiliária com Confirmação Segura via WhatsApp
             </p>
           </div>
 

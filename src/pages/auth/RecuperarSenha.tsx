@@ -69,7 +69,7 @@ export default function RecuperarSenha() {
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
           <LogoIcon size={32} />
-          <span className="font-display text-xl font-bold">VisitaSegura</span>
+          <span className="font-display text-xl font-bold">VisitaProva</span>
         </div>
 
         <Card className="border-0 shadow-soft">

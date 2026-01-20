@@ -33,7 +33,7 @@ const RegistroTipo = () => {
         <div className="container mx-auto px-4 h-16 flex items-center">
           <Link to="/" className="flex items-center gap-2">
             <LogoIcon size={28} />
-            <span className="font-heading text-xl font-bold">VisitaSegura</span>
+            <span className="font-heading text-xl font-bold">VisitaProva</span>
           </Link>
         </div>
       </header>

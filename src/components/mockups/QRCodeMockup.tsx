@@ -34,14 +34,14 @@ const QRCodeMockup = () => {
             </div>
             <div className="mt-2 flex items-center justify-center gap-1">
               <Shield className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-medium text-muted-foreground">VisitaSegura</span>
+              <span className="text-[10px] font-medium text-muted-foreground">VisitaProva</span>
             </div>
           </div>
         </div>
 
         {/* Verification Info */}
         <div className="text-center space-y-1">
-          <p className="text-sm font-medium">Protocolo: VS-2024-001234</p>
+          <p className="text-sm font-medium">Protocolo: VP-2024-001234</p>
           <p className="text-xs text-muted-foreground">Escaneie para verificar autenticidade</p>
         </div>
 
@@ -49,7 +49,7 @@ const QRCodeMockup = () => {
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ExternalLink className="h-3.5 w-3.5" />
-            <span className="truncate">visitaseguras.com.br/verificar/VS-2024-001234</span>
+            <span className="truncate">visitaprova.com.br/verificar/VP-2024-001234</span>
           </div>
         </div>
 
