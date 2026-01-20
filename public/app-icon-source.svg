@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <!-- Background -->
-  <rect width="1024" height="1024" rx="0" fill="#0F172A"></rect>
+  <rect width="1024" height="1024" rx="0" fill="#0F172A"/>
 
   <!-- Icon group (centered, safe margins) -->
   <g transform="translate(256,256)">
     <!-- Outer frame -->
-    <rect x="0" y="0" width="512" height="512" rx="64" stroke="#FFFFFF" stroke-width="20"></rect>
+    <rect x="0" y="0" width="512" height="512" rx="64" stroke="#FFFFFF" stroke-width="20" fill="none"/>
 
-    <!-- Inner grid -->
-    <path d="M96 192h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"></path>
-    <path d="M96 288h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"></path>
-    <path d="M96 384h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"></path>
+    <!-- Horizontal grid lines -->
+    <path d="M96 176h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+    <path d="M96 256h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
+    <path d="M96 336h320" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round"/>
 
     <!-- Vertical hash lines -->
-    <path d="M224 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.9"></path>
-    <path d="M256 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.5"></path>
-    <path d="M288 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.5"></path>
+    <path d="M192 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.8"/>
+    <path d="M256 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.5"/>
+    <path d="M296 96v320" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" opacity="0.5"/>
 
     <!-- Nodes -->
-    <circle cx="96" cy="192" r="18" fill="#FFFFFF"></circle>
-    <circle cx="416" cy="288" r="18" fill="#FFFFFF"></circle>
-    <circle cx="224" cy="384" r="18" fill="#FFFFFF"></circle>
+    <circle cx="96" cy="176" r="18" fill="#FFFFFF"/>
+    <circle cx="416" cy="256" r="18" fill="#FFFFFF"/>
+    <circle cx="192" cy="336" r="18" fill="#FFFFFF"/>
 
-    <!-- Accent -->
-    <circle cx="288" cy="192" r="14" fill="#60A5FA"></circle>
+    <!-- Blue accent -->
+    <circle cx="296" cy="176" r="14" fill="#60A5FA"/>
   </g>
 </svg>
