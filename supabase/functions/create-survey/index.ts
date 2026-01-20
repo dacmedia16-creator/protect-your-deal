@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
     if (existingSurvey) {
       // Return existing survey info with edge function URL for personalized OG tags
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const surveyUrl = `${supabaseUrl}/functions/v1/serve-survey-page?token=${existingSurvey.token}`;
+      const surveyUrl = `${supabaseUrl}/functions/v1/survey-og-page?token=${existingSurvey.token}`;
       
       return new Response(
         JSON.stringify({
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
 
     // Generate link that points to the edge function for personalized OG tags
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const surveyUrl = `${supabaseUrl}/functions/v1/serve-survey-page?token=${newSurvey.token}`;
+    const surveyUrl = `${supabaseUrl}/functions/v1/survey-og-page?token=${newSurvey.token}`;
 
     console.log('Survey criada com sucesso:', newSurvey.id);
 
