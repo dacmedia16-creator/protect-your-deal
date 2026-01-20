@@ -32,7 +32,7 @@ const hashtagsBase = [
   '#corretordeimoveis',
   '#imobiliaria',
   '#mercadoimobiliario',
-  '#visitasegura',
+  '#visitaprova',
   '#corretor',
   '#imoveis'
 ];
@@ -91,10 +91,10 @@ async function generateDescription(
   const templateStyle = templateStyles[template] || templateStyles['feature'];
   const funcDesc = funcionalidadeDescriptionsForText[funcionalidade] || funcionalidadeDescriptionsForText['geral'];
 
-  const descriptionPrompt = `Crie uma descrição profissional para um post de Instagram sobre o app VisitaSegura.
+  const descriptionPrompt = `Crie uma descrição profissional para um post de Instagram sobre o app VisitaProva.
 
 CONTEXTO:
-- App: VisitaSegura - plataforma de gestão de visitas imobiliárias
+- App: VisitaProva - plataforma de gestão de visitas imobiliárias
 - Funcionalidade destacada: ${funcDesc}
 - Título do post: ${titulo}
 - Subtítulo: ${subtitulo}
@@ -106,7 +106,7 @@ ${templateStyle}
 ESTRUTURA OBRIGATÓRIA (siga essa ordem):
 1. HOOK (primeira linha): Frase forte que chama atenção imediata. Use emoji relevante no início.
 2. PROBLEMA (2-3 linhas): Descreva uma dor/frustração que corretores enfrentam.
-3. SOLUÇÃO (2-3 linhas): Como o VisitaSegura resolve esse problema. Use ✅ ou 💡.
+3. SOLUÇÃO (2-3 linhas): Como o VisitaProva resolve esse problema. Use ✅ ou 💡.
 4. BENEFÍCIO (1-2 linhas): O resultado positivo de usar a ferramenta.
 5. PERGUNTA (1 linha): Uma pergunta para gerar engajamento nos comentários.
 6. CTA (1 linha): Chamada para ação. Ex: "Link na bio" ou "Salve esse post".
@@ -155,7 +155,7 @@ function getFallbackDescription(titulo: string, subtitulo: string): string {
 
 ${subtitulo}
 
-✅ Com o VisitaSegura, sua rotina de visitas fica mais organizada e profissional.
+✅ Com o VisitaProva, sua rotina de visitas fica mais organizada e profissional.
 
 👉 Já conhece o app? Conta pra gente nos comentários!
 
@@ -227,7 +227,7 @@ serve(async (req) => {
     const funcDescImage = funcionalidadeDescriptionsForImage[funcionalidade] || funcionalidadeDescriptionsForImage['geral'];
 
     // Prompt em inglês para melhor qualidade de geração
-    const prompt = `Create a professional Instagram marketing image for "VisitaSegura", a Brazilian real estate management app.
+    const prompt = `Create a professional Instagram marketing image for "VisitaProva", a Brazilian real estate management app.
 
 === CRITICAL: IMAGE DIMENSIONS ===
 ASPECT RATIO: ${aspectRatio}
@@ -252,7 +252,7 @@ VISUAL ELEMENTS TO INCLUDE:
 - Icons representing the feature (locks, QR codes, documents, etc.)
 
 CRITICAL TEXT RULES:
-- Include ONLY the brand name "VisitaSegura" as text
+- Include ONLY the brand name "VisitaProva" as text
 - DO NOT write any Portuguese sentences or phrases
 - DO NOT include the title or subtitle as text in the image
 - Use ONLY visual icons and graphics to represent concepts

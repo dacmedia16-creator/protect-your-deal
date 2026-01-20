@@ -175,7 +175,7 @@ export default function TourAudio() {
     if (!audioUrl) return;
     const a = document.createElement('a');
     a.href = audioUrl;
-    a.download = 'visitasegura-tour.mp3';
+    a.download = 'visitaprova-tour.mp3';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -193,7 +193,7 @@ export default function TourAudio() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-primary">
-            VisitaSegura
+            VisitaProva
           </Link>
           <Link to="/">
             <Button variant="outline" size="sm">
@@ -210,7 +210,7 @@ export default function TourAudio() {
             Tour em Áudio
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Ouça uma apresentação completa sobre todas as funcionalidades do VisitaSegura
+            Ouça uma apresentação completa sobre todas as funcionalidades do VisitaProva
             enquanto acompanha os mockups interativos.
           </p>
         </div>
@@ -228,7 +228,7 @@ export default function TourAudio() {
                     </h3>
                     <p className="text-muted-foreground text-sm mb-6">
                       Clique no botão abaixo para gerar uma narração profissional
-                      sobre todas as funcionalidades do VisitaSegura.
+                      sobre todas as funcionalidades do VisitaProva.
                     </p>
                     <Button 
                       onClick={generateAudio} 
@@ -380,7 +380,7 @@ export default function TourAudio() {
                     <div className="text-center p-8">
                       <div className="text-6xl mb-4">🏠</div>
                       <h3 className="text-xl font-semibold text-primary">
-                        VisitaSegura
+                        VisitaProva
                       </h3>
                       <p className="text-muted-foreground text-sm mt-2">
                         {currentSectionIndex === 0 

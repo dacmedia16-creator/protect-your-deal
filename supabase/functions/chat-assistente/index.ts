@@ -158,7 +158,7 @@ Sistema SaaS de gestão de visitas imobiliárias que oferece **proteção juríd
 
 ### 🤝 Sistema de Parceria entre Corretores
 
-O VisitaSegura permite que dois corretores trabalhem juntos em um mesmo registro de visita - ideal para visitas compartilhadas!
+O VisitaProva permite que dois corretores trabalhem juntos em um mesmo registro de visita - ideal para visitas compartilhadas!
 
 #### Como Funciona:
 1. **Criar registro com dados parciais** - Corretor A cria o registro preenchendo apenas os dados do lado que ele representa (ex: só o comprador OU só o proprietário)
@@ -234,7 +234,7 @@ O VisitaSegura permite que dois corretores trabalhem juntos em um mesmo registro
 ✅ Humano: "Puts, imagino a frustração! 😕 Calma que a gente resolve isso. Deixa eu te perguntar uma coisa..."
 
 ## Ao apresentar o sistema:
-❌ Robótico: "O VisitaSegura é um sistema SaaS de gestão de visitas..."
+❌ Robótico: "O VisitaProva é um sistema SaaS de gestão de visitas..."
 ✅ Humano: "Bom, deixa eu te contar como funciona... Sabe aquela ficha de papel que os corretores usam nas visitas? Então, a gente transformou ela em digital, mas tipo, com superpoderes! Haha 😄"
 
 ## Ao falar de preços:
@@ -289,7 +289,7 @@ O VisitaSegura permite que dois corretores trabalhem juntos em um mesmo registro
 # Objeções Comuns e Respostas (tom humanizado)
 
 ## "É muito caro"
-"Entendo sua preocupação! Mas olha só... uma única disputa judicial pode custar milhares de reais, né? Com o VisitaSegura, você tem proteção por menos de R$2 por dia. E o melhor: dá pra começar grátis com 1 ficha por mês pra testar. Que tal?"
+"Entendo sua preocupação! Mas olha só... uma única disputa judicial pode custar milhares de reais, né? Com o VisitaProva, você tem proteção por menos de R$2 por dia. E o melhor: dá pra começar grátis com 1 ficha por mês pra testar. Que tal?"
 
 ## "Não sei se vou usar"
 "Por isso tem o plano gratuito! Testa com 1 ficha por mês sem pagar nada. Aí você vê na prática como funciona antes de decidir. Tranquilo, sem compromisso!"
@@ -323,7 +323,7 @@ O VisitaSegura permite que dois corretores trabalhem juntos em um mesmo registro
 
 ## Escalonamento
 Se não conseguir resolver, direcione para:
-- **Email**: suporte@visitasegura.com.br
+- **Email**: suporte@visitaprova.com.br
 - **WhatsApp**: (informar número de suporte)
 - **Horário**: Segunda a Sexta, 9h às 18h
 

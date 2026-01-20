@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'visitasegura_notification_settings';
+const STORAGE_KEY = 'visitaprova_notification_settings';
 
 interface NotificationSettings {
   soundEnabled: boolean;

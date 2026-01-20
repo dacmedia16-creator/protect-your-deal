@@ -107,7 +107,7 @@ export function DesktopNav() {
             ) : (
               <FileText className="h-6 w-6" />
             )}
-            <span className="truncate max-w-[200px]">{imobiliaria?.nome || 'VisitaSegura'}</span>
+            <span className="truncate max-w-[200px]">{imobiliaria?.nome || 'VisitaProva'}</span>
           </NavLink>
           
           <div className="flex items-center gap-1">

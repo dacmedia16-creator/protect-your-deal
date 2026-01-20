@@ -189,7 +189,7 @@ export default function Dashboard() {
               </div>
             )}
             <span className="font-display text-lg font-bold truncate max-w-[140px]">
-              {imobiliaria?.nome || 'VisitaSegura'}
+              {imobiliaria?.nome || 'VisitaProva'}
             </span>
           </div>
         </div>
