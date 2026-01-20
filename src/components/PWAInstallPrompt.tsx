@@ -142,7 +142,7 @@ export function PWAInstallPrompt() {
                         </span>
                       </div>
                       <h3 className="text-xl font-bold">
-                        Instale o VisitaSegura
+                        Instale o VisitaProva
                       </h3>
                     </div>
                   </div>

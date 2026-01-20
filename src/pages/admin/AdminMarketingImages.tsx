@@ -52,7 +52,7 @@ const sugestoesTitulos: Record<string, { titulo: string; subtitulo: string }> = 
   'mobile': { titulo: 'Na Palma da Mão', subtitulo: 'Acesse de qualquer lugar' },
   'parcerias': { titulo: 'Parcerias que Funcionam', subtitulo: 'Divida comissões sem complicação' },
   'dashboard': { titulo: 'Dados em Tempo Real', subtitulo: 'Tome decisões inteligentes' },
-  'geral': { titulo: 'VisitaSegura', subtitulo: 'A evolução da gestão imobiliária' },
+  'geral': { titulo: 'VisitaProva', subtitulo: 'A evolução da gestão imobiliária' },
 };
 
 export default function AdminMarketingImages() {
@@ -140,7 +140,7 @@ const [legenda, setLegenda] = useState<string>('');
 
     const link = document.createElement('a');
     link.href = generatedImage;
-    link.download = `visitasegura-${template}-${Date.now()}.png`;
+    link.download = `visitaprova-${template}-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -205,7 +205,7 @@ const [legenda, setLegenda] = useState<string>('');
             Gerador de Imagens para Instagram
           </h1>
           <p className="text-muted-foreground mt-1">
-            Crie imagens profissionais para divulgar o VisitaSegura nas redes sociais
+            Crie imagens profissionais para divulgar o VisitaProva nas redes sociais
           </p>
         </div>
 

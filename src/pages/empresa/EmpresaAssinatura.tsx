@@ -366,7 +366,7 @@ export default function EmpresaAssinatura() {
                         variant="outline"
                         asChild
                       >
-                        <a href="mailto:contato@visitasegura.com">
+                        <a href="mailto:contato@visitaprova.com.br">
                           Entrar em Contato
                         </a>
                       </Button>
@@ -407,7 +407,7 @@ export default function EmpresaAssinatura() {
 
         <p className="text-sm text-center text-muted-foreground">
           Precisa de um plano personalizado?{' '}
-          <a href="mailto:contato@visitasegura.com" className="text-primary hover:underline">
+          <a href="mailto:contato@visitaprova.com.br" className="text-primary hover:underline">
             Entre em contato
           </a>
         </p>

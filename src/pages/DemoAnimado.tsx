@@ -35,12 +35,12 @@ import {
 const DEMO_STEPS = [
   {
     id: 'intro',
-    title: 'Bem-vindo ao VisitaSegura',
+    title: 'Bem-vindo ao VisitaProva',
     subtitle: 'Segurança jurídica em cada visita imobiliária',
     duration: 6000,
     icon: Shield,
     content: 'intro',
-    narration: 'Bem-vindo ao VisitaSegura! A plataforma que revoluciona a segurança nas visitas imobiliárias. Acompanhe este demo e descubra como proteger suas transações.',
+    narration: 'Bem-vindo ao VisitaProva! A plataforma que revoluciona a segurança nas visitas imobiliárias. Acompanhe este demo e descubra como proteger suas transações.',
   },
   {
     id: 'dashboard',
@@ -184,7 +184,7 @@ const DEMO_STEPS = [
     duration: 5000,
     icon: Smartphone,
     content: 'pwa',
-    narration: 'Instale o VisitaSegura como aplicativo no seu celular. Funciona offline e envia notificações.',
+    narration: 'Instale o VisitaProva como aplicativo no seu celular. Funciona offline e envia notificações.',
   },
   {
     id: 'planos',
@@ -202,7 +202,7 @@ const DEMO_STEPS = [
     duration: 6000,
     icon: Shield,
     content: 'cta',
-    narration: 'Comece agora gratuitamente e descubra como transformar sua rotina imobiliária. VisitaSegura, segurança em cada visita!',
+    narration: 'Comece agora gratuitamente e descubra como transformar sua rotina imobiliária. VisitaProva, segurança em cada visita!',
   },
 ];
 
@@ -420,7 +420,7 @@ export default function DemoAnimado() {
         return (
           <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-fade-in">
             <Shield className="h-24 w-24 text-primary mb-6 animate-pulse" />
-            <h2 className="text-3xl font-bold mb-4">VisitaSegura</h2>
+            <h2 className="text-3xl font-bold mb-4">VisitaProva</h2>
             <p className="text-xl text-muted-foreground">
               A plataforma que protege suas visitas imobiliárias
             </p>

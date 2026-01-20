@@ -29,7 +29,7 @@ export function AndroidInstallMockup({ step }: AndroidInstallMockupProps) {
             <div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
               <span className="text-[6px] text-white">🔒</span>
             </div>
-            <span className="text-[7px] text-muted-foreground truncate">visitasegura.app</span>
+            <span className="text-[7px] text-muted-foreground truncate">visitaprova.com.br</span>
           </div>
           <div className={`relative ${step === 1 ? 'animate-pulse' : ''}`}>
             <MoreVertical className={`w-4 h-4 ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`} />
@@ -121,8 +121,8 @@ export function AndroidInstallMockup({ step }: AndroidInstallMockupProps) {
                     <span className="text-lg text-primary-foreground font-bold">V</span>
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold">Instalar VisitaSegura?</p>
-                    <p className="text-[8px] text-muted-foreground">visitasegura.app</p>
+                    <p className="text-[10px] font-semibold">Instalar VisitaProva?</p>
+                    <p className="text-[8px] text-muted-foreground">visitaprova.com.br</p>
                   </div>
                 </div>
                 

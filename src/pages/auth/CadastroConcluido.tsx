@@ -31,7 +31,7 @@ export default function CadastroConcluido() {
             </div>
             <h1 className="text-2xl font-bold mb-2">Cadastro Concluído!</h1>
             <p className="text-muted-foreground">
-              Sua conta foi criada com sucesso. Agora você pode começar a usar o VisitaSegura.
+              Sua conta foi criada com sucesso. Agora você pode começar a usar o VisitaProva.
             </p>
           </CardContent>
         </Card>

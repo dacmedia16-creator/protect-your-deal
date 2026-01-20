@@ -351,8 +351,8 @@ export function PWAInstallModal() {
     return (
       <div className="space-y-4">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">
-            Instalar VisitaSegura
+        <h2 className="text-2xl font-bold text-foreground">
+            Instalar VisitaProva
           </h2>
           <p className="text-muted-foreground">
             Passo {androidStep + 1} de {steps.length}
@@ -493,8 +493,8 @@ export function PWAInstallModal() {
       </motion.div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">
-          Instalar VisitaSegura
+      <h2 className="text-2xl font-bold text-foreground">
+          Instalar VisitaProva
         </h2>
         <p className="text-muted-foreground">
           Tenha acesso rápido às suas fichas direto da tela inicial
