@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { APP_URL } from '@/lib/appConfig';
+import { APP_URL, SURVEY_URL } from '@/lib/appConfig';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -150,9 +150,9 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
     },
   });
 
-  // Link para compartilhamento - usa SPA diretamente pois edge functions não suportam GET no ambiente atual
+  // Link para compartilhamento - usa domínio separado para pesquisas
   // Nota: Prévias personalizadas do WhatsApp não funcionam devido a limitação de infraestrutura
-  const shareLink = survey ? `${APP_URL}/survey/${survey.token}` : null;
+  const shareLink = survey ? `${SURVEY_URL}/survey/${survey.token}` : null;
   
   // Link direto para visualização (mesmo que shareLink)
   const viewLink = shareLink;
