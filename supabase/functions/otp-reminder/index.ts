@@ -231,7 +231,7 @@ serve(async (req) => {
 
       // Build reminder message
       const tipoLabel = otp.tipo === 'proprietario' ? 'proprietário' : 'visitante';
-      const message = `⏰ *Lembrete - VisitaSegura*\n\nSeu código de confirmação como ${tipoLabel} expira em *${minutosRestantes} minutos*!\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📋 Protocolo: ${ficha.protocolo}\n\n🔐 Código: *${otp.codigo}*\n\n👉 Confirme agora: ${verificationUrl}\n\n_Após expirar, será necessário solicitar um novo código._`;
+      const message = `⏰ *Lembrete - VisitaProva*\n\nSeu código de confirmação como ${tipoLabel} expira em *${minutosRestantes} minutos*!\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📋 Protocolo: ${ficha.protocolo}\n\n🔐 Código: *${otp.codigo}*\n\n👉 Confirme agora: ${verificationUrl}\n\n_Após expirar, será necessário solicitar um novo código._`;
 
       // Try to send via available providers
       let sent = await sendViaZionTalk(otp.telefone, message);

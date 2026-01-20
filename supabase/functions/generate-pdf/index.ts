@@ -863,7 +863,7 @@ serve(async (req) => {
       });
 
       // Linha 5: Nome do sistema (formato original)
-      targetPage.drawText('VisitaSegura - Sistema de Comprovação de Visitas Imobiliárias', {
+      targetPage.drawText('VisitaProva - Prova de intermediação imobiliária', {
         x: 50,
         y: 25,
         size: 8,

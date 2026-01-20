@@ -77,7 +77,7 @@ serve(async (req) => {
         value: plano.valor_mensal,
         nextDueDate: nextDueDate.toISOString().split('T')[0],
         cycle: 'MONTHLY',
-        description: `Assinatura ${plano.nome} - Visita Segura`,
+        description: `Assinatura ${plano.nome} - VisitaProva`,
         externalReference: imobiliariaId || user.id,
       }),
     });

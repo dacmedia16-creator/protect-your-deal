@@ -180,7 +180,7 @@ serve(async (req) => {
       try {
         const parteLabel = parte_faltante === 'proprietario' ? 'proprietário' : 'comprador';
         const externoInfo = permite_externo ? '\n\n✅ Você não precisa ter conta no sistema para preencher.' : '';
-        const mensagem = `🏠 *VisitaSegura - Convite de Parceria*\n\nOlá!\n\n${origemNome} te convidou para completar um registro de visita.\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📝 Parte faltante: ${parteLabel}${externoInfo}\n\nAcesse o link para aceitar:\n${conviteUrl}\n\n⏰ Este convite expira em 7 dias.`;
+        const mensagem = `🏠 *VisitaProva - Convite de Parceria*\n\nOlá!\n\n${origemNome} te convidou para completar um registro de visita.\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📝 Parte faltante: ${parteLabel}${externoInfo}\n\nAcesse o link para aceitar:\n${conviteUrl}\n\n⏰ Este convite expira em 7 dias.`;
 
         const authHeader = btoa(`${ziontalkKey}:`);
         const formData = new FormData();
