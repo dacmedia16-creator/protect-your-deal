@@ -150,13 +150,12 @@ export function SurveySection({ fichaId, compradorNome, imovelEndereco }: Survey
     },
   });
 
-  // Link para compartilhamento (com OG tags personalizadas via edge function)
-  const shareLink = survey 
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-survey-by-token?token=${survey.token}` 
-    : null;
+  // Link para compartilhamento - usa SPA diretamente pois edge functions não suportam GET no ambiente atual
+  // Nota: Prévias personalizadas do WhatsApp não funcionam devido a limitação de infraestrutura
+  const shareLink = survey ? `${APP_URL}/survey/${survey.token}` : null;
   
-  // Link direto para visualização (SPA)
-  const viewLink = survey ? `${APP_URL}/survey/${survey.token}` : null;
+  // Link direto para visualização (mesmo que shareLink)
+  const viewLink = shareLink;
 
   const handleCreateAndSend = async () => {
     if (!survey) {
