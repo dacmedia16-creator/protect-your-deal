@@ -128,8 +128,9 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingSurvey) {
-      // Return existing survey info
-      const surveyUrl = `${app_url || 'https://visitaprova.com.br'}/survey/${existingSurvey.token}`;
+      // Return existing survey info with edge function URL for personalized OG tags
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const surveyUrl = `${supabaseUrl}/functions/v1/serve-survey-page?token=${existingSurvey.token}`;
       
       return new Response(
         JSON.stringify({
@@ -167,7 +168,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const surveyUrl = `${app_url || 'https://visitaprova.com.br'}/survey/${newSurvey.token}`;
+    // Generate link that points to the edge function for personalized OG tags
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const surveyUrl = `${supabaseUrl}/functions/v1/serve-survey-page?token=${newSurvey.token}`;
 
     console.log('Survey criada com sucesso:', newSurvey.id);
 
