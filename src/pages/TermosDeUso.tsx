@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LogoIcon } from '@/components/LogoIcon';
 
 const TermosDeUso = () => {
   return (
@@ -10,8 +11,8 @@ const TermosDeUso = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
-              <Shield className="h-8 w-8 text-primary" />
-              <span className="font-heading font-bold text-xl">VisitaSegura</span>
+              <LogoIcon size={32} />
+              <span className="font-heading font-bold text-xl">VisitaProva</span>
             </Link>
             <Button variant="outline" size="sm" asChild>
               <Link to="/">
@@ -26,7 +27,7 @@ const TermosDeUso = () => {
       {/* Content */}
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold mb-6 sm:mb-8 text-center">
-          <span className="hidden sm:inline">TERMOS DE USO DA PLATAFORMA VISITASEGURA</span>
+          <span className="hidden sm:inline">TERMOS DE USO DA PLATAFORMA VISITAPROVA</span>
           <span className="sm:hidden">TERMOS DE USO</span>
         </h1>
 
@@ -38,7 +39,7 @@ const TermosDeUso = () => {
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
               <span className="hidden sm:inline">
-                O Visitasegura é uma plataforma tecnológica destinada ao registro, organização e 
+                O VisitaProva é uma plataforma tecnológica destinada ao registro, organização e 
                 armazenamento de informações relacionadas à visita imobiliária, permitindo a geração 
                 de documentos eletrônicos com aceite das partes envolvidas.
               </span>
@@ -66,7 +67,7 @@ const TermosDeUso = () => {
               O usuário declara estar ciente de que:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-muted-foreground space-y-1 sm:space-y-2 ml-2 sm:ml-4">
-              <li><span className="hidden sm:inline">O Visitasegura atua exclusivamente como ferramenta tecnológica</span><span className="sm:hidden">Atua como ferramenta tecnológica</span></li>
+              <li><span className="hidden sm:inline">O VisitaProva atua exclusivamente como ferramenta tecnológica</span><span className="sm:hidden">Atua como ferramenta tecnológica</span></li>
               <li><span className="hidden sm:inline">Os documentos gerados constituem meio de prova, devendo ser analisados em conjunto com outros elementos</span><span className="sm:hidden">Documentos são meio de prova</span></li>
               <li><span className="hidden sm:inline">Não há garantia de resultado jurídico, êxito em ações judiciais ou recebimento de comissão</span><span className="sm:hidden">Sem garantia de resultado jurídico</span></li>
             </ul>
@@ -88,7 +89,7 @@ const TermosDeUso = () => {
               <li><span className="hidden sm:inline">Zelar pela guarda dos documentos e comprovantes</span><span className="sm:hidden">Guardar documentos</span></li>
             </ul>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">O Visitasegura não se responsabiliza por erros, omissões ou uso inadequado da plataforma.</span>
+              <span className="hidden sm:inline">O VisitaProva não se responsabiliza por erros, omissões ou uso inadequado da plataforma.</span>
               <span className="sm:hidden">Não nos responsabilizamos por erros ou uso inadequado.</span>
             </p>
           </section>
@@ -99,7 +100,7 @@ const TermosDeUso = () => {
               4. LIMITAÇÃO DE RESPONSABILIDADE
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">Em nenhuma hipótese o Visitasegura será responsável por:</span>
+              <span className="hidden sm:inline">Em nenhuma hipótese o VisitaProva será responsável por:</span>
               <span className="sm:hidden">Não somos responsáveis por:</span>
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-muted-foreground space-y-1 sm:space-y-2 ml-2 sm:ml-4">
@@ -110,7 +111,7 @@ const TermosDeUso = () => {
               <li><span className="hidden sm:inline">Decisões judiciais desfavoráveis ao usuário</span><span className="sm:hidden">Decisões judiciais</span></li>
             </ul>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">A responsabilidade do Visitasegura limita-se à disponibilização técnica da plataforma, conforme contratada.</span>
+              <span className="hidden sm:inline">A responsabilidade do VisitaProva limita-se à disponibilização técnica da plataforma, conforme contratada.</span>
               <span className="sm:hidden">Responsabilidade limitada à disponibilização técnica.</span>
             </p>
           </section>
@@ -121,7 +122,7 @@ const TermosDeUso = () => {
               5. DISPONIBILIDADE
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">O Visitasegura poderá passar por manutenções, atualizações ou indisponibilidades temporárias, sem que isso gere direito a indenização.</span>
+              <span className="hidden sm:inline">O VisitaProva poderá passar por manutenções, atualizações ou indisponibilidades temporárias, sem que isso gere direito a indenização.</span>
               <span className="sm:hidden">Pode haver manutenções ou indisponibilidades temporárias.</span>
             </p>
           </section>
@@ -132,8 +133,8 @@ const TermosDeUso = () => {
               6. PROPRIEDADE INTELECTUAL
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">Todo o sistema, layout, textos, códigos e funcionalidades pertencem exclusivamente ao Visitasegura, sendo vedada a cópia ou uso indevido.</span>
-              <span className="sm:hidden">Todo conteúdo pertence ao Visitasegura.</span>
+              <span className="hidden sm:inline">Todo o sistema, layout, textos, códigos e funcionalidades pertencem exclusivamente ao VisitaProva, sendo vedada a cópia ou uso indevido.</span>
+              <span className="sm:hidden">Todo conteúdo pertence ao VisitaProva.</span>
             </p>
           </section>
 
@@ -175,7 +176,7 @@ const TermosDeUso = () => {
       <footer className="py-8 border-t border-border mt-12">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} VisitaSegura. Todos os direitos reservados.
+            © {new Date().getFullYear()} VisitaProva. Todos os direitos reservados.
           </p>
         </div>
       </footer>

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Shield, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { LogoIcon } from '@/components/LogoIcon';
 
 const PoliticaPrivacidade = () => {
   return (
@@ -11,8 +12,8 @@ const PoliticaPrivacidade = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
-              <Shield className="h-8 w-8 text-primary" />
-              <span className="font-heading font-bold text-xl">VisitaSegura</span>
+              <LogoIcon size={32} />
+              <span className="font-heading font-bold text-xl">VisitaProva</span>
             </Link>
             <Button variant="outline" size="sm" asChild>
               <Link to="/">
@@ -39,7 +40,7 @@ const PoliticaPrivacidade = () => {
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
               <span className="hidden sm:inline">
-                Esta política tem como objetivo esclarecer os limites da atuação do Visitasegura 
+                Esta política tem como objetivo esclarecer os limites da atuação do VisitaProva 
                 quanto ao uso jurídico dos documentos gerados na plataforma.
               </span>
               <span className="sm:hidden">
@@ -55,7 +56,7 @@ const PoliticaPrivacidade = () => {
               <span className="sm:hidden">2. SEM GARANTIA</span>
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              O Visitasegura não garante:
+              O VisitaProva não garante:
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-muted-foreground space-y-1 sm:space-y-2 ml-2 sm:ml-4">
               <li><span className="hidden sm:inline">Ganho de causa em ações judiciais</span><span className="sm:hidden">Ganho de causa</span></li>
@@ -90,7 +91,7 @@ const PoliticaPrivacidade = () => {
               4. CONDUTA DO USUÁRIO
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">O Visitasegura não se responsabiliza por:</span>
+              <span className="hidden sm:inline">O VisitaProva não se responsabiliza por:</span>
               <span className="sm:hidden">Não nos responsabilizamos por:</span>
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-muted-foreground space-y-1 sm:space-y-2 ml-2 sm:ml-4">
@@ -109,7 +110,7 @@ const PoliticaPrivacidade = () => {
               <span className="sm:hidden">5. ISENÇÃO</span>
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-3 sm:mt-4">
-              <span className="hidden sm:inline">O Visitasegura não poderá ser responsabilizado civilmente por prejuízos decorrentes de:</span>
+              <span className="hidden sm:inline">O VisitaProva não poderá ser responsabilizado civilmente por prejuízos decorrentes de:</span>
               <span className="sm:hidden">Não somos responsáveis por:</span>
             </p>
             <ul className="list-disc list-inside text-sm sm:text-base text-muted-foreground space-y-1 sm:space-y-2 ml-2 sm:ml-4">
@@ -134,7 +135,7 @@ const PoliticaPrivacidade = () => {
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-muted-foreground/50 rounded flex items-center justify-center flex-shrink-0">
                   <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 </div>
-                <span><span className="hidden sm:inline">O Visitasegura é ferramenta tecnológica</span><span className="sm:hidden">É ferramenta tecnológica</span></span>
+                <span><span className="hidden sm:inline">O VisitaProva é ferramenta tecnológica</span><span className="sm:hidden">É ferramenta tecnológica</span></span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 text-sm sm:text-base text-muted-foreground">
                 <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-muted-foreground/50 rounded flex items-center justify-center flex-shrink-0">
@@ -201,7 +202,7 @@ const PoliticaPrivacidade = () => {
       <footer className="py-8 border-t border-border mt-12">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} VisitaSegura. Todos os direitos reservados.
+            © {new Date().getFullYear()} VisitaProva. Todos os direitos reservados.
           </p>
         </div>
       </footer>
