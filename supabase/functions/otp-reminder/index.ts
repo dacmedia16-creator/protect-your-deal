@@ -226,7 +226,7 @@ serve(async (req) => {
       const minutosRestantes = Math.ceil((expiraEm.getTime() - now.getTime()) / 60000);
 
       // Build the app URL for verification link
-      const baseUrl = Deno.env.get('APP_URL') || 'https://visitaprova.com.br';
+      const baseUrl = Deno.env.get('APP_URL') || 'https://visitaseguras.com.br';
       const verificationUrl = `${baseUrl}/confirmar/${otp.token}`;
 
       // Build reminder message

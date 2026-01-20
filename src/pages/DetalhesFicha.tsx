@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { supabase } from '@/integrations/supabase/client';
-import { APP_URL } from '@/lib/appConfig';
+import { APP_URL, OTP_URL } from '@/lib/appConfig';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -437,7 +437,7 @@ export default function DetalhesFicha() {
 
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { ficha_id: ficha.id, tipo, app_url: APP_URL },
+        body: { ficha_id: ficha.id, tipo, app_url: OTP_URL },
       });
 
       // Handle rate limit - check both data and error context
