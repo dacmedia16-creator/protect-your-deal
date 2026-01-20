@@ -137,3 +137,6 @@ verify_jwt = false
 
 [functions.serve-survey-meta]
 verify_jwt = false
+
+[functions.survey-og]
+verify_jwt = false
