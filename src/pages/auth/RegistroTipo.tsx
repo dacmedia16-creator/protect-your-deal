@@ -89,12 +89,12 @@ const RegistroTipo = () => {
 
             {/* Vincular a Imobiliária */}
             <Card 
-              className="group cursor-pointer hover:border-green-500 hover:shadow-lg transition-all duration-300"
+              className="group cursor-pointer hover:border-primary hover:shadow-lg transition-all duration-300"
               onClick={() => navigate('/registro-vinculado')}
             >
               <CardHeader className="text-center pb-2">
-                <div className="mx-auto h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4 group-hover:bg-green-200 dark:group-hover:bg-green-800/40 transition-colors">
-                  <UserPlus className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <UserPlus className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle className="text-xl">Vincular a Imobiliária</CardTitle>
                 <CardDescription>Corretor de Imobiliária</CardDescription>
@@ -105,19 +105,19 @@ const RegistroTipo = () => {
                 </p>
                 <ul className="text-sm text-left space-y-2">
                   <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                     Usa código da imobiliária
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                     Acesso ao sistema da empresa
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                     Sem custos adicionais
                   </li>
                 </ul>
-                <Button variant="outline" className="w-full mt-4 group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600">
+                <Button variant="outline" className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary">
                   Vincular a uma Imobiliária
                 </Button>
               </CardContent>
