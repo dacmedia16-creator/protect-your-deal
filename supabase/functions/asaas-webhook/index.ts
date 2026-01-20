@@ -319,7 +319,7 @@ serve(async (req) => {
                   `Olá${userName ? `, ${userName.split(' ')[0]}` : ''}!\n\n` +
                   `Recebemos seu pagamento de ${valorFormatado} referente ao plano *${planoNome}*.\n\n` +
                   `Sua assinatura está ativa e você pode continuar usando todos os recursos do sistema.\n\n` +
-                  `Obrigado por usar o Visita Segura! 🏠`;
+                  `Obrigado por usar o VisitaProva! 🏠`;
                 break;
 
               case 'overdue':
@@ -410,12 +410,12 @@ serve(async (req) => {
                     const planoNome = (newAssinatura as any).planos?.nome || 'Plano';
                     const valorFormatado = formatCurrency(value || 0);
 
-                    const message = `🎉 *Bem-vindo ao Visita Segura!*\n\n` +
+                    const message = `🎉 *Bem-vindo ao VisitaProva!*\n\n` +
                       `Olá${userName ? `, ${userName.split(' ')[0]}` : ''}!\n\n` +
                       `Sua assinatura do plano *${planoNome}* foi ativada com sucesso!\n\n` +
                       `Valor: ${valorFormatado}\n\n` +
                       `Você já pode acessar todas as funcionalidades do sistema.\n\n` +
-                      `Obrigado por escolher o Visita Segura! 🏠✨`;
+                      `Obrigado por escolher o VisitaProva! 🏠✨`;
 
                     console.log(`Sending welcome WhatsApp to ${userPhone}`);
                     await sendWhatsAppNotification(supabaseUrl, supabaseServiceKey, userPhone, message);

@@ -126,7 +126,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         name: `Assinatura ${plano.nome}`,
-        description: `Plano ${plano.nome} - Visita Segura. Assinatura mensal com renovação automática.`,
+        description: `Plano ${plano.nome} - VisitaProva. Assinatura mensal com renovação automática.`,
         endDate: expirationDate.toISOString().split('T')[0],
         value: plano.valor_mensal,
         billingType: 'UNDEFINED',
