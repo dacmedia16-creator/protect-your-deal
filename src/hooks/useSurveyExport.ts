@@ -470,7 +470,7 @@ export function useSurveyExport() {
         ` : ''}
 
         <div class="footer">
-          Gerado pelo VisitaSegura
+          Gerado pelo VisitaProva
         </div>
       </body>
       </html>

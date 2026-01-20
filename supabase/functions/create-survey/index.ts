@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
 
     if (existingSurvey) {
       // Return existing survey info
-      const surveyUrl = `${app_url || 'https://protect-your-deal.lovable.app'}/survey/${existingSurvey.token}`;
+      const surveyUrl = `${app_url || 'https://visitaprova.com.br'}/survey/${existingSurvey.token}`;
       
       return new Response(
         JSON.stringify({
@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const surveyUrl = `${app_url || 'https://protect-your-deal.lovable.app'}/survey/${newSurvey.token}`;
+    const surveyUrl = `${app_url || 'https://visitaprova.com.br'}/survey/${newSurvey.token}`;
 
     console.log('Survey criada com sucesso:', newSurvey.id);
 
