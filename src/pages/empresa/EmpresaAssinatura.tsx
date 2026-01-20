@@ -283,19 +283,19 @@ export default function EmpresaAssinatura() {
                     isCurrentPlan 
                       ? 'border-primary ring-2 ring-primary/20' 
                       : isFreePlan 
-                        ? 'border-emerald-500/50 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-950/20 dark:to-transparent' 
+                        ? 'border-primary/50 bg-gradient-to-b from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent' 
                         : ''
                   }`}
                 >
                   {isFreePlan && !isCurrentPlan && (
-                    <div className="absolute top-0 right-0 px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-bl-lg flex items-center gap-1">
+                    <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-bl-lg flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
                       Comece Grátis
                     </div>
                   )}
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className={isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : ''}>
+                      <CardTitle className={isFreePlan ? 'text-primary' : ''}>
                         {plano.nome}
                       </CardTitle>
                       {isCurrentPlan && (

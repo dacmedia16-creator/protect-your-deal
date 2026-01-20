@@ -320,12 +320,12 @@ export default function AdminPlanos() {
                 className={`relative overflow-hidden flex flex-col ${
                   !plano.ativo ? 'opacity-60' : ''
                 } ${
-                  isGratuitoCpf ? 'border-2 border-green-500' : ''
+                  isGratuitoCpf ? 'border-2 border-primary' : ''
                 }`}
               >
                 {/* Banner "Recomendado para começar" */}
                 {isGratuitoCpf && (
-                  <div className="bg-green-500 text-white text-xs font-medium px-3 py-1.5 flex items-center justify-center gap-1.5">
+                  <div className="bg-primary text-primary-foreground text-xs font-medium px-3 py-1.5 flex items-center justify-center gap-1.5">
                     <Sparkles className="h-3 w-3" />
                     Recomendado para começar
                   </div>
