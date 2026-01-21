@@ -136,7 +136,7 @@ export function useConvitesPendentes() {
         action: {
           label: 'Ver',
           onClick: () => {
-            window.location.href = '/convites';
+            window.location.href = '/convites?tab=recebidos';
           }
         },
         duration: 10000,

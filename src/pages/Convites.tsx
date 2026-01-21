@@ -114,7 +114,7 @@ export default function Convites() {
         .from('convites_parceiro')
         .select(`
           *,
-          ficha:fichas_visita!inner(
+          ficha:fichas_visita(
             id, imovel_endereco, imovel_tipo, data_visita,
             proprietario_telefone, comprador_telefone,
             proprietario_confirmado_em, comprador_confirmado_em
