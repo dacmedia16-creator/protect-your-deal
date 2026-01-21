@@ -71,6 +71,7 @@ import {
   Shield,
   User,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -220,9 +221,15 @@ export default function AdminUsuarios() {
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
 
   // Fetch users
-  const { data: users = [], isLoading, refetch } = useQuery({
+  const { data: users = [], isLoading, error, refetch } = useQuery({
     queryKey: ["admin-usuarios"],
     queryFn: async () => {
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuário não autenticado. Faça login novamente.");
+      }
+
       const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select(`
@@ -237,7 +244,12 @@ export default function AdminUsuarios() {
         `)
         .order("created_at", { ascending: false });
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error("Erro ao buscar roles:", rolesError);
+        throw rolesError;
+      }
+      
+      console.log(`AdminUsuarios: Encontrados ${userRoles?.length || 0} user_roles`);
 
       const userIds = userRoles?.map(u => u.user_id) || [];
 
@@ -575,6 +587,19 @@ export default function AdminUsuarios() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        ) : error ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+              <p className="text-destructive font-medium">Erro ao carregar usuários</p>
+              <p className="text-muted-foreground text-sm mt-2 text-center max-w-md">
+                {error instanceof Error ? error.message : "Erro desconhecido. Verifique sua conexão."}
+              </p>
+              <Button onClick={() => refetch()} className="mt-4">
+                Tentar Novamente
+              </Button>
+            </CardContent>
+          </Card>
         ) : groups.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
