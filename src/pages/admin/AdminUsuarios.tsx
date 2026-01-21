@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -49,29 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { 
-  Search, 
-  KeyRound, 
-  Users, 
-  MoreVertical, 
-  Trash2, 
-  Edit, 
-  UserPlus, 
-  Building2, 
-  Copy, 
-  CheckCircle2, 
-  MessageCircle, 
-  Loader2,
-  Shield,
-  User,
-  XCircle,
-} from "lucide-react";
+import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2, MessageCircle, Loader2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -79,7 +59,6 @@ import { ptBR } from "date-fns/locale";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PasswordInput } from "@/components/PasswordInput";
 import { generatePassword } from "@/lib/password";
-import { RoleBadge } from "@/components/RoleBadge";
 
 interface UserWithRole {
   id: string;
@@ -104,75 +83,10 @@ interface Imobiliaria {
   nome: string;
 }
 
-interface UserGroup {
-  id: string;
-  type: 'super_admin' | 'imobiliaria' | 'corretor_autonomo';
-  name: string;
-  users: UserWithRole[];
-  count: number;
-}
-
-function groupUsers(users: UserWithRole[]): UserGroup[] {
-  const superAdmins: UserWithRole[] = [];
-  const imobiliariaGroups = new Map<string, UserWithRole[]>();
-  const autonomos: UserWithRole[] = [];
-
-  users.forEach(user => {
-    if (user.role === 'super_admin') {
-      superAdmins.push(user);
-    } else if (user.imobiliaria_id && user.imobiliaria?.nome) {
-      const existing = imobiliariaGroups.get(user.imobiliaria_id) || [];
-      existing.push(user);
-      imobiliariaGroups.set(user.imobiliaria_id, existing);
-    } else {
-      autonomos.push(user);
-    }
-  });
-
-  const groups: UserGroup[] = [];
-
-  if (superAdmins.length > 0) {
-    groups.push({
-      id: 'super_admins',
-      type: 'super_admin',
-      name: 'Super Administradores',
-      users: superAdmins.sort((a, b) => 
-        (a.profile?.nome || '').localeCompare(b.profile?.nome || '')
-      ),
-      count: superAdmins.length,
-    });
-  }
-
-  const imobiliariaEntries = Array.from(imobiliariaGroups.entries())
-    .map(([id, groupUsers]) => ({
-      id,
-      type: 'imobiliaria' as const,
-      name: groupUsers[0].imobiliaria?.nome || 'Sem nome',
-      users: groupUsers.sort((a, b) => 
-        (a.profile?.nome || '').localeCompare(b.profile?.nome || '')
-      ),
-      count: groupUsers.length,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  groups.push(...imobiliariaEntries);
-
-  if (autonomos.length > 0) {
-    groups.push({
-      id: 'autonomos',
-      type: 'corretor_autonomo',
-      name: 'Corretores Autônomos',
-      users: autonomos.sort((a, b) => 
-        (a.profile?.nome || '').localeCompare(b.profile?.nome || '')
-      ),
-      count: autonomos.length,
-    });
-  }
-
-  return groups;
-}
-
 export default function AdminUsuarios() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   
   // Reset password dialog
@@ -184,13 +98,16 @@ export default function AdminUsuarios() {
 
   // Delete dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Edit dialog
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<UserWithRole | null>(null);
   const [editForm, setEditForm] = useState({
     nome: "",
     telefone: "",
+    creci: "",
     role: "",
     imobiliaria_id: "",
   });
@@ -200,29 +117,29 @@ export default function AdminUsuarios() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     email: "",
+    password: "",
     nome: "",
     telefone: "",
+    creci: "",
     role: "corretor",
     imobiliaria_id: "",
-    password: "",
   });
   const [isCreating, setIsCreating] = useState(false);
 
   // Success dialog
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
-  const [createdCredentials, setCreatedCredentials] = useState<{
-    email: string;
-    password: string;
-    nome: string;
-  } | null>(null);
-
-  // Toggle status state
+  const [createdUser, setCreatedUser] = useState<{ email: string; password: string; nome: string; telefone?: string } | null>(null);
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
 
-  // Fetch users
-  const { data: users = [], isLoading, refetch } = useQuery({
-    queryKey: ["admin-usuarios"],
+
+  // Fetch all users with their roles and emails
+  const { data: users, isLoading, refetch } = useQuery({
+    queryKey: ["admin-users"],
     queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
       const { data: userRoles, error: rolesError } = await supabase
         .from("user_roles")
         .select(`
@@ -231,102 +148,114 @@ export default function AdminUsuarios() {
           role,
           imobiliaria_id,
           created_at,
-          imobiliarias (
-            nome
-          )
+          imobiliarias(nome)
         `)
         .order("created_at", { ascending: false });
 
       if (rolesError) throw rolesError;
 
-      const userIds = userRoles?.map(u => u.user_id) || [];
-
-      const { data: profiles } = await supabase
+      const userIds = userRoles.map((ur: any) => ur.user_id);
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, nome, telefone, creci, ativo")
-        .in("id", userIds);
+        .select("user_id, nome, telefone, creci, ativo")
+        .in("user_id", userIds);
 
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      if (profilesError) throw profilesError;
 
-      const { data: emailsData } = await supabase.functions.invoke("admin-get-corretores-emails", {
-        body: { userIds }
-      });
+      let emailMap = new Map<string, string>();
+      try {
+        const { data: usersData, error: usersError } = await supabase.functions.invoke("admin-list-users", {
+          headers: {
+            Authorization: `Bearer ${sessionData.session?.access_token}`,
+          },
+        });
 
-      const emailMap = new Map(
-        emailsData?.emails?.map((e: { id: string; email: string }) => [e.id, e.email]) || []
-      );
+        if (!usersError && usersData?.users) {
+          emailMap = new Map(usersData.users.map((u: any) => [u.id, u.email]));
+        }
+      } catch (e) {
+        console.error("Error fetching user emails:", e);
+      }
 
-      return (userRoles || []).map(user => ({
-        ...user,
-        profile: profileMap.get(user.user_id) || null,
-        imobiliaria: user.imobiliarias,
-        email: emailMap.get(user.user_id) || "Email não encontrado",
+      const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p]) || []);
+
+      return userRoles.map((ur: any) => ({
+        id: ur.id,
+        user_id: ur.user_id,
+        role: ur.role,
+        imobiliaria_id: ur.imobiliaria_id,
+        created_at: ur.created_at,
+        profile: profileMap.get(ur.user_id) || null,
+        imobiliaria: ur.imobiliarias,
+        email: emailMap.get(ur.user_id) || null,
       })) as UserWithRole[];
     },
   });
 
-  // Fetch imobiliarias for selects
-  const { data: imobiliarias = [] } = useQuery({
-    queryKey: ["admin-imobiliarias-list"],
+  const { data: imobiliarias } = useQuery({
+    queryKey: ["admin-imobiliarias-filter"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("imobiliarias")
         .select("id, nome")
         .order("nome");
-
       if (error) throw error;
       return data as Imobiliaria[];
     },
   });
 
-  // Filter users
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredUsers = users?.filter((user) => {
+    const matchesSearch =
       user.profile?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.imobiliaria?.nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.user_id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    const matchesImobiliaria =
+      imobiliariaFilter === "all" ||
+      (imobiliariaFilter === "autonomos" && user.imobiliaria_id === null) ||
+      user.imobiliaria_id === imobiliariaFilter;
+    const matchesStatus =
+      statusFilter === "all" ||
       (statusFilter === "ativo" && user.profile?.ativo !== false) ||
       (statusFilter === "inativo" && user.profile?.ativo === false);
-
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesRole && matchesImobiliaria && matchesStatus;
   });
-
-  // Group filtered users
-  const groups = groupUsers(filteredUsers);
-
-  // Calculate stats
-  const totalUsers = users.length;
-  const imobiliariasCount = new Set(users.filter(u => u.imobiliaria_id).map(u => u.imobiliaria_id)).size;
-  const autonomosCount = users.filter(u => !u.imobiliaria_id && u.role !== 'super_admin').length;
-  const ativosCount = users.filter(u => u.profile?.ativo !== false).length;
-  const inativosCount = users.filter(u => u.profile?.ativo === false).length;
 
   const handleResetPassword = async () => {
     if (!selectedUser) return;
 
+    if (resetAction === "set_password" && newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
     setIsResetting(true);
     try {
-      if (resetAction === "set_password") {
-        if (!newPassword || newPassword.length < 6) {
-          toast.error("A senha deve ter pelo menos 6 caracteres");
-          return;
-        }
-        const { error } = await supabase.functions.invoke("admin-reset-password", {
-          body: { userId: selectedUser.user_id, newPassword }
-        });
-        if (error) throw error;
-        toast.success("Senha alterada com sucesso!");
-      } else {
-        const { error } = await supabase.functions.invoke("admin-reset-password", {
-          body: { userId: selectedUser.user_id, sendEmail: true }
-        });
-        if (error) throw error;
-        toast.success("Email de recuperação enviado!");
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-reset-password", {
+        body: {
+          user_id: selectedUser.user_id,
+          action: resetAction,
+          new_password: resetAction === "set_password" ? newPassword : undefined,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
       }
+
+      toast.success(
+        resetAction === "set_password"
+          ? "Senha redefinida com sucesso"
+          : "Link de recuperação gerado com sucesso"
+      );
       setIsResetDialogOpen(false);
       setNewPassword("");
+      setSelectedUser(null);
     } catch (error: any) {
       toast.error(error.message || "Erro ao redefinir senha");
     } finally {
@@ -335,16 +264,26 @@ export default function AdminUsuarios() {
   };
 
   const handleDeleteUser = async () => {
-    if (!selectedUser) return;
+    if (!userToDelete) return;
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase.functions.invoke("admin-delete-user", {
-        body: { userId: selectedUser.user_id }
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-delete-user", {
+        body: { user_id: userToDelete.user_id },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
       });
-      if (error) throw error;
-      toast.success("Usuário excluído com sucesso!");
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao excluir usuário");
+      }
+
+      toast.success("Usuário excluído com sucesso");
       setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
       refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao excluir usuário");
@@ -354,10 +293,11 @@ export default function AdminUsuarios() {
   };
 
   const openEditDialog = (user: UserWithRole) => {
-    setSelectedUser(user);
+    setUserToEdit(user);
     setEditForm({
       nome: user.profile?.nome || "",
       telefone: user.profile?.telefone || "",
+      creci: user.profile?.creci || "",
       role: user.role,
       imobiliaria_id: user.imobiliaria_id || "",
     });
@@ -365,22 +305,33 @@ export default function AdminUsuarios() {
   };
 
   const handleEditUser = async () => {
-    if (!selectedUser) return;
+    if (!userToEdit) return;
 
     setIsEditing(true);
     try {
-      const { error } = await supabase.functions.invoke("admin-update-user", {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-update-user", {
         body: {
-          userId: selectedUser.user_id,
-          nome: editForm.nome,
-          telefone: editForm.telefone,
-          role: editForm.role,
-          imobiliariaId: editForm.imobiliaria_id || null,
-        }
+          user_id: userToEdit.user_id,
+          nome: editForm.nome || undefined,
+          telefone: editForm.telefone || undefined,
+          creci: editForm.creci || undefined,
+          role: editForm.role !== userToEdit.role ? editForm.role : undefined,
+          imobiliaria_id: editForm.imobiliaria_id !== userToEdit.imobiliaria_id ? editForm.imobiliaria_id : undefined,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
       });
-      if (error) throw error;
-      toast.success("Usuário atualizado com sucesso!");
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao atualizar usuário");
+      }
+
+      toast.success("Usuário atualizado com sucesso");
       setIsEditDialogOpen(false);
+      setUserToEdit(null);
       refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar usuário");
@@ -389,45 +340,59 @@ export default function AdminUsuarios() {
     }
   };
 
-  const openCreateDialog = () => {
-    setCreateForm({
-      email: "",
-      nome: "",
-      telefone: "",
-      role: "corretor",
-      imobiliaria_id: "",
-      password: generatePassword(),
-    });
-    setIsCreateDialogOpen(true);
-  };
-
   const handleCreateUser = async () => {
-    if (!createForm.email || !createForm.nome || !createForm.password) {
+    if (!createForm.email || !createForm.password || !createForm.nome || !createForm.imobiliaria_id) {
       toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (createForm.password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
       return;
     }
 
     setIsCreating(true);
     try {
-      const { error } = await supabase.functions.invoke("admin-create-user", {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("admin-create-user", {
         body: {
           email: createForm.email,
-          nome: createForm.nome,
-          telefone: createForm.telefone,
-          role: createForm.role,
-          imobiliariaId: createForm.imobiliaria_id || null,
           password: createForm.password,
-        }
+          nome: createForm.nome,
+          telefone: createForm.telefone || undefined,
+          creci: createForm.creci || undefined,
+          role: createForm.role,
+          imobiliaria_id: createForm.imobiliaria_id,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
       });
-      if (error) throw error;
-      
-      setIsCreateDialogOpen(false);
-      setCreatedCredentials({
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao criar usuário");
+      }
+
+      // Show success dialog
+      setCreatedUser({
         email: createForm.email,
         password: createForm.password,
         nome: createForm.nome,
+        telefone: createForm.telefone || undefined,
       });
+      setIsCreateDialogOpen(false);
       setIsSuccessDialogOpen(true);
+      
+      setCreateForm({
+        email: "",
+        password: "",
+        nome: "",
+        telefone: "",
+        creci: "",
+        role: "corretor",
+        imobiliaria_id: "",
+      });
       refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar usuário");
@@ -436,512 +401,773 @@ export default function AdminUsuarios() {
     }
   };
 
+  const handleCopy = async (text: string, field: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success("Copiado!");
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!createdUser?.telefone) {
+      toast.error("Usuário não possui telefone cadastrado");
+      return;
+    }
+
+    setIsSendingWhatsApp(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const message = `Olá ${createdUser.nome}! 🎉\n\nSua conta foi criada com sucesso!\n\n📧 *Email:* ${createdUser.email}\n🔑 *Senha:* ${createdUser.password}\n\nAcesse: ${APP_URL}\n\nRecomendamos que você altere sua senha após o primeiro acesso.`;
+
+      const response = await supabase.functions.invoke("send-whatsapp", {
+        body: {
+          action: "send-text",
+          to: createdUser.telefone,
+          message,
+        },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
+
+      if (response.error || response.data?.error) {
+        throw new Error(response.data?.error || response.error?.message || "Erro ao enviar WhatsApp");
+      }
+
+      toast.success("Credenciais enviadas por WhatsApp!");
+    } catch (error: any) {
+      console.error("Erro ao enviar WhatsApp:", error);
+      toast.error(error.message || "Erro ao enviar WhatsApp");
+    } finally {
+      setIsSendingWhatsApp(false);
+    }
+  };
+
+  const openCreateWithPassword = () => {
+    setCreateForm({
+      email: "",
+      password: generatePassword(12),
+      nome: "",
+      telefone: "",
+      creci: "",
+      role: "corretor",
+      imobiliaria_id: "",
+    });
+    setIsCreateDialogOpen(true);
+  };
+
   const handleToggleStatus = async (user: UserWithRole) => {
+    if (user.role === "super_admin") return;
+    
     setTogglingUserId(user.user_id);
     try {
       const newStatus = user.profile?.ativo === false ? true : false;
+      
       const { error } = await supabase
         .from("profiles")
-        .update({ ativo: !newStatus })
-        .eq("id", user.user_id);
+        .update({ ativo: newStatus })
+        .eq("user_id", user.user_id);
+
       if (error) throw error;
-      toast.success("Status atualizado!");
+
+      toast.success(newStatus ? "Usuário ativado" : "Usuário desativado");
       refetch();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao atualizar status");
+      toast.error(error.message || "Erro ao alterar status");
     } finally {
       setTogglingUserId(null);
     }
   };
 
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copiado!`);
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case "super_admin":
+        return "destructive";
+      case "imobiliaria_admin":
+        return "default";
+      default:
+        return "secondary";
+    }
   };
 
-  const handleSendWhatsApp = () => {
-    if (!createdCredentials) return;
-    const message = `Olá ${createdCredentials.nome}!\n\nSeu acesso ao Protect Your Deal foi criado:\n\n📧 Email: ${createdCredentials.email}\n🔑 Senha: ${createdCredentials.password}\n\nAcesse: ${APP_URL}/auth`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
-  };
-
-  const getGroupIcon = (type: UserGroup['type']) => {
-    switch (type) {
-      case 'super_admin':
-        return <Shield className="h-5 w-5 text-red-500" />;
-      case 'imobiliaria':
-        return <Building2 className="h-5 w-5 text-blue-500" />;
-      case 'corretor_autonomo':
-        return <User className="h-5 w-5 text-orange-500" />;
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case "super_admin":
+        return "Super Admin";
+      case "imobiliaria_admin":
+        return "Admin Imobiliária";
+      case "corretor":
+        return "Corretor";
+      default:
+        return role;
     }
   };
 
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Usuários</h1>
-            <p className="text-muted-foreground">Gerencie todos os usuários do sistema</p>
+            <h1 className="text-3xl font-bold tracking-tight">Usuários</h1>
+            <p className="text-muted-foreground">
+              Gerencie todos os usuários do sistema
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button onClick={openCreateWithPassword}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Novo Usuário
+            </Button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-muted-foreground" />
+                <div className="text-right">
+                  <span className="text-2xl font-bold">{users?.length || 0}</span>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+              </div>
+              <Separator orientation="vertical" className="h-10" />
+              <div className="text-right">
+                <span className="text-xl font-bold text-green-600">
+                  {users?.filter(u => u.profile?.ativo !== false).length || 0}
+                </span>
+                <p className="text-xs text-muted-foreground">Ativos</p>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-bold text-muted-foreground">
+                  {users?.filter(u => u.profile?.ativo === false).length || 0}
+                </span>
+                <p className="text-xs text-muted-foreground">Inativos</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-5">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Usuários</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalUsers}</div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Filtrar por role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as roles</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                  <SelectItem value="corretor">Corretor</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={imobiliariaFilter} onValueChange={setImobiliariaFilter}>
+                <SelectTrigger className="w-full md:w-[250px]">
+                  <SelectValue placeholder="Filtrar por imobiliária" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as imobiliárias</SelectItem>
+                  <SelectItem value="autonomos">Autônomos (sem imobiliária)</SelectItem>
+                  {imobiliarias?.map((imob) => (
+                    <SelectItem key={imob.id} value={imob.id}>
+                      {imob.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="ativo">Ativos</SelectItem>
+                  <SelectItem value="inativo">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Imobiliárias</CardTitle>
-              <Building2 className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{imobiliariasCount}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Autônomos</CardTitle>
-              <User className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{autonomosCount}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ativos</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{ativosCount}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inativos</CardTitle>
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-muted-foreground">{inativosCount}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome, email ou imobiliária..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="ativo">Ativos</SelectItem>
-              <SelectItem value="inativo">Inativos</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button onClick={openCreateDialog}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Novo Usuário
-          </Button>
-        </div>
-
-        {/* User Groups Accordion */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : groups.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum usuário encontrado</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Accordion type="multiple" className="space-y-2">
-            {groups.map((group) => (
-              <AccordionItem key={group.id} value={group.id} className="border rounded-lg">
-                <AccordionTrigger className="px-4 hover:no-underline">
-                  <div className="flex items-center gap-3 w-full">
-                    {getGroupIcon(group.type)}
-                    <span className="font-medium">{group.name}</span>
-                    <Badge variant="secondary" className="ml-auto mr-2">
-                      {group.count} usuário{group.count !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Usuário</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Contato</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Criado em</TableHead>
-                          <TableHead className="text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {group.users.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <UserAvatar
-                                  nome={user.profile?.nome || user.email || ""}
-                                  size="sm"
-                                />
-                                <div>
-                                  <p className="font-medium">{user.profile?.nome || 'Sem nome'}</p>
-                                  {user.profile?.creci && (
-                                    <p className="text-xs text-muted-foreground">CRECI: {user.profile.creci}</p>
-                                  )}
+        <Card>
+          <CardContent className="p-0">
+            <TooltipProvider>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Imobiliária</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8">
+                        Carregando...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredUsers?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        Nenhum usuário encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <UserAvatar 
+                              name={user.profile?.nome} 
+                              role={user.role}
+                              size="sm"
+                            />
+                            <div>
+                              <p className="font-medium">{user.profile?.nome || "Sem nome"}</p>
+                              {user.profile?.creci && (
+                                <p className="text-xs text-muted-foreground">CRECI: {user.profile.creci}</p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm text-muted-foreground">
+                            {user.email || "-"}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getRoleBadgeVariant(user.role)}>
+                            {getRoleLabel(user.role)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.imobiliaria?.nome || (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.profile?.telefone ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground cursor-default">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{user.profile.telefone}</span>
                                 </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                            <TableCell>
-                              <RoleBadge role={user.role as any} />
-                            </TableCell>
-                            <TableCell>{formatPhone(user.profile?.telefone) || '-'}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={user.profile?.ativo !== false}
-                                  onCheckedChange={() => handleToggleStatus(user)}
-                                  disabled={togglingUserId === user.user_id}
-                                />
-                                <span className={user.profile?.ativo !== false ? 'text-green-600' : 'text-muted-foreground'}>
-                                  {user.profile?.ativo !== false ? 'Ativo' : 'Inativo'}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {format(new Date(user.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Editar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => {
-                                    setSelectedUser(user);
-                                    setIsResetDialogOpen(true);
-                                  }}>
-                                    <KeyRound className="h-4 w-4 mr-2" />
-                                    Redefinir Senha
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    className="text-destructive"
-                                    onClick={() => {
-                                      setSelectedUser(user);
-                                      setIsDeleteDialogOpen(true);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Excluir
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        )}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{user.profile.telefone}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={user.profile?.ativo !== false}
+                              onCheckedChange={() => handleToggleStatus(user)}
+                              disabled={user.role === "super_admin" || togglingUserId === user.user_id}
+                            />
+                            <span className={`text-xs ${user.profile?.ativo !== false ? 'text-green-600' : 'text-muted-foreground'}`}>
+                              {user.profile?.ativo !== false ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(user.created_at), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" disabled={user.role === "super_admin"}>
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditDialog(user)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewPassword(generatePassword(12));
+                                  setIsResetDialogOpen(true);
+                                }}
+                              >
+                                <KeyRound className="h-4 w-4 mr-2" />
+                                Redefinir Senha
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => {
+                                  setUserToDelete(user);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Reset Password Dialog */}
-        <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Redefinir Senha</DialogTitle>
-              <DialogDescription>
-                Escolha como redefinir a senha de {selectedUser?.profile?.nome || selectedUser?.email}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Método</Label>
-                <Select value={resetAction} onValueChange={(v: any) => setResetAction(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="send_reset_email">Enviar email de recuperação</SelectItem>
-                    <SelectItem value="set_password">Definir nova senha</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {resetAction === "set_password" && (
-                <div className="space-y-2">
-                  <Label>Nova Senha</Label>
-                  <div className="flex gap-2">
-                    <PasswordInput 
-                      value={newPassword} 
-                      onChange={(e) => setNewPassword(e.target.value)} 
-                      placeholder="Digite a nova senha" 
-                    />
-                    <Button type="button" variant="outline" onClick={() => setNewPassword(generatePassword())}>
-                      Gerar
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsResetDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleResetPassword} disabled={isResetting}>
-                {isResetting ? "Processando..." : "Confirmar"}
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha</DialogTitle>
+            <DialogDescription>
+              Escolha como deseja redefinir a senha do usuário{" "}
+              <strong>{selectedUser?.profile?.nome}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                variant={resetAction === "send_reset_email" ? "default" : "outline"}
+                className="flex-1"
+                onClick={() => setResetAction("send_reset_email")}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Enviar Email
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete User Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja excluir o usuário {selectedUser?.profile?.nome || selectedUser?.email}? Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteUser} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                {isDeleting ? "Excluindo..." : "Excluir"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Edit User Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Usuário</DialogTitle>
-              <DialogDescription>Editar informações de {selectedUser?.email}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input 
-                  value={editForm.nome} 
-                  onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })} 
-                  placeholder="Nome completo" 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input 
-                  value={editForm.telefone} 
-                  onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })} 
-                  placeholder="(00) 00000-0000" 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="corretor">Corretor</SelectItem>
-                    <SelectItem value="admin_imobiliaria">Admin Imobiliária</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Imobiliária</Label>
-                <Select 
-                  value={editForm.imobiliaria_id || "none"} 
-                  onValueChange={(v) => setEditForm({ ...editForm, imobiliaria_id: v === "none" ? "" : v })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma (Autônomo)</SelectItem>
-                    {imobiliarias.map((imob) => (
-                      <SelectItem key={imob.id} value={imob.id}>{imob.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleEditUser} disabled={isEditing}>
-                {isEditing ? "Salvando..." : "Salvar"}
+              <Button
+                variant={resetAction === "set_password" ? "default" : "outline"}
+                className="flex-1"
+                onClick={() => setResetAction("set_password")}
+              >
+                <KeyRound className="h-4 w-4 mr-2" />
+                Definir Senha
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Create User Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Novo Usuário</DialogTitle>
-              <DialogDescription>Criar um novo usuário no sistema</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email *</Label>
-                <Input 
-                  type="email" 
-                  value={createForm.email} 
-                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} 
-                  placeholder="email@exemplo.com" 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Nome *</Label>
-                <Input 
-                  value={createForm.nome} 
-                  onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })} 
-                  placeholder="Nome completo" 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input 
-                  value={createForm.telefone} 
-                  onChange={(e) => setCreateForm({ ...createForm, telefone: e.target.value })} 
-                  placeholder="(00) 00000-0000" 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Senha *</Label>
-                <div className="flex gap-2">
-                  <PasswordInput 
-                    value={createForm.password} 
-                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} 
-                    placeholder="Senha" 
-                  />
-                  <Button type="button" variant="outline" onClick={() => setCreateForm({ ...createForm, password: generatePassword() })}>
-                    Gerar
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="corretor">Corretor</SelectItem>
-                    <SelectItem value="admin_imobiliaria">Admin Imobiliária</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Imobiliária</Label>
-                <Select 
-                  value={createForm.imobiliaria_id || "none"} 
-                  onValueChange={(v) => setCreateForm({ ...createForm, imobiliaria_id: v === "none" ? "" : v })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma (Autônomo)</SelectItem>
-                    {imobiliarias.map((imob) => (
-                      <SelectItem key={imob.id} value={imob.id}>{imob.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleCreateUser} disabled={isCreating}>
-                {isCreating ? "Criando..." : "Criar Usuário"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
-        {/* Success Dialog */}
-        <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="text-green-600">Usuário Criado!</DialogTitle>
-              <DialogDescription>O usuário foi criado com sucesso. Copie as credenciais abaixo:</DialogDescription>
-            </DialogHeader>
-            {createdCredentials && (
-              <div className="space-y-4">
-                <div className="p-4 bg-muted rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-mono">{createdCredentials.email}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleCopy(createdCredentials.email, "Email")}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Senha</p>
-                      <p className="font-mono">{createdCredentials.password}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleCopy(createdCredentials.password, "Senha")}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => handleCopy(`Email: ${createdCredentials.email}\nSenha: ${createdCredentials.password}`, "Credenciais")}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar Tudo
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={handleSendWhatsApp}>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Enviar WhatsApp
-                  </Button>
-                </div>
+            {resetAction === "set_password" && (
+              <div className="space-y-2">
+                <Label>Nova Senha</Label>
+                <PasswordInput
+                  value={newPassword}
+                  onChange={setNewPassword}
+                  showGenerator={true}
+                  showStrength={true}
+                />
               </div>
             )}
-            <DialogFooter>
-              <Button onClick={() => setIsSuccessDialogOpen(false)}>Fechar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleResetPassword} disabled={isResetting}>
+              {isResetting ? "Processando..." : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário{" "}
+              <strong>{userToDelete?.profile?.nome}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {userToEdit && (
+                <UserAvatar name={userToEdit.profile?.nome} role={userToEdit.role} size="md" />
+              )}
+              Editar Usuário
+            </DialogTitle>
+            <DialogDescription>
+              {userToEdit?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Dados Pessoais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <IdCard className="h-4 w-4" />
+                Dados Pessoais
+              </div>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input
+                    value={editForm.nome}
+                    onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefone</Label>
+                    <Input
+                      value={editForm.telefone}
+                      onChange={(e) => setEditForm({ ...editForm, telefone: formatPhone(e.target.value) })}
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CRECI</Label>
+                    <Input
+                      value={editForm.creci}
+                      onChange={(e) => setEditForm({ ...editForm, creci: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Permissões */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                Permissões
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="corretor">Corretor</SelectItem>
+                      <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Imobiliária</Label>
+                  <Select value={editForm.imobiliaria_id} onValueChange={(v) => setEditForm({ ...editForm, imobiliaria_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {imobiliarias?.map((imob) => (
+                        <SelectItem key={imob.id} value={imob.id}>
+                          {imob.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditUser} disabled={isEditing}>
+              {isEditing ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Novo Usuário
+            </DialogTitle>
+            <DialogDescription>
+              Crie um novo usuário vinculado a uma imobiliária
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Credenciais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <KeyRound className="h-4 w-4" />
+                Credenciais de Acesso
+              </div>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Senha *</Label>
+                  <PasswordInput
+                    value={createForm.password}
+                    onChange={(v) => setCreateForm({ ...createForm, password: v })}
+                    showGenerator={true}
+                    showStrength={true}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Dados Pessoais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <IdCard className="h-4 w-4" />
+                Dados Pessoais
+              </div>
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input
+                    value={createForm.nome}
+                    onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefone</Label>
+                    <Input
+                      value={createForm.telefone}
+                      onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CRECI</Label>
+                    <Input
+                      value={createForm.creci}
+                      onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Permissões */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                Permissões
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Role *</Label>
+                  <Select value={createForm.role} onValueChange={(v) => setCreateForm({ ...createForm, role: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="corretor">Corretor</SelectItem>
+                      <SelectItem value="imobiliaria_admin">Admin Imobiliária</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Imobiliária *</Label>
+                  <Select value={createForm.imobiliaria_id} onValueChange={(v) => setCreateForm({ ...createForm, imobiliaria_id: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {imobiliarias?.map((imob) => (
+                        <SelectItem key={imob.id} value={imob.id}>
+                          {imob.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateUser} disabled={isCreating}>
+              {isCreating ? "Criando..." : "Criar Usuário"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+              Usuário Criado com Sucesso!
+            </DialogTitle>
+            <DialogDescription>
+              Anote as credenciais de acesso do usuário
+            </DialogDescription>
+          </DialogHeader>
+
+          {createdUser && (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nome</p>
+                    <p className="font-medium">{createdUser.nome}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="font-medium">{createdUser.email}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleCopy(createdUser.email, "email")}
+                  >
+                    {copiedField === "email" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Senha</p>
+                    <p className="font-mono font-medium">{createdUser.password}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleCopy(createdUser.password, "password")}
+                  >
+                    {copiedField === "password" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleCopy(`Email: ${createdUser.email}\nSenha: ${createdUser.password}`, "all")}
+                >
+                  {copiedField === "all" ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2 text-green-500" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="default"
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={handleSendWhatsApp}
+                  disabled={!createdUser.telefone || isSendingWhatsApp}
+                  title={!createdUser.telefone ? "Usuário sem telefone cadastrado" : "Enviar credenciais por WhatsApp"}
+                >
+                  {isSendingWhatsApp ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      WhatsApp
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsSuccessDialogOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => {
+              setIsSuccessDialogOpen(false);
+              openCreateWithPassword();
+            }}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Criar Outro
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </SuperAdminLayout>
   );
 }
