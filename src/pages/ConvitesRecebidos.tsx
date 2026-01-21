@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -72,30 +73,43 @@ export default function ConvitesRecebidos() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Buscar convites recebidos (onde o usuário é o parceiro, NÃO o remetente)
-  const { data: convites, isLoading } = useQuery({
-    queryKey: ['convites-recebidos', user?.id],
+  // Cache do telefone do usuário
+  const { data: userTelefone } = useQuery({
+    queryKey: ['user-profile-telefone', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('telefone')
+        .eq('user_id', user!.id)
+        .single();
+      return data?.telefone?.replace(/\D/g, '') || '';
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  // Buscar convites recebidos com JOIN (query otimizada)
+  const { data: convitesRaw, isLoading } = useQuery({
+    queryKey: ['convites-recebidos', user?.id, userTelefone],
     queryFn: async () => {
       if (!user) return [];
       
-      // Buscar telefone do usuário para filtrar convites pendentes
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('telefone')
-        .eq('user_id', user.id)
-        .single();
+      const telefoneNormalizado = userTelefone || '';
       
-      const telefoneNormalizado = profile?.telefone?.replace(/\D/g, '') || '';
-      
-      // Buscar convites onde o usuário é o parceiro (por id ou telefone)
-      // E NÃO é o corretor que enviou (corretor_origem)
       let query = supabase
         .from('convites_parceiro')
-        .select('*')
+        .select(`
+          *,
+          ficha:fichas_visita!inner(
+            id, imovel_endereco, imovel_tipo, data_visita,
+            proprietario_telefone, comprador_telefone,
+            proprietario_confirmado_em, comprador_confirmado_em
+          )
+        `)
         .neq('corretor_origem_id', user.id)
         .order('created_at', { ascending: false });
       
-      // Filtrar por parceiro_id OU telefone do parceiro
       if (telefoneNormalizado) {
         query = query.or(`corretor_parceiro_id.eq.${user.id},corretor_parceiro_telefone.eq.${telefoneNormalizado}`);
       } else {
@@ -103,43 +117,58 @@ export default function ConvitesRecebidos() {
       }
       
       const { data, error } = await query;
-      
       if (error) throw error;
-      return data as ConviteParceiro[];
+      return data;
     },
-    enabled: !!user,
+    enabled: !!user && userTelefone !== undefined,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  // Buscar detalhes das fichas e corretores
-  const { data: detalhes } = useQuery({
-    queryKey: ['convites-detalhes', convites?.map(c => c.ficha_id)],
+  // Buscar nomes dos corretores separadamente
+  const { data: corretoresMap } = useQuery({
+    queryKey: ['convites-recebidos-corretores', convitesRaw?.map(c => c.corretor_origem_id)],
     queryFn: async () => {
-      if (!convites || convites.length === 0) return {};
+      if (!convitesRaw || convitesRaw.length === 0) return {};
+      const corretorIds = [...new Set(convitesRaw.map(c => c.corretor_origem_id))];
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, nome')
+        .in('user_id', corretorIds);
       
-      const fichaIds = convites.map(c => c.ficha_id);
-      const corretorIds = convites.map(c => c.corretor_origem_id);
-      
-      const [fichas, corretores] = await Promise.all([
-        supabase
-          .from('fichas_visita')
-          .select('id, imovel_endereco, imovel_tipo, data_visita, proprietario_telefone, comprador_telefone, proprietario_confirmado_em, comprador_confirmado_em')
-          .in('id', fichaIds),
-        supabase
-          .from('profiles')
-          .select('user_id, nome')
-          .in('user_id', corretorIds)
-      ]);
-      
-      const fichasMap: Record<string, FichaDetalhe> = {};
-      const corretoresMap: Record<string, string> = {};
-      
-      fichas.data?.forEach(f => { fichasMap[f.id] = f as FichaDetalhe; });
-      corretores.data?.forEach(c => { corretoresMap[c.user_id] = c.nome; });
-      
-      return { fichas: fichasMap, corretores: corretoresMap };
+      const map: Record<string, string> = {};
+      data?.forEach(c => { map[c.user_id] = c.nome; });
+      return map;
     },
-    enabled: !!convites && convites.length > 0,
+    enabled: !!convitesRaw && convitesRaw.length > 0,
   });
+
+  // Processar dados para manter compatibilidade
+  const convites = useMemo(() => {
+    return convitesRaw?.map(c => ({
+      id: c.id,
+      ficha_id: c.ficha_id,
+      corretor_origem_id: c.corretor_origem_id,
+      corretor_parceiro_telefone: c.corretor_parceiro_telefone,
+      parte_faltante: c.parte_faltante,
+      status: c.status,
+      token: c.token,
+      expira_em: c.expira_em,
+      created_at: c.created_at,
+    })) as ConviteParceiro[] || [];
+  }, [convitesRaw]);
+
+  const detalhes = useMemo(() => {
+    if (!convitesRaw || convitesRaw.length === 0) return {};
+    
+    const fichasMap: Record<string, FichaDetalhe> = {};
+    
+    convitesRaw.forEach(c => {
+      if (c.ficha) fichasMap[c.ficha.id] = c.ficha as FichaDetalhe;
+    });
+    
+    return { fichas: fichasMap, corretores: corretoresMap || {} };
+  }, [convitesRaw, corretoresMap]);
 
   // Mutation para aceitar convite
   const aceitarMutation = useMutation({

@@ -81,32 +81,26 @@ serve(async (req) => {
       );
     }
 
-    // Search for partner broker by phone (normalize both sides to handle different formats)
-    const { data: perfis, error: perfilError } = await supabase
-      .from('profiles')
-      .select('user_id, nome, telefone')
-      .not('telefone', 'is', null);
-
+    // Search for partner broker by phone directly (optimized query)
     let parceiroEncontrado = false;
     let parceiroId: string | null = null;
     let parceiroNome = 'Corretor';
 
-    if (perfis && !perfilError) {
-      // Find partner by comparing normalized phone numbers
-      const parceiroPerfil = perfis.find(p => 
-        p.telefone?.replace(/\D/g, '') === telefoneLimpo
-      );
+    const { data: parceiroPerfil, error: perfilError } = await supabase
+      .from('profiles')
+      .select('user_id, nome')
+      .eq('telefone', telefoneLimpo)
+      .maybeSingle();
 
-      if (parceiroPerfil) {
-        parceiroEncontrado = true;
-        parceiroId = parceiroPerfil.user_id;
-        parceiroNome = parceiroPerfil.nome;
-        console.log(`Parceiro encontrado: ${parceiroNome} (${parceiroId})`);
-      } else {
-        console.log('Parceiro não encontrado no sistema');
-      }
+    if (perfilError) {
+      console.log('Erro ao buscar perfil:', perfilError);
+    } else if (parceiroPerfil) {
+      parceiroEncontrado = true;
+      parceiroId = parceiroPerfil.user_id;
+      parceiroNome = parceiroPerfil.nome;
+      console.log(`Parceiro encontrado: ${parceiroNome} (${parceiroId})`);
     } else {
-      console.log('Erro ao buscar perfis:', perfilError);
+      console.log('Parceiro não encontrado no sistema');
     }
 
     // Check for existing pending invite
