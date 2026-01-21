@@ -237,6 +237,16 @@ ${formato === 'quadrado'
 DO NOT generate a landscape (horizontal) image under any circumstances.
 ${formato === 'vertical' ? 'PORTRAIT MODE ONLY. HEIGHT > WIDTH.' : ''}
 
+=== BRAND LOGO (MUST INCLUDE) ===
+Include the VisitaProva "VP" logo with these EXACT specifications:
+- A geometric ROUNDED SQUARE frame with dark slate (#0F172A) background
+- Inside the square: WHITE/LIGHT GRAY horizontal and vertical GRID LINES creating a matrix pattern
+- The letters "VP" prominently displayed in BRIGHT BLUE (#60A5FA) overlaid on the grid
+- The VP letters should be bold, modern, and clearly visible against the dark background
+- Logo placement: TOP-LEFT corner or BOTTOM-RIGHT corner of the image
+- Logo size: approximately 15-20% of the image width
+- The logo represents security, organization, and technology
+
 SPECIFICATIONS:
 - Output size: ${dimensions}
 - Visual style: ${colors}
@@ -244,25 +254,26 @@ SPECIFICATIONS:
 - Feature to highlight: ${funcDescImage}
 
 VISUAL ELEMENTS TO INCLUDE:
-- Shield icon or house icon representing real estate security
-- Modern, tech-inspired abstract graphics
-- Professional gradient backgrounds
-- Clean geometric shapes and patterns
+- The VisitaProva "VP" geometric grid logo (as described above) - THIS IS MANDATORY
+- Modern, tech-inspired abstract graphics that complement the logo style
+- Professional gradient backgrounds (dark navy, slate, or gradient with blue accents)
+- Clean geometric shapes and patterns that echo the grid design of the logo
 - Smartphone mockups showing the app (optional)
 - Icons representing the feature (locks, QR codes, documents, etc.)
 
 CRITICAL TEXT RULES:
-- Include ONLY the brand name "VisitaProva" as text
+- Include the "VP" geometric logo as described above
+- The brand name "VisitaProva" can appear as text near the logo (optional)
 - DO NOT write any Portuguese sentences or phrases
 - DO NOT include the title or subtitle as text in the image
 - Use ONLY visual icons and graphics to represent concepts
-- Maximum text allowed: 2 words total (just the brand name)
-- If any text is needed, use UPPERCASE without accents
+- If any text is needed besides the logo, use UPPERCASE without accents
 
 STYLE:
 - Clean, modern, and professional
-- Tech-focused aesthetic
+- Tech-focused aesthetic matching the geometric grid logo
 - High contrast for visual impact
+- Color palette: Dark slate (#0F172A), bright blue (#60A5FA), emerald green (#10B981), white
 - Instagram-ready composition
 
 TARGET AUDIENCE: Brazilian real estate agents looking to modernize their work`;
