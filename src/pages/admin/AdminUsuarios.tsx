@@ -261,11 +261,12 @@ export default function AdminUsuarios() {
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
       const { data: emailsData } = await supabase.functions.invoke("admin-get-corretores-emails", {
-        body: { userIds }
+        body: { user_ids: userIds }
       });
 
+      const emailsObject = emailsData?.emails || {};
       const emailMap = new Map(
-        emailsData?.emails?.map((e: { id: string; email: string }) => [e.id, e.email]) || []
+        Object.entries(emailsObject) as [string, string][]
       );
 
       return (userRoles || []).map(user => ({
