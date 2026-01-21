@@ -100,6 +100,7 @@ export default function EmpresaFichas() {
     aguardando_proprietario: 'Aguard. Proprietário',
     aguardando_comprador: 'Aguard. Comprador',
     completo: 'Completo',
+    finalizado_parcial: 'Finalizado',
     cancelado: 'Cancelado',
   };
 
@@ -108,6 +109,7 @@ export default function EmpresaFichas() {
     aguardando_proprietario: 'bg-warning/20 text-warning border-warning/30',
     aguardando_comprador: 'bg-warning/20 text-warning border-warning/30',
     completo: 'bg-success/20 text-success border-success/30',
+    finalizado_parcial: 'bg-success/20 text-success border-success/30',
     cancelado: 'bg-muted text-muted-foreground',
   };
 
