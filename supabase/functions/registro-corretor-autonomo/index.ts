@@ -239,75 +239,87 @@ Deno.serve(async (req) => {
 
     // 4. Create subscription linked to user_id (only for autonomous brokers without imobiliaria)
     // If linked to imobiliaria, the subscription is managed by the imobiliaria
+    // Also check if user already has a subscription (edge case: re-registration)
     if (plano_id && !imobiliariaId) {
-      console.log("Creating subscription for autonomous broker...");
-      
-      // Get plan value
-      const { data: planoData } = await supabaseAdmin
-        .from("planos")
-        .select("valor_mensal")
-        .eq("id", plano_id)
-        .single();
+      // Check if user already has an active subscription
+      const { data: existingSub } = await supabaseAdmin
+        .from('assinaturas')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-      const valorOriginal = planoData?.valor_mensal || 0;
-      
-      // Buscar afiliado_id do cupom se existir
-      let afiliadoId: string | null = null;
-      if (cupomData) {
-        const { data: cupomInfo } = await supabaseAdmin
-          .from("cupons")
-          .select("afiliado_id")
-          .eq("id", cupomData.cupom_id)
-          .single();
-        afiliadoId = cupomInfo?.afiliado_id || null;
-      }
-
-      const { data: assinData, error: assinError } = await supabaseAdmin
-        .from("assinaturas")
-        .insert({
-          user_id: userId, // Vinculado ao usuário, não à imobiliária
-          imobiliaria_id: null,
-          plano_id: plano_id,
-          status: "ativa", // Plano gratuito já começa ativo
-          data_inicio: new Date().toISOString().split("T")[0],
-          // Novos campos para comissões recorrentes
-          afiliado_id: afiliadoId,
-          cupom_id: cupomData?.cupom_id || null,
-          comissao_percentual: cupomData?.comissao_percentual || 0,
-        })
-        .select()
-        .single();
-
-      if (assinError) {
-        console.error("Subscription error:", assinError);
-        // Non-critical, continue
-      } else if (cupomData && assinData) {
-        // Register initial coupon usage (first payment commission)
-        console.log("Registering coupon usage...");
-        
-        let valorDesconto = 0;
-        if (cupomData.tipo_desconto === 'percentual') {
-          valorDesconto = valorOriginal * (cupomData.valor_desconto / 100);
-        } else {
-          valorDesconto = Math.min(cupomData.valor_desconto, valorOriginal);
-        }
-        
-        const valorComissao = valorOriginal * (cupomData.comissao_percentual / 100);
-
-        await supabaseAdmin.from("cupons_usos").insert({
-          cupom_id: cupomData.cupom_id,
-          assinatura_id: assinData.id,
-          user_id: userId,
-          valor_original: valorOriginal,
-          valor_desconto: valorDesconto,
-          valor_comissao: valorComissao,
-        });
-
-        // Increment coupon usage count
-        await supabaseAdmin.rpc('increment_cupom_usos', { cupom_uuid: cupomData.cupom_id });
-        console.log("Coupon usage registered");
+      if (existingSub) {
+        console.log("User already has a subscription, skipping creation");
       } else {
-        console.log("Subscription created");
+        console.log("Creating subscription for autonomous broker...");
+      
+        // Get plan value
+        const { data: planoData } = await supabaseAdmin
+          .from("planos")
+          .select("valor_mensal")
+          .eq("id", plano_id)
+          .single();
+
+        const valorOriginal = planoData?.valor_mensal || 0;
+        
+        // Buscar afiliado_id do cupom se existir
+        let afiliadoId: string | null = null;
+        if (cupomData) {
+          const { data: cupomInfo } = await supabaseAdmin
+            .from("cupons")
+            .select("afiliado_id")
+            .eq("id", cupomData.cupom_id)
+            .single();
+          afiliadoId = cupomInfo?.afiliado_id || null;
+        }
+
+        const { data: assinData, error: assinError } = await supabaseAdmin
+          .from("assinaturas")
+          .insert({
+            user_id: userId, // Vinculado ao usuário, não à imobiliária
+            imobiliaria_id: null,
+            plano_id: plano_id,
+            status: "ativa", // Plano gratuito já começa ativo
+            data_inicio: new Date().toISOString().split("T")[0],
+            // Novos campos para comissões recorrentes
+            afiliado_id: afiliadoId,
+            cupom_id: cupomData?.cupom_id || null,
+            comissao_percentual: cupomData?.comissao_percentual || 0,
+          })
+          .select()
+          .single();
+
+        if (assinError) {
+          console.error("Subscription error:", assinError);
+          // Non-critical, continue
+        } else if (cupomData && assinData) {
+          // Register initial coupon usage (first payment commission)
+          console.log("Registering coupon usage...");
+          
+          let valorDesconto = 0;
+          if (cupomData.tipo_desconto === 'percentual') {
+            valorDesconto = valorOriginal * (cupomData.valor_desconto / 100);
+          } else {
+            valorDesconto = Math.min(cupomData.valor_desconto, valorOriginal);
+          }
+          
+          const valorComissao = valorOriginal * (cupomData.comissao_percentual / 100);
+
+          await supabaseAdmin.from("cupons_usos").insert({
+            cupom_id: cupomData.cupom_id,
+            assinatura_id: assinData.id,
+            user_id: userId,
+            valor_original: valorOriginal,
+            valor_desconto: valorDesconto,
+            valor_comissao: valorComissao,
+          });
+
+          // Increment coupon usage count
+          await supabaseAdmin.rpc('increment_cupom_usos', { cupom_uuid: cupomData.cupom_id });
+          console.log("Coupon usage registered");
+        } else {
+          console.log("Subscription created");
+        }
       }
     }
 
