@@ -86,11 +86,15 @@ serve(async (req) => {
     let parceiroId: string | null = null;
     let parceiroNome = 'Corretor';
 
-    const { data: parceiroPerfil, error: perfilError } = await supabase
+    // Buscar parceiro pelo telefone - usar limit(1) para evitar erro com telefones duplicados
+    const { data: parceirosPerfis, error: perfilError } = await supabase
       .from('profiles')
       .select('user_id, nome')
       .eq('telefone', telefoneLimpo)
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const parceiroPerfil = parceirosPerfis?.[0] || null;
 
     if (perfilError) {
       console.log('Erro ao buscar perfil:', perfilError);
