@@ -133,6 +133,7 @@ export default function AdminBackups() {
   const [search, setSearch] = useState('');
   const [deletingOrphans, setDeletingOrphans] = useState(false);
   const [downloadingAll, setDownloadingAll] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
   const queryClient = useQueryClient();
 
   const { data: backups, isLoading } = useQuery({
@@ -286,11 +287,14 @@ export default function AdminBackups() {
     if (!backups || backups.length === 0) return;
 
     setDownloadingAll(true);
+    setDownloadProgress({ current: 0, total: backups.length });
+    
     try {
       const zip = new JSZip();
       let downloadedCount = 0;
 
-      for (const backup of backups) {
+      for (let i = 0; i < backups.length; i++) {
+        const backup = backups[i];
         const { data, error } = await supabase.storage
           .from('comprovantes-backup')
           .download(backup.name);
@@ -299,6 +303,8 @@ export default function AdminBackups() {
           zip.file(`${backup.protocolo}.pdf`, data);
           downloadedCount++;
         }
+        
+        setDownloadProgress({ current: i + 1, total: backups.length });
       }
 
       if (downloadedCount === 0) {
@@ -320,6 +326,7 @@ export default function AdminBackups() {
       toast.error('Erro ao baixar backups');
     } finally {
       setDownloadingAll(false);
+      setDownloadProgress({ current: 0, total: 0 });
     }
   };
 
@@ -415,14 +422,14 @@ export default function AdminBackups() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 min-w-[160px]"
               onClick={handleDownloadAll}
               disabled={downloadingAll}
             >
               {downloadingAll ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Baixando...
+                  {downloadProgress.current}/{downloadProgress.total}
                 </>
               ) : (
                 <>
