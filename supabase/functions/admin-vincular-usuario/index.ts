@@ -101,6 +101,33 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Delete any individual subscription the user may have (orphan subscriptions)
+    // When a broker is linked to an imobiliaria, they should use the imobiliaria's subscription
+    let deletedSubscriptions = 0;
+    const { data: individualSubs, error: findSubError } = await supabaseAdmin
+      .from('assinaturas')
+      .select('id')
+      .eq('user_id', user_id)
+      .is('imobiliaria_id', null);
+
+    if (!findSubError && individualSubs && individualSubs.length > 0) {
+      console.log(`Found ${individualSubs.length} individual subscription(s) to delete for user ${user_id}`);
+      
+      const { error: deleteSubError } = await supabaseAdmin
+        .from('assinaturas')
+        .delete()
+        .eq('user_id', user_id)
+        .is('imobiliaria_id', null);
+
+      if (deleteSubError) {
+        console.error('Error deleting individual subscriptions:', deleteSubError);
+        // Non-critical, continue with the process
+      } else {
+        deletedSubscriptions = individualSubs.length;
+        console.log(`Deleted ${deletedSubscriptions} individual subscription(s)`);
+      }
+    }
+
     let fichasBackfilled = 0;
     if (backfillFichas) {
       console.log(`Backfill: atualizando fichas_visita sem imobiliaria_id para o usuário ${user_id}`);
@@ -131,6 +158,7 @@ Deno.serve(async (req) => {
         success: true,
         message: 'User linked to imobiliaria successfully',
         backfill: { enabled: backfillFichas, updated: fichasBackfilled },
+        subscriptions_deleted: deletedSubscriptions,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
