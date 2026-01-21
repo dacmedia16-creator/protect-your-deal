@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { getRedirectPathByRole } from '@/lib/roleRedirect';
@@ -38,6 +38,8 @@ interface ImobiliariaEncontrada {
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
   const { user, signUp, signIn, loading } = useAuth();
   const { role, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
@@ -73,14 +75,19 @@ export default function Auth() {
     // Quando terminar de carregar e o usuário estiver logado
     if (!loading && !roleLoading && user) {
       if (role) {
-        // Usuário tem role, redirecionar para o dashboard apropriado
-        navigate(getRedirectPathByRole(role));
+        // Priorizar returnUrl se existir e for uma rota interna válida
+        if (returnUrl && returnUrl.startsWith('/')) {
+          navigate(returnUrl);
+        } else {
+          // Usuário tem role, redirecionar para o dashboard apropriado
+          navigate(getRedirectPathByRole(role));
+        }
       } else {
         // Usuário não tem role, redirecionar para página de pendente
         navigate('/sem-permissao');
       }
     }
-  }, [user, loading, role, roleLoading, navigate]);
+  }, [user, loading, role, roleLoading, navigate, returnUrl]);
 
   // Buscar imobiliária quando o email mudar (com debounce)
   useEffect(() => {
