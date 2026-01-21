@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar, Building2, User, ChevronDown } from 'lucide-react';
+import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar, Building2, User, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -119,6 +130,8 @@ function groupBackups(backups: BackupFile[]): BackupGroup[] {
 
 export default function AdminBackups() {
   const [search, setSearch] = useState('');
+  const [deletingOrphans, setDeletingOrphans] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: backups, isLoading } = useQuery({
     queryKey: ['admin-backups'],
@@ -238,6 +251,35 @@ export default function AdminBackups() {
     }
   };
 
+  // Identificar backups órfãos
+  const orphanGroup = groups.find(g => g.id === 'orfaos');
+  const orphanCount = orphanGroup?.backups.length || 0;
+  const orphanSize = orphanGroup?.totalSize || 0;
+
+  const handleDeleteOrphans = async () => {
+    if (!orphanGroup || orphanGroup.backups.length === 0) return;
+
+    setDeletingOrphans(true);
+    try {
+      const filesToDelete = orphanGroup.backups.map(b => b.name);
+      
+      const { error } = await supabase
+        .storage
+        .from('comprovantes-backup')
+        .remove(filesToDelete);
+
+      if (error) throw error;
+
+      toast.success(`${filesToDelete.length} backups órfãos excluídos com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ['admin-backups'] });
+    } catch (error) {
+      console.error('Erro ao deletar backups órfãos:', error);
+      toast.error('Erro ao excluir backups órfãos');
+    } finally {
+      setDeletingOrphans(false);
+    }
+  };
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
@@ -314,8 +356,8 @@ export default function AdminBackups() {
           </Card>
         </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-2">
+        {/* Search and Actions */}
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -325,6 +367,47 @@ export default function AdminBackups() {
               className="pl-9"
             />
           </div>
+
+          {orphanCount > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="gap-2">
+                  <Trash2 className="h-4 w-4" />
+                  Limpar {orphanCount} órfão{orphanCount > 1 ? 's' : ''} ({formatBytes(orphanSize)})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Limpar backups órfãos?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Você está prestes a excluir <strong>{orphanCount}</strong> backup{orphanCount > 1 ? 's' : ''} órfão{orphanCount > 1 ? 's' : ''} 
+                    que não possuem fichas correspondentes no sistema.
+                    <br /><br />
+                    <span className="text-destructive font-medium">
+                      Esta ação não pode ser desfeita. Total: {formatBytes(orphanSize)}
+                    </span>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deletingOrphans}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteOrphans}
+                    disabled={deletingOrphans}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deletingOrphans ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Excluindo...
+                      </>
+                    ) : (
+                      'Excluir todos'
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
 
         {/* Grouped Backups */}
