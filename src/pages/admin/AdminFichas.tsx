@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,15 +18,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User, Users } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User, CheckCircle2, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -49,51 +47,80 @@ interface Ficha {
   is_autonomo?: boolean;
 }
 
+interface FichaGroup {
+  id: string;
+  type: 'imobiliaria' | 'corretor_autonomo';
+  name: string;
+  fichas: Ficha[];
+  count: number;
+}
+
+function groupFichas(fichas: Ficha[]): FichaGroup[] {
+  const imobiliariaGroups = new Map<string, Ficha[]>();
+  const autonomoGroups = new Map<string, Ficha[]>();
+
+  fichas.forEach((ficha) => {
+    if (ficha.imobiliaria_id && ficha.imobiliaria_nome) {
+      const existing = imobiliariaGroups.get(ficha.imobiliaria_id) || [];
+      existing.push(ficha);
+      imobiliariaGroups.set(ficha.imobiliaria_id, existing);
+    } else if (ficha.user_id && ficha.corretor_nome) {
+      const existing = autonomoGroups.get(ficha.user_id) || [];
+      existing.push(ficha);
+      autonomoGroups.set(ficha.user_id, existing);
+    }
+  });
+
+  const groups: FichaGroup[] = [];
+
+  // Imobiliárias primeiro (ordenadas alfabeticamente)
+  const imobiliariaEntries: FichaGroup[] = [];
+  imobiliariaGroups.forEach((groupFichas, id) => {
+    imobiliariaEntries.push({
+      id,
+      type: 'imobiliaria',
+      name: groupFichas[0].imobiliaria_nome || 'Sem nome',
+      fichas: groupFichas.sort(
+        (a, b) =>
+          new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime()
+      ),
+      count: groupFichas.length,
+    });
+  });
+
+  imobiliariaEntries.sort((a, b) => a.name.localeCompare(b.name));
+  groups.push(...imobiliariaEntries);
+
+  // Corretores autônomos depois
+  const autonomoEntries: FichaGroup[] = [];
+  autonomoGroups.forEach((groupFichas, id) => {
+    autonomoEntries.push({
+      id,
+      type: 'corretor_autonomo',
+      name: groupFichas[0].corretor_nome || 'Desconhecido',
+      fichas: groupFichas.sort(
+        (a, b) =>
+          new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime()
+      ),
+      count: groupFichas.length,
+    });
+  });
+
+  autonomoEntries.sort((a, b) => a.name.localeCompare(b.name));
+  groups.push(...autonomoEntries);
+
+  return groups;
+}
+
 export default function AdminFichas() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedImobiliaria, setSelectedImobiliaria] = useState<string>('all');
-  const [selectedCorretor, setSelectedCorretor] = useState<string>('all');
-
-  // Lista única de imobiliárias para o filtro
-  const imobiliariaOptions = useMemo(() => {
-    const uniqueImobiliarias = new Map<string, string>();
-    fichas.forEach(f => {
-      if (f.imobiliaria_id && f.imobiliaria_nome && f.imobiliaria_nome !== '-') {
-        uniqueImobiliarias.set(f.imobiliaria_id, f.imobiliaria_nome);
-      }
-    });
-    return Array.from(uniqueImobiliarias.entries())
-      .map(([id, nome]) => ({ id, nome }))
-      .sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [fichas]);
-
-  // Lista única de corretores para as abas
-  const corretorOptions = useMemo(() => {
-    const corretorMap = new Map<string, { id: string; nome: string; count: number }>();
-    
-    fichas.forEach(f => {
-      if (corretorMap.has(f.user_id)) {
-        corretorMap.get(f.user_id)!.count++;
-      } else {
-        corretorMap.set(f.user_id, {
-          id: f.user_id,
-          nome: f.corretor_nome || 'Desconhecido',
-          count: 1
-        });
-      }
-    });
-    
-    return Array.from(corretorMap.values())
-      .sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [fichas]);
 
   const fetchFichas = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Fetch all fichas
       const { data, error } = await supabase
         .from('fichas_visita')
         .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, imobiliaria_id, backup_gerado_em')
@@ -134,26 +161,11 @@ export default function AdminFichas() {
       const enrichedFichas = (data || []).map(f => ({
         ...f,
         corretor_nome: corretorMap[f.user_id] || 'Desconhecido',
-        imobiliaria_nome: f.imobiliaria_id ? imobiliariaMap[f.imobiliaria_id] || '-' : 'Autônomo',
+        imobiliaria_nome: f.imobiliaria_id ? imobiliariaMap[f.imobiliaria_id] || null : null,
         is_autonomo: !f.imobiliaria_id
       }));
 
-      // Ordenar: primeiro imobiliárias (alfabética), depois autônomos, e por data dentro de cada grupo
-      const sortedFichas = enrichedFichas.sort((a, b) => {
-        // Autônomos vão para o final
-        if (a.is_autonomo && !b.is_autonomo) return 1;
-        if (!a.is_autonomo && b.is_autonomo) return -1;
-        
-        // Se ambos são da mesma categoria, ordenar por imobiliária
-        if (a.imobiliaria_nome !== b.imobiliaria_nome) {
-          return (a.imobiliaria_nome || '').localeCompare(b.imobiliaria_nome || '');
-        }
-        
-        // Dentro da mesma imobiliária, ordenar por data (mais recente primeiro)
-        return new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime();
-      });
-
-      setFichas(sortedFichas);
+      setFichas(enrichedFichas);
     } catch (error) {
       console.error('Error fetching fichas:', error);
     } finally {
@@ -165,25 +177,44 @@ export default function AdminFichas() {
     fetchFichas();
   }, [fetchFichas]);
 
-  const filteredFichas = fichas.filter(f => {
-    // Filtro por corretor (abas)
-    if (selectedCorretor !== 'all' && f.user_id !== selectedCorretor) return false;
-    
-    // Filtro por imobiliária
-    if (selectedImobiliaria === 'autonomo' && !f.is_autonomo) return false;
-    if (selectedImobiliaria !== 'all' && selectedImobiliaria !== 'autonomo' && f.imobiliaria_id !== selectedImobiliaria) return false;
-
-    // Filtro por busca
-    const searchLower = search.toLowerCase();
-    return (
-      f.protocolo.toLowerCase().includes(searchLower) ||
-      f.imovel_endereco.toLowerCase().includes(searchLower) ||
-      f.corretor_nome?.toLowerCase().includes(searchLower) ||
-      f.imobiliaria_nome?.toLowerCase().includes(searchLower) ||
-      f.proprietario_nome?.toLowerCase().includes(searchLower) ||
-      f.comprador_nome?.toLowerCase().includes(searchLower)
+  // Estatísticas
+  const stats = useMemo(() => {
+    const imobiliarias = new Set(
+      fichas.filter((f) => f.imobiliaria_id).map((f) => f.imobiliaria_id)
     );
-  });
+    const autonomos = new Set(
+      fichas.filter((f) => !f.imobiliaria_id).map((f) => f.user_id)
+    );
+    const completos = fichas.filter((f) => f.status === 'completo' || f.status === 'finalizado_parcial').length;
+    const comBackup = fichas.filter((f) => f.backup_gerado_em).length;
+
+    return {
+      total: fichas.length,
+      imobiliarias: imobiliarias.size,
+      autonomos: autonomos.size,
+      completos,
+      comBackup,
+    };
+  }, [fichas]);
+
+  // Filtrar fichas pela busca
+  const filteredFichas = useMemo(() => {
+    if (!search) return fichas;
+
+    const term = search.toLowerCase();
+    return fichas.filter(
+      (f) =>
+        f.protocolo.toLowerCase().includes(term) ||
+        f.imovel_endereco.toLowerCase().includes(term) ||
+        f.proprietario_nome?.toLowerCase().includes(term) ||
+        f.comprador_nome?.toLowerCase().includes(term) ||
+        f.corretor_nome?.toLowerCase().includes(term) ||
+        f.imobiliaria_nome?.toLowerCase().includes(term)
+    );
+  }, [fichas, search]);
+
+  // Agrupar fichas
+  const groups = useMemo(() => groupFichas(filteredFichas), [filteredFichas]);
 
   const statusLabels: Record<string, string> = {
     pendente: 'Pendente',
@@ -221,119 +252,145 @@ export default function AdminFichas() {
           <p className="text-muted-foreground">Visualize todos os registros do sistema</p>
         </div>
 
-        {/* Abas por Corretor */}
-        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-          <Tabs value={selectedCorretor} onValueChange={setSelectedCorretor}>
-            <TabsList className="bg-muted inline-flex w-auto min-w-full md:min-w-0 h-auto flex-wrap gap-1 p-1">
-              <TabsTrigger value="all" className="gap-1.5 data-[state=active]:bg-background">
-                <Users className="h-3.5 w-3.5" />
-                Todos
-                <Badge variant="secondary" className="ml-1 text-xs">{fichas.length}</Badge>
-              </TabsTrigger>
-              {corretorOptions.map(corretor => (
-                <TabsTrigger 
-                  key={corretor.id} 
-                  value={corretor.id} 
-                  className="gap-1.5 data-[state=active]:bg-background"
-                >
-                  <User className="h-3.5 w-3.5" />
-                  {corretor.nome}
-                  <Badge variant="secondary" className="ml-1 text-xs">{corretor.count}</Badge>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+        {/* Cards de Estatísticas */}
+        <div className="grid gap-4 md:grid-cols-5">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground">registros</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Imobiliárias</CardTitle>
+              <Building2 className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.imobiliarias}</div>
+              <p className="text-xs text-muted-foreground">com registros</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Autônomos</CardTitle>
+              <User className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.autonomos}</div>
+              <p className="text-xs text-muted-foreground">corretores</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completos</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.completos}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.total > 0
+                  ? `${Math.round((stats.completos / stats.total) * 100)}%`
+                  : '0%'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Com Backup</CardTitle>
+              <Shield className="h-4 w-4 text-emerald-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.comBackup}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.total > 0
+                  ? `${Math.round((stats.comBackup / stats.total) * 100)}%`
+                  : '0%'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por protocolo, endereço, corretor..."
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Select value={selectedImobiliaria} onValueChange={setSelectedImobiliaria}>
-                <SelectTrigger className="w-full sm:w-[220px]">
-                  <SelectValue placeholder="Filtrar por imobiliária" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      <span>Todas</span>
-                    </div>
-                  </SelectItem>
-                  {imobiliariaOptions.map(imob => (
-                    <SelectItem key={imob.id} value={imob.id}>
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        <span>{imob.nome}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="autonomo">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>Corretores Autônomos</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {filteredFichas.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">Nenhum registro encontrado</h3>
-                <p className="text-muted-foreground">
-                  {search ? 'Tente buscar por outro termo' : 'Ainda não há registros cadastrados no sistema'}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Protocolo</TableHead>
-                      <TableHead>Corretor</TableHead>
-                      <TableHead className="hidden md:table-cell">Imobiliária</TableHead>
-                      <TableHead className="hidden lg:table-cell">Endereço</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Backup</TableHead>
-                      <TableHead className="w-[100px] text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFichas.map((ficha, index) => {
-                      const prevFicha = index > 0 ? filteredFichas[index - 1] : null;
-                      const showSeparator = prevFicha && !prevFicha.is_autonomo && ficha.is_autonomo;
-                      
-                      return (
-                        <>
-                          {showSeparator && (
-                            <TableRow key={`separator-${ficha.id}`} className="hover:bg-transparent">
-                              <TableCell colSpan={8} className="bg-muted/50 py-2">
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  Corretores Autônomos
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          )}
+        {/* Busca */}
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por protocolo, endereço, nome..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {search && (
+            <p className="text-sm text-muted-foreground">
+              {filteredFichas.length} resultado
+              {filteredFichas.length !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
+
+        {/* Acordeões agrupados */}
+        {groups.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                {search
+                  ? 'Nenhum registro encontrado com esses critérios'
+                  : 'Nenhum registro cadastrado'}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Accordion type="multiple" className="space-y-2">
+            {groups.map((group) => (
+              <AccordionItem
+                key={group.id}
+                value={group.id}
+                className="border rounded-lg bg-card"
+              >
+                <AccordionTrigger className="px-4 hover:no-underline">
+                  <div className="flex items-center gap-3 w-full">
+                    {group.type === 'imobiliaria' ? (
+                      <Building2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    ) : (
+                      <User className="h-5 w-5 text-orange-500 flex-shrink-0" />
+                    )}
+                    <span className="font-medium text-left flex-1">
+                      {group.name}
+                    </span>
+                    <Badge variant="secondary" className="ml-auto mr-2">
+                      {group.count} registro{group.count !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Protocolo</TableHead>
+                          <TableHead>Corretor</TableHead>
+                          <TableHead className="hidden lg:table-cell">Endereço</TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Backup</TableHead>
+                          <TableHead className="w-[100px] text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.fichas.map((ficha) => (
                           <TableRow key={ficha.id}>
                             <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
                             <TableCell>{ficha.corretor_nome}</TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <Badge variant={ficha.imobiliaria_id ? "secondary" : "outline"}>
-                                {ficha.imobiliaria_nome}
-                              </Badge>
-                            </TableCell>
                             <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
                               {ficha.imovel_endereco}
                             </TableCell>
@@ -382,15 +439,15 @@ export default function AdminFichas() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        </>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </div>
     </SuperAdminLayout>
   );
