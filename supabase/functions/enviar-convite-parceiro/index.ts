@@ -177,8 +177,32 @@ serve(async (req) => {
     if (ziontalkKey) {
       try {
         const parteLabel = parte_faltante === 'proprietario' ? 'proprietário' : 'comprador';
-        const externoInfo = permite_externo ? '\n\n✅ Você não precisa ter conta no sistema para preencher.' : '';
-        const mensagem = `🏠 *Confirmação de Visita - Convite de Parceria*\n\nOlá!\n\n${origemNome} te convidou para completar um registro de visita.\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📝 Parte faltante: ${parteLabel}${externoInfo}\n\nAcesse o link para aceitar:\n${conviteUrl}\n\n⏰ Este convite expira em 7 dias.`;
+        
+        // Para parceiros externos: enviar link direto (não têm o app)
+        // Para parceiros internos: enviar lembrete para abrir o app (evita problema de deep linking)
+        const mensagemBase = `🏠 *Confirmação de Visita - Convite de Parceria*
+
+Olá!
+
+${origemNome} te convidou para completar um registro de visita.
+
+📍 *Imóvel:* ${ficha.imovel_endereco}
+📝 *Parte faltante:* ${parteLabel}`;
+
+        const instrucao = permite_externo
+          ? `
+
+✅ Você não precisa ter conta no sistema.
+Acesse o link para preencher:
+${conviteUrl}`
+          : `
+
+👉 *Abra o app VisitaProva* para aceitar o convite.
+O convite já está esperando por você na aba "Convites Recebidos".`;
+
+        const mensagem = `${mensagemBase}${instrucao}
+
+⏰ Este convite expira em 7 dias.`;
 
         const authHeader = btoa(`${ziontalkKey}:`);
         const formData = new FormData();
