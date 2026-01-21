@@ -24,8 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -53,6 +54,7 @@ export default function AdminFichas() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedImobiliaria, setSelectedImobiliaria] = useState<string>('all');
+  const [selectedCorretor, setSelectedCorretor] = useState<string>('all');
 
   // Lista única de imobiliárias para o filtro
   const imobiliariaOptions = useMemo(() => {
@@ -64,6 +66,26 @@ export default function AdminFichas() {
     });
     return Array.from(uniqueImobiliarias.entries())
       .map(([id, nome]) => ({ id, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [fichas]);
+
+  // Lista única de corretores para as abas
+  const corretorOptions = useMemo(() => {
+    const corretorMap = new Map<string, { id: string; nome: string; count: number }>();
+    
+    fichas.forEach(f => {
+      if (corretorMap.has(f.user_id)) {
+        corretorMap.get(f.user_id)!.count++;
+      } else {
+        corretorMap.set(f.user_id, {
+          id: f.user_id,
+          nome: f.corretor_nome || 'Desconhecido',
+          count: 1
+        });
+      }
+    });
+    
+    return Array.from(corretorMap.values())
       .sort((a, b) => a.nome.localeCompare(b.nome));
   }, [fichas]);
 
@@ -144,6 +166,9 @@ export default function AdminFichas() {
   }, [fetchFichas]);
 
   const filteredFichas = fichas.filter(f => {
+    // Filtro por corretor (abas)
+    if (selectedCorretor !== 'all' && f.user_id !== selectedCorretor) return false;
+    
     // Filtro por imobiliária
     if (selectedImobiliaria === 'autonomo' && !f.is_autonomo) return false;
     if (selectedImobiliaria !== 'all' && selectedImobiliaria !== 'autonomo' && f.imobiliaria_id !== selectedImobiliaria) return false;
@@ -194,6 +219,30 @@ export default function AdminFichas() {
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Registros de Visita</h1>
           <p className="text-muted-foreground">Visualize todos os registros do sistema</p>
+        </div>
+
+        {/* Abas por Corretor */}
+        <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+          <Tabs value={selectedCorretor} onValueChange={setSelectedCorretor}>
+            <TabsList className="bg-muted inline-flex w-auto min-w-full md:min-w-0 h-auto flex-wrap gap-1 p-1">
+              <TabsTrigger value="all" className="gap-1.5 data-[state=active]:bg-background">
+                <Users className="h-3.5 w-3.5" />
+                Todos
+                <Badge variant="secondary" className="ml-1 text-xs">{fichas.length}</Badge>
+              </TabsTrigger>
+              {corretorOptions.map(corretor => (
+                <TabsTrigger 
+                  key={corretor.id} 
+                  value={corretor.id} 
+                  className="gap-1.5 data-[state=active]:bg-background"
+                >
+                  <User className="h-3.5 w-3.5" />
+                  {corretor.nome}
+                  <Badge variant="secondary" className="ml-1 text-xs">{corretor.count}</Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
         <Card>
