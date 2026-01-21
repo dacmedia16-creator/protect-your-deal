@@ -184,8 +184,24 @@ export default function ConviteParceiro() {
 
     setAccepting(true);
     try {
+      // Buscar sessão atualizada para garantir token válido
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError || !sessionData?.session?.access_token) {
+        toast({
+          variant: 'destructive',
+          title: 'Sessão expirada',
+          description: 'Faça login novamente para aceitar o convite.',
+        });
+        navigate(`/auth?returnUrl=/convite-parceiro/${token}`);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('aceitar-convite-parceiro', {
         body: { token },
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
       });
 
       if (error || data.error) {
