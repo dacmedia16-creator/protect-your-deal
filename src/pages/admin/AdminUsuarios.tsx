@@ -615,7 +615,7 @@ export default function AdminUsuarios() {
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <UserAvatar
-                                  name={user.profile?.nome || user.email || ""}
+                                  nome={user.profile?.nome || user.email || ""}
                                   size="sm"
                                 />
                                 <div>
@@ -714,11 +714,11 @@ export default function AdminUsuarios() {
                 <div className="space-y-2">
                   <Label>Nova Senha</Label>
                   <div className="flex gap-2">
-                  <PasswordInput 
-                    value={newPassword} 
-                    onChange={(value) => setNewPassword(value)} 
-                    placeholder="Digite a nova senha" 
-                  />
+                    <PasswordInput 
+                      value={newPassword} 
+                      onChange={(e) => setNewPassword(e.target.value)} 
+                      placeholder="Digite a nova senha" 
+                    />
                     <Button type="button" variant="outline" onClick={() => setNewPassword(generatePassword())}>
                       Gerar
                     </Button>
@@ -849,11 +849,11 @@ export default function AdminUsuarios() {
               <div className="space-y-2">
                 <Label>Senha *</Label>
                 <div className="flex gap-2">
-                <PasswordInput 
-                  value={createForm.password} 
-                  onChange={(value) => setCreateForm({ ...createForm, password: value })} 
-                  placeholder="Senha" 
-                />
+                  <PasswordInput 
+                    value={createForm.password} 
+                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} 
+                    placeholder="Senha" 
+                  />
                   <Button type="button" variant="outline" onClick={() => setCreateForm({ ...createForm, password: generatePassword() })}>
                     Gerar
                   </Button>
