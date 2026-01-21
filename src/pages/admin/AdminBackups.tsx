@@ -139,7 +139,7 @@ export default function AdminBackups() {
       // Extract protocols from filenames
       const protocolos = backupFiles.map(f => f.name.split('-backup-')[0]);
 
-      // Fetch fichas data with imobiliaria and corretor info
+      // Fetch fichas data with imobiliaria info
       const { data: fichas, error: fichasError } = await supabase
         .from('fichas_visita')
         .select(`
@@ -147,19 +147,32 @@ export default function AdminBackups() {
           protocolo, 
           imobiliaria_id,
           user_id,
-          imobiliarias!left(nome),
-          profiles!left(nome)
+          imobiliarias!left(nome)
         `)
         .in('protocolo', protocolos);
 
       if (fichasError) throw fichasError;
+
+      // Buscar nomes dos corretores separadamente
+      const userIds = fichas?.filter(f => f.user_id).map(f => f.user_id) || [];
+      const uniqueUserIds = [...new Set(userIds)];
+
+      let profilesMap = new Map<string, string>();
+      if (uniqueUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', uniqueUserIds);
+        
+        profilesMap = new Map(profiles?.map(p => [p.user_id, p.nome]) || []);
+      }
 
       const fichasMap = new Map(fichas?.map(f => [f.protocolo, {
         id: f.id,
         imobiliaria_id: f.imobiliaria_id,
         imobiliaria_nome: (f.imobiliarias as any)?.nome || null,
         user_id: f.user_id,
-        corretor_nome: (f.profiles as any)?.nome || null,
+        corretor_nome: f.user_id ? profilesMap.get(f.user_id) || null : null,
       }]) || []);
 
       return backupFiles.map(f => {
