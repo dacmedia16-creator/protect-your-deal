@@ -43,9 +43,11 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  Trash2,
 } from 'lucide-react';
 import { useSurveyExport } from '@/hooks/useSurveyExport';
 import { toast } from 'sonner';
+import { DeleteSurveyDialog } from '@/components/DeleteSurveyDialog';
 
 interface SurveyResponse {
   id: string;
@@ -88,7 +90,7 @@ export default function EmpresaPesquisas() {
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
   const { exportToExcel, exportToPDF, exportSingleToPDF } = useSurveyExport();
 
-  const { data: surveys, isLoading } = useQuery({
+  const { data: surveys, isLoading, refetch } = useQuery({
     queryKey: ['empresa-surveys', imobiliariaId, filter],
     queryFn: async () => {
       let query = supabase
@@ -353,6 +355,11 @@ export default function EmpresaPesquisas() {
                               </Button>
                             </Link>
                           )}
+                          <DeleteSurveyDialog
+                            surveyId={survey.id}
+                            clientName={survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                            onDeleted={() => refetch()}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
