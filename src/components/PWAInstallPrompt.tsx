@@ -105,7 +105,7 @@ export function PWAInstallPrompt() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6"
+            className="fixed bottom-16 left-0 right-0 z-50 p-4 md:p-6 md:bottom-20"
           >
             <div className="max-w-lg mx-auto">
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground shadow-2xl">
