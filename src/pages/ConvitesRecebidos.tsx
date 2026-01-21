@@ -170,41 +170,10 @@ export default function ConvitesRecebidos() {
     return { fichas: fichasMap, corretores: corretoresMap || {} };
   }, [convitesRaw, corretoresMap]);
 
-  // Mutation para aceitar convite
-  const aceitarMutation = useMutation({
-    mutationFn: async (convite: ConviteParceiro) => {
-      // Atualizar o convite com o id do usuário
-      const { error: conviteError } = await supabase
-        .from('convites_parceiro')
-        .update({ 
-          corretor_parceiro_id: user?.id,
-          status: 'aceito'
-        })
-        .eq('id', convite.id);
-      
-      if (conviteError) throw conviteError;
-      
-      // Atualizar a ficha com o id do parceiro
-      const { error: fichaError } = await supabase
-        .from('fichas_visita')
-        .update({ corretor_parceiro_id: user?.id })
-        .eq('id', convite.ficha_id);
-      
-      if (fichaError) throw fichaError;
-      
-      return convite;
-    },
-    onSuccess: (convite) => {
-      toast.success('Convite aceito! Redirecionando para preencher os dados...');
-      queryClient.invalidateQueries({ queryKey: ['convites-recebidos'] });
-      // Redirecionar para a página de preenchimento
-      navigate(`/convite-parceiro/${convite.token}`);
-    },
-    onError: (error) => {
-      console.error('Erro ao aceitar convite:', error);
-      toast.error('Erro ao aceitar o convite');
-    }
-  });
+  // Navigate to view/accept invite - acceptance is now done in ConviteParceiro page
+  const handleAbrirConvite = (convite: ConviteParceiro) => {
+    navigate(`/convite-parceiro/${convite.token}`);
+  };
 
   // Mutation para recusar convite
   const recusarMutation = useMutation({
@@ -398,11 +367,10 @@ export default function ConvitesRecebidos() {
                         <Button 
                           className="flex-1" 
                           size="sm"
-                          onClick={() => aceitarMutation.mutate(convite)}
-                          disabled={aceitarMutation.isPending}
+                          onClick={() => handleAbrirConvite(convite)}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Aceitar
+                          Ver Convite
                         </Button>
                         <Button 
                           variant="outline" 
