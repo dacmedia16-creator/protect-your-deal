@@ -25,6 +25,7 @@ import {
   MapPin,
   UserPlus,
   MessageCircle,
+  XCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -56,6 +57,7 @@ export default function ConviteParceiro() {
 
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
+  const [refusing, setRefusing] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [savingData, setSavingData] = useState(false);
   
@@ -231,6 +233,35 @@ export default function ConviteParceiro() {
       });
     } finally {
       setAccepting(false);
+    }
+  };
+
+  const handleRecusarConvite = async () => {
+    if (!token) return;
+    
+    setRefusing(true);
+    try {
+      const { error } = await supabase
+        .from('convites_parceiro')
+        .update({ status: 'recusado' })
+        .eq('token', token);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Convite recusado',
+        description: 'Você recusou este convite de parceria.',
+      });
+      navigate('/convites-recebidos');
+    } catch (err) {
+      console.error('Erro ao recusar convite:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao recusar convite',
+      });
+    } finally {
+      setRefusing(false);
     }
   };
 
@@ -516,34 +547,49 @@ export default function ConviteParceiro() {
             </Card>
           )}
 
-          {/* Accept Invite Card */}
+          {/* Accept/Reject Invite Card */}
           {!conviteAceito && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <UserPlus className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">Aceitar Convite</h3>
+                      <h3 className="font-semibold">Aceitar este convite?</h3>
                       <p className="text-sm text-muted-foreground">
-                        Clique para aceitar e ter acesso à ficha
+                        Você será responsável por preencher os dados do {parteFaltante === 'proprietario' ? 'proprietário' : 'comprador'}
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={handleAceitarConvite}
-                    disabled={accepting}
-                    className="gap-2 min-w-[150px]"
-                  >
-                    {accepting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
-                    Aceitar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleAceitarConvite}
+                      disabled={accepting || refusing}
+                      className="flex-1 gap-2"
+                    >
+                      {accepting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                      Aceitar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleRecusarConvite}
+                      disabled={accepting || refusing}
+                      className="flex-1 gap-2"
+                    >
+                      {refusing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4" />
+                      )}
+                      Recusar
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
