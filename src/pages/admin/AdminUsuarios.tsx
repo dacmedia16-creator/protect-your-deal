@@ -255,10 +255,10 @@ export default function AdminUsuarios() {
 
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, nome, telefone, creci, ativo")
-        .in("id", userIds);
+        .select("id, user_id, nome, telefone, creci, ativo")
+        .in("user_id", userIds);
 
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
       const { data: emailsData } = await supabase.functions.invoke("admin-get-corretores-emails", {
         body: { userIds }
