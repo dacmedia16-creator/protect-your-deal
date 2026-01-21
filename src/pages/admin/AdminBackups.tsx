@@ -428,7 +428,7 @@ export default function AdminBackups() {
             </CardContent>
           </Card>
         ) : (
-          <Accordion type="multiple" defaultValue={groups.map(g => g.id)} className="space-y-2">
+          <Accordion type="multiple" defaultValue={[]} className="space-y-2">
             {groups.map((group) => (
               <AccordionItem key={group.id} value={group.id} className="border rounded-lg bg-card">
                 <AccordionTrigger className="px-4 hover:no-underline">
