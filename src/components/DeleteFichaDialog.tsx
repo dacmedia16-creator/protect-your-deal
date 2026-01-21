@@ -29,6 +29,31 @@ export function DeleteFichaDialog({ fichaId, protocolo, onDeleted, variant = 'ic
   const handleDelete = async () => {
     setLoading(true);
     try {
+      // 1. Primeiro, buscar e deletar arquivos de backup no storage
+      const { data: backupFiles } = await supabase
+        .storage
+        .from('comprovantes-backup')
+        .list('', {
+          search: protocolo
+        });
+
+      // Deletar todos os backups que começam com o protocolo
+      if (backupFiles && backupFiles.length > 0) {
+        const filesToDelete = backupFiles
+          .filter(file => file.name.startsWith(protocolo))
+          .map(file => file.name);
+
+        if (filesToDelete.length > 0) {
+          await supabase
+            .storage
+            .from('comprovantes-backup')
+            .remove(filesToDelete);
+          
+          console.log(`Backups deletados: ${filesToDelete.join(', ')}`);
+        }
+      }
+
+      // 2. Depois, deletar a ficha do banco
       const { error } = await supabase
         .from('fichas_visita')
         .delete()
