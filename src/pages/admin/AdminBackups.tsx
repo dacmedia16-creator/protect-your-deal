@@ -35,6 +35,8 @@ interface BackupFile {
   created_at: string;
   imobiliaria_id: string | null;
   imobiliaria_nome: string | null;
+  user_id: string | null;
+  corretor_nome: string | null;
 }
 
 interface BackupGroup {
@@ -55,21 +57,29 @@ function formatBytes(bytes: number): string {
 
 function groupBackups(backups: BackupFile[]): BackupGroup[] {
   const imobiliariaGroups = new Map<string, BackupFile[]>();
-  const autonomos: BackupFile[] = [];
+  const autonomoGroups = new Map<string, BackupFile[]>();
+  const orfaos: BackupFile[] = [];
 
   backups.forEach(backup => {
     if (backup.imobiliaria_id && backup.imobiliaria_nome) {
+      // Agrupar por imobiliária
       const existing = imobiliariaGroups.get(backup.imobiliaria_id) || [];
       existing.push(backup);
       imobiliariaGroups.set(backup.imobiliaria_id, existing);
+    } else if (backup.user_id && backup.corretor_nome) {
+      // Agrupar por corretor autônomo
+      const existing = autonomoGroups.get(backup.user_id) || [];
+      existing.push(backup);
+      autonomoGroups.set(backup.user_id, existing);
     } else {
-      autonomos.push(backup);
+      // Backups sem ficha correspondente (órfãos)
+      orfaos.push(backup);
     }
   });
 
   const groups: BackupGroup[] = [];
 
-  // Add imobiliaria groups sorted by name
+  // 1. Adicionar grupos de imobiliárias
   const imobiliariaEntries = Array.from(imobiliariaGroups.entries())
     .map(([id, groupBackups]) => ({
       id,
@@ -79,17 +89,28 @@ function groupBackups(backups: BackupFile[]): BackupGroup[] {
       totalSize: groupBackups.reduce((acc, b) => acc + b.size, 0),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-
   groups.push(...imobiliariaEntries);
 
-  // Add autonomos group if any
-  if (autonomos.length > 0) {
+  // 2. Adicionar grupos de corretores autônomos
+  const autonomoEntries = Array.from(autonomoGroups.entries())
+    .map(([id, groupBackups]) => ({
+      id,
+      type: 'corretor_autonomo' as const,
+      name: groupBackups[0].corretor_nome || 'Corretor Desconhecido',
+      backups: groupBackups,
+      totalSize: groupBackups.reduce((acc, b) => acc + b.size, 0),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  groups.push(...autonomoEntries);
+
+  // 3. Adicionar grupo de órfãos (se houver)
+  if (orfaos.length > 0) {
     groups.push({
-      id: 'autonomos',
+      id: 'orfaos',
       type: 'corretor_autonomo',
-      name: 'Corretores Autônomos',
-      backups: autonomos,
-      totalSize: autonomos.reduce((acc, b) => acc + b.size, 0),
+      name: 'Backups Órfãos',
+      backups: orfaos,
+      totalSize: orfaos.reduce((acc, b) => acc + b.size, 0),
     });
   }
 
@@ -118,14 +139,16 @@ export default function AdminBackups() {
       // Extract protocols from filenames
       const protocolos = backupFiles.map(f => f.name.split('-backup-')[0]);
 
-      // Fetch fichas data with imobiliaria info
+      // Fetch fichas data with imobiliaria and corretor info
       const { data: fichas, error: fichasError } = await supabase
         .from('fichas_visita')
         .select(`
           id, 
           protocolo, 
           imobiliaria_id,
-          imobiliarias!left(nome)
+          user_id,
+          imobiliarias!left(nome),
+          profiles!left(nome)
         `)
         .in('protocolo', protocolos);
 
@@ -135,6 +158,8 @@ export default function AdminBackups() {
         id: f.id,
         imobiliaria_id: f.imobiliaria_id,
         imobiliaria_nome: (f.imobiliarias as any)?.nome || null,
+        user_id: f.user_id,
+        corretor_nome: (f.profiles as any)?.nome || null,
       }]) || []);
 
       return backupFiles.map(f => {
@@ -148,6 +173,8 @@ export default function AdminBackups() {
           created_at: f.created_at,
           imobiliaria_id: fichaInfo?.imobiliaria_id || null,
           imobiliaria_nome: fichaInfo?.imobiliaria_nome || null,
+          user_id: fichaInfo?.user_id || null,
+          corretor_nome: fichaInfo?.corretor_nome || null,
         } as BackupFile;
       });
     },
