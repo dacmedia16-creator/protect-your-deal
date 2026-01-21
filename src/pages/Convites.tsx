@@ -231,30 +231,11 @@ export default function Convites() {
   });
 
   // ========== MUTATIONS ==========
-  const aceitarMutation = useMutation({
-    mutationFn: async (convite: ConviteParceiro) => {
-      const { error: conviteError } = await supabase
-        .from('convites_parceiro')
-        .update({ corretor_parceiro_id: user?.id, status: 'aceito' })
-        .eq('id', convite.id);
-      
-      if (conviteError) throw conviteError;
-      
-      const { error: fichaError } = await supabase
-        .from('fichas_visita')
-        .update({ corretor_parceiro_id: user?.id })
-        .eq('id', convite.ficha_id);
-      
-      if (fichaError) throw fichaError;
-      return convite;
-    },
-    onSuccess: (convite) => {
-      toast.success('Convite aceito! Redirecionando para preencher os dados...');
-      queryClient.invalidateQueries({ queryKey: ['convites-recebidos'] });
-      navigate(`/convite-parceiro/${convite.token}`);
-    },
-    onError: () => toast.error('Erro ao aceitar o convite'),
-  });
+  // Função para abrir a página de detalhes do convite
+  // A aceitação é centralizada em ConviteParceiro.tsx para garantir consistência
+  const handleAbrirConvite = (convite: ConviteParceiro) => {
+    navigate(`/convite-parceiro/${convite.token}`);
+  };
 
   const recusarMutation = useMutation({
     mutationFn: async (conviteId: string) => {
@@ -471,11 +452,10 @@ export default function Convites() {
                             <Button 
                               className="flex-1" 
                               size="sm"
-                              onClick={() => aceitarMutation.mutate(convite)}
-                              disabled={aceitarMutation.isPending}
+                              onClick={() => handleAbrirConvite(convite)}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              Aceitar
+                              Ver Convite
                             </Button>
                             <Button 
                               variant="outline" 
