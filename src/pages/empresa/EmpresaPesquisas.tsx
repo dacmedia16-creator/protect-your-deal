@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
@@ -43,11 +43,13 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Trash2,
+  BarChart3,
 } from 'lucide-react';
 import { useSurveyExport } from '@/hooks/useSurveyExport';
 import { toast } from 'sonner';
 import { DeleteSurveyDialog } from '@/components/DeleteSurveyDialog';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 interface SurveyResponse {
   id: string;
@@ -186,6 +188,33 @@ export default function EmpresaPesquisas() {
   const respondedSurveys = surveys?.filter(s => s.status === 'responded').length || 0;
   const pendingSurveys = surveys?.filter(s => s.status === 'pending' || s.status === 'sent').length || 0;
 
+  // Calculate averages for chart
+  const averagesData = useMemo(() => {
+    const respondedSurveysList = surveys?.filter(s => s.status === 'responded') || [];
+    const responses = respondedSurveysList.flatMap(s => s.survey_responses);
+    
+    if (responses.length === 0) return null;
+    
+    const criteria = [
+      { key: 'rating_location' as const, label: 'Localização' },
+      { key: 'rating_size' as const, label: 'Tamanho' },
+      { key: 'rating_layout' as const, label: 'Planta' },
+      { key: 'rating_finishes' as const, label: 'Acabamentos' },
+      { key: 'rating_conservation' as const, label: 'Conservação' },
+      { key: 'rating_common_areas' as const, label: 'Áreas Comuns' },
+      { key: 'rating_price' as const, label: 'Preço' },
+    ];
+    
+    return criteria.map(c => ({
+      criterio: c.label,
+      media: responses.reduce((sum, r) => sum + (r[c.key] || 0), 0) / responses.length,
+    })).sort((a, b) => b.media - a.media);
+  }, [surveys]);
+
+  const chartConfig = {
+    media: { label: 'Média', color: 'hsl(var(--primary))' }
+  };
+
   const handleExportExcel = () => {
     if (!surveys) return;
     try {
@@ -283,6 +312,69 @@ export default function EmpresaPesquisas() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Averages Chart */}
+        {averagesData && averagesData.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                <CardTitle className="text-base">Média das Avaliações</CardTitle>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Baseado em {respondedSurveys} pesquisas respondidas
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={averagesData} 
+                    layout="vertical" 
+                    margin={{ left: 0, right: 30, top: 10, bottom: 10 }}
+                  >
+                    <XAxis 
+                      type="number" 
+                      domain={[0, 5]} 
+                      tickCount={6} 
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="criterio" 
+                      width={100} 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value) => [`${Number(value).toFixed(1)} / 5`, 'Média']}
+                    />
+                    <Bar 
+                      dataKey="media" 
+                      radius={[0, 4, 4, 0]}
+                      maxBarSize={30}
+                    >
+                      {averagesData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={
+                            entry.media >= 4 
+                              ? 'hsl(142.1 76.2% 36.3%)' 
+                              : entry.media >= 3 
+                                ? 'hsl(43.3 96.4% 56.3%)' 
+                                : 'hsl(0 84.2% 60.2%)'
+                          } 
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
