@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar, Building2, User, Trash2, Loader2 } from 'lucide-react';
+import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar, Building2, User, Trash2, Loader2, FolderDown } from 'lucide-react';
+import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -131,6 +132,7 @@ function groupBackups(backups: BackupFile[]): BackupGroup[] {
 export default function AdminBackups() {
   const [search, setSearch] = useState('');
   const [deletingOrphans, setDeletingOrphans] = useState(false);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: backups, isLoading } = useQuery({
@@ -280,6 +282,47 @@ export default function AdminBackups() {
     }
   };
 
+  const handleDownloadAll = async () => {
+    if (!backups || backups.length === 0) return;
+
+    setDownloadingAll(true);
+    try {
+      const zip = new JSZip();
+      let downloadedCount = 0;
+
+      for (const backup of backups) {
+        const { data, error } = await supabase.storage
+          .from('comprovantes-backup')
+          .download(backup.name);
+
+        if (!error && data) {
+          zip.file(`${backup.protocolo}.pdf`, data);
+          downloadedCount++;
+        }
+      }
+
+      if (downloadedCount === 0) {
+        toast.error('Nenhum arquivo foi baixado');
+        return;
+      }
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backups_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success(`${downloadedCount} backups baixados com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao baixar backups:', error);
+      toast.error('Erro ao baixar backups');
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
@@ -367,6 +410,28 @@ export default function AdminBackups() {
               className="pl-9"
             />
           </div>
+
+          {backups && backups.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleDownloadAll}
+              disabled={downloadingAll}
+            >
+              {downloadingAll ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Baixando...
+                </>
+              ) : (
+                <>
+                  <FolderDown className="h-4 w-4" />
+                  Baixar Todos ({backups.length})
+                </>
+              )}
+            </Button>
+          )}
 
           {orphanCount > 0 && (
             <AlertDialog>
