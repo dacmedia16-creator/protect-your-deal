@@ -40,7 +40,8 @@ import {
   CheckCircle,
   Target,
   Eye,
-  Star
+  Star,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -451,48 +452,72 @@ export default function MinhaEquipe() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 group"
+            onClick={() => setActiveTab('membros')}
+          >
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{membros.length}</p>
-                  <p className="text-xs text-muted-foreground">Membros</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{membros.length}</p>
+                    <p className="text-xs text-muted-foreground">Membros</p>
+                  </div>
                 </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 group"
+            onClick={() => setActiveTab('membros')}
+          >
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-success" />
-                <div>
-                  <p className="text-2xl font-bold">{membros.filter(m => m.ativo).length}</p>
-                  <p className="text-xs text-muted-foreground">Ativos</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-success" />
+                  <div>
+                    <p className="text-2xl font-bold">{membros.filter(m => m.ativo).length}</p>
+                    <p className="text-xs text-muted-foreground">Ativos</p>
+                  </div>
                 </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 group"
+            onClick={() => setActiveTab('registros')}
+          >
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{fichas.length}</p>
-                  <p className="text-xs text-muted-foreground">Registros</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{fichas.length}</p>
+                    <p className="text-xs text-muted-foreground">Registros</p>
+                  </div>
                 </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
             </CardContent>
           </Card>
           {surveyEnabled && (
-            <Card>
+            <Card 
+              className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 group"
+              onClick={() => setActiveTab('pesquisas')}
+            >
               <CardContent className="pt-4">
-                <div className="flex items-center gap-2">
-                  <ClipboardCheck className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-2xl font-bold">{surveys.length}</p>
-                    <p className="text-xs text-muted-foreground">Pesquisas</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold">{surveys.length}</p>
+                      <p className="text-xs text-muted-foreground">Pesquisas</p>
+                    </div>
                   </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </CardContent>
             </Card>
