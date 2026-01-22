@@ -40,7 +40,7 @@ export function MobileNav() {
   const navItems = [
     { path: '/dashboard', label: 'Início', icon: Home },
     { path: '/fichas', label: 'Registros', icon: FileText },
-    { path: '/convites', label: 'Convites', icon: Handshake },
+    ...(isLider ? [{ path: '/minha-equipe', label: 'Equipe', icon: UsersRound }] : [{ path: '/convites', label: 'Convites', icon: Handshake }]),
     ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
   ];
   
