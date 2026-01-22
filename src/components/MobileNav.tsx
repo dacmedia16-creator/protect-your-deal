@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ export function MobileNav() {
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
   const [profile, setProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const navItems = [
     { path: '/dashboard', label: 'Início', icon: Home },
@@ -66,8 +67,14 @@ export function MobileNav() {
   if (!user) return null;
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const isProfileActive = location.pathname === '/perfil';
@@ -148,9 +155,9 @@ export function MobileNav() {
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
+            <DropdownMenuItem onClick={handleSignOut} disabled={isLoggingOut} className="text-destructive">
+              {isLoggingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
+              {isLoggingOut ? 'Saindo...' : 'Sair'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

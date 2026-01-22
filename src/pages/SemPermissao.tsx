@@ -1,16 +1,24 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, LogOut, Mail } from 'lucide-react';
+import { Shield, LogOut, Mail, Loader2 } from 'lucide-react';
 
 export default function SemPermissao() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -57,9 +65,10 @@ export default function SemPermissao() {
             variant="ghost" 
             className="w-full text-muted-foreground" 
             onClick={handleLogout}
+            disabled={isLoggingOut}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair e voltar ao login
+            {isLoggingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
+            {isLoggingOut ? 'Saindo...' : 'Sair e voltar ao login'}
           </Button>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -28,7 +28,8 @@ import {
   Image,
   UserCheck,
   Ticket,
-  DollarSign
+  DollarSign,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -59,10 +60,23 @@ const navItems = [
 
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const queryClient = useQueryClient();
   const { playNotificationSound } = useNotificationSound();
+
+  const handleSignOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   // Buscar contagem de assinaturas suspensas/pendentes
   const { data: assinaturasCount } = useQuery({
@@ -262,10 +276,11 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
             <Button 
               variant="ghost" 
               className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              onClick={signOut}
+              onClick={handleSignOut}
+              disabled={isLoggingOut}
             >
-              <LogOut className="h-5 w-5 mr-3" />
-              Sair
+              {isLoggingOut ? <Loader2 className="h-5 w-5 mr-3 animate-spin" /> : <LogOut className="h-5 w-5 mr-3" />}
+              {isLoggingOut ? 'Saindo...' : 'Sair'}
             </Button>
           </div>
         </div>

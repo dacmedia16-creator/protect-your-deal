@@ -1,16 +1,26 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, CreditCard, ArrowLeft, Phone } from 'lucide-react';
+import { AlertTriangle, CreditCard, ArrowLeft, Phone, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 
 export default function AssinaturaSuspensa() {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const { role, imobiliaria } = useUserRole();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -52,9 +62,9 @@ export default function AssinaturaSuspensa() {
               </a>
             </Button>
             
-            <Button variant="ghost" className="w-full" onClick={handleLogout}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Sair da Conta
+            <Button variant="ghost" className="w-full" onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowLeft className="h-4 w-4 mr-2" />}
+              {isLoggingOut ? 'Saindo...' : 'Sair da Conta'}
             </Button>
           </div>
         </CardContent>

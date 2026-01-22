@@ -1,16 +1,24 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserX, LogOut, Mail } from 'lucide-react';
+import { UserX, LogOut, Mail, Loader2 } from 'lucide-react';
 
 export default function ContaDesativada() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -54,9 +62,10 @@ export default function ContaDesativada() {
             onClick={handleLogout} 
             variant="outline" 
             className="w-full"
+            disabled={isLoggingOut}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair e voltar ao login
+            {isLoggingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
+            {isLoggingOut ? 'Saindo...' : 'Sair e voltar ao login'}
           </Button>
         </CardContent>
       </Card>

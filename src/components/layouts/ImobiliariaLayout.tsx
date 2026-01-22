@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { ReactNode, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -18,11 +18,11 @@ import {
   Menu,
   X,
   UserCircle,
-  ClipboardCheck
+  ClipboardCheck,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 
 interface ImobiliariaLayoutProps {
@@ -31,10 +31,23 @@ interface ImobiliariaLayoutProps {
 
 export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { imobiliaria, assinatura } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+
+  const handleSignOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const navItems = [
     { href: '/empresa', icon: LayoutDashboard, label: 'Dashboard' },
@@ -168,10 +181,11 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
             <Button 
               variant="ghost" 
               className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              onClick={signOut}
+              onClick={handleSignOut}
+              disabled={isLoggingOut}
             >
-              <LogOut className="h-5 w-5 mr-3" />
-              Sair
+              {isLoggingOut ? <Loader2 className="h-5 w-5 mr-3 animate-spin" /> : <LogOut className="h-5 w-5 mr-3" />}
+              {isLoggingOut ? 'Saindo...' : 'Sair'}
             </Button>
           </div>
         </div>
