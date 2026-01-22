@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { SurveyRatingButtons } from '@/components/SurveyRatingButtons';
 import { Loader2, CheckCircle, AlertCircle, MapPin, Calendar, User, Building2 } from 'lucide-react';
+import { PUBLIC_BRAND_NAME } from '@/lib/appConfig';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -370,7 +371,7 @@ export default function SurveyPublic() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Visita © {new Date().getFullYear()}
+          {PUBLIC_BRAND_NAME} © {new Date().getFullYear()}
         </p>
       </div>
     </div>

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PUBLIC_BRAND_NAME } from '@/lib/appConfig';
 
 interface VerificationData {
   valid: boolean;
@@ -211,7 +212,7 @@ export default function VerificarComprovante() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
-              <span className="font-display font-bold text-lg">Visita</span>
+              <span className="font-display font-bold text-lg">{PUBLIC_BRAND_NAME}</span>
             </div>
             <Link to="/">
               <Button variant="ghost" size="sm" className="gap-2">
@@ -545,7 +546,7 @@ export default function VerificarComprovante() {
       <footer className="border-t py-4">
         <div className="container mx-auto px-4 text-center">
           <p className="text-xs text-muted-foreground">
-            Visita - Sistema de Registro de Intermediação Imobiliária
+            {PUBLIC_BRAND_NAME} - Sistema de Registro de Intermediação Imobiliária
           </p>
         </div>
       </footer>
