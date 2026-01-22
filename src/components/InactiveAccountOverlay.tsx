@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Lock, LogOut, Phone, Mail, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Lock, LogOut, Phone, Mail, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,10 +14,12 @@ interface AdminInfo {
 }
 
 export function InactiveAccountOverlay() {
+  const navigate = useNavigate();
   const { signOut } = useAuth();
   const { imobiliariaId } = useUserRole();
   const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     async function fetchAdminInfo() {
@@ -59,7 +62,14 @@ export function InactiveAccountOverlay() {
   }, [imobiliariaId]);
 
   const handleLogout = async () => {
-    await signOut();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -135,9 +145,10 @@ export function InactiveAccountOverlay() {
             variant="outline" 
             className="w-full mt-4" 
             onClick={handleLogout}
+            disabled={isLoggingOut}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair da conta
+            {isLoggingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
+            {isLoggingOut ? 'Saindo...' : 'Sair da conta'}
           </Button>
         </CardContent>
       </Card>

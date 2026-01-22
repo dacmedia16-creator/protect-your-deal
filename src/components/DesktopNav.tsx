@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +15,8 @@ import {
   CreditCard,
   Handshake,
   Download,
-  ClipboardCheck
+  ClipboardCheck,
+  Loader2
 } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
@@ -40,6 +42,7 @@ export function DesktopNav() {
   const { isInstalled, isIOS, install } = usePWAInstall();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
@@ -79,8 +82,14 @@ export function DesktopNav() {
   });
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -185,9 +194,9 @@ export function DesktopNav() {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
+              <DropdownMenuItem onClick={handleSignOut} disabled={isLoggingOut} className="cursor-pointer text-destructive focus:text-destructive">
+                {isLoggingOut ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
+                {isLoggingOut ? 'Saindo...' : 'Sair'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

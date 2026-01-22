@@ -62,7 +62,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Verificar se há sessão antes de tentar logout
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    
+    if (!currentSession) {
+      // Já está deslogado, apenas limpar estado local
+      setUser(null);
+      setSession(null);
+      return;
+    }
+    
+    const { error } = await supabase.auth.signOut();
+    
+    // Mesmo com erro, limpar estado local
+    setUser(null);
+    setSession(null);
+    
+    // Ignorar erro "Session not found" - não é problema real
+    if (error && !error.message.includes('session_not_found') && !error.message.includes('Session not found')) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   return (
