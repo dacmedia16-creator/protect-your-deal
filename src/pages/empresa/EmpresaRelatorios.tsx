@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,16 +24,22 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   FileText, 
-  Download, 
   Loader2, 
-  Calendar,
   Filter,
   FileSpreadsheet,
-  FileDown
+  FileDown,
+  TrendingUp,
+  Target,
+  Star,
+  CheckCircle,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
+import { Progress } from '@/components/ui/progress';
 
 interface FichaRelatorio {
   id: string;
@@ -46,18 +52,50 @@ interface FichaRelatorio {
   status: string;
   created_at: string;
   corretor_nome?: string;
+  user_id: string;
+}
+
+interface Survey {
+  id: string;
+  corretor_id: string;
+  status: string;
+}
+
+interface SurveyResponse {
+  survey_id: string;
+  rating_location: number;
+  rating_size: number;
+  rating_layout: number;
+  rating_finishes: number;
+  rating_conservation: number;
+  rating_common_areas: number;
+  rating_price: number;
+}
+
+interface CorretorPerformance {
+  user_id: string;
+  nome: string;
+  totalFichas: number;
+  fichasConfirmadas: number;
+  taxaConfirmacao: number;
+  totalSurveys: number;
+  surveysRespondidas: number;
+  mediaAvaliacao: number | null;
 }
 
 export default function EmpresaRelatorios() {
   const { imobiliariaId } = useUserRole();
+  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const [fichas, setFichas] = useState<FichaRelatorio[]>([]);
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [surveyResponses, setSurveyResponses] = useState<SurveyResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   
   // Filters
   const [dataInicio, setDataInicio] = useState(() => {
     const d = new Date();
-    d.setMonth(d.getMonth() - 1);
+    d.setMonth(d.getMonth() - 6);
     return d.toISOString().split('T')[0];
   });
   const [dataFim, setDataFim] = useState(() => new Date().toISOString().split('T')[0]);
@@ -117,6 +155,26 @@ export default function EmpresaRelatorios() {
       }));
 
       setFichas(enrichedFichas);
+
+      // Fetch surveys if enabled
+      if (surveyEnabled) {
+        const { data: surveysData } = await supabase
+          .from('surveys')
+          .select('id, corretor_id, status')
+          .eq('imobiliaria_id', imobiliariaId);
+
+        if (surveysData && surveysData.length > 0) {
+          setSurveys(surveysData);
+
+          const surveyIds = surveysData.map(s => s.id);
+          const { data: responsesData } = await supabase
+            .from('survey_responses')
+            .select('survey_id, rating_location, rating_size, rating_layout, rating_finishes, rating_conservation, rating_common_areas, rating_price')
+            .in('survey_id', surveyIds);
+
+          setSurveyResponses(responsesData || []);
+        }
+      }
     } catch (error) {
       console.error('Error fetching fichas:', error);
       toast.error('Erro ao carregar dados');
@@ -127,7 +185,114 @@ export default function EmpresaRelatorios() {
 
   useEffect(() => {
     fetchFichas();
-  }, [imobiliariaId, dataInicio, dataFim, statusFilter]);
+  }, [imobiliariaId, dataInicio, dataFim, statusFilter, surveyEnabled]);
+
+  // Calculate monthly data for chart
+  const monthlyData = useMemo(() => {
+    const months: { month: string; fichas: number; confirmadas: number }[] = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthKey = format(date, 'yyyy-MM');
+      const monthLabel = format(date, 'MMM', { locale: ptBR });
+      
+      const monthFichas = fichas.filter(f => 
+        f.created_at.startsWith(monthKey)
+      );
+      
+      months.push({
+        month: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
+        fichas: monthFichas.length,
+        confirmadas: monthFichas.filter(f => f.status === 'completo').length
+      });
+    }
+    
+    return months;
+  }, [fichas]);
+
+  // Calculate performance data per broker
+  const performanceData = useMemo(() => {
+    const corretorMap = new Map<string, CorretorPerformance>();
+    
+    fichas.forEach(f => {
+      const existing = corretorMap.get(f.user_id);
+      const isConfirmada = f.status === 'completo';
+      
+      if (existing) {
+        existing.totalFichas++;
+        if (isConfirmada) existing.fichasConfirmadas++;
+      } else {
+        corretorMap.set(f.user_id, {
+          user_id: f.user_id,
+          nome: f.corretor_nome || 'Desconhecido',
+          totalFichas: 1,
+          fichasConfirmadas: isConfirmada ? 1 : 0,
+          taxaConfirmacao: 0,
+          totalSurveys: 0,
+          surveysRespondidas: 0,
+          mediaAvaliacao: null
+        });
+      }
+    });
+
+    // Add survey data
+    if (surveyEnabled) {
+      surveys.forEach(s => {
+        const corretor = corretorMap.get(s.corretor_id);
+        if (corretor) {
+          corretor.totalSurveys++;
+          if (s.status === 'responded') {
+            corretor.surveysRespondidas++;
+          }
+        }
+      });
+
+      // Calculate average ratings
+      corretorMap.forEach((corretor) => {
+        const corretorSurveys = surveys.filter(s => s.corretor_id === corretor.user_id && s.status === 'responded');
+        const surveyIds = corretorSurveys.map(s => s.id);
+        const responses = surveyResponses.filter(r => surveyIds.includes(r.survey_id));
+        
+        if (responses.length > 0) {
+          const allRatings = responses.flatMap(r => [
+            r.rating_location, r.rating_size, r.rating_layout,
+            r.rating_finishes, r.rating_conservation, r.rating_common_areas, r.rating_price
+          ]);
+          corretor.mediaAvaliacao = allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
+        }
+      });
+    }
+
+    // Calculate confirmation rates
+    corretorMap.forEach(corretor => {
+      corretor.taxaConfirmacao = corretor.totalFichas > 0 
+        ? (corretor.fichasConfirmadas / corretor.totalFichas) * 100 
+        : 0;
+    });
+
+    return Array.from(corretorMap.values()).sort((a, b) => b.totalFichas - a.totalFichas);
+  }, [fichas, surveys, surveyResponses, surveyEnabled]);
+
+  // Calculate overall metrics
+  const overallMetrics = useMemo(() => {
+    const totalFichas = fichas.length;
+    const confirmadas = fichas.filter(f => f.status === 'completo').length;
+    const taxaConfirmacao = totalFichas > 0 ? (confirmadas / totalFichas) * 100 : 0;
+    
+    let mediaGeral: number | null = null;
+    if (surveyEnabled && surveyResponses.length > 0) {
+      const allRatings = surveyResponses.flatMap(r => [
+        r.rating_location, r.rating_size, r.rating_layout,
+        r.rating_finishes, r.rating_conservation, r.rating_common_areas, r.rating_price
+      ]);
+      mediaGeral = allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
+    }
+
+    return { totalFichas, confirmadas, taxaConfirmacao, mediaGeral };
+  }, [fichas, surveyResponses, surveyEnabled]);
+
+  const maxFichas = Math.max(...performanceData.map(p => p.totalFichas), 1);
 
   function exportToCSV() {
     setExporting(true);
@@ -364,38 +529,176 @@ export default function EmpresaRelatorios() {
         </Card>
 
         {/* Summary cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{fichas.length}</div>
-              <p className="text-sm text-muted-foreground">Total de Registros</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-success">
-                {fichas.filter(f => f.status === 'completo').length}
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{overallMetrics.totalFichas}</p>
+                  <p className="text-xs text-muted-foreground">Total Registros</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">Completas</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-warning">
-                {fichas.filter(f => ['pendente', 'aguardando_proprietario', 'aguardando_comprador'].includes(f.status)).length}
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success/10">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success">{overallMetrics.confirmadas}</p>
+                  <p className="text-xs text-muted-foreground">Completas</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">Pendentes</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">
-                {new Set(fichas.map(f => f.corretor_nome)).size}
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <TrendingUp className="h-5 w-5 text-accent-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{overallMetrics.taxaConfirmacao.toFixed(0)}%</p>
+                  <p className="text-xs text-muted-foreground">Taxa Confirmação</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">Corretores Ativos</p>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{performanceData.length}</p>
+                  <p className="text-xs text-muted-foreground">Corretores Ativos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {surveyEnabled && overallMetrics.mediaGeral !== null && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-warning/10">
+                    <Star className="h-5 w-5 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{overallMetrics.mediaGeral.toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">Média Avaliações</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
+
+        {/* Monthly evolution chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Evolução Mensal
+            </CardTitle>
+            <CardDescription>
+              Registros criados vs confirmados nos últimos 6 meses
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData}>
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="fichas" name="Total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="confirmadas" name="Confirmadas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Performance per broker */}
+        {performanceData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Performance por Corretor
+              </CardTitle>
+              <CardDescription>
+                Métricas individuais de cada corretor da imobiliária
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {performanceData.map((corretor) => (
+                  <div key={corretor.user_id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">{corretor.nome}</h4>
+                      <div className="flex items-center gap-2">
+                        {surveyEnabled && corretor.mediaAvaliacao !== null && (
+                          <Badge className="bg-warning/20 text-warning border-warning/30">
+                            ★ {corretor.mediaAvaliacao.toFixed(1)}
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className={
+                          corretor.taxaConfirmacao >= 70 
+                            ? 'bg-success/20 text-success border-success/30'
+                            : corretor.taxaConfirmacao >= 40
+                            ? 'bg-warning/20 text-warning border-warning/30'
+                            : 'bg-muted text-muted-foreground'
+                        }>
+                          {corretor.taxaConfirmacao.toFixed(0)}% confirmação
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-3">
+                      <div>
+                        <p className="text-muted-foreground">Registros</p>
+                        <p className="font-bold text-lg">{corretor.totalFichas}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Confirmados</p>
+                        <p className="font-bold text-lg text-success">{corretor.fichasConfirmadas}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Pendentes</p>
+                        <p className="font-bold text-lg text-warning">{corretor.totalFichas - corretor.fichasConfirmadas}</p>
+                      </div>
+                      {surveyEnabled && (
+                        <div>
+                          <p className="text-muted-foreground">Pesquisas</p>
+                          <p className="font-bold text-lg">{corretor.surveysRespondidas}/{corretor.totalSurveys}</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Progress 
+                      value={(corretor.totalFichas / maxFichas) * 100} 
+                      className="h-2"
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Data table */}
         <Card>
