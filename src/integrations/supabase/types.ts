@@ -1530,6 +1530,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_user_active: { Args: { _user_id: string }; Returns: boolean }
       normalize_phone: { Args: { phone_number: string }; Returns: string }
       user_belongs_to_imobiliaria: {
         Args: { _imobiliaria_id: string; _user_id: string }
