@@ -370,7 +370,7 @@ export default function SurveyPublic() {
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          VisitaProva © {new Date().getFullYear()}
+          Visita © {new Date().getFullYear()}
         </p>
       </div>
     </div>

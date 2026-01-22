@@ -647,7 +647,7 @@ export default function ConfirmarVisita() {
 
       {/* Footer */}
       <footer className="py-4 border-t text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} VisitaProva
+        © {new Date().getFullYear()} Visita
       </footer>
     </div>
   );
