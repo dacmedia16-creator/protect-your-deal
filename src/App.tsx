@@ -37,6 +37,7 @@ import RegistroTipo from "./pages/auth/RegistroTipo";
 import RegistroVinculado from "./pages/auth/RegistroVinculado";
 import AceitarConvite from "./pages/auth/AceitarConvite";
 import CadastroConcluido from "./pages/auth/CadastroConcluido";
+import SelecionarEquipe from "./pages/auth/SelecionarEquipe";
 import RecuperarSenha from "./pages/auth/RecuperarSenha";
 import RedefinirSenha from "./pages/auth/RedefinirSenha";
 import ConviteParceiro from "./pages/ConviteParceiro";
@@ -129,6 +130,7 @@ const App = () => (
                 <Route path="/registro-vinculado" element={<RegistroVinculado />} />
                 <Route path="/convite/:token" element={<AceitarConvite />} />
                 <Route path="/cadastro-concluido" element={<CadastroConcluido />} />
+                <Route path="/selecionar-equipe" element={<SelecionarEquipe />} />
                 <Route path="/confirmar/:token" element={<ConfirmarVisita />} />
                 <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
                 <Route path="/assinatura-suspensa" element={<AssinaturaSuspensa />} />
