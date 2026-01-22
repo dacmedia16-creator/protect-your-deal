@@ -54,8 +54,8 @@ export default function EmpresaFichas() {
 
       if (error) throw error;
 
-      // Fetch corretor names
-      const userIds = [...new Set((data || []).map(f => f.user_id))];
+      // Fetch corretor names (only for non-null user_ids)
+      const userIds = [...new Set((data || []).filter(f => f.user_id).map(f => f.user_id))];
       
       let corretorMap: Record<string, string> = {};
       if (userIds.length > 0) {
@@ -72,7 +72,9 @@ export default function EmpresaFichas() {
 
       const enrichedFichas = (data || []).map(f => ({
         ...f,
-        corretor_nome: corretorMap[f.user_id] || 'Desconhecido'
+        corretor_nome: f.user_id 
+          ? (corretorMap[f.user_id] || 'Desconhecido')
+          : null // Null indicates orphaned ficha
       }));
 
       setFichas(enrichedFichas);
@@ -171,7 +173,15 @@ export default function EmpresaFichas() {
                     {filteredFichas.map((ficha) => (
                       <TableRow key={ficha.id}>
                         <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
-                        <TableCell>{ficha.corretor_nome}</TableCell>
+                        <TableCell>
+                          {ficha.corretor_nome ? (
+                            ficha.corretor_nome
+                          ) : (
+                            <span className="text-muted-foreground italic text-sm">
+                              (Corretor removido)
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="hidden md:table-cell max-w-[200px] truncate">
                           {ficha.imovel_endereco}
                         </TableCell>

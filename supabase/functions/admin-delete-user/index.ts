@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
     }
 
     // ====== STEP 6: Delete templates_mensagem ======
-    console.log('[6/7] Deleting from templates_mensagem...');
+    console.log('[6/9] Deleting from templates_mensagem...');
     const { error: templatesError, count: templatesCount } = await supabaseAdmin
       .from('templates_mensagem')
       .delete()
@@ -181,11 +181,67 @@ Deno.serve(async (req) => {
     if (templatesError) {
       console.warn('Could not delete from templates_mensagem:', templatesError.message);
     } else {
-      console.log(`[6/7] Deleted ${templatesCount ?? 0} records from templates_mensagem`);
+      console.log(`[6/9] Deleted ${templatesCount ?? 0} records from templates_mensagem`);
     }
 
-    // ====== STEP 7: Delete user from auth.users (cascades to user_roles and profiles) ======
-    console.log('[7/7] Deleting user from auth.users...');
+    // ====== STEP 7: Reassign fichas_visita to imobiliaria admin ======
+    console.log('[7/9] Reassigning fichas_visita...');
+    
+    // Get user's imobiliaria_id from profile
+    const { data: userProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('imobiliaria_id')
+      .eq('user_id', user_id)
+      .single();
+
+    if (userProfile?.imobiliaria_id) {
+      // Find imobiliaria admin (different from the user being deleted)
+      const { data: adminRole } = await supabaseAdmin
+        .from('user_roles')
+        .select('user_id')
+        .eq('imobiliaria_id', userProfile.imobiliaria_id)
+        .eq('role', 'imobiliaria_admin')
+        .neq('user_id', user_id)
+        .maybeSingle();
+
+      if (adminRole?.user_id) {
+        // Transfer fichas to admin
+        const { count: transferredCount } = await supabaseAdmin
+          .from('fichas_visita')
+          .update({ user_id: adminRole.user_id })
+          .eq('user_id', user_id);
+        
+        console.log(`[7/9] Transferred ${transferredCount ?? 0} fichas to admin ${adminRole.user_id}`);
+      } else {
+        // If deleting admin or no admin found, keep fichas orphaned with null user_id
+        const { count: orphanedCount } = await supabaseAdmin
+          .from('fichas_visita')
+          .update({ user_id: null })
+          .eq('user_id', user_id);
+        
+        console.log(`[7/9] Orphaned ${orphanedCount ?? 0} fichas (no admin available)`);
+      }
+    } else {
+      // Corretor autônomo - keep fichas with null user_id
+      const { count: orphanedCount } = await supabaseAdmin
+        .from('fichas_visita')
+        .update({ user_id: null })
+        .eq('user_id', user_id);
+      
+      console.log(`[7/9] Orphaned ${orphanedCount ?? 0} fichas (autonomous corretor)`);
+    }
+
+    // ====== STEP 8: Reassign corretor_parceiro_id in fichas_visita ======
+    console.log('[8/9] Clearing corretor_parceiro_id references...');
+    const { count: partnerCount } = await supabaseAdmin
+      .from('fichas_visita')
+      .update({ corretor_parceiro_id: null })
+      .eq('corretor_parceiro_id', user_id);
+    
+    console.log(`[8/9] Cleared ${partnerCount ?? 0} corretor_parceiro_id references`);
+
+    // ====== STEP 9: Delete user from auth.users (cascades to user_roles and profiles) ======
+    console.log('[9/9] Deleting user from auth.users...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
 
     if (deleteError) {

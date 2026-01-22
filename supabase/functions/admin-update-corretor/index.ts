@@ -138,10 +138,42 @@ Deno.serve(async (req) => {
     if (email !== undefined) updateData.email = email;
     if (ativo !== undefined) {
       updateData.ativo = ativo;
-      // If deactivating, also clear phone to free it for reuse
+      // If deactivating, also clear phone and transfer fichas
       if (ativo === false) {
         updateData.telefone = null;
         console.log('admin-update-corretor: Clearing phone due to deactivation');
+        
+        // Transfer fichas to imobiliaria admin
+        if (imobiliariaId) {
+          // Find imobiliaria admin (different from the user being deactivated)
+          const { data: adminRole } = await supabaseAdmin
+            .from('user_roles')
+            .select('user_id')
+            .eq('imobiliaria_id', imobiliariaId)
+            .eq('role', 'imobiliaria_admin')
+            .neq('user_id', user_id)
+            .maybeSingle();
+
+          if (adminRole?.user_id) {
+            // Transfer fichas to admin
+            const { count: transferredCount } = await supabaseAdmin
+              .from('fichas_visita')
+              .update({ user_id: adminRole.user_id })
+              .eq('user_id', user_id);
+            
+            console.log(`admin-update-corretor: Transferred ${transferredCount ?? 0} fichas to admin ${adminRole.user_id}`);
+          } else {
+            console.log('admin-update-corretor: No admin found, fichas will remain with deactivated user');
+          }
+        }
+        
+        // Clear corretor_parceiro_id references
+        const { count: partnerCount } = await supabaseAdmin
+          .from('fichas_visita')
+          .update({ corretor_parceiro_id: null })
+          .eq('corretor_parceiro_id', user_id);
+        
+        console.log(`admin-update-corretor: Cleared ${partnerCount ?? 0} corretor_parceiro_id references`);
       }
     }
 
