@@ -57,10 +57,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Fetch ficha FIRST to get imobiliaria_id
+    // Fetch ficha FIRST to get imobiliaria_id and determine who added the buyer
     const { data: ficha, error: fichaError } = await supabaseAdmin
       .from('fichas_visita')
-      .select('id, status, user_id, imobiliaria_id, comprador_nome, comprador_telefone, comprador_cpf')
+      .select('id, status, user_id, imobiliaria_id, corretor_parceiro_id, parte_preenchida_parceiro, comprador_nome, comprador_telefone, comprador_cpf, comprador_confirmado_em')
       .eq('id', ficha_id)
       .maybeSingle();
 
@@ -104,19 +104,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Verify user owns the ficha
-    if (ficha.user_id !== userId) {
+    // Verify buyer has confirmed the visit
+    if (!ficha.comprador_confirmado_em) {
       return new Response(
-        JSON.stringify({ error: 'Você não tem permissão para enviar pesquisa nesta ficha' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'A pesquisa só pode ser enviada após o comprador confirmar a visita' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify ficha status
-    if (!['completo', 'finalizado_parcial'].includes(ficha.status)) {
+    // Determine who added the buyer and can create the survey
+    const corretorQueAdicionouComprador = 
+      ficha.parte_preenchida_parceiro === 'comprador' 
+        ? ficha.corretor_parceiro_id 
+        : ficha.user_id;
+
+    if (userId !== corretorQueAdicionouComprador) {
       return new Response(
-        JSON.stringify({ error: 'A ficha precisa estar com assinatura confirmada para enviar pesquisa' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Apenas o corretor que adicionou o comprador pode enviar a pesquisa' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

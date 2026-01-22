@@ -57,9 +57,11 @@ interface SurveySectionProps {
   fichaId: string;
   compradorNome: string | null;
   imovelEndereco: string;
+  canCreate: boolean;
+  isPartner?: boolean;
 }
 
-export function SurveySection({ fichaId, compradorNome, imovelEndereco }: SurveySectionProps) {
+export function SurveySection({ fichaId, compradorNome, imovelEndereco, canCreate, isPartner }: SurveySectionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showSendDialog, setShowSendDialog] = useState(false);
@@ -240,6 +242,11 @@ Agradecemos seu feedback!`;
     );
   }
 
+  // Partner sees nothing if survey exists but is not responded yet
+  if (isPartner && survey && survey.status !== 'responded') {
+    return null;
+  }
+
   return (
     <>
       <Card className="border-purple-500/30">
@@ -259,45 +266,54 @@ Agradecemos seu feedback!`;
         </CardHeader>
         <CardContent>
           {!survey ? (
-            <div className="flex flex-col items-center gap-4 py-4">
-              <p className="text-sm text-muted-foreground text-center">
-                Envie uma pesquisa rápida para {compradorNome || 'o cliente'} avaliar o imóvel visitado.
-              </p>
-              <Button 
-                onClick={handleCreateAndSend}
-                disabled={createSurveyMutation.isPending}
-              >
-                {createSurveyMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4 mr-2" />
-                )}
-                Enviar Pesquisa
-              </Button>
-            </div>
+            canCreate ? (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <p className="text-sm text-muted-foreground text-center">
+                  Envie uma pesquisa rápida para {compradorNome || 'o cliente'} avaliar o imóvel visitado.
+                </p>
+                <Button 
+                  onClick={handleCreateAndSend}
+                  disabled={createSurveyMutation.isPending}
+                >
+                  {createSurveyMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-2" />
+                  )}
+                  Enviar Pesquisa
+                </Button>
+              </div>
+            ) : isPartner ? (
+              <div className="flex flex-col items-center gap-4 py-6 text-center text-muted-foreground">
+                <ClipboardList className="h-8 w-8 opacity-50" />
+                <p className="text-sm">Aguardando o corretor que adicionou o comprador enviar a pesquisa.</p>
+              </div>
+            ) : null
           ) : survey.status === 'sent' ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>
-                  Enviada em {survey.sent_at && format(new Date(survey.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </span>
+            canCreate ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>
+                    Enviada em {survey.sent_at && format(new Date(survey.sent_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar Link
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleSendWhatsApp}>
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Reenviar via WhatsApp
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => window.open(viewLink!, '_blank')}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Visualizar
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar Link
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleSendWhatsApp}>
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Reenviar via WhatsApp
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => window.open(viewLink!, '_blank')}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Visualizar
-                </Button>
-              </div>
-            </div>
+            ) : null // Partner doesn't see anything while survey is pending
           ) : survey.status === 'responded' && response ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-green-600">
