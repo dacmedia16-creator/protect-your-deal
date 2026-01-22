@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Check, Building2, UserPlus } from 'lucide-react';
+import { Loader2, ArrowLeft, Check, Building2, UserPlus, AlertCircle } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { toast } from 'sonner';
 import { formatPhone } from '@/lib/phone';
@@ -23,6 +23,10 @@ export default function RegistroVinculado() {
   const [validatingCodigo, setValidatingCodigo] = useState(false);
   const [imobiliariaEncontrada, setImobiliariaEncontrada] = useState<{ id: string; nome: string } | null>(null);
   const [codigoError, setCodigoError] = useState('');
+
+  // Phone validation
+  const [telefoneError, setTelefoneError] = useState('');
+  const [validatingTelefone, setValidatingTelefone] = useState(false);
 
   // Step 2 - Dados do corretor
   const [corretorForm, setCorretorForm] = useState({
@@ -90,6 +94,44 @@ export default function RegistroVinculado() {
     return () => clearTimeout(debounce);
   }, [codigoImobiliaria]);
 
+  // Validar telefone duplicado
+  useEffect(() => {
+    async function validarTelefone() {
+      const telefoneNormalizado = corretorForm.telefone.replace(/\D/g, '');
+      if (!telefoneNormalizado || telefoneNormalizado.length < 10) {
+        setTelefoneError('');
+        return;
+      }
+
+      setValidatingTelefone(true);
+      try {
+        const { data, error } = await supabase.rpc('check_phone_available', {
+          phone_number: telefoneNormalizado
+        });
+        
+        if (error) {
+          console.error('Error checking phone:', error);
+          setTelefoneError('');
+          return;
+        }
+        
+        if (!data) {
+          setTelefoneError('Este telefone já está em uso');
+        } else {
+          setTelefoneError('');
+        }
+      } catch (err) {
+        console.error('Error validating phone:', err);
+        setTelefoneError('');
+      } finally {
+        setValidatingTelefone(false);
+      }
+    }
+
+    const debounce = setTimeout(validarTelefone, 500);
+    return () => clearTimeout(debounce);
+  }, [corretorForm.telefone]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
@@ -105,6 +147,11 @@ export default function RegistroVinculado() {
 
     if (!imobiliariaEncontrada) {
       toast.error('Código da imobiliária inválido');
+      return;
+    }
+
+    if (telefoneError) {
+      toast.error('Corrija o telefone antes de continuar');
       return;
     }
 
@@ -150,7 +197,7 @@ export default function RegistroVinculado() {
       }
 
       toast.success('Cadastro realizado com sucesso! Aguarde a ativação pelo administrador da imobiliária.', { duration: 6000 });
-      navigate('/cadastro-concluido');
+      navigate(`/cadastro-concluido?vinculado=true&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
     } catch (error: any) {
       console.error('Error during registration:', error);
       
@@ -324,12 +371,24 @@ export default function RegistroVinculado() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={corretorForm.telefone}
-                      onChange={(e) => setCorretorForm({ ...corretorForm, telefone: formatPhone(e.target.value) })}
-                      placeholder="(00) 00000-0000"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="telefone"
+                        value={corretorForm.telefone}
+                        onChange={(e) => setCorretorForm({ ...corretorForm, telefone: formatPhone(e.target.value) })}
+                        placeholder="(00) 00000-0000"
+                        className={telefoneError ? 'border-destructive pr-10' : ''}
+                      />
+                      {validatingTelefone && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                      {!validatingTelefone && telefoneError && (
+                        <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+                    {telefoneError && (
+                      <p className="text-sm text-destructive">{telefoneError}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF</Label>

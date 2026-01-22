@@ -463,14 +463,20 @@ export default function AdminUsuarios() {
     try {
       const newStatus = user.profile?.ativo === false ? true : false;
       
+      // If deactivating, also clear phone to free it for reuse
+      const updateData: { ativo: boolean; telefone?: null } = { ativo: newStatus };
+      if (!newStatus) {
+        updateData.telefone = null;
+      }
+      
       const { error } = await supabase
         .from("profiles")
-        .update({ ativo: newStatus })
+        .update(updateData)
         .eq("user_id", user.user_id);
 
       if (error) throw error;
 
-      toast.success(newStatus ? "Usuário ativado" : "Usuário desativado");
+      toast.success(newStatus ? "Usuário ativado" : "Usuário desativado (telefone liberado)");
       refetch();
     } catch (error: any) {
       toast.error(error.message || "Erro ao alterar status");
