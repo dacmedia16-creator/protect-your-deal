@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck, Loader2 } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck, Loader2, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { useUserFeatureFlag } from '@/hooks/useUserFeatureFlag';
+import { useEquipeLider } from '@/hooks/useEquipeLider';
 
 export function MobileNav() {
   const location = useLocation();
@@ -29,6 +30,7 @@ export function MobileNav() {
   const { isInstalled, isIOS, isInstallable, install } = usePWAInstall();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
+  const { isLider } = useEquipeLider();
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
   const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
@@ -146,6 +148,12 @@ export function MobileNav() {
               <DropdownMenuItem onClick={() => navigate('/minha-assinatura')}>
                 <CreditCard className="h-4 w-4 mr-2" />
                 Minha Assinatura
+              </DropdownMenuItem>
+            )}
+            {isLider && (
+              <DropdownMenuItem onClick={() => navigate('/minha-equipe')}>
+                <UsersRound className="h-4 w-4 mr-2" />
+                Minha Equipe
               </DropdownMenuItem>
             )}
             {!isInstalled && (

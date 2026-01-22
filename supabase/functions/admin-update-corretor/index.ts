@@ -78,17 +78,7 @@ Deno.serve(async (req) => {
 
     const isSuperAdmin = roles?.some(r => r.role === 'super_admin');
     const adminRole = roles?.find(r => r.role === 'imobiliaria_admin');
-
-    if (!isSuperAdmin && !adminRole) {
-      console.log('admin-update-corretor: User is not admin');
-      return new Response(
-        JSON.stringify({ error: 'Only admins can update corretores' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const imobiliariaId = adminRole?.imobiliaria_id;
-    console.log('admin-update-corretor: Imobiliaria ID:', imobiliariaId);
 
     // Parse request body
     const body: UpdateCorretorRequest = await req.json();
@@ -103,8 +93,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the corretor belongs to the same imobiliaria (unless super_admin)
-    if (!isSuperAdmin) {
+    // Check if user is a team leader for this corretor
+    const { data: isLiderData } = await supabaseAdmin.rpc('is_membro_da_minha_equipe', {
+      _lider_id: user.id,
+      _membro_user_id: user_id
+    });
+    const isLiderOfMembro = isLiderData === true;
+
+    console.log('admin-update-corretor: isLiderOfMembro:', isLiderOfMembro);
+
+    // Authorization check: must be super_admin, imobiliaria_admin, or team leader
+    if (!isSuperAdmin && !adminRole && !isLiderOfMembro) {
+      console.log('admin-update-corretor: User has no permission');
+      return new Response(
+        JSON.stringify({ error: 'Sem permissão para alterar este corretor' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Team leaders can ONLY toggle ativo status - not edit other fields
+    if (isLiderOfMembro && !isSuperAdmin && !adminRole) {
+      if (nome !== undefined || telefone !== undefined || creci !== undefined || cpf !== undefined || email !== undefined) {
+        console.log('admin-update-corretor: Leader tried to edit fields other than ativo');
+        return new Response(
+          JSON.stringify({ error: 'Líder de equipe só pode ativar/desativar corretores' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Verify the corretor belongs to the same imobiliaria (unless super_admin or leader)
+    if (!isSuperAdmin && !isLiderOfMembro) {
       const { data: corretorRole, error: corretorRoleError } = await supabaseAdmin
         .from('user_roles')
         .select('imobiliaria_id')
@@ -143,10 +162,10 @@ Deno.serve(async (req) => {
         updateData.telefone = null;
         console.log('admin-update-corretor: Clearing phone due to deactivation');
         
-        // Transfer fichas to imobiliaria admin
-        if (imobiliariaId) {
+        // Transfer fichas to imobiliaria admin (only if admin is doing this, not leader)
+        if (imobiliariaId && !isLiderOfMembro) {
           // Find imobiliaria admin (different from the user being deactivated)
-          const { data: adminRole } = await supabaseAdmin
+          const { data: adminRoleData } = await supabaseAdmin
             .from('user_roles')
             .select('user_id')
             .eq('imobiliaria_id', imobiliariaId)
@@ -154,14 +173,14 @@ Deno.serve(async (req) => {
             .neq('user_id', user_id)
             .maybeSingle();
 
-          if (adminRole?.user_id) {
+          if (adminRoleData?.user_id) {
             // Transfer fichas to admin
             const { count: transferredCount } = await supabaseAdmin
               .from('fichas_visita')
-              .update({ user_id: adminRole.user_id })
+              .update({ user_id: adminRoleData.user_id })
               .eq('user_id', user_id);
             
-            console.log(`admin-update-corretor: Transferred ${transferredCount ?? 0} fichas to admin ${adminRole.user_id}`);
+            console.log(`admin-update-corretor: Transferred ${transferredCount ?? 0} fichas to admin ${adminRoleData.user_id}`);
           } else {
             console.log('admin-update-corretor: No admin found, fichas will remain with deactivated user');
           }
