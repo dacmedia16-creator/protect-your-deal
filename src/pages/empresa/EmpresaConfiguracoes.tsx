@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { Loader2, Building2, Settings, Bell, Link as LinkIcon, Save, Upload, Image, Trash2, Copy, Check } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { formatCNPJ } from '@/lib/cnpj';
+import { formatCreciJuridico } from '@/lib/creci';
 
 const estadosBrasileiros = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -40,6 +41,7 @@ const estadosBrasileiros = [
 const formSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   cnpj: z.string().optional(),
+  creci_juridico: z.string().optional(),
   email: z.string().email('Email inválido'),
   telefone: z.string().optional(),
   endereco: z.string().optional(),
@@ -63,6 +65,7 @@ export default function EmpresaConfiguracoes() {
     defaultValues: {
       nome: '',
       cnpj: '',
+      creci_juridico: '',
       email: '',
       telefone: '',
       endereco: '',
@@ -76,6 +79,7 @@ export default function EmpresaConfiguracoes() {
       form.reset({
         nome: imobiliaria.nome || '',
         cnpj: imobiliaria.cnpj || '',
+        creci_juridico: (imobiliaria as any).creci_juridico || '',
         email: imobiliaria.email || '',
         telefone: imobiliaria.telefone || '',
         endereco: imobiliaria.endereco || '',
@@ -206,6 +210,7 @@ export default function EmpresaConfiguracoes() {
         .update({
           nome: data.nome,
           cnpj: data.cnpj || null,
+          creci_juridico: data.creci_juridico || null,
           email: data.email,
           telefone: data.telefone || null,
           endereco: data.endereco || null,
@@ -420,6 +425,24 @@ export default function EmpresaConfiguracoes() {
                                 {...field}
                                 onChange={(e) => field.onChange(formatCNPJ(e.target.value))}
                                 maxLength={18}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="creci_juridico"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CRECI Jurídico</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Ex: J-12345" 
+                                {...field}
+                                onChange={(e) => field.onChange(formatCreciJuridico(e.target.value))}
                               />
                             </FormControl>
                             <FormMessage />
