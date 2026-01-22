@@ -488,7 +488,7 @@ export default function MinhaEquipe() {
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 group"
-            onClick={() => setActiveTab('fichas')}
+            onClick={() => setActiveTab('registros')}
           >
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
@@ -531,7 +531,7 @@ export default function MinhaEquipe() {
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Membros</span>
             </TabsTrigger>
-            <TabsTrigger value="fichas" className="gap-2">
+            <TabsTrigger value="registros" className="gap-2">
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Registros</span>
             </TabsTrigger>
@@ -617,8 +617,8 @@ export default function MinhaEquipe() {
             </Card>
           </TabsContent>
 
-          {/* Fichas Tab */}
-          <TabsContent value="fichas">
+          {/* Registros Tab */}
+          <TabsContent value="registros">
             <Card>
               <CardHeader>
                 <CardTitle>Registros de Visita</CardTitle>
