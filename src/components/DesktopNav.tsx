@@ -39,7 +39,7 @@ export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliaria, imobiliariaId } = useUserRole();
-  const { isInstalled, isIOS, install } = usePWAInstall();
+  const { isInstalled, isIOS, isInstallable, install } = usePWAInstall();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -190,7 +190,7 @@ export function DesktopNav() {
               {!isInstalled && (
                 <DropdownMenuItem onClick={handleInstallApp} className="cursor-pointer">
                   <Download className="mr-2 h-4 w-4" />
-                  Instalar App
+                  {isInstallable ? 'Instalar com 1 clique' : 'Instalar App'}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />

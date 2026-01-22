@@ -26,7 +26,7 @@ export function MobileNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { role, imobiliariaId } = useUserRole();
-  const { isInstalled, isIOS, install } = usePWAInstall();
+  const { isInstalled, isIOS, isInstallable, install } = usePWAInstall();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
   
@@ -151,7 +151,7 @@ export function MobileNav() {
             {!isInstalled && (
               <DropdownMenuItem onClick={handleInstallApp}>
                 <Download className="h-4 w-4 mr-2" />
-                Instalar App
+                {isInstallable ? 'Instalar com 1 clique' : 'Instalar App'}
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
