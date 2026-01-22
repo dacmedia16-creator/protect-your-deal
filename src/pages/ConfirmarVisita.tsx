@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { OTP_URL } from '@/lib/appConfig';
+import { OTP_URL, PUBLIC_BRAND_NAME } from '@/lib/appConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -381,7 +381,7 @@ export default function ConfirmarVisita() {
           <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center">
             <Shield className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span className="font-display text-xl font-bold">Visita</span>
+          <span className="font-display text-xl font-bold">{PUBLIC_BRAND_NAME}</span>
         </div>
       </header>
 
@@ -647,7 +647,7 @@ export default function ConfirmarVisita() {
 
       {/* Footer */}
       <footer className="py-4 border-t text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Visita
+        © {new Date().getFullYear()} {PUBLIC_BRAND_NAME}
       </footer>
     </div>
   );
