@@ -57,24 +57,35 @@ serve(async (req) => {
     // Clean phone number
     const telefoneLimpo = telefone_parceiro.replace(/\D/g, '');
 
-    // Verify ficha exists and belongs to user
+    // Verify ficha exists
     const { data: ficha, error: fichaError } = await supabase
       .from('fichas_visita')
       .select('*')
       .eq('id', ficha_id)
-      .eq('user_id', user.id)
       .maybeSingle();
 
     if (fichaError || !ficha) {
       console.error('Registro não encontrado:', fichaError);
       return new Response(
-        JSON.stringify({ error: 'Registro não encontrado ou você não tem permissão' }),
+        JSON.stringify({ error: 'Registro não encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if ficha already has a partner
-    if (ficha.corretor_parceiro_id) {
+    // Verificar permissão: corretor principal OU corretor parceiro
+    const isCorretorPrincipal = ficha.user_id === user.id;
+    const isCorretorParceiro = ficha.corretor_parceiro_id === user.id;
+
+    if (!isCorretorPrincipal && !isCorretorParceiro) {
+      console.error(`Usuário ${user.id} sem permissão para ficha ${ficha_id}`);
+      return new Response(
+        JSON.stringify({ error: 'Você não tem permissão para convidar parceiros neste registro' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if ficha already has a partner (que não seja o próprio usuário)
+    if (ficha.corretor_parceiro_id && ficha.corretor_parceiro_id !== user.id) {
       return new Response(
         JSON.stringify({ error: 'Este registro já possui um corretor parceiro' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
