@@ -69,11 +69,45 @@ interface Survey {
     comprador_nome: string | null;
     protocolo: string;
     user_id: string;
+    corretor_parceiro_id: string | null;
   } | null;
   survey_responses: SurveyResponse[];
 }
 
 type FilterStatus = 'all' | 'pending' | 'responded';
+
+const SURVEY_SELECT = `
+  id,
+  token,
+  status,
+  sent_at,
+  responded_at,
+  client_name,
+  client_phone,
+  ficha_id,
+  fichas_visita!inner (
+    id,
+    imovel_endereco,
+    comprador_nome,
+    protocolo,
+    user_id,
+    corretor_parceiro_id
+  ),
+  survey_responses (
+    id,
+    rating_location,
+    rating_size,
+    rating_layout,
+    rating_finishes,
+    rating_conservation,
+    rating_common_areas,
+    rating_price,
+    liked_most,
+    liked_least,
+    would_buy,
+    created_at
+  )
+`;
 
 export default function Pesquisas() {
   const { user } = useAuth();
@@ -92,52 +126,53 @@ export default function Pesquisas() {
   const { data: surveys, isLoading } = useQuery({
     queryKey: ['corretor-surveys', user?.id, filter],
     queryFn: async () => {
-      let query = supabase
+      // Query 1: Surveys where user is the main broker
+      let query1 = supabase
         .from('surveys')
-        .select(`
-          id,
-          token,
-          status,
-          sent_at,
-          responded_at,
-          client_name,
-          client_phone,
-          ficha_id,
-          fichas_visita!inner (
-            id,
-            imovel_endereco,
-            comprador_nome,
-            protocolo,
-            user_id
-          ),
-          survey_responses (
-            id,
-            rating_location,
-            rating_size,
-            rating_layout,
-            rating_finishes,
-            rating_conservation,
-            rating_common_areas,
-            rating_price,
-            liked_most,
-            liked_least,
-            would_buy,
-            created_at
-          )
-        `)
-        .eq('fichas_visita.user_id', user?.id)
-        .order('created_at', { ascending: false });
+        .select(SURVEY_SELECT)
+        .eq('fichas_visita.user_id', user?.id);
 
+      // Query 2: Surveys where user is partner broker (only responded)
+      let query2 = supabase
+        .from('surveys')
+        .select(SURVEY_SELECT)
+        .eq('fichas_visita.corretor_parceiro_id', user?.id)
+        .eq('status', 'responded');
+
+      // Apply status filter to query1
       if (filter === 'pending') {
-        query = query.eq('status', 'pending');
+        query1 = query1.in('status', ['pending', 'sent']);
+        // query2 already filtered to responded, so skip if filtering pending
+        const { data: data1, error: error1 } = await query1;
+        if (error1) throw error1;
+        return (data1 || []).map(survey => ({
+          ...survey,
+          survey_responses: Array.isArray(survey.survey_responses) 
+            ? survey.survey_responses 
+            : survey.survey_responses ? [survey.survey_responses] : []
+        })) as Survey[];
       } else if (filter === 'responded') {
-        query = query.eq('status', 'responded');
+        query1 = query1.eq('status', 'responded');
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      // Execute both queries in parallel
+      const [result1, result2] = await Promise.all([query1, query2]);
       
-      return (data || []).map(survey => ({
+      if (result1.error) throw result1.error;
+      if (result2.error) throw result2.error;
+
+      // Combine and deduplicate
+      const allSurveys = [...(result1.data || []), ...(result2.data || [])];
+      const uniqueSurveys = allSurveys.filter((survey, index, self) =>
+        index === self.findIndex(s => s.id === survey.id)
+      );
+
+      // Sort by sent_at descending
+      uniqueSurveys.sort((a, b) => 
+        new Date(b.sent_at || 0).getTime() - new Date(a.sent_at || 0).getTime()
+      );
+
+      return uniqueSurveys.map(survey => ({
         ...survey,
         survey_responses: Array.isArray(survey.survey_responses) 
           ? survey.survey_responses 
@@ -181,10 +216,16 @@ export default function Pesquisas() {
 
   const response = selectedSurvey?.survey_responses?.[0];
 
-  // Calculate stats
+  // Calculate stats - pending only counts for main broker surveys
   const totalSurveys = surveys?.length || 0;
   const respondedSurveys = surveys?.filter(s => s.status === 'responded').length || 0;
-  const pendingSurveys = surveys?.filter(s => s.status === 'pending' || s.status === 'sent').length || 0;
+  const pendingSurveys = surveys?.filter(s => 
+    (s.status === 'pending' || s.status === 'sent') &&
+    s.fichas_visita?.user_id === user?.id
+  ).length || 0;
+
+  // Helper to determine if user is main broker or partner
+  const isMainBroker = (survey: Survey) => survey.fichas_visita?.user_id === user?.id;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -252,9 +293,14 @@ export default function Pesquisas() {
               {surveys.map((survey) => (
                 <Card key={survey.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium truncate flex-1 mr-2">
-                      {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
-                    </span>
+                    <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                      <span className="font-medium truncate">
+                        {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                      </span>
+                      <Badge variant={isMainBroker(survey) ? "outline" : "secondary"} className="text-xs shrink-0">
+                        {isMainBroker(survey) ? 'Principal' : 'Parceiro'}
+                      </Badge>
+                    </div>
                     {getStatusBadge(survey.status)}
                   </div>
                   <p className="text-sm text-muted-foreground truncate mb-1">
@@ -316,7 +362,12 @@ export default function Pesquisas() {
                     {surveys.map((survey) => (
                       <TableRow key={survey.id}>
                         <TableCell className="font-medium">
-                          {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                          <div className="flex items-center gap-2">
+                            {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                            <Badge variant={isMainBroker(survey) ? "outline" : "secondary"} className="text-xs">
+                              {isMainBroker(survey) ? 'Principal' : 'Parceiro'}
+                            </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {survey.fichas_visita?.imovel_endereco || '-'}
