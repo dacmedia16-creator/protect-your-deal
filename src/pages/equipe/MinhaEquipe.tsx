@@ -19,6 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { 
   Users, 
   FileText, 
@@ -31,7 +38,9 @@ import {
   BarChart3,
   TrendingUp,
   CheckCircle,
-  Target
+  Target,
+  Eye,
+  Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -66,6 +75,8 @@ interface Survey {
   corretor_id: string;
   corretor_nome: string;
   ficha_protocolo: string;
+  ficha_id: string;
+  imovel_endereco: string;
 }
 
 interface SurveyResponse {
@@ -77,7 +88,21 @@ interface SurveyResponse {
   rating_conservation: number;
   rating_common_areas: number;
   rating_price: number;
+  would_buy: boolean;
+  liked_most: string | null;
+  liked_least: string | null;
+  created_at: string;
 }
+
+const ratingLabels: Record<string, string> = {
+  rating_location: 'Localização',
+  rating_size: 'Tamanho',
+  rating_layout: 'Distribuição',
+  rating_finishes: 'Acabamentos',
+  rating_conservation: 'Conservação',
+  rating_common_areas: 'Áreas Comuns',
+  rating_price: 'Preço',
+};
 
 interface MembroPerformance {
   user_id: string;
@@ -104,6 +129,7 @@ export default function MinhaEquipe() {
   const [loading, setLoading] = useState(true);
   const [togglingUser, setTogglingUser] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('membros');
+  const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user?.id || equipesLideradas.length === 0) {
@@ -171,7 +197,8 @@ export default function MinhaEquipe() {
               status, 
               created_at, 
               corretor_id,
-              fichas_visita!inner(protocolo)
+              ficha_id,
+              fichas_visita!inner(protocolo, imovel_endereco)
             `)
             .in('corretor_id', userIds)
             .order('created_at', { ascending: false });
@@ -185,6 +212,8 @@ export default function MinhaEquipe() {
               corretor_id: s.corretor_id,
               corretor_nome: profilesMap.get(s.corretor_id)?.nome || 'Desconhecido',
               ficha_protocolo: s.fichas_visita?.protocolo || '',
+              ficha_id: s.ficha_id,
+              imovel_endereco: s.fichas_visita?.imovel_endereco || '',
             }));
             setSurveys(surveysWithNome);
 
@@ -193,7 +222,7 @@ export default function MinhaEquipe() {
             if (surveyIds.length > 0) {
               const { data: responsesData } = await supabase
                 .from('survey_responses')
-                .select('survey_id, rating_location, rating_size, rating_layout, rating_finishes, rating_conservation, rating_common_areas, rating_price')
+                .select('survey_id, rating_location, rating_size, rating_layout, rating_finishes, rating_conservation, rating_common_areas, rating_price, would_buy, liked_most, liked_least, created_at')
                 .in('survey_id', surveyIds);
               
               setSurveyResponses(responsesData || []);
@@ -645,6 +674,7 @@ export default function MinhaEquipe() {
                           <TableHead className="hidden sm:table-cell">Cliente</TableHead>
                           <TableHead className="hidden sm:table-cell">Data</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead className="w-[60px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -659,6 +689,18 @@ export default function MinhaEquipe() {
                               {format(new Date(survey.created_at), 'dd/MM/yy', { locale: ptBR })}
                             </TableCell>
                             <TableCell>{getStatusBadge(survey.status)}</TableCell>
+                            <TableCell>
+                              {survey.status === 'responded' && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={() => setSelectedSurvey(survey)}
+                                  title="Ver resposta"
+                                >
+                                  <Eye className="h-4 w-4 text-primary" />
+                                </Button>
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -842,6 +884,95 @@ export default function MinhaEquipe() {
       </div>
 
       <MobileNav />
+
+      {/* Dialog para visualizar resposta da pesquisa */}
+      <Dialog open={!!selectedSurvey} onOpenChange={() => setSelectedSurvey(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5" />
+              Resposta da Pesquisa
+            </DialogTitle>
+            <DialogDescription>
+              {selectedSurvey?.imovel_endereco}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedSurvey && (() => {
+            const response = surveyResponses.find(r => r.survey_id === selectedSurvey.id);
+            if (!response) return <p className="text-muted-foreground">Resposta não encontrada</p>;
+            
+            return (
+              <div className="space-y-6">
+                {/* Info do cliente */}
+                <div className="text-sm text-muted-foreground">
+                  <p><strong>Cliente:</strong> {selectedSurvey.client_name || '-'}</p>
+                  <p><strong>Corretor:</strong> {selectedSurvey.corretor_nome}</p>
+                  <p><strong>Protocolo:</strong> {selectedSurvey.ficha_protocolo}</p>
+                </div>
+
+                {/* Avaliações */}
+                <div className="space-y-3">
+                  <h4 className="font-medium">Avaliações</h4>
+                  {Object.entries(ratingLabels).map(([key, label]) => {
+                    const rating = response[key as keyof typeof response] as number;
+                    return (
+                      <div key={key} className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{label}</span>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= rating
+                                  ? 'fill-warning text-warning'
+                                  : 'text-muted-foreground/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Compraria */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Compraria este imóvel?</span>
+                    <Badge variant={response.would_buy ? 'default' : 'secondary'}>
+                      {response.would_buy ? 'Sim' : 'Não'}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Comentários */}
+                {(response.liked_most || response.liked_least) && (
+                  <div className="space-y-3 border-t pt-4">
+                    {response.liked_most && (
+                      <div>
+                        <p className="text-sm font-medium text-success">O que mais gostou:</p>
+                        <p className="text-sm text-muted-foreground mt-1">{response.liked_most}</p>
+                      </div>
+                    )}
+                    {response.liked_least && (
+                      <div>
+                        <p className="text-sm font-medium text-destructive">O que menos gostou:</p>
+                        <p className="text-sm text-muted-foreground mt-1">{response.liked_least}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Data de resposta */}
+                <div className="text-xs text-muted-foreground border-t pt-4">
+                  Respondido em {format(new Date(response.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
