@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserRole, AppRole } from '@/hooks/useUserRole';
 import { useTermosAceitos } from '@/hooks/useTermosAceitos';
 import { Loader2 } from 'lucide-react';
+import { InactiveAccountOverlay } from '@/components/InactiveAccountOverlay';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -42,11 +43,6 @@ export function ProtectedRoute({
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if user account is active (super_admin never blocked to prevent lock-out)
-  if (role !== 'super_admin' && ativo === false) {
-    return <Navigate to="/conta-desativada" replace />;
-  }
-
   // Check if user has accepted terms (skip for the terms acceptance page itself)
   // Only redirect if termosAceitos is explicitly false (not null/undefined while loading)
   if (!skipTermsCheck && termosAceitos === false && location.pathname !== '/aceitar-termos') {
@@ -72,6 +68,19 @@ export function ProtectedRoute({
     if (!assinatura || assinatura.status === 'suspensa' || assinatura.status === 'cancelada' || assinatura.status === 'pendente') {
       return <Navigate to="/assinatura-suspensa" replace />;
     }
+  }
+
+  // Check if user account is inactive (super_admin never blocked to prevent lock-out)
+  // Show overlay instead of redirecting - user can see dashboard but cannot interact
+  if (role !== 'super_admin' && ativo === false) {
+    return (
+      <div className="relative min-h-screen">
+        <InactiveAccountOverlay />
+        <div className="pointer-events-none select-none opacity-50 blur-[1px]">
+          {children}
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
