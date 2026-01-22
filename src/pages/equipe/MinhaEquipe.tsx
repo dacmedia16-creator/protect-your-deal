@@ -636,36 +636,40 @@ export default function MinhaEquipe() {
                     Nenhum registro encontrado
                   </p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Protocolo</TableHead>
-                        <TableHead>Corretor</TableHead>
-                        <TableHead className="hidden sm:table-cell">Imóvel</TableHead>
-                        <TableHead className="hidden sm:table-cell">Data</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {fichas.slice(0, 50).map((ficha) => (
-                        <TableRow 
-                          key={ficha.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => navigate(`/fichas/${ficha.id}`)}
-                        >
-                          <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
-                          <TableCell>{ficha.corretor_nome}</TableCell>
-                          <TableCell className="hidden sm:table-cell max-w-[200px] truncate">
-                            {ficha.imovel_endereco}
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {format(new Date(ficha.data_visita), 'dd/MM/yy', { locale: ptBR })}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(ficha.status)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <div className="space-y-3">
+                    {fichas.slice(0, 50).map((ficha) => (
+                      <Card 
+                        key={ficha.id}
+                        className="hover:shadow-md transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/fichas/${ficha.id}`)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-mono text-sm font-medium">
+                                  {ficha.protocolo}
+                                </span>
+                                {getStatusBadge(ficha.status)}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {ficha.corretor_nome}
+                              </p>
+                              {ficha.imovel_endereco && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {ficha.imovel_endereco}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(ficha.data_visita), "dd/MM/yyyy", { locale: ptBR })}
+                              </p>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </CardContent>
             </Card>
