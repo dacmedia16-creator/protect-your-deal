@@ -691,30 +691,33 @@ export default function MinhaEquipe() {
                       Nenhuma pesquisa encontrada
                     </p>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Protocolo</TableHead>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="hidden sm:table-cell">Cliente</TableHead>
-                          <TableHead className="hidden sm:table-cell">Data</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-[60px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {surveys.slice(0, 50).map((survey) => (
-                          <TableRow key={survey.id}>
-                            <TableCell className="font-mono text-sm">{survey.ficha_protocolo}</TableCell>
-                            <TableCell>{survey.corretor_nome}</TableCell>
-                            <TableCell className="hidden sm:table-cell">
-                              {survey.client_name || '-'}
-                            </TableCell>
-                            <TableCell className="hidden sm:table-cell">
-                              {format(new Date(survey.created_at), 'dd/MM/yy', { locale: ptBR })}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(survey.status)}</TableCell>
-                            <TableCell>
+                    <div className="space-y-3">
+                      {surveys.slice(0, 50).map((survey) => (
+                        <Card 
+                          key={survey.id}
+                          className="hover:shadow-md transition-shadow"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-mono text-sm font-medium">
+                                    {survey.ficha_protocolo}
+                                  </span>
+                                  {getStatusBadge(survey.status)}
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {survey.corretor_nome}
+                                </p>
+                                {survey.client_name && (
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    Cliente: {survey.client_name}
+                                  </p>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(survey.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                                </p>
+                              </div>
                               {survey.status === 'responded' && (
                                 <Button 
                                   variant="ghost" 
@@ -725,11 +728,11 @@ export default function MinhaEquipe() {
                                   <Eye className="h-4 w-4 text-primary" />
                                 </Button>
                               )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
