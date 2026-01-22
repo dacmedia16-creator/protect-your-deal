@@ -6,12 +6,14 @@ import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
+import { useEquipeLider } from '@/hooks/useEquipeLider';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { 
   FileText, 
   Plus,
@@ -22,6 +24,9 @@ import {
   Bug,
   ClipboardCheck,
   Scale,
+  UsersRound,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
@@ -46,6 +51,9 @@ export default function Dashboard() {
   
   // Verificar se pesquisa pós-visita está habilitada
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+  
+  // Hook para verificar se é líder de equipe
+  const { isLider, equipesLideradas, loading: liderLoading } = useEquipeLider();
 
   // Hook de notificação para fichas confirmadas
   useFichaNotification();
@@ -156,6 +164,61 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
   });
 
+  // Query para buscar resumo da equipe (apenas para líderes)
+  const { data: teamSummary } = useQuery({
+    queryKey: ['team-summary', user?.id, equipesLideradas],
+    queryFn: async () => {
+      if (!equipesLideradas.length) return null;
+      
+      const equipeIds = equipesLideradas.map(e => e.id);
+      
+      // Buscar membros da equipe
+      const { data: membrosData } = await supabase
+        .from('equipes_membros')
+        .select('user_id')
+        .in('equipe_id', equipeIds);
+      
+      const userIds = membrosData?.map(m => m.user_id) || [];
+      
+      if (userIds.length === 0) {
+        return {
+          totalMembros: 0,
+          membrosAtivos: 0,
+          fichasMes: 0,
+          nomeEquipe: equipesLideradas.map(e => e.nome).join(', '),
+          corEquipe: equipesLideradas[0]?.cor || '#3B82F6',
+        };
+      }
+      
+      // Buscar perfis para contar ativos e fichas do mês em paralelo
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const [profilesResult, fichasResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('ativo')
+          .in('user_id', userIds),
+        supabase
+          .from('fichas_visita')
+          .select('id', { count: 'exact', head: true })
+          .in('user_id', userIds)
+          .gte('data_visita', startOfMonth.toISOString()),
+      ]);
+      
+      return {
+        totalMembros: userIds.length,
+        membrosAtivos: profilesResult.data?.filter(p => p.ativo).length || 0,
+        fichasMes: fichasResult.count || 0,
+        nomeEquipe: equipesLideradas.map(e => e.nome).join(', '),
+        corEquipe: equipesLideradas[0]?.cor || '#3B82F6',
+      };
+    },
+    enabled: isLider && equipesLideradas.length > 0 && !liderLoading,
+    staleTime: 60000, // 1 minuto
+  });
+
   // Extrair dados para uso no componente
   const stats = dashboardData;
   const fichasParceiro = dashboardData?.fichasParceiro;
@@ -220,9 +283,46 @@ export default function Dashboard() {
                   Clique para ver e aceitar os convites recebidos
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Card de Resumo da Equipe para Líderes */}
+      {isLider && teamSummary && (
+        <Card 
+          className="mb-4 border-cyan-500/30 bg-cyan-500/5 dark:border-cyan-400/30 dark:bg-cyan-400/5 cursor-pointer hover:shadow-medium transition-all animate-fade-in"
+          onClick={() => navigate('/minha-equipe')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div 
+                className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${teamSummary.corEquipe}20` }}
+              >
+                <UsersRound className="h-6 w-6" style={{ color: teamSummary.corEquipe }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-cyan-700 dark:text-cyan-300">
+                  {teamSummary.nomeEquipe}
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    {teamSummary.fichasMes} registros este mês
+                  </span>
+                </div>
+              </div>
+              <Badge variant="outline" className="text-cyan-600 dark:text-cyan-400 border-cyan-500/30 shrink-0 hidden sm:flex">
+                Líder
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
         {/* Welcome Section */}
         <div className="mb-4 md:mb-8">
