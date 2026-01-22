@@ -36,19 +36,25 @@ async function sendViaZionTalk(phone: string, message: string): Promise<boolean>
   const apiKey = Deno.env.get('ZIONTALK_API_KEY');
 
   if (!apiKey) {
-    console.log('ZionTalk API not configured');
+    console.log('[process-otp-queue] ZionTalk API not configured');
     return false;
   }
 
   try {
-    const formattedPhone = `+${formatPhoneNumber(phone)}`;
-    const authHeader = btoa(`${apiKey}:`);
+    // Log detalhado para diagnóstico
+    console.log(`[process-otp-queue] ========== ENVIO ZIONTALK ==========`);
+    console.log(`[process-otp-queue] Telefone ORIGINAL recebido: "${phone}"`);
     
-    console.log(`[process-otp-queue] Sending WhatsApp to ${formattedPhone} via ZionTalk`);
+    const formattedPhone = `+${formatPhoneNumber(phone)}`;
+    console.log(`[process-otp-queue] Telefone FORMATADO para API: "${formattedPhone}"`);
+    
+    const authHeader = btoa(`${apiKey}:`);
 
     const formData = new FormData();
     formData.append('mobile_phone', formattedPhone);
     formData.append('msg', message);
+    
+    console.log(`[process-otp-queue] FormData mobile_phone: "${formattedPhone}"`);
 
     const response = await fetch('https://app.ziontalk.com/api/send_message/', {
       method: 'POST',
@@ -59,14 +65,24 @@ async function sendViaZionTalk(phone: string, message: string): Promise<boolean>
     });
 
     const responseText = await response.text();
-    console.log(`[process-otp-queue] ZionTalk response status: ${response.status}`);
+    console.log(`[process-otp-queue] ZionTalk status: ${response.status}`);
+    console.log(`[process-otp-queue] ZionTalk resposta COMPLETA: ${responseText}`);
+    
+    // Tentar parsear JSON para ver detalhes do destinatário
+    try {
+      const responseJson = JSON.parse(responseText);
+      console.log(`[process-otp-queue] ZionTalk destinatário confirmado:`, responseJson.to || responseJson.phone || responseJson.mobile_phone || 'não informado na resposta');
+      console.log(`[process-otp-queue] ZionTalk response JSON:`, JSON.stringify(responseJson));
+    } catch (e) {
+      console.log(`[process-otp-queue] Resposta não é JSON válido, conteúdo raw: ${responseText.substring(0, 500)}`);
+    }
 
     if (!response.ok) {
       console.error('[process-otp-queue] ZionTalk error:', responseText);
       return false;
     }
 
-    console.log('[process-otp-queue] Message sent via ZionTalk');
+    console.log('[process-otp-queue] ========== ENVIO CONCLUÍDO ==========');
     return true;
   } catch (error) {
     console.error('[process-otp-queue] ZionTalk error:', error);
@@ -273,15 +289,8 @@ async function processQueueItem(
       sent = await sendViaZAPI(telefone, message);
     }
 
-    // Send second message with just the code for easy copying
-    if (sent) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const codigoMessage = codigo;
-      await sendViaZionTalk(telefone, codigoMessage) ||
-        await sendViaEvolutionAPI(telefone, codigoMessage) ||
-        await sendViaZAPI(telefone, codigoMessage);
-    }
+    // Mensagem única já contém o código - não enviar segunda mensagem
+    // (removido envio duplicado para evitar confusão)
 
     // Update ficha status
     const newStatus = item.tipo === 'proprietario' 

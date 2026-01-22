@@ -31,20 +31,26 @@ async function sendViaZionTalk(phone: string, message: string): Promise<boolean>
   const apiKey = Deno.env.get('ZIONTALK_API_KEY');
 
   if (!apiKey) {
-    console.log('ZionTalk API not configured, using simulation mode');
+    console.log('[send-otp] ZionTalk API not configured, using simulation mode');
     return false;
   }
 
   try {
-    const formattedPhone = `+${formatPhoneNumber(phone)}`;
-    const authHeader = btoa(`${apiKey}:`);
+    // Log detalhado para diagnóstico
+    console.log(`[send-otp] ========== ENVIO ZIONTALK ==========`);
+    console.log(`[send-otp] Telefone ORIGINAL recebido: "${phone}"`);
     
-    console.log(`Sending WhatsApp to ${formattedPhone} via ZionTalk`);
+    const formattedPhone = `+${formatPhoneNumber(phone)}`;
+    console.log(`[send-otp] Telefone FORMATADO para API: "${formattedPhone}"`);
+    
+    const authHeader = btoa(`${apiKey}:`);
 
     // Use FormData as per ZionTalk API documentation
     const formData = new FormData();
     formData.append('mobile_phone', formattedPhone);
     formData.append('msg', message);
+    
+    console.log(`[send-otp] FormData mobile_phone: "${formattedPhone}"`);
 
     const response = await fetch('https://app.ziontalk.com/api/send_message/', {
       method: 'POST',
@@ -55,18 +61,27 @@ async function sendViaZionTalk(phone: string, message: string): Promise<boolean>
     });
 
     const responseText = await response.text();
-    console.log(`ZionTalk response status: ${response.status}`);
-    console.log(`ZionTalk response: ${responseText.substring(0, 300)}`);
+    console.log(`[send-otp] ZionTalk status: ${response.status}`);
+    console.log(`[send-otp] ZionTalk resposta COMPLETA: ${responseText}`);
+    
+    // Tentar parsear JSON para ver detalhes do destinatário
+    try {
+      const responseJson = JSON.parse(responseText);
+      console.log(`[send-otp] ZionTalk destinatário confirmado:`, responseJson.to || responseJson.phone || responseJson.mobile_phone || 'não informado na resposta');
+      console.log(`[send-otp] ZionTalk response JSON:`, JSON.stringify(responseJson));
+    } catch (e) {
+      console.log(`[send-otp] Resposta não é JSON válido, conteúdo raw: ${responseText.substring(0, 500)}`);
+    }
 
     if (!response.ok) {
-      console.error('ZionTalk error:', responseText);
+      console.error('[send-otp] ZionTalk error:', responseText);
       return false;
     }
 
-    console.log('Message sent via ZionTalk');
+    console.log('[send-otp] ========== ENVIO CONCLUÍDO ==========');
     return true;
   } catch (error) {
-    console.error('ZionTalk error:', error);
+    console.error('[send-otp] ZionTalk error:', error);
     return false;
   }
 }
