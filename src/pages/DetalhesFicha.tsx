@@ -139,6 +139,7 @@ export default function DetalhesFicha() {
   const [modoConvite, setModoConvite] = useState<'selecionar' | 'digitar'>('selecionar');
   const [corretorSelecionado, setCorretorSelecionado] = useState<string | null>(null);
   const [parceiroExterno, setParceiroExterno] = useState(false);
+  const [corretorPopoverOpen, setCorretorPopoverOpen] = useState(false);
 
   // State for editing existing phone numbers
   const [editandoProprietario, setEditandoProprietario] = useState(false);
@@ -1405,7 +1406,7 @@ export default function DetalhesFicha() {
                       {modoConvite === 'selecionar' && corretoresImobiliaria && corretoresImobiliaria.length > 0 && (
                         <div className="space-y-2">
                           <Label>Selecione um corretor da equipe</Label>
-                          <Popover>
+                          <Popover open={corretorPopoverOpen} onOpenChange={setCorretorPopoverOpen}>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
@@ -1437,6 +1438,7 @@ export default function DetalhesFicha() {
                                           if (corretor.telefone) {
                                             setTelefoneParceiro(formatPhoneInput(corretor.telefone));
                                           }
+                                          setCorretorPopoverOpen(false);
                                         }}
                                       >
                                         <Check

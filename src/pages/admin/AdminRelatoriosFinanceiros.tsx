@@ -86,6 +86,8 @@ export default function AdminRelatoriosFinanceiros() {
   // Date range filter - default to last 12 months
   const [startDate, setStartDate] = useState<Date>(startOfMonth(subMonths(new Date(), 11)));
   const [endDate, setEndDate] = useState<Date>(endOfMonth(new Date()));
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -253,7 +255,7 @@ export default function AdminRelatoriosFinanceiros() {
               </div>
               
               <div className="flex items-center gap-2">
-                <Popover>
+                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -270,7 +272,12 @@ export default function AdminRelatoriosFinanceiros() {
                     <Calendar
                       mode="single"
                       selected={startDate}
-                      onSelect={(date) => date && setStartDate(startOfMonth(date))}
+                      onSelect={(date) => {
+                        if (date) {
+                          setStartDate(startOfMonth(date));
+                          setStartDateOpen(false);
+                        }
+                      }}
                       initialFocus
                       className="p-3 pointer-events-auto"
                       locale={ptBR}
@@ -280,7 +287,7 @@ export default function AdminRelatoriosFinanceiros() {
                 
                 <span className="text-muted-foreground">até</span>
                 
-                <Popover>
+                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -297,7 +304,12 @@ export default function AdminRelatoriosFinanceiros() {
                     <Calendar
                       mode="single"
                       selected={endDate}
-                      onSelect={(date) => date && setEndDate(endOfMonth(date))}
+                      onSelect={(date) => {
+                        if (date) {
+                          setEndDate(endOfMonth(date));
+                          setEndDateOpen(false);
+                        }
+                      }}
                       initialFocus
                       className="p-3 pointer-events-auto"
                       locale={ptBR}
