@@ -741,7 +741,7 @@ export type Database = {
           protocolo: string
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           backup_gerado_em?: string | null
@@ -769,7 +769,7 @@ export type Database = {
           protocolo: string
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           backup_gerado_em?: string | null
@@ -797,7 +797,7 @@ export type Database = {
           protocolo?: string
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1491,6 +1491,7 @@ export type Database = {
       }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       generate_protocolo: { Args: never; Returns: string }
+      get_imobiliaria_admin: { Args: { imob_id: string }; Returns: string }
       get_imobiliarias_publicas: {
         Args: never
         Returns: {
