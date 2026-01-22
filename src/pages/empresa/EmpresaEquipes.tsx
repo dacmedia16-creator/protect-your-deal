@@ -287,19 +287,37 @@ export default function EmpresaEquipes() {
 
   async function fetchMembros(equipeId: string) {
     setLoadingMembros(true);
-    const { data } = await supabase
+    
+    // Buscar membros da equipe
+    const { data: membrosData } = await supabase
       .from('equipes_membros')
-      .select(`
-        id,
-        user_id,
-        cargo,
-        entrou_em,
-        profile:profiles!equipes_membros_user_id_fkey(nome)
-      `)
+      .select('id, user_id, cargo, entrou_em')
       .eq('equipe_id', equipeId)
       .order('entrou_em');
 
-    setMembros((data as any) || []);
+    if (membrosData && membrosData.length > 0) {
+      // Buscar profiles separadamente usando user_id
+      const userIds = membrosData.map(m => m.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, nome')
+        .in('user_id', userIds);
+
+      // Combinar dados
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.user_id, p])
+      );
+      
+      const membrosWithProfile = membrosData.map(m => ({
+        ...m,
+        profile: profilesMap.get(m.user_id) || null
+      }));
+
+      setMembros(membrosWithProfile);
+    } else {
+      setMembros([]);
+    }
+    
     setLoadingMembros(false);
   }
 
