@@ -362,7 +362,20 @@ serve(async (req) => {
       sent = await sendViaZAPI(telefone, message);
     }
 
-    // Single message with all info - no second message needed
+    // Send second message with just the code for easy copying
+    if (sent) {
+      console.log('[send-otp] Enviando mensagem separada com código para facilitar cópia');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+      
+      const codigoMessage = codigo; // Just the 6-digit code
+      const codeSent = await sendViaZionTalk(telefone, codigoMessage);
+      if (!codeSent) {
+        const codeSentEvo = await sendViaEvolutionAPI(telefone, codigoMessage);
+        if (!codeSentEvo) {
+          await sendViaZAPI(telefone, codigoMessage);
+        }
+      }
+    }
 
     // Update ficha status
     const newStatus = tipo === 'proprietario' 

@@ -289,8 +289,20 @@ async function processQueueItem(
       sent = await sendViaZAPI(telefone, message);
     }
 
-    // Mensagem única já contém o código - não enviar segunda mensagem
-    // (removido envio duplicado para evitar confusão)
+    // Send second message with just the code for easy copying
+    if (sent) {
+      console.log('[process-otp-queue] Enviando mensagem separada com código para facilitar cópia');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+      
+      const codigoMessage = codigo; // Just the 6-digit code
+      const codeSent = await sendViaZionTalk(telefone, codigoMessage);
+      if (!codeSent) {
+        const codeSentEvo = await sendViaEvolutionAPI(telefone, codigoMessage);
+        if (!codeSentEvo) {
+          await sendViaZAPI(telefone, codigoMessage);
+        }
+      }
+    }
 
     // Update ficha status
     const newStatus = item.tipo === 'proprietario' 
