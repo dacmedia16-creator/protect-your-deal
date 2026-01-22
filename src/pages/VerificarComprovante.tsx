@@ -211,7 +211,7 @@ export default function VerificarComprovante() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
-              <span className="font-display font-bold text-lg">VisitaProva</span>
+              <span className="font-display font-bold text-lg">Visita</span>
             </div>
             <Link to="/">
               <Button variant="ghost" size="sm" className="gap-2">
@@ -545,7 +545,7 @@ export default function VerificarComprovante() {
       <footer className="border-t py-4">
         <div className="container mx-auto px-4 text-center">
           <p className="text-xs text-muted-foreground">
-            VisitaProva - Sistema de Registro de Intermediação Imobiliária
+            Visita - Sistema de Registro de Intermediação Imobiliária
           </p>
         </div>
       </footer>
