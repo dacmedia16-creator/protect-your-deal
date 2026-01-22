@@ -160,15 +160,15 @@ export function PWAInstallBanner() {
                 onClick={handleInstall}
                 className="h-8 text-xs md:text-sm gap-1.5"
               >
-                {showManualInstructions ? (
+{showManualInstructions ? (
                   <>
                     <Share className="h-3.5 w-3.5" />
-                    Ver instruções
+                    Ver como instalar
                   </>
                 ) : (
                   <>
                     <Download className="h-3.5 w-3.5" />
-                    Instalar app
+                    Instalar com 1 clique
                   </>
                 )}
               </Button>
