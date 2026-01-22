@@ -644,7 +644,7 @@ export type Database = {
             columns: ["lider_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "equipes_parent_id_fkey"
