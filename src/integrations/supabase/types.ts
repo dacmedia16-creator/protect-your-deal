@@ -688,13 +688,6 @@ export type Database = {
             referencedRelation: "equipes"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "equipes_membros_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       ficha_usage_log: {

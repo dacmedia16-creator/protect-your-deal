@@ -104,22 +104,88 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Deleting user:', user_id);
+    console.log('Starting deletion process for user:', user_id);
 
-    // Clear phone number before deleting to free it for reuse
-    const { error: clearPhoneError } = await supabaseAdmin
+    // ====== STEP 1: Clear phone number to free it for reuse ======
+    console.log('[1/7] Clearing phone number from profile...');
+    const { error: clearPhoneError, count: phoneCount } = await supabaseAdmin
       .from('profiles')
       .update({ telefone: null })
       .eq('user_id', user_id);
 
     if (clearPhoneError) {
-      console.warn('Could not clear phone:', clearPhoneError);
-      // Non-critical, continue with deletion
+      console.warn('Could not clear phone:', clearPhoneError.message);
     } else {
-      console.log('Phone number cleared for user:', user_id);
+      console.log('[1/7] Phone number cleared successfully');
     }
 
-    // Delete user from auth.users (this will cascade to user_roles and profiles)
+    // ====== STEP 2: Delete from equipes_membros ======
+    console.log('[2/7] Deleting from equipes_membros...');
+    const { error: equipesError, count: equipesCount } = await supabaseAdmin
+      .from('equipes_membros')
+      .delete()
+      .eq('user_id', user_id);
+
+    if (equipesError) {
+      console.warn('Could not delete from equipes_membros:', equipesError.message);
+    } else {
+      console.log(`[2/7] Deleted ${equipesCount ?? 0} records from equipes_membros`);
+    }
+
+    // ====== STEP 3: Delete from otp_queue ======
+    console.log('[3/7] Deleting from otp_queue...');
+    const { error: otpError, count: otpCount } = await supabaseAdmin
+      .from('otp_queue')
+      .delete()
+      .eq('user_id', user_id);
+
+    if (otpError) {
+      console.warn('Could not delete from otp_queue:', otpError.message);
+    } else {
+      console.log(`[3/7] Deleted ${otpCount ?? 0} records from otp_queue`);
+    }
+
+    // ====== STEP 4: Delete from afiliados ======
+    console.log('[4/7] Deleting from afiliados...');
+    const { error: afiliadosError, count: afiliadosCount } = await supabaseAdmin
+      .from('afiliados')
+      .delete()
+      .eq('user_id', user_id);
+
+    if (afiliadosError) {
+      console.warn('Could not delete from afiliados:', afiliadosError.message);
+    } else {
+      console.log(`[4/7] Deleted ${afiliadosCount ?? 0} records from afiliados`);
+    }
+
+    // ====== STEP 5: Nullify audit_logs (preserve history) ======
+    console.log('[5/7] Nullifying user_id in audit_logs...');
+    const { error: auditError, count: auditCount } = await supabaseAdmin
+      .from('audit_logs')
+      .update({ user_id: null })
+      .eq('user_id', user_id);
+
+    if (auditError) {
+      console.warn('Could not update audit_logs:', auditError.message);
+    } else {
+      console.log(`[5/7] Updated ${auditCount ?? 0} records in audit_logs`);
+    }
+
+    // ====== STEP 6: Delete templates_mensagem ======
+    console.log('[6/7] Deleting from templates_mensagem...');
+    const { error: templatesError, count: templatesCount } = await supabaseAdmin
+      .from('templates_mensagem')
+      .delete()
+      .eq('user_id', user_id);
+
+    if (templatesError) {
+      console.warn('Could not delete from templates_mensagem:', templatesError.message);
+    } else {
+      console.log(`[6/7] Deleted ${templatesCount ?? 0} records from templates_mensagem`);
+    }
+
+    // ====== STEP 7: Delete user from auth.users (cascades to user_roles and profiles) ======
+    console.log('[7/7] Deleting user from auth.users...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
 
     if (deleteError) {
