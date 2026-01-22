@@ -488,7 +488,7 @@ export default function MinhaEquipe() {
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all duration-200 group"
-            onClick={() => setActiveTab('registros')}
+            onClick={() => setActiveTab('fichas')}
           >
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
