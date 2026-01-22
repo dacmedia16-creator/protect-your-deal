@@ -1484,6 +1484,10 @@ export type Database = {
         Args: { equipe_imobiliaria_id: string }
         Returns: boolean
       }
+      check_phone_available: {
+        Args: { phone_number: string }
+        Returns: boolean
+      }
       check_subscription_status: {
         Args: { _imobiliaria_id: string }
         Returns: string

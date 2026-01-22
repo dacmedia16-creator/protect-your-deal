@@ -106,6 +106,19 @@ Deno.serve(async (req) => {
 
     console.log('Deleting user:', user_id);
 
+    // Clear phone number before deleting to free it for reuse
+    const { error: clearPhoneError } = await supabaseAdmin
+      .from('profiles')
+      .update({ telefone: null })
+      .eq('user_id', user_id);
+
+    if (clearPhoneError) {
+      console.warn('Could not clear phone:', clearPhoneError);
+      // Non-critical, continue with deletion
+    } else {
+      console.log('Phone number cleared for user:', user_id);
+    }
+
     // Delete user from auth.users (this will cascade to user_roles and profiles)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
 

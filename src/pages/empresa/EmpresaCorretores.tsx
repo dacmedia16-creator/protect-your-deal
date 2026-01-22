@@ -399,7 +399,8 @@ export default function EmpresaCorretores() {
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
 
-      toast.success(novoStatus ? 'Corretor ativado com sucesso!' : 'Corretor desativado com sucesso!');
+      // When deactivating, phone is automatically cleared by edge function
+      toast.success(novoStatus ? 'Corretor ativado com sucesso!' : 'Corretor desativado (telefone liberado)');
       fetchData();
     } catch (error: any) {
       console.error('Error toggling corretor status:', error);

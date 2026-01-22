@@ -136,7 +136,14 @@ Deno.serve(async (req) => {
     if (creci !== undefined) updateData.creci = creci;
     if (cpf !== undefined) updateData.cpf = cpf;
     if (email !== undefined) updateData.email = email;
-    if (ativo !== undefined) updateData.ativo = ativo;
+    if (ativo !== undefined) {
+      updateData.ativo = ativo;
+      // If deactivating, also clear phone to free it for reuse
+      if (ativo === false) {
+        updateData.telefone = null;
+        console.log('admin-update-corretor: Clearing phone due to deactivation');
+      }
+    }
 
     if (Object.keys(updateData).length === 0) {
       return new Response(

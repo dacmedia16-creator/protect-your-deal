@@ -218,23 +218,45 @@ Deno.serve(async (req) => {
   // 3. Update profile with additional data (profile is created by trigger)
     // Se vinculado a imobiliária, começa desativado (admin precisa ativar)
     // Se autônomo, permanece ativo
-    console.log("Updating profile...");
-    const { error: profileError } = await supabaseAdmin
+    // IMPORTANT: Separate critical updates from optional ones to ensure linking always works
+    console.log("Updating profile (critical fields)...");
+    const { error: criticalProfileError } = await supabaseAdmin
       .from("profiles")
       .update({ 
         nome: corretor.nome,
-        telefone: corretor.telefone || null,
-        creci: corretor.creci || null,
-        cpf: corretor.cpf || null,
-        email: corretor.email || null,
         imobiliaria_id: imobiliariaId,
         ativo: imobiliariaId ? false : true,
       })
       .eq("user_id", userId);
 
-    if (profileError) {
-      console.error("Profile error:", profileError);
-      // Non-critical, continue
+    if (criticalProfileError) {
+      console.error("Critical profile error:", criticalProfileError);
+      // Rollback: delete the user since we couldn't set essential data
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      return new Response(
+        JSON.stringify({ error: "Erro ao criar perfil: " + criticalProfileError.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Update optional fields (telefone, creci, cpf, email) - these may fail due to duplicates
+    if (corretor.telefone || corretor.creci || corretor.cpf || corretor.email) {
+      console.log("Updating profile (optional fields)...");
+      const { error: optionalProfileError } = await supabaseAdmin
+        .from("profiles")
+        .update({ 
+          telefone: corretor.telefone || null,
+          creci: corretor.creci || null,
+          cpf: corretor.cpf || null,
+          email: corretor.email || null,
+        })
+        .eq("user_id", userId);
+
+      if (optionalProfileError) {
+        console.warn("Optional profile fields error (non-critical):", optionalProfileError);
+        // Non-critical: user can update these later in their profile
+        // This handles duplicate phone/cpf cases gracefully
+      }
     }
 
     // 4. Create subscription linked to user_id (only for autonomous brokers without imobiliaria)
