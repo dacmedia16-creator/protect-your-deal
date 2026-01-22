@@ -2130,14 +2130,27 @@ export default function DetalhesFicha() {
           </CardContent>
           </Card>
 
-          {/* Pesquisa Pós-Visita - Only when complete or finalized partial AND feature enabled */}
-          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && surveyFeatureEnabled && (
-            <SurveySection 
-              fichaId={ficha.id} 
-              compradorNome={ficha.comprador_nome} 
-              imovelEndereco={ficha.imovel_endereco}
-            />
-          )}
+          {/* Pesquisa Pós-Visita - Only when buyer confirmed AND feature enabled */}
+          {ficha.comprador_confirmado_em && surveyFeatureEnabled && (() => {
+            // Determinar quem adicionou o comprador
+            const corretorQueAdicionouComprador = 
+              ficha.parte_preenchida_parceiro === 'comprador' 
+                ? ficha.corretor_parceiro_id 
+                : ficha.user_id;
+            
+            const canCreate = user?.id === corretorQueAdicionouComprador;
+            const isPartner = !canCreate && (user?.id === ficha.user_id || user?.id === ficha.corretor_parceiro_id);
+            
+            return (
+              <SurveySection 
+                fichaId={ficha.id} 
+                compradorNome={ficha.comprador_nome} 
+                imovelEndereco={ficha.imovel_endereco}
+                canCreate={canCreate}
+                isPartner={isPartner}
+              />
+            );
+          })()}
 
           {/* Dados Jurídicos - Only when complete or finalized partial */}
           {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (confirmacaoProprietario || confirmacaoComprador) && (
