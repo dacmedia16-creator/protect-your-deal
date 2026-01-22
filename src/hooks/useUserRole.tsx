@@ -9,6 +9,7 @@ interface UserRoleContextType {
   imobiliariaId: string | null;
   imobiliaria: Imobiliaria | null;
   assinatura: Assinatura | null;
+  ativo: boolean | null;
   loading: boolean;
   refetch: () => Promise<void>;
 }
@@ -52,6 +53,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [imobiliariaId, setImobiliariaId] = useState<string | null>(null);
   const [imobiliaria, setImobiliaria] = useState<Imobiliaria | null>(null);
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
+  const [ativo, setAtivo] = useState<boolean | null>(null);
   const [internalLoading, setInternalLoading] = useState(false);
   // Track which user ID we have fetched for - null means never fetched
   const [fetchedForUserId, setFetchedForUserId] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       setImobiliariaId(null);
       setImobiliaria(null);
       setAssinatura(null);
+      setAtivo(null);
       setInternalLoading(false);
       setFetchedForUserId(null);
       return;
@@ -88,6 +91,15 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       if (roleData) {
         setRole(roleData.role as AppRole);
         setImobiliariaId(roleData.imobiliaria_id);
+
+        // Fetch user's active status from profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('ativo')
+          .eq('user_id', currentUserId)
+          .maybeSingle();
+
+        setAtivo(profileData?.ativo ?? true);
 
         // Fetch imobiliaria details if user has one
         if (roleData.imobiliaria_id) {
@@ -181,6 +193,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
           setImobiliariaId(null);
           setImobiliaria(null);
           setAssinatura(null);
+          setAtivo(null);
         }
       }
     } catch (error) {
@@ -215,6 +228,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       imobiliariaId, 
       imobiliaria, 
       assinatura, 
+      ativo,
       loading: isLoading,
       refetch: fetchUserRole
     }}>
