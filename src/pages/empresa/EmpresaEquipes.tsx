@@ -103,6 +103,7 @@ export default function EmpresaEquipes() {
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
   const [membrosDialogOpen, setMembrosDialogOpen] = useState(false);
+  const [viewMembrosDialogOpen, setViewMembrosDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingEquipe, setEditingEquipe] = useState<Equipe | null>(null);
   const [selectedEquipe, setSelectedEquipe] = useState<Equipe | null>(null);
@@ -284,11 +285,8 @@ export default function EmpresaEquipes() {
     }
   }
 
-  async function openMembrosDialog(equipe: Equipe) {
-    setSelectedEquipe(equipe);
-    setMembrosDialogOpen(true);
+  async function fetchMembros(equipeId: string) {
     setLoadingMembros(true);
-
     const { data } = await supabase
       .from('equipes_membros')
       .select(`
@@ -298,11 +296,23 @@ export default function EmpresaEquipes() {
         entrou_em,
         profile:profiles!equipes_membros_user_id_fkey(nome)
       `)
-      .eq('equipe_id', equipe.id)
+      .eq('equipe_id', equipeId)
       .order('entrou_em');
 
     setMembros((data as any) || []);
     setLoadingMembros(false);
+  }
+
+  async function openMembrosDialog(equipe: Equipe) {
+    setSelectedEquipe(equipe);
+    setMembrosDialogOpen(true);
+    await fetchMembros(equipe.id);
+  }
+
+  async function openViewMembrosDialog(equipe: Equipe) {
+    setSelectedEquipe(equipe);
+    setViewMembrosDialogOpen(true);
+    await fetchMembros(equipe.id);
   }
 
   async function addMembro(userId: string) {
@@ -473,8 +483,17 @@ export default function EmpresaEquipes() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => openViewMembrosDialog(equipe)}
+                title="Ver membros"
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex-1"
                 onClick={() => openMembrosDialog(equipe)}
+                title="Gerenciar membros"
               >
                 <UserPlus className="h-4 w-4 mr-1" />
                 Membros
@@ -778,6 +797,62 @@ export default function EmpresaEquipes() {
               </Table>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Ver Membros (somente leitura) */}
+      <Dialog open={viewMembrosDialogOpen} onOpenChange={setViewMembrosDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: selectedEquipe?.cor }}
+              />
+              Membros: {selectedEquipe?.nome}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {loadingMembros ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : membros.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum membro nesta equipe
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {membros.map((membro) => (
+                  <div key={membro.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{membro.profile?.nome}</span>
+                      {membro.user_id === selectedEquipe?.lider_id && (
+                        <Crown className="h-4 w-4 text-warning" />
+                      )}
+                    </div>
+                    <Badge variant="secondary">{membro.cargo}</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewMembrosDialogOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => {
+              setViewMembrosDialogOpen(false);
+              if (selectedEquipe) {
+                openMembrosDialog(selectedEquipe);
+              }
+            }}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Gerenciar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
