@@ -16,9 +16,11 @@ import {
   Handshake,
   Download,
   ClipboardCheck,
-  Loader2
+  Loader2,
+  UsersRound
 } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { useEquipeLider } from '@/hooks/useEquipeLider';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -42,6 +44,7 @@ export function DesktopNav() {
   const { isInstalled, isIOS, isInstallable, install } = usePWAInstall();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
+  const { isLider } = useEquipeLider();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
@@ -185,6 +188,12 @@ export function DesktopNav() {
                 <DropdownMenuItem onClick={() => navigate('/minha-assinatura')} className="cursor-pointer">
                   <CreditCard className="mr-2 h-4 w-4" />
                   Minha Assinatura
+                </DropdownMenuItem>
+              )}
+              {isLider && (
+                <DropdownMenuItem onClick={() => navigate('/minha-equipe')} className="cursor-pointer">
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  Minha Equipe
                 </DropdownMenuItem>
               )}
               {!isInstalled && (

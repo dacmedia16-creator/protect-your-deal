@@ -65,6 +65,7 @@ import CorretorAssinatura from "./pages/CorretorAssinatura";
 import Convites from "./pages/Convites";
 import FichasParceiro from "./pages/FichasParceiro";
 import Pesquisas from "./pages/Pesquisas";
+import MinhaEquipe from "./pages/equipe/MinhaEquipe";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -401,6 +402,11 @@ const App = () => (
                 <Route path="/fichas-parceiro" element={
                   <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
                     <FichasParceiro />
+                  </ProtectedRoute>
+                } />
+                <Route path="/minha-equipe" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <MinhaEquipe />
                   </ProtectedRoute>
                 } />
 

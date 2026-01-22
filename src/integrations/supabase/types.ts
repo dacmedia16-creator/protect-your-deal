@@ -1525,8 +1525,17 @@ export type Database = {
         Args: { equipe_imobiliaria_id: string }
         Returns: boolean
       }
+      is_equipe_lider: { Args: { _user_id: string }; Returns: boolean }
       is_imobiliaria_admin: {
         Args: { _imobiliaria_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_lider_of_equipe: {
+        Args: { _equipe_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_membro_da_minha_equipe: {
+        Args: { _lider_id: string; _membro_user_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
