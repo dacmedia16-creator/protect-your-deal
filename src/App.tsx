@@ -21,6 +21,7 @@ import VerificarComprovante from "./pages/VerificarComprovante";
 import NotFound from "./pages/NotFound";
 import AssinaturaSuspensa from "./pages/AssinaturaSuspensa";
 import SemPermissao from "./pages/SemPermissao";
+import ContaDesativada from "./pages/ContaDesativada";
 import InstalarApp from "./pages/InstalarApp";
 import Funcionalidades from "./pages/Funcionalidades";
 import ComoFunciona from "./pages/ComoFunciona";
@@ -131,6 +132,7 @@ const App = () => (
                 <Route path="/verificar/:protocolo" element={<VerificarComprovante />} />
                 <Route path="/assinatura-suspensa" element={<AssinaturaSuspensa />} />
                 <Route path="/sem-permissao" element={<SemPermissao />} />
+                <Route path="/conta-desativada" element={<ContaDesativada />} />
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/como-funciona" element={<ComoFunciona />} />

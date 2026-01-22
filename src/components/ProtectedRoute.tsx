@@ -19,7 +19,7 @@ export function ProtectedRoute({
   skipTermsCheck = false 
 }: ProtectedRouteProps) {
   const { user, loading: authLoading } = useAuth();
-  const { role, assinatura, loading: roleLoading } = useUserRole();
+  const { role, assinatura, ativo, loading: roleLoading } = useUserRole();
   const { termosAceitos, loading: termosLoading } = useTermosAceitos();
   const location = useLocation();
 
@@ -40,6 +40,11 @@ export function ProtectedRoute({
   // No role assigned - redirect to pending page or auth
   if (!role) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Check if user account is active (super_admin never blocked to prevent lock-out)
+  if (role !== 'super_admin' && ativo === false) {
+    return <Navigate to="/conta-desativada" replace />;
   }
 
   // Check if user has accepted terms (skip for the terms acceptance page itself)
