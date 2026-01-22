@@ -41,7 +41,8 @@ import {
   Target,
   Eye,
   Star,
-  ChevronRight
+  ChevronRight,
+  Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -56,6 +57,7 @@ interface Membro {
   nome: string;
   telefone: string | null;
   ativo: boolean;
+  isLider: boolean;
 }
 
 interface Ficha {
@@ -161,6 +163,17 @@ export default function MinhaEquipe() {
           (profilesData || []).map(p => [p.user_id, p])
         );
 
+        // Fetch equipes to check which members are leaders
+        const { data: equipesComLideres } = await supabase
+          .from('equipes')
+          .select('lider_id')
+          .eq('ativa', true)
+          .not('lider_id', 'is', null);
+
+        const liderIds = new Set(
+          (equipesComLideres || []).map(e => e.lider_id)
+        );
+
         const membrosWithProfile = membrosData.map(m => {
           const profile = profilesMap.get(m.user_id);
           return {
@@ -168,6 +181,7 @@ export default function MinhaEquipe() {
             nome: profile?.nome || 'Sem nome',
             telefone: profile?.telefone || null,
             ativo: profile?.ativo ?? true,
+            isLider: liderIds.has(m.user_id),
           };
         });
 
@@ -579,7 +593,16 @@ export default function MinhaEquipe() {
                     <TableBody>
                       {membros.map((membro) => (
                         <TableRow key={membro.id}>
-                          <TableCell className="font-medium">{membro.nome}</TableCell>
+                          <TableCell className="font-medium">
+                            <span className="flex items-center gap-1.5">
+                              {membro.nome}
+                              {membro.isLider && (
+                                <span title="Líder de equipe">
+                                  <Crown className="h-4 w-4 text-yellow-500" />
+                                </span>
+                              )}
+                            </span>
+                          </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             {membro.telefone ? (
                               <span className="flex items-center gap-1">
