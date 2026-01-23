@@ -44,8 +44,10 @@ import {
   ChevronRight,
   Crown,
   PartyPopper,
-  DollarSign
+  DollarSign,
+  Trophy
 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -408,6 +410,48 @@ export default function MinhaEquipe() {
       });
     }
     return months;
+  }, [fichas]);
+
+  // Ranking mensal - Top 5 corretores com mais registros este mês
+  const rankingMensal = useMemo(() => {
+    const currentMonth = format(new Date(), 'yyyy-MM');
+    
+    // Filtrar apenas fichas do mês atual
+    const fichasMes = fichas.filter(f => f.data_visita.startsWith(currentMonth));
+    
+    // Agrupar por corretor
+    const corretorMap = new Map<string, { 
+      user_id: string; 
+      nome: string; 
+      fichasMes: number; 
+      confirmadas: number;
+      vendas: number;
+    }>();
+    
+    fichasMes.forEach(f => {
+      const existing = corretorMap.get(f.user_id);
+      const isConfirmada = f.status === 'confirmado' || f.status === 'finalizado_parcial';
+      const isVenda = f.convertido_venda === true;
+      
+      if (existing) {
+        existing.fichasMes++;
+        if (isConfirmada) existing.confirmadas++;
+        if (isVenda) existing.vendas++;
+      } else {
+        corretorMap.set(f.user_id, {
+          user_id: f.user_id,
+          nome: f.corretor_nome || 'Desconhecido',
+          fichasMes: 1,
+          confirmadas: isConfirmada ? 1 : 0,
+          vendas: isVenda ? 1 : 0
+        });
+      }
+    });
+    
+    // Ordenar por quantidade de fichas e pegar top 5
+    return Array.from(corretorMap.values())
+      .sort((a, b) => b.fichasMes - a.fichasMes)
+      .slice(0, 5);
   }, [fichas]);
 
   const handleToggleAtivo = async (membro: Membro) => {
@@ -922,6 +966,78 @@ export default function MinhaEquipe() {
                   </Card>
                 )}
               </div>
+
+              {/* Ranking do Mês */}
+              {rankingMensal.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-warning" />
+                        Ranking do Mês
+                      </CardTitle>
+                      <Badge variant="outline">
+                        {format(new Date(), 'MMMM', { locale: ptBR }).charAt(0).toUpperCase() + 
+                         format(new Date(), 'MMMM', { locale: ptBR }).slice(1)}
+                      </Badge>
+                    </div>
+                    <CardDescription>
+                      Top {Math.min(5, rankingMensal.length)} corretores com mais registros este mês
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {rankingMensal.map((corretor, index) => {
+                        const maxFichasMes = rankingMensal[0]?.fichasMes || 1;
+                        const percent = (corretor.fichasMes / maxFichasMes) * 100;
+                        
+                        return (
+                          <div key={corretor.user_id} className="flex items-center gap-3">
+                            {/* Posição com medalha */}
+                            <div className="w-8 text-center flex-shrink-0">
+                              {index === 0 && <span className="text-xl">🥇</span>}
+                              {index === 1 && <span className="text-xl">🥈</span>}
+                              {index === 2 && <span className="text-xl">🥉</span>}
+                              {index > 2 && (
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {index + 1}º
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Nome e barra de progresso */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-medium truncate">{corretor.nome}</span>
+                                <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
+                                  {corretor.fichasMes} {corretor.fichasMes === 1 ? 'registro' : 'registros'}
+                                </span>
+                              </div>
+                              <Progress value={percent} className="h-2" />
+                            </div>
+                            
+                            {/* Badge de confirmação */}
+                            <Badge variant="outline" className={
+                              corretor.confirmadas === corretor.fichasMes && corretor.fichasMes > 0
+                                ? 'bg-success/20 text-success border-success/30 flex-shrink-0'
+                                : 'bg-muted flex-shrink-0'
+                            }>
+                              {corretor.confirmadas}/{corretor.fichasMes}
+                            </Badge>
+                            
+                            {/* Badge de vendas (se houver) */}
+                            {corretor.vendas > 0 && (
+                              <Badge className="bg-success text-success-foreground flex-shrink-0">
+                                {corretor.vendas} 🎉
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Monthly Evolution Chart */}
               <Card>
