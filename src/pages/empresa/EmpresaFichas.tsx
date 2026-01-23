@@ -14,11 +14,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search, PartyPopper } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, PartyPopper, MapPin, Calendar, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 
 interface Ficha {
@@ -35,6 +35,7 @@ interface Ficha {
 
 export default function EmpresaFichas() {
   const { imobiliariaId } = useUserRole();
+  const navigate = useNavigate();
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -157,47 +158,22 @@ export default function EmpresaFichas() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Protocolo</TableHead>
-                      <TableHead>Corretor</TableHead>
-                      <TableHead className="hidden md:table-cell">Endereço</TableHead>
-                      <TableHead className="hidden lg:table-cell">Proprietário</TableHead>
-                      <TableHead className="hidden lg:table-cell">Comprador</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-[100px] text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFichas.map((ficha) => (
-                      <TableRow key={ficha.id}>
-                        <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
-                        <TableCell>
-                          {ficha.corretor_nome ? (
-                            ficha.corretor_nome
-                          ) : (
-                            <span className="text-muted-foreground italic text-sm">
-                              (Corretor removido)
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell max-w-[200px] truncate">
-                          {ficha.imovel_endereco}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {ficha.proprietario_nome || '-'}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {ficha.comprador_nome || '-'}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
+              <>
+                {/* Mobile Layout - Cards clicáveis */}
+                <div className="space-y-3 md:hidden">
+                  {filteredFichas.map((ficha) => (
+                    <Card 
+                      key={ficha.id}
+                      className="cursor-pointer hover:shadow-md active:bg-muted/30 transition-all"
+                      onClick={() => navigate(`/fichas/${ficha.id}`)}
+                    >
+                      <CardContent className="p-3 space-y-2">
+                        {/* Header: Protocolo + Status */}
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-mono text-xs font-medium text-primary">
+                            #{ficha.protocolo}
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end">
                             <Badge variant="outline" className={statusColors[ficha.status]}>
                               {statusLabels[ficha.status] || ficha.status}
                             </Badge>
@@ -208,26 +184,120 @@ export default function EmpresaFichas() {
                               </Badge>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link to={`/fichas/${ficha.id}`}>
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <DeleteFichaDialog 
-                              fichaId={ficha.id} 
-                              protocolo={ficha.protocolo}
-                              onDeleted={fetchFichas}
-                            />
+                        </div>
+                        
+                        {/* Endereço */}
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                          <p className="text-sm font-medium line-clamp-2">{ficha.imovel_endereco}</p>
+                        </div>
+                        
+                        {/* Info: Corretor + Data */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                          <div className="flex items-center gap-1">
+                            <User className="h-3.5 w-3.5" />
+                            <span>
+                              {ficha.corretor_nome || (
+                                <span className="italic">(Corretor removido)</span>
+                              )}
+                            </span>
                           </div>
-                        </TableCell>
+                          <span>•</span>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>{format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Footer com delete */}
+                        <div 
+                          className="flex justify-end pt-2 border-t border-border/50" 
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DeleteFichaDialog 
+                            fichaId={ficha.id} 
+                            protocolo={ficha.protocolo}
+                            onDeleted={fetchFichas}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Layout - Tabela */}
+                <div className="overflow-x-auto hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Protocolo</TableHead>
+                        <TableHead>Corretor</TableHead>
+                        <TableHead className="hidden lg:table-cell">Endereço</TableHead>
+                        <TableHead className="hidden xl:table-cell">Proprietário</TableHead>
+                        <TableHead className="hidden xl:table-cell">Comprador</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[100px] text-right">Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredFichas.map((ficha) => (
+                        <TableRow key={ficha.id}>
+                          <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
+                          <TableCell>
+                            {ficha.corretor_nome ? (
+                              ficha.corretor_nome
+                            ) : (
+                              <span className="text-muted-foreground italic text-sm">
+                                (Corretor removido)
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
+                            {ficha.imovel_endereco}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            {ficha.proprietario_nome || '-'}
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            {ficha.comprador_nome || '-'}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <Badge variant="outline" className={statusColors[ficha.status]}>
+                                {statusLabels[ficha.status] || ficha.status}
+                              </Badge>
+                              {ficha.convertido_venda && (
+                                <Badge variant="outline" className="bg-success/20 text-success border-success/30 gap-1">
+                                  <PartyPopper className="h-3 w-3" />
+                                  Vendido
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Link to={`/fichas/${ficha.id}`}>
+                                <Button variant="ghost" size="icon">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <DeleteFichaDialog 
+                                fichaId={ficha.id} 
+                                protocolo={ficha.protocolo}
+                                onDeleted={fetchFichas}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
