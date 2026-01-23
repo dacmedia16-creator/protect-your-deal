@@ -53,6 +53,33 @@ export type Database = {
         }
         Relationships: []
       }
+      app_versions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          published_at: string
+          published_by: string | null
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          published_at?: string
+          published_by?: string | null
+          version: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          published_at?: string
+          published_by?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       assinaturas: {
         Row: {
           afiliado_id: string | null
