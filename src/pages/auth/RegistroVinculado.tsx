@@ -197,8 +197,15 @@ export default function RegistroVinculado() {
       }
 
       toast.success('Cadastro realizado com sucesso! Aguarde a ativação pelo administrador da imobiliária.', { duration: 6000 });
-      // Redirecionar para seleção de equipe (se houver), senão vai direto para cadastro concluído
-      navigate(`/selecionar-equipe?vinculado=true&imobiliaria_id=${imobiliariaEncontrada.id}&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
+      
+      // Redirecionar para seleção de equipe passando user_id (sem precisar de login)
+      const userId = data?.user_id;
+      if (userId) {
+        navigate(`/selecionar-equipe?vinculado=true&user_id=${userId}&imobiliaria_id=${imobiliariaEncontrada.id}&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
+      } else {
+        // Fallback se não retornar user_id
+        navigate(`/cadastro-concluido?vinculado=true&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
+      }
     } catch (error: any) {
       console.error('Error during registration:', error);
       

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,9 +17,9 @@ interface Equipe {
 
 export default function SelecionarEquipe() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   
+  const userId = searchParams.get('user_id');
   const imobiliariaId = searchParams.get('imobiliaria_id');
   const imobiliariaNome = searchParams.get('imobiliaria');
   
@@ -29,22 +28,20 @@ export default function SelecionarEquipe() {
   const [selectedEquipe, setSelectedEquipe] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch equipes da imobiliária
+  // Fetch equipes da imobiliária usando RPC (sem auth)
   useEffect(() => {
     async function fetchEquipes() {
-      if (!imobiliariaId) {
-        // Se não tiver imobiliaria_id, redirecionar para cadastro concluído
+      // Se não tiver imobiliaria_id ou user_id, redirecionar
+      if (!imobiliariaId || !userId) {
         navigate(`/cadastro-concluido?vinculado=true&imobiliaria=${encodeURIComponent(imobiliariaNome || '')}`);
         return;
       }
 
       try {
-        const { data, error } = await supabase
-          .from('equipes')
-          .select('id, nome, cor, descricao')
-          .eq('imobiliaria_id', imobiliariaId)
-          .eq('ativa', true)
-          .order('nome');
+        // Usar RPC para buscar equipes (sem precisar de auth)
+        const { data, error } = await supabase.rpc('get_equipes_by_imobiliaria', {
+          imob_id: imobiliariaId
+        });
 
         if (error) throw error;
 
@@ -65,33 +62,23 @@ export default function SelecionarEquipe() {
     }
 
     fetchEquipes();
-  }, [imobiliariaId, imobiliariaNome, navigate]);
+  }, [imobiliariaId, imobiliariaNome, userId, navigate]);
 
   async function handleConfirmar() {
-    if (!selectedEquipe || !user?.id) {
+    if (!selectedEquipe || !userId) {
       toast.error('Selecione uma equipe');
       return;
     }
 
     setSubmitting(true);
     try {
-      // Inserir na tabela equipes_membros
-      const { error } = await supabase
-        .from('equipes_membros')
-        .insert({
-          equipe_id: selectedEquipe,
-          user_id: user.id,
-          cargo: 'corretor',
-        });
+      // Usar RPC para adicionar membro (sem precisar de auth)
+      const { error } = await supabase.rpc('add_membro_to_equipe', {
+        p_equipe_id: selectedEquipe,
+        p_user_id: userId
+      });
 
-      if (error) {
-        // Se já estiver na equipe, ignorar o erro
-        if (error.code === '23505') {
-          console.log('Usuário já está na equipe');
-        } else {
-          throw error;
-        }
-      }
+      if (error) throw error;
 
       toast.success('Equipe selecionada com sucesso!');
       navigate(`/cadastro-concluido?vinculado=true&imobiliaria=${encodeURIComponent(imobiliariaNome || '')}`);
@@ -103,7 +90,7 @@ export default function SelecionarEquipe() {
     }
   }
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
