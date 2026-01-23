@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -62,6 +62,8 @@ interface Corretor {
   ativo: boolean;
   equipe?: Equipe | null;
   role: 'corretor' | 'imobiliaria_admin';
+  isLider: boolean;
+  equipeQueLidera?: string | null;
 }
 
 interface Convite {
@@ -104,15 +106,23 @@ export default function EmpresaCorretores() {
     if (!imobiliariaId) return;
 
     try {
-      // Fetch equipes first
+      // Fetch equipes first (including lider_id for leader detection)
       const { data: equipesData } = await supabase
         .from('equipes')
-        .select('id, nome, cor')
+        .select('id, nome, cor, lider_id')
         .eq('imobiliaria_id', imobiliariaId)
         .eq('ativa', true)
         .order('nome');
 
       setEquipes(equipesData || []);
+
+      // Build leaders map: user_id -> team name they lead
+      const lideresMap: Record<string, string> = {};
+      (equipesData || []).forEach((equipe: any) => {
+        if (equipe.lider_id) {
+          lideresMap[equipe.lider_id] = equipe.nome;
+        }
+      });
 
       // Fetch corretores and admins (users with corretor or imobiliaria_admin role in this imobiliaria)
       const { data: rolesData, error: rolesError } = await supabase
@@ -188,6 +198,8 @@ export default function EmpresaCorretores() {
               ativo: profile.ativo ?? true,
               equipe: membrosMap[profile.user_id] || null,
               role: (roleData?.role as 'corretor' | 'imobiliaria_admin') || 'corretor',
+              isLider: !!lideresMap[profile.user_id],
+              equipeQueLidera: lideresMap[profile.user_id] || null,
             };
           })
         );
@@ -790,19 +802,27 @@ export default function EmpresaCorretores() {
                           <p className="font-medium">{corretor.nome}</p>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <Badge variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} className="gap-1">
-                            {corretor.role === 'imobiliaria_admin' ? (
-                              <>
-                                <ShieldCheck className="h-3 w-3" />
-                                Admin
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="h-3 w-3" />
-                                Corretor
-                              </>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} className="gap-1">
+                              {corretor.role === 'imobiliaria_admin' ? (
+                                <>
+                                  <ShieldCheck className="h-3 w-3" />
+                                  Admin
+                                </>
+                              ) : (
+                                <>
+                                  <Shield className="h-3 w-3" />
+                                  Corretor
+                                </>
+                              )}
+                            </Badge>
+                            {corretor.isLider && (
+                              <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20" title={`Líder da equipe ${corretor.equipeQueLidera}`}>
+                                <Crown className="h-3 w-3" />
+                                Líder
+                              </Badge>
                             )}
-                          </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           {corretor.equipe ? (
