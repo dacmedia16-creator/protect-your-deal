@@ -791,7 +791,7 @@ export default function EmpresaEquipes() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => navigate(`/empresa/corretores?highlight=${membro.user_id}`)}
+                            onClick={() => navigate(`/empresa/corretores/${membro.user_id}`)}
                             className="hover:underline hover:text-primary text-left cursor-pointer transition-colors"
                           >
                             {membro.profile?.nome}
@@ -853,7 +853,7 @@ export default function EmpresaEquipes() {
                   <div key={membro.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => navigate(`/empresa/corretores?highlight=${membro.user_id}`)}
+                        onClick={() => navigate(`/empresa/corretores/${membro.user_id}`)}
                         className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors"
                       >
                         {membro.profile?.nome}
