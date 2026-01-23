@@ -19,11 +19,47 @@ interface VersionCheckResult {
  * - Periodicamente a cada 5 minutos
  * 
  * Se detectar versão diferente, força atualização automática.
+ * 
+ * Super admins automaticamente registram novas versões ao abrir o app.
  */
 export function useVersionCheck() {
   const lastCheckRef = useRef<number>(0);
   const isCheckingRef = useRef(false);
   const hasShownToastRef = useRef(false);
+  const hasRegisteredRef = useRef(false);
+
+  /**
+   * Registra a versão atual no banco de dados.
+   * Só funciona para super_admin - outros usuários são ignorados silenciosamente.
+   */
+  const registerVersion = useCallback(async () => {
+    // Evitar múltiplos registros
+    if (hasRegisteredRef.current) return;
+    if (LOCAL_VERSION === 'unknown') return;
+
+    hasRegisteredRef.current = true;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('register-version', {
+        body: { version: LOCAL_VERSION }
+      });
+
+      if (error) {
+        console.warn('Erro ao registrar versão:', error);
+        hasRegisteredRef.current = false; // Permitir retry
+        return;
+      }
+
+      if (data?.registered) {
+        console.log(`✅ Versão ${LOCAL_VERSION} registrada com sucesso`);
+      } else if (data?.reason === 'already_exists') {
+        console.log(`Versão ${LOCAL_VERSION} já está registrada`);
+      }
+    } catch (err) {
+      console.warn('Falha ao registrar versão:', err);
+      hasRegisteredRef.current = false; // Permitir retry
+    }
+  }, []);
 
   const checkVersion = useCallback(async (): Promise<VersionCheckResult> => {
     // Evitar múltiplas verificações simultâneas
@@ -50,8 +86,9 @@ export function useVersionCheck() {
 
       const serverVersion = data?.version;
 
-      // Se não há versão no servidor, ignora
+      // Se não há versão no servidor, tenta registrar (se for super_admin)
       if (!serverVersion) {
+        registerVersion();
         return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
       }
 
@@ -60,6 +97,9 @@ export function useVersionCheck() {
 
       if (needsUpdate) {
         console.log(`Nova versão disponível: ${serverVersion} (atual: ${LOCAL_VERSION})`);
+      } else {
+        // Versão igual - registrar para garantir que está no banco
+        registerVersion();
       }
 
       return { needsUpdate, serverVersion, localVersion: LOCAL_VERSION };
@@ -69,7 +109,7 @@ export function useVersionCheck() {
     } finally {
       isCheckingRef.current = false;
     }
-  }, []);
+  }, [registerVersion]);
 
   const forceUpdate = useCallback(async () => {
     console.log('Forçando atualização do app...');
@@ -175,6 +215,7 @@ export function useVersionCheck() {
   return {
     checkVersion,
     forceUpdate,
+    registerVersion,
     localVersion: LOCAL_VERSION,
   };
 }
