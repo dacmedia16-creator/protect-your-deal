@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { Loader2, CheckCircle, AlertCircle, MapPin, Calendar, User, Building2 } 
 import { PUBLIC_BRAND_NAME } from '@/lib/appConfig';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 interface SurveyData {
   survey: {
@@ -37,6 +38,9 @@ interface RatingItem {
 
 export default function SurveyPublic() {
   const { token } = useParams<{ token: string }>();
+  
+  // Set specific page title for survey
+  useDocumentTitle("Pesquisa de Satisfação - Avalie sua Visita");
   
   const [ratings, setRatings] = useState<Record<string, number | null>>({
     rating_location: null,
