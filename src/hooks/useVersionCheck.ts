@@ -30,12 +30,15 @@ export function useVersionCheck() {
 
   /**
    * Registra a versão atual no banco de dados.
-   * Só funciona para super_admin - outros usuários são ignorados silenciosamente.
+   * Qualquer usuário autenticado pode registrar - operação idempotente.
    */
   const registerVersion = useCallback(async () => {
-    // Evitar múltiplos registros
     if (hasRegisteredRef.current) return;
     if (LOCAL_VERSION === 'unknown') return;
+
+    // Verificar se usuário está autenticado
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
     hasRegisteredRef.current = true;
 
@@ -46,7 +49,7 @@ export function useVersionCheck() {
 
       if (error) {
         console.warn('Erro ao registrar versão:', error);
-        hasRegisteredRef.current = false; // Permitir retry
+        hasRegisteredRef.current = false;
         return;
       }
 
@@ -57,7 +60,7 @@ export function useVersionCheck() {
       }
     } catch (err) {
       console.warn('Falha ao registrar versão:', err);
-      hasRegisteredRef.current = false; // Permitir retry
+      hasRegisteredRef.current = false;
     }
   }, []);
 

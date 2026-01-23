@@ -35,21 +35,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is super_admin
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'super_admin')
-      .maybeSingle();
-
-    if (roleError || !roleData) {
-      // Not a super_admin - silently return success (don't expose role info)
-      return new Response(
-        JSON.stringify({ registered: false, reason: 'not_authorized' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Qualquer usuário autenticado pode registrar versão
+    // A operação é idempotente (não cria duplicatas)
 
     // Get version from request body
     const { version } = await req.json();
