@@ -42,7 +42,9 @@ import {
   Eye,
   Star,
   ChevronRight,
-  Crown
+  Crown,
+  PartyPopper,
+  DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -68,6 +70,9 @@ interface Ficha {
   status: string;
   user_id: string;
   corretor_nome: string;
+  convertido_venda: boolean | null;
+  valor_venda: number | null;
+  convertido_em: string | null;
 }
 
 interface Survey {
@@ -117,6 +122,9 @@ interface MembroPerformance {
   surveysRespondidas: number;
   taxaResposta: number;
   mediaAvaliacao: number | null;
+  totalVendas: number;
+  taxaConversao: number;
+  volumeVendas: number;
 }
 
 export default function MinhaEquipe() {
@@ -191,7 +199,7 @@ export default function MinhaEquipe() {
         // Fetch ALL fichas for team members (for reports)
         const { data: fichasData } = await supabase
           .from('fichas_visita')
-          .select('id, protocolo, imovel_endereco, data_visita, status, user_id')
+          .select('id, protocolo, imovel_endereco, data_visita, status, user_id, convertido_venda, valor_venda, convertido_em')
           .in('user_id', userIds)
           .order('data_visita', { ascending: false });
 
@@ -199,6 +207,9 @@ export default function MinhaEquipe() {
           const fichasWithNome = fichasData.map(f => ({
             ...f,
             corretor_nome: profilesMap.get(f.user_id)?.nome || 'Desconhecido',
+            convertido_venda: f.convertido_venda ?? null,
+            valor_venda: f.valor_venda ?? null,
+            convertido_em: f.convertido_em ?? null,
           }));
           setFichas(fichasWithNome);
         }
@@ -269,7 +280,17 @@ export default function MinhaEquipe() {
   const performanceData = useMemo((): MembroPerformance[] => {
     return membros.map(membro => {
       const membroFichas = fichas.filter(f => f.user_id === membro.user_id);
-      const fichasConfirmadas = membroFichas.filter(f => f.status === 'confirmado').length;
+      const fichasConfirmadas = membroFichas.filter(f => 
+        f.status === 'confirmado' || f.status === 'finalizado_parcial'
+      ).length;
+      
+      // Sales metrics
+      const fichasVendidas = membroFichas.filter(f => f.convertido_venda === true);
+      const totalVendas = fichasVendidas.length;
+      const volumeVendas = fichasVendidas.reduce((sum, f) => sum + (f.valor_venda || 0), 0);
+      const taxaConversao = fichasConfirmadas > 0 
+        ? (totalVendas / fichasConfirmadas) * 100 
+        : 0;
       
       const membroSurveys = surveys.filter(s => s.corretor_id === membro.user_id);
       const surveysRespondidas = membroSurveys.filter(s => s.status === 'responded').length;
@@ -302,6 +323,9 @@ export default function MinhaEquipe() {
         surveysRespondidas,
         taxaResposta: membroSurveys.length > 0 ? (surveysRespondidas / membroSurveys.length) * 100 : 0,
         mediaAvaliacao,
+        totalVendas,
+        taxaConversao,
+        volumeVendas,
       };
     }).sort((a, b) => b.totalFichas - a.totalFichas);
   }, [membros, fichas, surveys, surveyResponses]);
@@ -318,9 +342,19 @@ export default function MinhaEquipe() {
   // Team totals
   const teamTotals = useMemo(() => {
     const totalFichas = fichas.length;
-    const fichasConfirmadas = fichas.filter(f => f.status === 'confirmado').length;
+    const fichasConfirmadas = fichas.filter(f => 
+      f.status === 'confirmado' || f.status === 'finalizado_parcial'
+    ).length;
     const totalSurveys = surveys.length;
     const surveysRespondidas = surveys.filter(s => s.status === 'responded').length;
+    
+    // Sales metrics
+    const fichasVendidas = fichas.filter(f => f.convertido_venda === true);
+    const totalVendas = fichasVendidas.length;
+    const volumeVendas = fichasVendidas.reduce((sum, f) => sum + (f.valor_venda || 0), 0);
+    const taxaConversao = fichasConfirmadas > 0 
+      ? (totalVendas / fichasConfirmadas) * 100 
+      : 0;
     
     // Overall average rating
     let mediaGeral: number | null = null;
@@ -345,6 +379,9 @@ export default function MinhaEquipe() {
       surveysRespondidas,
       taxaResposta: totalSurveys > 0 ? (surveysRespondidas / totalSurveys) * 100 : 0,
       mediaGeral,
+      totalVendas,
+      taxaConversao,
+      volumeVendas,
     };
   }, [fichas, surveys, surveyResponses]);
 
@@ -364,7 +401,10 @@ export default function MinhaEquipe() {
       months.push({
         month: format(date, 'MMM', { locale: ptBR }),
         fichas: monthFichas.length,
-        confirmadas: monthFichas.filter(f => f.status === 'confirmado').length,
+        confirmadas: monthFichas.filter(f => 
+          f.status === 'confirmado' || f.status === 'finalizado_parcial'
+        ).length,
+        vendas: monthFichas.filter(f => f.convertido_venda === true).length,
       });
     }
     return months;
@@ -696,11 +736,17 @@ export default function MinhaEquipe() {
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="font-mono text-sm font-medium">
                                   {ficha.protocolo}
                                 </span>
                                 {getStatusBadge(ficha.status)}
+                                {ficha.convertido_venda && (
+                                  <Badge className="bg-success text-success-foreground gap-1">
+                                    <PartyPopper className="h-3 w-3" />
+                                    Vendido
+                                  </Badge>
+                                )}
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 {ficha.corretor_nome}
@@ -797,7 +843,7 @@ export default function MinhaEquipe() {
           <TabsContent value="relatorios">
             <div className="space-y-6">
               {/* Team Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 <Card>
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-2">
@@ -820,33 +866,60 @@ export default function MinhaEquipe() {
                     </div>
                   </CardContent>
                 </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2">
+                      <PartyPopper className="h-5 w-5 text-success" />
+                      <div>
+                        <p className="text-2xl font-bold">{teamTotals.totalVendas}</p>
+                        <p className="text-xs text-muted-foreground">Vendas</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="text-2xl font-bold">{teamTotals.taxaConversao.toFixed(0)}%</p>
+                        <p className="text-xs text-muted-foreground">Taxa Conversão</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-success" />
+                      <div>
+                        <p className="text-2xl font-bold">
+                          {teamTotals.volumeVendas.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            notation: 'compact',
+                            maximumFractionDigits: 1
+                          })}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Volume Vendas</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
                 {surveyEnabled && (
-                  <>
-                    <Card>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-5 w-5 text-primary" />
-                          <div>
-                            <p className="text-2xl font-bold">{teamTotals.taxaResposta.toFixed(0)}%</p>
-                            <p className="text-xs text-muted-foreground">Taxa Resposta</p>
-                          </div>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className={`h-5 w-5 ${getRatingColor(teamTotals.mediaGeral)}`} />
+                        <div>
+                          <p className={`text-2xl font-bold ${getRatingColor(teamTotals.mediaGeral)}`}>
+                            {teamTotals.mediaGeral !== null ? teamTotals.mediaGeral.toFixed(1) : '-'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Média Geral</p>
                         </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className={`h-5 w-5 ${getRatingColor(teamTotals.mediaGeral)}`} />
-                          <div>
-                            <p className={`text-2xl font-bold ${getRatingColor(teamTotals.mediaGeral)}`}>
-                              {teamTotals.mediaGeral !== null ? teamTotals.mediaGeral.toFixed(1) : '-'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">Média Geral</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
 
@@ -880,7 +953,8 @@ export default function MinhaEquipe() {
                             }}
                           />
                           <Bar dataKey="fichas" name="Total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="confirmadas" name="Confirmadas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="confirmadas" name="Confirmadas" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="vendas" name="Vendas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -921,7 +995,7 @@ export default function MinhaEquipe() {
                             )}
                           </div>
                           
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
                             <div>
                               <p className="text-muted-foreground">Registros</p>
                               <p className="font-bold text-lg">{p.totalFichas}</p>
@@ -933,6 +1007,14 @@ export default function MinhaEquipe() {
                             <div>
                               <p className="text-muted-foreground">Taxa Confirm.</p>
                               <p className="font-bold text-lg">{p.taxaConfirmacao.toFixed(0)}%</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Vendas</p>
+                              <p className="font-bold text-lg text-success">{p.totalVendas}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Taxa Conv.</p>
+                              <p className="font-bold text-lg">{p.taxaConversao.toFixed(0)}%</p>
                             </div>
                             {surveyEnabled && (
                               <div>
