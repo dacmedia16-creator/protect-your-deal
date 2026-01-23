@@ -24,11 +24,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User, CheckCircle2, Shield } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User, CheckCircle2, Shield, MapPin, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 
 interface Ficha {
@@ -116,6 +116,7 @@ export default function AdminFichas() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   const fetchFichas = useCallback(async () => {
     try {
@@ -373,13 +374,64 @@ export default function AdminFichas() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4">
-                  <div className="rounded-md border overflow-x-auto">
+                  {/* Mobile Layout - Cards */}
+                  <div className="md:hidden space-y-3">
+                    {group.fichas.map((ficha) => (
+                      <div 
+                        key={ficha.id}
+                        className="bg-background border rounded-lg p-3 space-y-2 cursor-pointer hover:shadow-md active:bg-muted/30 transition-all"
+                        onClick={() => navigate(`/fichas/${ficha.id}`)}
+                      >
+                        {/* Header: Protocolo + Status */}
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-mono text-xs font-medium text-primary">
+                            #{ficha.protocolo}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className={statusColors[ficha.status]}>
+                              {statusLabels[ficha.status] || ficha.status}
+                            </Badge>
+                            {ficha.backup_gerado_em && (
+                              <HardDrive className="h-3.5 w-3.5 text-green-500" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Endereço */}
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-sm font-medium line-clamp-2">{ficha.imovel_endereco}</p>
+                        </div>
+                        
+                        {/* Info: Corretor + Data */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <User className="h-3.5 w-3.5" />
+                          <span className="line-clamp-1">{ficha.corretor_nome}</span>
+                          <span>•</span>
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}</span>
+                        </div>
+                        
+                        {/* Footer com delete */}
+                        <div className="flex justify-end pt-1 border-t" onClick={(e) => e.stopPropagation()}>
+                          <DeleteFichaDialog 
+                            fichaId={ficha.id} 
+                            protocolo={ficha.protocolo}
+                            onDeleted={fetchFichas}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Layout - Tabela */}
+                  <div className="hidden md:block rounded-md border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Protocolo</TableHead>
                           <TableHead>Corretor</TableHead>
-                          <TableHead className="hidden lg:table-cell">Endereço</TableHead>
+                          <TableHead>Endereço</TableHead>
                           <TableHead>Data</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Backup</TableHead>
@@ -391,7 +443,7 @@ export default function AdminFichas() {
                           <TableRow key={ficha.id}>
                             <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
                             <TableCell>{ficha.corretor_nome}</TableCell>
-                            <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
+                            <TableCell className="max-w-[200px] truncate">
                               {ficha.imovel_endereco}
                             </TableCell>
                             <TableCell>

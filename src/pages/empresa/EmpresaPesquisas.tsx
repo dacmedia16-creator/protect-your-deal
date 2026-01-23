@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -44,6 +44,8 @@ import {
   FileSpreadsheet,
   FileText,
   BarChart3,
+  MapPin,
+  Calendar,
 } from 'lucide-react';
 import { useSurveyExport } from '@/hooks/useSurveyExport';
 import { toast } from 'sonner';
@@ -91,6 +93,7 @@ export default function EmpresaPesquisas() {
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
   const { exportToExcel, exportToPDF, exportSingleToPDF } = useSurveyExport();
+  const navigate = useNavigate();
 
   const { data: surveys, isLoading, refetch } = useQuery({
     queryKey: ['empresa-surveys', imobiliariaId, filter],
@@ -393,71 +396,136 @@ export default function EmpresaPesquisas() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : surveys && surveys.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="hidden md:table-cell">Imóvel</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden sm:table-cell">Data Envio</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile Layout - Cards */}
+                <div className="md:hidden space-y-3 p-4">
                   {surveys.map((survey) => (
-                    <TableRow key={survey.id}>
-                      <TableCell className="font-medium">
-                        {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell max-w-[200px] truncate">
-                        {survey.fichas_visita?.imovel_endereco || '-'}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(survey.status)}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {survey.sent_at 
-                          ? format(new Date(survey.sent_at), 'dd/MM/yyyy', { locale: ptBR })
-                          : '-'
+                    <div 
+                      key={survey.id}
+                      className="bg-background border rounded-lg p-3 space-y-2 cursor-pointer hover:shadow-md active:bg-muted/30 transition-all"
+                      onClick={() => {
+                        if (survey.status === 'responded') {
+                          setSelectedSurvey(survey);
+                        } else if (survey.fichas_visita) {
+                          navigate(`/fichas/${survey.ficha_id}`);
                         }
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {survey.status === 'responded' && (
-                            <>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setSelectedSurvey(survey)}
-                              >
-                                Ver respostas
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleExportSinglePDF(survey)}
-                                title="Exportar PDF"
-                              >
-                                <FileText className="h-4 w-4 text-primary" />
-                              </Button>
-                            </>
-                          )}
-                          {survey.fichas_visita && (
-                            <Link to={`/fichas/${survey.ficha_id}`}>
-                              <Button variant="ghost" size="sm">
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                          )}
-                          <DeleteSurveyDialog
-                            surveyId={survey.id}
-                            clientName={survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
-                            onDeleted={() => refetch()}
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      }}
+                    >
+                      {/* Header: Cliente + Status */}
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-medium text-sm line-clamp-1">
+                          {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                        </span>
+                        {getStatusBadge(survey.status)}
+                      </div>
+                      
+                      {/* Endereço do imóvel */}
+                      <div className="flex items-start gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm line-clamp-2">{survey.fichas_visita?.imovel_endereco || '-'}</p>
+                      </div>
+                      
+                      {/* Data de envio */}
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>
+                          {survey.sent_at 
+                            ? format(new Date(survey.sent_at), 'dd/MM/yyyy', { locale: ptBR })
+                            : '-'
+                          }
+                        </span>
+                      </div>
+                      
+                      {/* Footer com ações */}
+                      <div className="flex justify-end gap-2 pt-1 border-t" onClick={(e) => e.stopPropagation()}>
+                        {survey.status === 'responded' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleExportSinglePDF(survey)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <DeleteSurveyDialog
+                          surveyId={survey.id}
+                          clientName={survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                          onDeleted={() => refetch()}
+                        />
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop Layout - Tabela */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Imóvel</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data Envio</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {surveys.map((survey) => (
+                        <TableRow key={survey.id}>
+                          <TableCell className="font-medium">
+                            {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {survey.fichas_visita?.imovel_endereco || '-'}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(survey.status)}</TableCell>
+                          <TableCell>
+                            {survey.sent_at 
+                              ? format(new Date(survey.sent_at), 'dd/MM/yyyy', { locale: ptBR })
+                              : '-'
+                            }
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {survey.status === 'responded' && (
+                                <>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setSelectedSurvey(survey)}
+                                  >
+                                    Ver respostas
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleExportSinglePDF(survey)}
+                                    title="Exportar PDF"
+                                  >
+                                    <FileText className="h-4 w-4 text-primary" />
+                                  </Button>
+                                </>
+                              )}
+                              {survey.fichas_visita && (
+                                <Link to={`/fichas/${survey.ficha_id}`}>
+                                  <Button variant="ghost" size="sm">
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              )}
+                              <DeleteSurveyDialog
+                                surveyId={survey.id}
+                                clientName={survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                                onDeleted={() => refetch()}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <ClipboardCheck className="h-12 w-12 mb-4 opacity-50" />
