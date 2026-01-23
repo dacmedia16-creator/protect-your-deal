@@ -123,7 +123,7 @@ export default function MinhaEquipe() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isLider, equipesLideradas, loading: loadingLider } = useEquipeLider();
-  const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+  const { enabled: surveyEnabled, loading: surveyLoading } = useImobiliariaFeatureFlag('post_visit_survey');
   
   const [membros, setMembros] = useState<Membro[]>([]);
   const [fichas, setFichas] = useState<Ficha[]>([]);
@@ -423,7 +423,7 @@ export default function MinhaEquipe() {
     return 'hsl(var(--primary))';
   };
 
-  if (loadingLider) {
+  if (loadingLider || surveyLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

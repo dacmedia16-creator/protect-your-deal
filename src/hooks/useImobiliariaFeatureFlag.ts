@@ -4,9 +4,10 @@ import { useUserRole } from '@/hooks/useUserRole';
 
 /**
  * Hook para verificar se uma feature está habilitada para a imobiliária do usuário atual
+ * Retorna loading=true enquanto o useUserRole ou a query estiverem carregando
  */
 export function useImobiliariaFeatureFlag(featureKey: string) {
-  const { imobiliariaId } = useUserRole();
+  const { imobiliariaId, loading: roleLoading } = useUserRole();
 
   const { data, isLoading } = useQuery({
     queryKey: ['imobiliaria-feature-flag', imobiliariaId, featureKey],
@@ -27,12 +28,12 @@ export function useImobiliariaFeatureFlag(featureKey: string) {
       
       return { enabled: data?.enabled ?? false };
     },
-    enabled: !!imobiliariaId,
+    enabled: !!imobiliariaId && !roleLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
   return {
     enabled: data?.enabled ?? false,
-    loading: isLoading,
+    loading: roleLoading || isLoading,
   };
 }
