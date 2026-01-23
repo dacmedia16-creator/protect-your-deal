@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
@@ -78,6 +78,7 @@ interface Convite {
 export default function EmpresaCorretores() {
   const { imobiliariaId, assinatura } = useUserRole();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [convites, setConvites] = useState<Convite[]>([]);
   const [equipes, setEquipes] = useState<Equipe[]>([]);
@@ -227,6 +228,19 @@ export default function EmpresaCorretores() {
   useEffect(() => {
     fetchData();
   }, [imobiliariaId]);
+
+  // Detectar parâmetro highlight na URL para abrir modal automaticamente
+  useEffect(() => {
+    const highlightUserId = searchParams.get('highlight');
+    if (highlightUserId && corretores.length > 0) {
+      const corretor = corretores.find(c => c.user_id === highlightUserId);
+      if (corretor) {
+        openEditDialog(corretor);
+        // Limpa o parâmetro da URL após abrir
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, corretores]);
 
   async function sendConvite(e: React.FormEvent) {
     e.preventDefault();
