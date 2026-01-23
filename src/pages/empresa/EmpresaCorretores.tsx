@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown, ArrowLeft } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -981,10 +981,24 @@ export default function EmpresaCorretores() {
                   onChange={(e) => setEditForm({ ...editForm, creci: e.target.value })}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={editing}>
-                {editing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
-                Salvar Alterações
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setEditDialogOpen(false);
+                    navigate('/empresa/equipes');
+                  }}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Voltar para Equipes
+                </Button>
+                <Button type="submit" className="flex-1" disabled={editing}>
+                  {editing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
+                  Salvar
+                </Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>
