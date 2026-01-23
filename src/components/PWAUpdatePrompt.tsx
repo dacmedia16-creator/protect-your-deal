@@ -21,15 +21,15 @@ export function PWAUpdatePrompt() {
         if (shownRef.current) return;
         shownRef.current = true;
 
-        // Para apps instalados, aplica automaticamente após 5s
+        // Para apps instalados, aplica automaticamente após 1s (mais rápido)
         if (isStandalone) {
           toast("Atualizando...", {
             description: "Uma nova versão está sendo aplicada.",
-            duration: 5000,
+            duration: 1500,
           });
           setTimeout(() => {
             updateSW(true);
-          }, 5000);
+          }, 1000);
           return;
         }
 

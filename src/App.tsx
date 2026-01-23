@@ -11,6 +11,7 @@ import { SmartRedirect } from "@/components/SmartRedirect";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { ChatAssistente } from "@/components/ChatAssistente";
+import { VersionCheck } from "@/components/VersionCheck";
 
 // Public pages
 import Index from "./pages/Index";
@@ -117,6 +118,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <PWAUpdatePrompt />
+              <VersionCheck />
               <PWAInstallModal />
               <ChatAssistente />
               <Routes>

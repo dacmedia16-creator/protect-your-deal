@@ -140,3 +140,6 @@ verify_jwt = false
 
 [functions.survey-og]
 verify_jwt = false
+
+[functions.app-version]
+verify_jwt = false
