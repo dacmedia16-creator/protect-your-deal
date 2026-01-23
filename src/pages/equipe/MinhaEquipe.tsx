@@ -133,6 +133,7 @@ export default function MinhaEquipe() {
   const [togglingUser, setTogglingUser] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('membros');
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const [filtroCorretor, setFiltroCorretor] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user?.id || equipesLideradas.length === 0) {
@@ -594,14 +595,24 @@ export default function MinhaEquipe() {
                       {membros.map((membro) => (
                         <TableRow key={membro.id}>
                           <TableCell className="font-medium">
-                            <span className="flex items-center gap-1.5">
+                            <button
+                              className="flex items-center gap-1.5 text-left hover:text-primary hover:underline transition-colors"
+                              onClick={() => {
+                                setFiltroCorretor(membro.user_id);
+                                setActiveTab('registros');
+                              }}
+                              title="Ver registros deste corretor"
+                            >
                               {membro.nome}
                               {membro.isLider && (
                                 <span title="Líder de equipe">
                                   <Crown className="h-4 w-4 text-yellow-500" />
                                 </span>
                               )}
-                            </span>
+                              <Badge variant="outline" className="ml-1 text-xs">
+                                {fichas.filter(f => f.user_id === membro.user_id).length}
+                              </Badge>
+                            </button>
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
                             {membro.telefone ? (
@@ -644,23 +655,39 @@ export default function MinhaEquipe() {
           <TabsContent value="registros">
             <Card>
               <CardHeader>
-                <CardTitle>Registros de Visita</CardTitle>
-                <CardDescription>
-                  Fichas criadas pelos membros da equipe
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Registros de Visita</CardTitle>
+                    <CardDescription>
+                      {filtroCorretor 
+                        ? `Mostrando registros de ${membros.find(m => m.user_id === filtroCorretor)?.nome || 'corretor'}`
+                        : 'Fichas criadas pelos membros da equipe'
+                      }
+                    </CardDescription>
+                  </div>
+                  {filtroCorretor && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setFiltroCorretor(null)}
+                    >
+                      Limpar filtro
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
-                ) : fichas.length === 0 ? (
+                ) : fichas.filter(f => !filtroCorretor || f.user_id === filtroCorretor).length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
                     Nenhum registro encontrado
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {fichas.slice(0, 50).map((ficha) => (
+                    {fichas.filter(f => !filtroCorretor || f.user_id === filtroCorretor).slice(0, 50).map((ficha) => (
                       <Card 
                         key={ficha.id}
                         className="hover:shadow-md transition-shadow cursor-pointer"
