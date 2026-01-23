@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -92,6 +93,7 @@ const CORES = [
 ];
 
 export default function EmpresaEquipes() {
+  const navigate = useNavigate();
   const { imobiliariaId } = useUserRole();
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [allEquipes, setAllEquipes] = useState<Equipe[]>([]);
@@ -788,7 +790,12 @@ export default function EmpresaEquipes() {
                     <TableRow key={membro.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {membro.profile?.nome}
+                          <button
+                            onClick={() => navigate(`/empresa/corretores?highlight=${membro.user_id}`)}
+                            className="hover:underline hover:text-primary text-left cursor-pointer transition-colors"
+                          >
+                            {membro.profile?.nome}
+                          </button>
                           {membro.user_id === selectedEquipe?.lider_id && (
                             <Crown className="h-4 w-4 text-warning" />
                           )}
@@ -845,7 +852,12 @@ export default function EmpresaEquipes() {
                 {membros.map((membro) => (
                   <div key={membro.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{membro.profile?.nome}</span>
+                      <button
+                        onClick={() => navigate(`/empresa/corretores?highlight=${membro.user_id}`)}
+                        className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors"
+                      >
+                        {membro.profile?.nome}
+                      </button>
                       {membro.user_id === selectedEquipe?.lider_id && (
                         <Crown className="h-4 w-4 text-warning" />
                       )}
