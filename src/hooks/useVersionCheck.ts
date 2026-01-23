@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutos
 const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
 
 interface VersionCheckResult {
