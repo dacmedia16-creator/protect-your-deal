@@ -61,7 +61,7 @@ export function PWAInstallPrompt() {
 
     // Mostrar após pequeno delay para melhor UX
     const timer = setTimeout(() => {
-      const shouldShow = isInstallable || isIOS || (isAndroid && canShowManualInstall);
+      const shouldShow = isInstallable || (isAndroid && canShowManualInstall);
       setIsVisible(shouldShow && !isIOSWrongBrowser);
     }, 2000);
 
