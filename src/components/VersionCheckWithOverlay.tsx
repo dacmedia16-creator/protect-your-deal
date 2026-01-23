@@ -14,6 +14,24 @@ interface VersionCheckResult {
 }
 
 /**
+ * Compara duas versões no formato "YYYY-MM-DD HH:mm" e retorna true se server > local.
+ */
+function isServerVersionNewer(serverVersion: string, localVersion: string): boolean {
+  try {
+    // Formato: "2026-01-23 17:58"
+    const serverDate = new Date(serverVersion.replace(' ', 'T'));
+    const localDate = new Date(localVersion.replace(' ', 'T'));
+    
+    // Só precisa atualizar se a versão do servidor for MAIS NOVA
+    return serverDate.getTime() > localDate.getTime();
+  } catch (err) {
+    console.warn('Erro ao comparar versões:', err);
+    // Em caso de erro, assume que não precisa atualizar
+    return false;
+  }
+}
+
+/**
  * Componente que verifica atualizações e exibe overlay com countdown.
  */
 export function VersionCheckWithOverlay() {
@@ -143,7 +161,16 @@ export function VersionCheckWithOverlay() {
         return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
       }
 
-      const needsUpdate = serverVersion !== LOCAL_VERSION && LOCAL_VERSION !== 'unknown';
+      // Só precisa atualizar se a versão do servidor for MAIS NOVA que a local
+      const needsUpdate = serverVersion !== LOCAL_VERSION 
+        && LOCAL_VERSION !== 'unknown'
+        && isServerVersionNewer(serverVersion, LOCAL_VERSION);
+
+      // Se a versão local for mais nova ou igual, registra no banco
+      if (!needsUpdate && LOCAL_VERSION !== 'unknown') {
+        console.log(`📝 Versão local (${LOCAL_VERSION}) >= servidor (${serverVersion}), registrando...`);
+        registerVersion();
+      }
 
       return { needsUpdate, serverVersion, localVersion: LOCAL_VERSION };
     } catch (err) {
