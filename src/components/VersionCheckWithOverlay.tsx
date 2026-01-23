@@ -15,7 +15,6 @@ interface VersionCheckResult {
 
 /**
  * Componente que verifica atualizações e exibe overlay com countdown.
- * Substitui o VersionCheck.tsx original.
  */
 export function VersionCheckWithOverlay() {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -26,6 +25,7 @@ export function VersionCheckWithOverlay() {
   const checkingRef = useRef(false);
   const deferredUntilRef = useRef<number | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const forceUpdateRef = useRef<() => void>();
 
   // Detect if running as installed PWA
   useEffect(() => {
@@ -33,6 +33,54 @@ export function VersionCheckWithOverlay() {
                       (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
   }, []);
+
+  /**
+   * Força a atualização do app.
+   */
+  const forceUpdate = useCallback(async () => {
+    console.log('🔄 Forçando atualização do app...');
+    
+    // Clear any countdown immediately
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+
+    try {
+      // Unregister service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+        console.log('✅ Service workers removidos');
+      }
+
+      // Clear caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(n => caches.delete(n)));
+        console.log('✅ Caches limpos');
+      }
+    } catch (err) {
+      console.warn('Erro ao limpar caches:', err);
+    }
+
+    // Always reload, even if cache clearing failed
+    console.log('🔄 Recarregando página...');
+    window.location.reload();
+  }, []);
+
+  // Keep forceUpdateRef always updated
+  useEffect(() => {
+    forceUpdateRef.current = forceUpdate;
+  }, [forceUpdate]);
+
+  // Watch countdown and trigger update when it reaches 0
+  useEffect(() => {
+    if (showOverlay && countdown === 0) {
+      console.log('⏰ Countdown chegou a 0, executando atualização...');
+      forceUpdateRef.current?.();
+    }
+  }, [countdown, showOverlay]);
 
   /**
    * Registra a versão atual no banco de dados.
@@ -57,46 +105,11 @@ export function VersionCheckWithOverlay() {
         return;
       }
 
-      const { data } = await supabase.functions.invoke('register-version', {
-        body: { version: LOCAL_VERSION }
-      });
-      
-      if (data?.registered) {
-        console.log('✅ Versão registrada:', LOCAL_VERSION);
-      }
+      console.log('✅ Versão registrada:', LOCAL_VERSION);
     } catch (err) {
       console.warn('Falha ao registrar versão:', err);
       hasRegisteredRef.current = false;
     }
-  }, []);
-
-  /**
-   * Força a atualização do app.
-   */
-  const forceUpdate = useCallback(async () => {
-    console.log('🔄 Forçando atualização do app...');
-    
-    // Clear any countdown
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-
-    // Unregister service workers and clear caches
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        await registration.unregister();
-      }
-    }
-
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      for (const cacheName of cacheNames) {
-        await caches.delete(cacheName);
-      }
-    }
-
-    window.location.reload();
   }, []);
 
   /**
@@ -145,23 +158,31 @@ export function VersionCheckWithOverlay() {
    * Inicia o countdown e exibe o overlay.
    */
   const startCountdown = useCallback(() => {
+    console.log('🕐 Iniciando countdown de atualização...');
     setCountdown(COUNTDOWN_SECONDS);
     setShowOverlay(true);
 
+    // Clear any existing interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
     countdownIntervalRef.current = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) {
+        const next = prev - 1;
+        console.log(`⏱️ Countdown: ${next}`);
+        
+        if (next <= 0) {
           if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
           }
-          // Trigger update
-          forceUpdate();
           return 0;
         }
-        return prev - 1;
+        return next;
       });
     }, 1000);
-  }, [forceUpdate]);
+  }, []);
 
   /**
    * Adia a atualização por 30 minutos.
@@ -171,6 +192,7 @@ export function VersionCheckWithOverlay() {
     setShowOverlay(false);
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
     console.log('⏰ Atualização adiada por 30 minutos');
   }, []);
@@ -186,6 +208,12 @@ export function VersionCheckWithOverlay() {
       startCountdown();
     }
   }, [checkVersion, showOverlay, startCountdown]);
+
+  // Handler for "Update Now" button - calls forceUpdate directly
+  const handleUpdateNow = useCallback(() => {
+    console.log('👆 Botão Atualizar agora clicado');
+    forceUpdate();
+  }, [forceUpdate]);
 
   // Setup checks on mount and visibility changes
   useEffect(() => {
@@ -225,7 +253,7 @@ export function VersionCheckWithOverlay() {
     <UpdateCountdownOverlay
       isOpen={showOverlay}
       countdown={countdown}
-      onUpdateNow={forceUpdate}
+      onUpdateNow={handleUpdateNow}
       onDefer={deferUpdate}
       showDefer={!isStandalone}
     />
