@@ -1473,6 +1473,10 @@ export type Database = {
       }
     }
     Functions: {
+      add_membro_to_equipe: {
+        Args: { p_equipe_id: string; p_user_id: string }
+        Returns: undefined
+      }
       check_equipe_access: {
         Args: { equipe_imobiliaria_id: string }
         Returns: boolean
@@ -1491,6 +1495,15 @@ export type Database = {
       }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       generate_protocolo: { Args: never; Returns: string }
+      get_equipes_by_imobiliaria: {
+        Args: { imob_id: string }
+        Returns: {
+          cor: string
+          descricao: string
+          id: string
+          nome: string
+        }[]
+      }
       get_imobiliaria_admin: { Args: { imob_id: string }; Returns: string }
       get_imobiliarias_publicas: {
         Args: never
