@@ -105,10 +105,10 @@ export function PWAInstallPrompt() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6"
+            className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-8 sm:pt-4 md:p-6 overflow-y-auto"
           >
-            <div className="max-w-lg w-full">
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground shadow-2xl">
+            <div className="max-w-lg w-full max-h-[90vh] sm:max-h-none">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground shadow-2xl max-h-[85vh] sm:max-h-none overflow-y-auto">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
@@ -123,7 +123,7 @@ export function PWAInstallPrompt() {
                   <X className="h-5 w-5" />
                 </Button>
 
-                <div className="relative p-5 md:p-6">
+                <div className="relative p-4 sm:p-5 md:p-6">
                   {/* Header */}
                   <div className="flex items-start gap-4 mb-4">
                     <motion.div 
@@ -148,7 +148,7 @@ export function PWAInstallPrompt() {
                   </div>
 
                   {/* Features */}
-                  <div className="flex flex-wrap gap-2 mb-5">
+                  <div className="flex flex-wrap gap-2 mb-3 sm:mb-5">
                     {features.map((feature, index) => (
                       <motion.div
                         key={index}
@@ -164,7 +164,7 @@ export function PWAInstallPrompt() {
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-white/80 mb-5">
+                  <p className="text-sm text-white/80 mb-3 sm:mb-5">
                     {showManualInstructions 
                       ? isIOS 
                         ? 'Adicione à sua tela inicial para acesso rápido. Toque no botão de compartilhar do Safari.'
