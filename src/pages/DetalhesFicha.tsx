@@ -1235,36 +1235,6 @@ export default function DetalhesFicha() {
             </Card>
           )}
 
-          {/* Download PDF - when complete or finalized partial */}
-          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
-            <Card className="border-primary/30 bg-primary/5">
-              <CardContent className="pt-6">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold text-foreground">Comprovante Disponível</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {ficha.status === 'finalizado_parcial' 
-                        ? 'Registro finalizado com assinatura parcial. Baixe o comprovante.'
-                        : 'Ambas as partes confirmaram. Baixe o comprovante com QR code de verificação.'}
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => downloadPdf(ficha.status === 'finalizado_parcial')}
-                    disabled={downloadingPdf}
-                    className="gap-2 min-w-[180px]"
-                  >
-                    {downloadingPdf ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileDown className="h-4 w-4" />
-                    )}
-                    Baixar Comprovante PDF
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Marcar como Vendido - para fichas completas/finalizadas */}
           {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && 
            (role === 'corretor' && ficha.user_id === user?.id || 
@@ -1316,6 +1286,36 @@ export default function DetalhesFicha() {
                       {ficha.convertido_venda ? 'Ver Detalhes' : 'Marcar como Vendido'}
                     </Button>
                   </MarcarVendaDialog>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Download PDF - when complete or finalized partial */}
+          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-foreground">Comprovante Disponível</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {ficha.status === 'finalizado_parcial' 
+                        ? 'Registro finalizado com assinatura parcial. Baixe o comprovante.'
+                        : 'Ambas as partes confirmaram. Baixe o comprovante com QR code de verificação.'}
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={() => downloadPdf(ficha.status === 'finalizado_parcial')}
+                    disabled={downloadingPdf}
+                    className="gap-2 min-w-[180px]"
+                  >
+                    {downloadingPdf ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileDown className="h-4 w-4" />
+                    )}
+                    Baixar Comprovante PDF
+                  </Button>
                 </div>
               </CardContent>
             </Card>
