@@ -34,6 +34,6 @@ export function useImobiliariaFeatureFlag(featureKey: string) {
 
   return {
     enabled: data?.enabled ?? false,
-    loading: roleLoading || isLoading,
+    loading: roleLoading || (!!imobiliariaId && isLoading),
   };
 }
