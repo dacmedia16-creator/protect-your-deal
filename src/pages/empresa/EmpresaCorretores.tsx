@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
@@ -78,6 +78,7 @@ interface Convite {
 export default function EmpresaCorretores() {
   const { imobiliariaId, assinatura } = useUserRole();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [corretores, setCorretores] = useState<Corretor[]>([]);
   const [convites, setConvites] = useState<Convite[]>([]);
@@ -813,7 +814,12 @@ export default function EmpresaCorretores() {
                     {filteredCorretores.map((corretor) => (
                       <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
                         <TableCell>
-                          <p className="font-medium">{corretor.nome}</p>
+                          <button
+                            onClick={() => navigate(`/empresa/corretores/${corretor.user_id}`)}
+                            className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors"
+                          >
+                            {corretor.nome}
+                          </button>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           <div className="flex items-center gap-1.5 flex-wrap">

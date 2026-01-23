@@ -99,6 +99,7 @@ import AfiliadoPerfil from "./pages/afiliado/AfiliadoPerfil";
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
+import EmpresaDetalhesCorretor from "./pages/empresa/EmpresaDetalhesCorretor";
 import EmpresaEquipes from "./pages/empresa/EmpresaEquipes";
 import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
 import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
@@ -272,6 +273,11 @@ const App = () => (
                 <Route path="/empresa/corretores" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaCorretores />
+                  </ProtectedRoute>
+                } />
+                <Route path="/empresa/corretores/:userId" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaDetalhesCorretor />
                   </ProtectedRoute>
                 } />
                 <Route path="/empresa/equipes" element={
