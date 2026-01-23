@@ -53,8 +53,11 @@ import {
   Save,
   Check,
   ChevronsUpDown,
-  RefreshCw
+  RefreshCw,
+  PartyPopper
 } from 'lucide-react';
+import { MarcarVendaDialog } from '@/components/MarcarVendaDialog';
+import { useEquipeLider } from '@/hooks/useEquipeLider';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -75,6 +78,7 @@ export default function DetalhesFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { role, imobiliariaId } = useUserRole();
+  const { isLider } = useEquipeLider();
   const { toast } = useToast();
   
   // Dynamic return URL based on user role
@@ -1256,6 +1260,62 @@ export default function DetalhesFicha() {
                     )}
                     Baixar Comprovante PDF
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Marcar como Vendido - para fichas completas/finalizadas */}
+          {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && 
+           (role === 'corretor' && ficha.user_id === user?.id || 
+            role === 'imobiliaria_admin' || 
+            role === 'super_admin' ||
+            isLider) && (
+            <Card className={ficha.convertido_venda ? 'border-success/50 bg-success/5' : 'border-amber-500/30 bg-amber-500/5'}>
+              <CardContent className="pt-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-lg ${ficha.convertido_venda ? 'bg-success/10' : 'bg-amber-500/10'} flex items-center justify-center`}>
+                      <PartyPopper className={`h-5 w-5 ${ficha.convertido_venda ? 'text-success' : 'text-amber-500'}`} />
+                    </div>
+                    <div>
+                      {ficha.convertido_venda ? (
+                        <>
+                          <h3 className="font-semibold text-success">Venda Registrada!</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {ficha.valor_venda 
+                              ? `Valor: ${ficha.valor_venda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
+                              : 'Este registro foi convertido em venda'}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <h3 className="font-semibold text-foreground">Conversão em Venda</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Este imóvel foi vendido? Marque para registrar a conversão
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <MarcarVendaDialog
+                    fichaId={ficha.id}
+                    protocolo={ficha.protocolo}
+                    jaVendida={ficha.convertido_venda}
+                    valorVenda={ficha.valor_venda}
+                    convertidoEm={ficha.convertido_em}
+                    onVendaRegistrada={refetch}
+                  >
+                    <Button
+                      variant={ficha.convertido_venda ? 'outline' : 'default'}
+                      className={ficha.convertido_venda 
+                        ? 'gap-2 min-w-[180px] border-success/50 text-success hover:bg-success/10' 
+                        : 'gap-2 min-w-[180px]'}
+                    >
+                      <PartyPopper className="h-4 w-4" />
+                      {ficha.convertido_venda ? 'Ver Detalhes' : 'Marcar como Vendido'}
+                    </Button>
+                  </MarcarVendaDialog>
                 </div>
               </CardContent>
             </Card>
