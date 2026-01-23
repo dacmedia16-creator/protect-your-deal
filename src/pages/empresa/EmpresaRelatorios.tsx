@@ -32,7 +32,8 @@ import {
   Target,
   Star,
   CheckCircle,
-  Users
+  Users,
+  Trophy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -273,6 +274,42 @@ export default function EmpresaRelatorios() {
 
     return Array.from(corretorMap.values()).sort((a, b) => b.totalFichas - a.totalFichas);
   }, [fichas, surveys, surveyResponses, surveyEnabled]);
+
+  // Calculate monthly ranking (top 5 for current month)
+  const rankingMensal = useMemo(() => {
+    const currentMonth = format(new Date(), 'yyyy-MM');
+    
+    // Filter only current month fichas
+    const fichasMes = fichas.filter(f => f.created_at.startsWith(currentMonth));
+    
+    // Group by corretor
+    const corretorMap = new Map<string, { 
+      user_id: string; 
+      nome: string; 
+      fichasMes: number; 
+      confirmadas: number;
+    }>();
+    
+    fichasMes.forEach(f => {
+      const existing = corretorMap.get(f.user_id);
+      if (existing) {
+        existing.fichasMes++;
+        if (f.status === 'completo') existing.confirmadas++;
+      } else {
+        corretorMap.set(f.user_id, {
+          user_id: f.user_id,
+          nome: f.corretor_nome || 'Desconhecido',
+          fichasMes: 1,
+          confirmadas: f.status === 'completo' ? 1 : 0
+        });
+      }
+    });
+    
+    // Sort and get top 5
+    return Array.from(corretorMap.values())
+      .sort((a, b) => b.fichasMes - a.fichasMes)
+      .slice(0, 5);
+  }, [fichas]);
 
   // Calculate overall metrics
   const overallMetrics = useMemo(() => {
@@ -631,6 +668,70 @@ export default function EmpresaRelatorios() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Monthly Ranking - Top 5 */}
+        {rankingMensal.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-warning" />
+                  Ranking do Mês
+                </CardTitle>
+                <Badge variant="outline">
+                  {format(new Date(), 'MMMM', { locale: ptBR }).charAt(0).toUpperCase() + format(new Date(), 'MMMM', { locale: ptBR }).slice(1)}
+                </Badge>
+              </div>
+              <CardDescription>
+                Top 5 corretores com mais registros este mês
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {rankingMensal.map((corretor, index) => {
+                  const maxFichasMes = rankingMensal[0]?.fichasMes || 1;
+                  const percent = (corretor.fichasMes / maxFichasMes) * 100;
+                  
+                  return (
+                    <div key={corretor.user_id} className="flex items-center gap-3">
+                      {/* Position with medal */}
+                      <div className="w-8 text-center flex-shrink-0">
+                        {index === 0 && <span className="text-xl">🥇</span>}
+                        {index === 1 && <span className="text-xl">🥈</span>}
+                        {index === 2 && <span className="text-xl">🥉</span>}
+                        {index > 2 && (
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {index + 1}º
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Name and progress bar */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium truncate">{corretor.nome}</span>
+                          <span className="text-sm text-muted-foreground ml-2 flex-shrink-0">
+                            {corretor.fichasMes} {corretor.fichasMes === 1 ? 'ficha' : 'fichas'}
+                          </span>
+                        </div>
+                        <Progress value={percent} className="h-2" />
+                      </div>
+                      
+                      {/* Confirmation rate badge */}
+                      <Badge variant="outline" className={
+                        corretor.confirmadas === corretor.fichasMes && corretor.fichasMes > 0
+                          ? 'bg-success/20 text-success border-success/30 flex-shrink-0'
+                          : 'bg-muted flex-shrink-0'
+                      }>
+                        {corretor.confirmadas}/{corretor.fichasMes}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Performance per broker */}
         {performanceData.length > 0 && (
