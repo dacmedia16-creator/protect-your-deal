@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck } from 'lucide-react';
+import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck, TrendingUp, TrendingDown, Star } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -26,6 +26,10 @@ interface DashboardStats {
   totalPesquisas: number;
   pesquisasRespondidas: number;
   pesquisasPendentes: number;
+  // Novas métricas
+  taxaConfirmacao: number;
+  crescimentoMoM: number;
+  mediaSatisfacao?: number;
 }
 
 interface MonthlyData {
@@ -66,15 +70,41 @@ export default function EmpresaDashboard() {
           .eq('imobiliaria_id', imobiliariaId);
 
         // Count fichas this month
-        const currentMonthStart = new Date();
-        currentMonthStart.setDate(1);
-        currentMonthStart.setHours(0, 0, 0, 0);
+        const currentMonthStart = startOfMonth(new Date());
         
         const { count: fichasMes } = await supabase
           .from('fichas_visita')
           .select('*', { count: 'exact', head: true })
           .eq('imobiliaria_id', imobiliariaId)
           .gte('created_at', currentMonthStart.toISOString());
+
+        // Count fichas confirmadas this month (para taxa de confirmação)
+        const { count: fichasConfirmadas } = await supabase
+          .from('fichas_visita')
+          .select('*', { count: 'exact', head: true })
+          .eq('imobiliaria_id', imobiliariaId)
+          .gte('created_at', currentMonthStart.toISOString())
+          .eq('status', 'completo');
+
+        // Count fichas do mês anterior (para crescimento MoM)
+        const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
+        const lastMonthEnd = endOfMonth(subMonths(new Date(), 1));
+        
+        const { count: fichasMesAnterior } = await supabase
+          .from('fichas_visita')
+          .select('*', { count: 'exact', head: true })
+          .eq('imobiliaria_id', imobiliariaId)
+          .gte('created_at', lastMonthStart.toISOString())
+          .lte('created_at', lastMonthEnd.toISOString());
+
+        // Calcular métricas
+        const taxaConfirmacao = (fichasMes || 0) > 0 
+          ? Math.round(((fichasConfirmadas || 0) / (fichasMes || 1)) * 100) 
+          : 0;
+
+        const crescimentoMoM = (fichasMesAnterior || 0) > 0
+          ? Math.round((((fichasMes || 0) - (fichasMesAnterior || 0)) / (fichasMesAnterior || 1)) * 100)
+          : (fichasMes || 0) > 0 ? 100 : 0;
 
         // Fetch all fichas for monthly chart (last 6 months)
         const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
@@ -107,6 +137,7 @@ export default function EmpresaDashboard() {
         let totalPesquisas = 0;
         let pesquisasRespondidas = 0;
         let pesquisasPendentes = 0;
+        let mediaSatisfacao: number | undefined;
 
         if (surveyEnabled) {
           const { data: surveysData } = await supabase
@@ -117,6 +148,34 @@ export default function EmpresaDashboard() {
           totalPesquisas = surveysData?.length || 0;
           pesquisasRespondidas = surveysData?.filter(s => s.status === 'responded').length || 0;
           pesquisasPendentes = surveysData?.filter(s => s.status === 'pending').length || 0;
+
+          // Calcular média de satisfação se há pesquisas respondidas
+          if (pesquisasRespondidas > 0) {
+            const { data: responses } = await supabase
+              .from('survey_responses')
+              .select(`
+                rating_location, 
+                rating_size, 
+                rating_layout, 
+                rating_finishes, 
+                rating_conservation, 
+                rating_common_areas, 
+                rating_price,
+                surveys!inner(imobiliaria_id)
+              `)
+              .eq('surveys.imobiliaria_id', imobiliariaId);
+
+            if (responses && responses.length > 0) {
+              const allRatings = responses.flatMap(r => [
+                r.rating_location, r.rating_size, r.rating_layout,
+                r.rating_finishes, r.rating_conservation, r.rating_common_areas, r.rating_price
+              ].filter(rating => rating !== null));
+              
+              if (allRatings.length > 0) {
+                mediaSatisfacao = allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
+              }
+            }
+          }
         }
 
         setStats({
@@ -126,6 +185,9 @@ export default function EmpresaDashboard() {
           totalPesquisas,
           pesquisasRespondidas,
           pesquisasPendentes,
+          taxaConfirmacao,
+          crescimentoMoM,
+          mediaSatisfacao,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -226,7 +288,14 @@ export default function EmpresaDashboard() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.fichasMes}</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold">{stats?.fichasMes}</span>
+                {stats?.taxaConfirmacao !== undefined && stats.taxaConfirmacao > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({stats.taxaConfirmacao}% confirmado)
+                  </span>
+                )}
+              </div>
               {plano && (
                 <>
                   <Progress value={fichasPercent} className="h-1 mt-2" />
@@ -234,6 +303,17 @@ export default function EmpresaDashboard() {
                     de {plano.max_fichas_mes} permitidos
                   </p>
                 </>
+              )}
+              {/* Indicador de crescimento */}
+              {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
+                <p className={`text-xs mt-1 flex items-center gap-1 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
+                  {stats.crescimentoMoM > 0 ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}% vs mês anterior
+                </p>
               )}
             </CardContent>
           </Card>
@@ -246,10 +326,19 @@ export default function EmpresaDashboard() {
                   <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    de {stats?.totalPesquisas || 0} enviadas
-                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</span>
+                    <span className="text-xs text-muted-foreground">
+                      de {stats?.totalPesquisas || 0}
+                    </span>
+                  </div>
+                  {/* Média de satisfação */}
+                  {stats?.mediaSatisfacao !== undefined && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Star className="h-3 w-3 text-warning fill-warning" />
+                      {stats.mediaSatisfacao.toFixed(1)}/5 média geral
+                    </p>
+                  )}
                   {stats?.totalPesquisas && stats.totalPesquisas > 0 && (
                     <Progress
                       value={(stats.pesquisasRespondidas / stats.totalPesquisas) * 100}
@@ -265,7 +354,19 @@ export default function EmpresaDashboard() {
         {/* Monthly chart */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium">Registros por Mês</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-base font-medium">Registros por Mês</CardTitle>
+              {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
+                <span className={`text-xs font-medium flex items-center gap-1 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
+                  {stats.crescimentoMoM > 0 ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}%
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {monthlyData.some(d => d.fichas > 0) ? (
