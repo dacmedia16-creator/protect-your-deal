@@ -23,8 +23,6 @@ import { EquipeBadge } from '@/components/EquipeBadge';
 import {
   ArrowLeft,
   FileText,
-  Users,
-  Building2,
   ClipboardCheck,
   CheckCircle2,
   Clock,
@@ -80,20 +78,6 @@ interface Ficha {
   created_at: string;
 }
 
-interface Cliente {
-  id: string;
-  nome: string;
-  telefone: string | null;
-  email: string | null;
-  created_at: string;
-}
-
-interface Imovel {
-  id: string;
-  endereco: string;
-  tipo: string;
-  created_at: string;
-}
 
 interface Survey {
   id: string;
@@ -132,8 +116,6 @@ export default function EmpresaDetalhesCorretor() {
   const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [isLider, setIsLider] = useState(false);
   const [fichas, setFichas] = useState<Ficha[]>([]);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [surveyResponses, setSurveyResponses] = useState<SurveyResponse[]>([]);
 
@@ -202,27 +184,6 @@ export default function EmpresaDetalhesCorretor() {
 
       setFichas(fichasData || []);
 
-      // Fetch clientes
-      const { data: clientesData } = await supabase
-        .from('clientes')
-        .select('id, nome, telefone, email, created_at')
-        .eq('user_id', userId)
-        .eq('imobiliaria_id', imobiliariaId)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      setClientes(clientesData || []);
-
-      // Fetch imóveis
-      const { data: imoveisData } = await supabase
-        .from('imoveis')
-        .select('id, endereco, tipo, created_at')
-        .eq('user_id', userId)
-        .eq('imobiliaria_id', imobiliariaId)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      setImoveis(imoveisData || []);
 
       // Fetch surveys se feature habilitada
       if (surveyEnabled) {
@@ -479,25 +440,6 @@ export default function EmpresaDetalhesCorretor() {
             </Card>
           )}
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Users className="h-4 w-4" />
-                Clientes
-              </div>
-              <p className="text-2xl font-bold mt-1">{clientes.length}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Building2 className="h-4 w-4" />
-                Imóveis
-              </div>
-              <p className="text-2xl font-bold mt-1">{imoveis.length}</p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Tabs */}
@@ -507,8 +449,6 @@ export default function EmpresaDetalhesCorretor() {
             {surveyEnabled && (
               <TabsTrigger value="pesquisas" className="flex-1 min-w-[100px]">Pesquisas</TabsTrigger>
             )}
-            <TabsTrigger value="clientes" className="flex-1 min-w-[100px]">Clientes</TabsTrigger>
-            <TabsTrigger value="imoveis" className="flex-1 min-w-[100px]">Imóveis</TabsTrigger>
           </TabsList>
 
           {/* Registros Tab */}
@@ -650,87 +590,6 @@ export default function EmpresaDetalhesCorretor() {
             </TabsContent>
           )}
 
-          {/* Clientes Tab */}
-          <TabsContent value="clientes">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Clientes ({clientes.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {clientes.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Nenhum cliente cadastrado</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead className="hidden md:table-cell">Telefone</TableHead>
-                          <TableHead className="hidden md:table-cell">Email</TableHead>
-                          <TableHead>Cadastrado em</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {clientes.map((cliente) => (
-                          <TableRow key={cliente.id}>
-                            <TableCell className="font-medium">{cliente.nome}</TableCell>
-                            <TableCell className="hidden md:table-cell">{cliente.telefone || '-'}</TableCell>
-                            <TableCell className="hidden md:table-cell">{cliente.email || '-'}</TableCell>
-                            <TableCell>
-                              {format(new Date(cliente.created_at), 'dd/MM/yyyy')}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Imóveis Tab */}
-          <TabsContent value="imoveis">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Imóveis ({imoveis.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {imoveis.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Nenhum imóvel cadastrado</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Endereço</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Cadastrado em</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {imoveis.map((imovel) => (
-                          <TableRow key={imovel.id}>
-                            <TableCell className="max-w-[250px] truncate">{imovel.endereco}</TableCell>
-                            <TableCell>{imovel.tipo}</TableCell>
-                            <TableCell>
-                              {format(new Date(imovel.created_at), 'dd/MM/yyyy')}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </ImobiliariaLayout>
