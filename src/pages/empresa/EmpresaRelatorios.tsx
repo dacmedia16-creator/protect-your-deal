@@ -33,7 +33,9 @@ import {
   Star,
   CheckCircle,
   Users,
-  Trophy
+  Trophy,
+  PartyPopper,
+  DollarSign
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -54,6 +56,8 @@ interface FichaRelatorio {
   created_at: string;
   corretor_nome?: string;
   user_id: string;
+  convertido_venda?: boolean;
+  valor_venda?: number | null;
 }
 
 interface Survey {
@@ -82,6 +86,8 @@ interface CorretorPerformance {
   totalSurveys: number;
   surveysRespondidas: number;
   mediaAvaliacao: number | null;
+  vendas: number;
+  valorVendas: number;
 }
 
 export default function EmpresaRelatorios() {
@@ -119,7 +125,9 @@ export default function EmpresaRelatorios() {
           data_visita,
           status,
           created_at,
-          user_id
+          user_id,
+          convertido_venda,
+          valor_venda
         `)
         .eq('imobiliaria_id', imobiliariaId)
         .gte('created_at', `${dataInicio}T00:00:00`)
@@ -219,10 +227,16 @@ export default function EmpresaRelatorios() {
     fichas.forEach(f => {
       const existing = corretorMap.get(f.user_id);
       const isConfirmada = f.status === 'completo';
+      const isVenda = f.convertido_venda === true;
+      const valorVenda = f.valor_venda || 0;
       
       if (existing) {
         existing.totalFichas++;
         if (isConfirmada) existing.fichasConfirmadas++;
+        if (isVenda) {
+          existing.vendas++;
+          existing.valorVendas += valorVenda;
+        }
       } else {
         corretorMap.set(f.user_id, {
           user_id: f.user_id,
@@ -232,7 +246,9 @@ export default function EmpresaRelatorios() {
           taxaConfirmacao: 0,
           totalSurveys: 0,
           surveysRespondidas: 0,
-          mediaAvaliacao: null
+          mediaAvaliacao: null,
+          vendas: isVenda ? 1 : 0,
+          valorVendas: isVenda ? valorVenda : 0
         });
       }
     });
@@ -317,6 +333,13 @@ export default function EmpresaRelatorios() {
     const confirmadas = fichas.filter(f => f.status === 'completo').length;
     const taxaConfirmacao = totalFichas > 0 ? (confirmadas / totalFichas) * 100 : 0;
     
+    // Sales metrics
+    const vendas = fichas.filter(f => f.convertido_venda === true).length;
+    const volumeVendas = fichas
+      .filter(f => f.convertido_venda === true)
+      .reduce((sum, f) => sum + (f.valor_venda || 0), 0);
+    const taxaConversao = confirmadas > 0 ? (vendas / confirmadas) * 100 : 0;
+    
     let mediaGeral: number | null = null;
     if (surveyEnabled && surveyResponses.length > 0) {
       const allRatings = surveyResponses.flatMap(r => [
@@ -326,7 +349,7 @@ export default function EmpresaRelatorios() {
       mediaGeral = allRatings.reduce((a, b) => a + b, 0) / allRatings.length;
     }
 
-    return { totalFichas, confirmadas, taxaConfirmacao, mediaGeral };
+    return { totalFichas, confirmadas, taxaConfirmacao, mediaGeral, vendas, volumeVendas, taxaConversao };
   }, [fichas, surveyResponses, surveyEnabled]);
 
   const maxFichas = Math.max(...performanceData.map(p => p.totalFichas), 1);
@@ -634,6 +657,53 @@ export default function EmpresaRelatorios() {
               </CardContent>
             </Card>
           )}
+        </div>
+
+        {/* Sales Metrics Row */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success/10">
+                  <PartyPopper className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success">{overallMetrics.vendas}</p>
+                  <p className="text-xs text-muted-foreground">Vendas Registradas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{overallMetrics.taxaConversao.toFixed(0)}%</p>
+                  <p className="text-xs text-muted-foreground">Taxa de Conversão</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success/10">
+                  <DollarSign className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success">
+                    {overallMetrics.volumeVendas > 0 
+                      ? overallMetrics.volumeVendas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+                      : 'R$ 0'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Volume de Vendas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Monthly evolution chart */}

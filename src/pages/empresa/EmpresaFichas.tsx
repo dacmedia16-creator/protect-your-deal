@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Loader2, Eye, Search } from 'lucide-react';
+import { FileText, Loader2, Eye, Search, PartyPopper } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -30,6 +30,7 @@ interface Ficha {
   data_visita: string;
   status: string;
   corretor_nome?: string;
+  convertido_venda?: boolean;
 }
 
 export default function EmpresaFichas() {
@@ -48,7 +49,7 @@ export default function EmpresaFichas() {
       setLoading(true);
       const { data, error } = await supabase
         .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id')
+        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, convertido_venda')
         .eq('imobiliaria_id', imobiliariaId)
         .order('created_at', { ascending: false });
 
@@ -74,7 +75,8 @@ export default function EmpresaFichas() {
         ...f,
         corretor_nome: f.user_id 
           ? (corretorMap[f.user_id] || 'Desconhecido')
-          : null // Null indicates orphaned ficha
+          : null, // Null indicates orphaned ficha
+        convertido_venda: f.convertido_venda ?? false
       }));
 
       setFichas(enrichedFichas);
@@ -195,9 +197,17 @@ export default function EmpresaFichas() {
                           {format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={statusColors[ficha.status]}>
-                            {statusLabels[ficha.status] || ficha.status}
-                          </Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className={statusColors[ficha.status]}>
+                              {statusLabels[ficha.status] || ficha.status}
+                            </Badge>
+                            {ficha.convertido_venda && (
+                              <Badge variant="outline" className="bg-success/20 text-success border-success/30 gap-1">
+                                <PartyPopper className="h-3 w-3" />
+                                Vendido
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">

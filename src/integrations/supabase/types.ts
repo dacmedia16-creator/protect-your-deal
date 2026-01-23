@@ -722,6 +722,9 @@ export type Database = {
           comprador_cpf: string | null
           comprador_nome: string | null
           comprador_telefone: string | null
+          convertido_em: string | null
+          convertido_por: string | null
+          convertido_venda: boolean | null
           corretor_parceiro_id: string | null
           created_at: string
           data_visita: string
@@ -742,6 +745,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string | null
+          valor_venda: number | null
         }
         Insert: {
           backup_gerado_em?: string | null
@@ -750,6 +754,9 @@ export type Database = {
           comprador_cpf?: string | null
           comprador_nome?: string | null
           comprador_telefone?: string | null
+          convertido_em?: string | null
+          convertido_por?: string | null
+          convertido_venda?: boolean | null
           corretor_parceiro_id?: string | null
           created_at?: string
           data_visita: string
@@ -770,6 +777,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+          valor_venda?: number | null
         }
         Update: {
           backup_gerado_em?: string | null
@@ -778,6 +786,9 @@ export type Database = {
           comprador_cpf?: string | null
           comprador_nome?: string | null
           comprador_telefone?: string | null
+          convertido_em?: string | null
+          convertido_por?: string | null
+          convertido_venda?: boolean | null
           corretor_parceiro_id?: string | null
           created_at?: string
           data_visita?: string
@@ -798,6 +809,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+          valor_venda?: number | null
         }
         Relationships: [
           {
