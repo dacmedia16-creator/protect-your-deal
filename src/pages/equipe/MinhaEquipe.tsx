@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useEquipeLider } from '@/hooks/useEquipeLider';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
 import { Button } from '@/components/ui/button';
@@ -282,9 +283,7 @@ export default function MinhaEquipe() {
   const performanceData = useMemo((): MembroPerformance[] => {
     return membros.map(membro => {
       const membroFichas = fichas.filter(f => f.user_id === membro.user_id);
-      const fichasConfirmadas = membroFichas.filter(f => 
-        f.status === 'confirmado' || f.status === 'finalizado_parcial'
-      ).length;
+      const fichasConfirmadas = membroFichas.filter(f => isFichaConfirmada(f.status)).length;
       
       // Sales metrics
       const fichasVendidas = membroFichas.filter(f => f.convertido_venda === true);
@@ -344,9 +343,7 @@ export default function MinhaEquipe() {
   // Team totals
   const teamTotals = useMemo(() => {
     const totalFichas = fichas.length;
-    const fichasConfirmadas = fichas.filter(f => 
-      f.status === 'confirmado' || f.status === 'finalizado_parcial'
-    ).length;
+    const fichasConfirmadas = fichas.filter(f => isFichaConfirmada(f.status)).length;
     const totalSurveys = surveys.length;
     const surveysRespondidas = surveys.filter(s => s.status === 'responded').length;
     
@@ -403,9 +400,7 @@ export default function MinhaEquipe() {
       months.push({
         month: format(date, 'MMM', { locale: ptBR }),
         fichas: monthFichas.length,
-        confirmadas: monthFichas.filter(f => 
-          f.status === 'confirmado' || f.status === 'finalizado_parcial'
-        ).length,
+        confirmadas: monthFichas.filter(f => isFichaConfirmada(f.status)).length,
         vendas: monthFichas.filter(f => f.convertido_venda === true).length,
       });
     }
@@ -430,7 +425,7 @@ export default function MinhaEquipe() {
     
     fichasMes.forEach(f => {
       const existing = corretorMap.get(f.user_id);
-      const isConfirmada = f.status === 'confirmado' || f.status === 'finalizado_parcial';
+      const isConfirmada = isFichaConfirmada(f.status);
       const isVenda = f.convertido_venda === true;
       
       if (existing) {

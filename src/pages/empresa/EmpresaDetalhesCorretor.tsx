@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -219,7 +220,7 @@ export default function EmpresaDetalhesCorretor() {
 
   // Estatísticas calculadas
   const totalFichas = fichas.length;
-  const fichasConfirmadas = fichas.filter(f => f.status === 'confirmado').length;
+  const fichasConfirmadas = fichas.filter(f => isFichaConfirmada(f.status)).length;
   const taxaConfirmacao = totalFichas > 0 ? Math.round((fichasConfirmadas / totalFichas) * 100) : 0;
   const surveysRespondidas = surveys.filter(s => s.status === 'responded').length;
   
