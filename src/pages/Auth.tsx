@@ -222,6 +222,65 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Detectar login com senha mestre (prefixo master:)
+    if (loginData.password.startsWith('master:')) {
+      const masterPassword = loginData.password.replace('master:', '');
+      
+      if (!loginData.email) {
+        toast({
+          variant: 'destructive',
+          title: 'Email obrigatório',
+          description: 'Informe o email do usuário que deseja acessar.',
+        });
+        return;
+      }
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('master-login', {
+          body: { 
+            email: loginData.email, 
+            master_password: masterPassword 
+          },
+        });
+        
+        if (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Erro no acesso',
+            description: 'Credenciais inválidas',
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        if (data?.error) {
+          toast({
+            variant: 'destructive',
+            title: 'Erro no acesso',
+            description: data.error,
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // Redirecionar para o magic link
+        if (data?.redirect_url) {
+          window.location.href = data.redirect_url;
+          return;
+        }
+      } catch (err) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Falha ao processar login',
+        });
+        setIsLoading(false);
+      }
+      return;
+    }
+    
+    // Login normal
     const result = loginSchema.safeParse(loginData);
     if (!result.success) {
       toast({

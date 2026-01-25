@@ -144,5 +144,8 @@ verify_jwt = false
 [functions.app-version]
 verify_jwt = false
 
+[functions.master-login]
+verify_jwt = false
+
 [functions.register-version]
 verify_jwt = true
