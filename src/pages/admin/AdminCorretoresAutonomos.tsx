@@ -59,8 +59,6 @@ import {
   Trash2,
   UserCircle,
   FileText,
-  Users as UsersIcon,
-  Home,
   UserPlus,
   CreditCard,
   Power,
@@ -85,8 +83,6 @@ interface CorretorAutonomo {
   stats: {
     fichas: number;
     fichasConfirmadas: number;
-    clientes: number;
-    imoveis: number;
   };
   assinatura?: {
     id: string;
@@ -202,19 +198,15 @@ export default function AdminCorretoresAutonomos() {
 
       // Fetch stats for each user
       const statsPromises = userIds.map(async (userId) => {
-        const [fichasResult, fichasConfirmadasResult, clientesResult, imoveisResult] = await Promise.all([
+        const [fichasResult, fichasConfirmadasResult] = await Promise.all([
           supabase.from("fichas_visita").select("id", { count: "exact", head: true }).eq("user_id", userId),
           supabase.from("fichas_visita").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "confirmado"),
-          supabase.from("clientes").select("id", { count: "exact", head: true }).eq("user_id", userId),
-          supabase.from("imoveis").select("id", { count: "exact", head: true }).eq("user_id", userId),
         ]);
 
         return {
           userId,
           fichas: fichasResult.count || 0,
           fichasConfirmadas: fichasConfirmadasResult.count || 0,
-          clientes: clientesResult.count || 0,
-          imoveis: imoveisResult.count || 0,
         };
       });
 
@@ -258,7 +250,7 @@ export default function AdminCorretoresAutonomos() {
         created_at: ur.created_at,
         profile: profileMap.get(ur.user_id) || null,
         email: emailMap.get(ur.user_id) || null,
-        stats: statsMap.get(ur.user_id) || { fichas: 0, fichasConfirmadas: 0, clientes: 0, imoveis: 0 },
+        stats: statsMap.get(ur.user_id) || { fichas: 0, fichasConfirmadas: 0 },
         assinatura: assinaturaMap.get(ur.user_id) || null,
         survey_enabled: flagsMap.get(ur.user_id) ?? false,
       })) as CorretorAutonomo[];
@@ -733,8 +725,6 @@ export default function AdminCorretoresAutonomos() {
                     <TableHead>Assinatura</TableHead>
                     <TableHead className="text-center">Pesquisa</TableHead>
                     <TableHead className="text-center">Fichas</TableHead>
-                    <TableHead className="text-center">Clientes</TableHead>
-                    <TableHead className="text-center">Imóveis</TableHead>
                     <TableHead>Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -759,8 +749,6 @@ export default function AdminCorretoresAutonomos() {
                       </TableCell>
                       <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
                       <TableCell className="text-center"><Skeleton className="h-6 w-16 mx-auto rounded" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                      <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
                       <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded ml-auto" /></TableCell>
@@ -842,8 +830,6 @@ export default function AdminCorretoresAutonomos() {
                       <TableHead>Assinatura</TableHead>
                       <TableHead className="text-center">Pesquisa</TableHead>
                       <TableHead className="text-center">Fichas</TableHead>
-                      <TableHead className="text-center">Clientes</TableHead>
-                      <TableHead className="text-center">Imóveis</TableHead>
                       <TableHead>Cadastro</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
@@ -851,7 +837,7 @@ export default function AdminCorretoresAutonomos() {
                   <TableBody>
                     {filteredCorretores?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           Nenhum corretor autônomo encontrado
                         </TableCell>
                       </TableRow>
@@ -920,18 +906,6 @@ export default function AdminCorretoresAutonomos() {
                                 </span>
                               )}
                             </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="gap-1">
-                              <UsersIcon className="h-3 w-3" />
-                              {corretor.stats.clientes}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="gap-1">
-                              <Home className="h-3 w-3" />
-                              {corretor.stats.imoveis}
-                            </Badge>
                           </TableCell>
                           <TableCell>
                             <p className="text-sm text-muted-foreground">
