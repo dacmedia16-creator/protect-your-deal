@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown, ArrowLeft } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown, ArrowLeft, UserMinus } from 'lucide-react';
 import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -581,6 +581,13 @@ export default function EmpresaCorretores() {
   const maxCorretores = assinatura?.plano?.max_corretores || 0;
   const canAddMore = corretores.length + convites.length < maxCorretores;
 
+  // KPI stats
+  const stats = useMemo(() => ({
+    ativos: corretores.filter(c => c.ativo).length,
+    inativos: corretores.filter(c => !c.ativo).length,
+    semEquipe: corretores.filter(c => !c.equipe).length,
+  }), [corretores]);
+
   if (loading) {
     return (
       <ImobiliariaLayout>
@@ -594,138 +601,207 @@ export default function EmpresaCorretores() {
   return (
     <ImobiliariaLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Corretores</h1>
-            <p className="text-muted-foreground">
-              {corretores.length} de {maxCorretores} corretores
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {/* Create corretor dialog */}
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button disabled={!canAddMore}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Criar Corretor
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Criar Corretor</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={createCorretor} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="create_nome">Nome *</Label>
-                    <Input
-                      id="create_nome"
-                      value={createForm.nome}
-                      onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create_email">Email *</Label>
-                    <Input
-                      id="create_email"
-                      type="email"
-                      value={createForm.email}
-                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="create_senha">Senha *</Label>
-                    <Input
-                      id="create_senha"
-                      type="password"
-                      value={createForm.senha}
-                      onChange={(e) => setCreateForm({ ...createForm, senha: e.target.value })}
-                      required
-                      minLength={6}
-                      placeholder="Mínimo 6 caracteres"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="create_telefone">Telefone</Label>
-                      <Input
-                        id="create_telefone"
-                        value={createForm.telefone}
-                        onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
-                        placeholder="(00) 00000-0000"
-                        maxLength={15}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="create_creci">CRECI</Label>
-                      <Input
-                        id="create_creci"
-                        value={createForm.creci}
-                        onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    O corretor poderá fazer login imediatamente com o email e senha definidos.
-                  </p>
-                  <Button type="submit" className="w-full" disabled={creating}>
-                    {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-                    Criar Corretor
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+        {/* Unified Header with Toolbar */}
+        <div className="space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-display font-bold text-foreground">Corretores</h1>
+              <p className="text-muted-foreground">
+                {corretores.length} de {maxCorretores} corretores
+              </p>
+            </div>
+            
+            {/* Toolbar: Search + Filter + Actions */}
+            <div className="flex flex-col sm:flex-row gap-2 flex-1 lg:max-w-2xl">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou CRECI..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <Select value={equipeFilter} onValueChange={setEquipeFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Users2 className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="none">Sem equipe</SelectItem>
+                  {equipes.map((equipe) => (
+                    <SelectItem key={equipe.id} value={equipe.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: equipe.cor }}
+                        />
+                        {equipe.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div className="flex gap-2">
+                {/* Create corretor dialog */}
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button disabled={!canAddMore} size="sm" className="whitespace-nowrap">
+                      <UserPlus className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Criar</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Criar Corretor</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={createCorretor} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="create_nome">Nome *</Label>
+                        <Input
+                          id="create_nome"
+                          value={createForm.nome}
+                          onChange={(e) => setCreateForm({ ...createForm, nome: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="create_email">Email *</Label>
+                        <Input
+                          id="create_email"
+                          type="email"
+                          value={createForm.email}
+                          onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="create_senha">Senha *</Label>
+                        <Input
+                          id="create_senha"
+                          type="password"
+                          value={createForm.senha}
+                          onChange={(e) => setCreateForm({ ...createForm, senha: e.target.value })}
+                          required
+                          minLength={6}
+                          placeholder="Mínimo 6 caracteres"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="create_telefone">Telefone</Label>
+                          <Input
+                            id="create_telefone"
+                            value={createForm.telefone}
+                            onChange={(e) => setCreateForm({ ...createForm, telefone: formatPhone(e.target.value) })}
+                            placeholder="(00) 00000-0000"
+                            maxLength={15}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="create_creci">CRECI</Label>
+                          <Input
+                            id="create_creci"
+                            value={createForm.creci}
+                            onChange={(e) => setCreateForm({ ...createForm, creci: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        O corretor poderá fazer login imediatamente com o email e senha definidos.
+                      </p>
+                      <Button type="submit" className="w-full" disabled={creating}>
+                        {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                        Criar Corretor
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
 
-            {/* Invite corretor dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" disabled={!canAddMore}>
-                  <Send className="h-4 w-4 mr-2" />
-                  Convidar
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Convidar Corretor</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={sendConvite} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome</Label>
-                    <Input
-                      id="nome"
-                      value={conviteForm.nome}
-                      onChange={(e) => setConviteForm({ ...conviteForm, nome: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={conviteForm.email}
-                      onChange={(e) => setConviteForm({ ...conviteForm, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    O corretor receberá um email com instruções para criar sua conta.
-                  </p>
-                  <Button type="submit" className="w-full" disabled={sending}>
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                    Enviar Convite
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+                {/* Invite corretor dialog */}
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" disabled={!canAddMore} size="sm" className="whitespace-nowrap">
+                      <Send className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Convidar</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Convidar Corretor</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={sendConvite} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nome">Nome</Label>
+                        <Input
+                          id="nome"
+                          value={conviteForm.nome}
+                          onChange={(e) => setConviteForm({ ...conviteForm, nome: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={conviteForm.email}
+                          onChange={(e) => setConviteForm({ ...conviteForm, email: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        O corretor receberá um email com instruções para criar sua conta.
+                      </p>
+                      <Button type="submit" className="w-full" disabled={sending}>
+                        {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+                        Enviar Convite
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* KPI Summary Cards */}
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Ativos</p>
+                <p className="text-2xl font-bold text-success">{stats.ativos}</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-success/40" />
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Inativos</p>
+                <p className="text-2xl font-bold text-muted-foreground">{stats.inativos}</p>
+              </div>
+              <UserX className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Sem Equipe</p>
+                <p className="text-2xl font-bold text-warning">{stats.semEquipe}</p>
+              </div>
+              <UserMinus className="h-8 w-8 text-warning/40" />
+            </div>
+          </Card>
         </div>
 
         {/* Pending invites */}
         {convites.length > 0 && (
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg">Convites Pendentes</CardTitle>
             </CardHeader>
             <CardContent>
@@ -751,41 +827,7 @@ export default function EmpresaCorretores() {
 
         {/* Corretores list */}
         <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou CRECI..."
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Select value={equipeFilter} onValueChange={setEquipeFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <Users2 className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filtrar por equipe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as equipes</SelectItem>
-                  <SelectItem value="none">Sem equipe</SelectItem>
-                  {equipes.map((equipe) => (
-                    <SelectItem key={equipe.id} value={equipe.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: equipe.cor }}
-                        />
-                        {equipe.nome}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {filteredCorretores.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -800,13 +842,11 @@ export default function EmpresaCorretores() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
-                      <TableHead className="hidden sm:table-cell">Cargo</TableHead>
                       <TableHead className="hidden sm:table-cell">Equipe</TableHead>
                       <TableHead className="hidden md:table-cell">CRECI</TableHead>
                       <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                       <TableHead>Fichas</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Desde</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -814,34 +854,41 @@ export default function EmpresaCorretores() {
                     {filteredCorretores.map((corretor) => (
                       <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
                         <TableCell>
-                          <button
-                            onClick={() => navigate(`/empresa/corretores/${corretor.user_id}`)}
-                            className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors"
-                          >
-                            {corretor.nome}
-                          </button>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} className="gap-1">
-                              {corretor.role === 'imobiliaria_admin' ? (
-                                <>
-                                  <ShieldCheck className="h-3 w-3" />
-                                  Admin
-                                </>
-                              ) : (
-                                <>
-                                  <Shield className="h-3 w-3" />
-                                  Corretor
-                                </>
-                              )}
-                            </Badge>
-                            {corretor.isLider && (
-                              <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20" title={`Líder da equipe ${corretor.equipeQueLidera}`}>
-                                <Crown className="h-3 w-3" />
-                                Líder
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => navigate(`/empresa/corretores/${corretor.user_id}`)}
+                              className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors block"
+                            >
+                              {corretor.nome}
+                            </button>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Badge 
+                                variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} 
+                                className="gap-1 text-xs h-5"
+                              >
+                                {corretor.role === 'imobiliaria_admin' ? (
+                                  <>
+                                    <ShieldCheck className="h-3 w-3" />
+                                    Admin
+                                  </>
+                                ) : (
+                                  <>
+                                    <Shield className="h-3 w-3" />
+                                    Corretor
+                                  </>
+                                )}
                               </Badge>
-                            )}
+                              {corretor.isLider && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-5" 
+                                  title={`Líder da equipe ${corretor.equipeQueLidera}`}
+                                >
+                                  <Crown className="h-3 w-3" />
+                                  Líder
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
@@ -862,9 +909,6 @@ export default function EmpresaCorretores() {
                           <Badge variant={corretor.ativo ? 'default' : 'secondary'}>
                             {corretor.ativo ? 'Ativo' : 'Inativo'}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground">
-                          {format(new Date(corretor.created_at), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
