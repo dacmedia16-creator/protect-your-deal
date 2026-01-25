@@ -506,19 +506,20 @@ export default function AdminUsuarios() {
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header - Responsive */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Usuários</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Usuários</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
               Gerencie todos os usuários do sistema
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Button onClick={openCreateWithPassword}>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button onClick={openCreateWithPassword} className="w-full md:w-auto">
               <UserPlus className="h-4 w-4 mr-2" />
               Novo Usuário
             </Button>
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Users className="h-6 w-6 text-muted-foreground" />
                 <div className="text-right">
@@ -543,12 +544,42 @@ export default function AdminUsuarios() {
           </div>
         </div>
 
+        {/* Mobile Stats */}
+        <div className="grid grid-cols-3 gap-3 md:hidden">
+          <Card className="p-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-lg font-bold">{users?.length || 0}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-3">
+            <div>
+              <p className="text-lg font-bold text-green-600">
+                {users?.filter(u => u.profile?.ativo !== false).length || 0}
+              </p>
+              <p className="text-xs text-muted-foreground">Ativos</p>
+            </div>
+          </Card>
+          <Card className="p-3">
+            <div>
+              <p className="text-lg font-bold text-muted-foreground">
+                {users?.filter(u => u.profile?.ativo === false).length || 0}
+              </p>
+              <p className="text-xs text-muted-foreground">Inativos</p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Filters Card */}
         <Card>
-          <CardHeader>
-            <CardTitle>Filtros</CardTitle>
+          <CardHeader className="pb-3 md:pb-6">
+            <CardTitle className="text-base md:text-lg">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-3 md:flex-row md:gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -597,7 +628,147 @@ export default function AdminUsuarios() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Mobile View - Cards */}
+        <div className="space-y-3 md:hidden">
+          {isLoading ? (
+            <>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-5 w-20 rounded-full" />
+                        </div>
+                        <Skeleton className="h-3 w-40" />
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-8 w-8 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : filteredUsers?.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                Nenhum usuário encontrado
+              </CardContent>
+            </Card>
+          ) : (
+            filteredUsers?.map((user) => (
+              <Card
+                key={user.id}
+                className="cursor-pointer transition-all hover:shadow-md active:bg-muted/30"
+                onClick={() => openEditDialog(user)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <UserAvatar 
+                      name={user.profile?.nome} 
+                      role={user.role}
+                      size="md"
+                    />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold truncate">
+                          {user.profile?.nome || "Sem nome"}
+                        </p>
+                        <Badge variant={getRoleBadgeVariant(user.role)} className="flex-shrink-0">
+                          {getRoleLabel(user.role)}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {user.email || "-"}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs flex-wrap">
+                        {user.imobiliaria?.nome && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Building2 className="h-3 w-3" />
+                            <span className="truncate max-w-[150px]">{user.imobiliaria.nome}</span>
+                          </span>
+                        )}
+                        {user.profile?.creci && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <IdCard className="h-3 w-3" />
+                            {user.profile.creci}
+                          </span>
+                        )}
+                        <span className={user.profile?.ativo !== false 
+                          ? 'text-green-600 font-medium' 
+                          : 'text-muted-foreground'}>
+                          {user.profile?.ativo !== false ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 flex-shrink-0"
+                          disabled={user.role === "super_admin"}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-popover">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          openEditDialog(user);
+                        }}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleStatus(user);
+                          }}
+                          disabled={user.role === "super_admin" || togglingUserId === user.user_id}
+                        >
+                          <Switch className="h-4 w-4 mr-2" />
+                          {user.profile?.ativo !== false ? 'Desativar' : 'Ativar'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedUser(user);
+                            setNewPassword(generatePassword(12));
+                            setIsResetDialogOpen(true);
+                          }}
+                        >
+                          <KeyRound className="h-4 w-4 mr-2" />
+                          Redefinir Senha
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUserToDelete(user);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <Card className="hidden md:block">
           <CardContent className="p-0">
             <TooltipProvider>
               <Table>
@@ -717,7 +888,7 @@ export default function AdminUsuarios() {
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="bg-popover">
                               <DropdownMenuItem onClick={() => openEditDialog(user)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Editar
