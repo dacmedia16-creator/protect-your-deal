@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { entityStatusColors, subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { Link, useNavigate } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -318,20 +319,7 @@ export default function AdminImobiliarias() {
     imob.cnpj?.includes(search)
   );
 
-  const statusColors: Record<string, string> = {
-    ativo: 'bg-success text-success-foreground',
-    suspenso: 'bg-destructive text-destructive-foreground',
-    inativo: 'bg-muted text-muted-foreground',
-  };
-
-  const assinaturaColors: Record<string, string> = {
-    ativa: 'bg-success/20 text-success border-success/30',
-    trial: 'bg-warning/20 text-warning border-warning/30',
-    pendente: 'bg-warning/20 text-warning border-warning/30',
-    suspensa: 'bg-destructive/20 text-destructive border-destructive/30',
-    cancelada: 'bg-muted text-muted-foreground',
-    sem_assinatura: 'bg-muted text-muted-foreground',
-  };
+  // Using global status colors from lib/statusColors
 
   if (loading) {
     return (
@@ -460,7 +448,7 @@ export default function AdminImobiliarias() {
                               <span className="font-mono text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                                 #{imob.codigo || '-'}
                               </span>
-                              <Badge className={statusColors[imob.status]}>
+                              <Badge className={getStatusColor(entityStatusColors, imob.status)}>
                                 {imob.status === 'ativo' ? 'Ativo' : imob.status === 'suspenso' ? 'Suspenso' : 'Inativo'}
                               </Badge>
                             </div>
@@ -504,7 +492,7 @@ export default function AdminImobiliarias() {
                           </DropdownMenu>
                         </div>
                         <div className="flex items-center gap-3 mt-3 pt-3 border-t">
-                          <Badge variant="outline" className={assinaturaColors[imob.assinatura_status || 'sem_assinatura']}>
+                          <Badge variant="outline" className={getStatusColor(subscriptionStatusColors, imob.assinatura_status || 'sem_assinatura', 'bg-muted text-muted-foreground')}>
                             {imob.assinatura_status === 'ativa' && 'Assinatura Ativa'}
                             {imob.assinatura_status === 'trial' && 'Trial'}
                             {imob.assinatura_status === 'pendente' && 'Pendente'}
@@ -559,12 +547,12 @@ export default function AdminImobiliarias() {
                             {imob.cidade && imob.estado ? `${imob.cidade}/${imob.estado}` : '-'}
                           </TableCell>
                           <TableCell>
-                            <Badge className={statusColors[imob.status]}>
+                            <Badge className={getStatusColor(entityStatusColors, imob.status)}>
                               {imob.status === 'ativo' ? 'Ativo' : imob.status === 'suspenso' ? 'Suspenso' : 'Inativo'}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={assinaturaColors[imob.assinatura_status || 'sem_assinatura']}>
+                            <Badge variant="outline" className={getStatusColor(subscriptionStatusColors, imob.assinatura_status || 'sem_assinatura', 'bg-muted text-muted-foreground')}>
                               {imob.assinatura_status === 'ativa' && 'Ativa'}
                               {imob.assinatura_status === 'trial' && 'Trial'}
                               {imob.assinatura_status === 'pendente' && 'Pendente'}

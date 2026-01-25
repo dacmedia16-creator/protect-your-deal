@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { getSubscriptionBadgeVariant } from '@/lib/statusColors';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
@@ -286,23 +287,7 @@ export default function AdminAssinaturas() {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "ativa":
-        return "default";
-      case "trial":
-      case "gratuito":
-        return "secondary";
-      case "suspensa":
-      case "pendente":
-        return "destructive";
-      case "cancelada":
-      case "desativada":
-        return "outline";
-      default:
-        return "secondary";
-    }
-  };
+  // Using getSubscriptionBadgeVariant from lib/statusColors
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -510,7 +495,7 @@ export default function AdminAssinaturas() {
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                          <Badge variant={getStatusBadgeVariant(assinatura.status)}>
+                          <Badge variant={getSubscriptionBadgeVariant(assinatura.status)}>
                             {getStatusLabel(assinatura.status)}
                           </Badge>
                           <DropdownMenu>
@@ -629,7 +614,7 @@ export default function AdminAssinaturas() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(assinatura.status)}>
+                          <Badge variant={getSubscriptionBadgeVariant(assinatura.status)}>
                             {getStatusLabel(assinatura.status)}
                           </Badge>
                         </TableCell>

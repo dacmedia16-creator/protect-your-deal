@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,13 +75,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
     enabled: !!user?.id,
   });
 
-  const statusColors: Record<string, string> = {
-    ativa: 'bg-success text-success-foreground',
-    trial: 'bg-warning text-warning-foreground',
-    pendente: 'bg-warning text-warning-foreground',
-    suspensa: 'bg-destructive text-destructive-foreground',
-    cancelada: 'bg-muted text-muted-foreground',
-  };
+  // Using subscriptionStatusColors from lib/statusColors
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +128,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
               </span>
             </div>
             {assinatura && (
-              <Badge className={cn("text-xs", statusColors[assinatura.status])}>
+              <Badge className={cn("text-xs", getStatusColor(subscriptionStatusColors, assinatura.status))}>
                 {assinatura.status === 'ativa' && 'Ativa'}
                 {assinatura.status === 'trial' && 'Período de Teste'}
                 {assinatura.status === 'pendente' && 'Pendente'}

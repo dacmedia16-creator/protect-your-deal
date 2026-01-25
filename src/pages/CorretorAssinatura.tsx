@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
@@ -144,12 +145,7 @@ export default function CorretorAssinatura() {
     }).format(value);
   };
 
-  const statusColors: Record<string, string> = {
-    ativa: 'bg-success/10 text-success border-success/30',
-    pendente: 'bg-warning/10 text-warning border-warning/30',
-    suspensa: 'bg-destructive/10 text-destructive border-destructive/30',
-    cancelada: 'bg-muted text-muted-foreground border-muted',
-  };
+  // Using subscriptionStatusColors from lib/statusColors
 
   const statusLabels: Record<string, string> = {
     ativa: 'Ativa',
@@ -210,7 +206,7 @@ export default function CorretorAssinatura() {
                   </div>
                 </div>
                 {assinatura && (
-                  <Badge variant="outline" className={statusColors[assinatura.status]}>
+                  <Badge variant="outline" className={getStatusColor(subscriptionStatusColors, assinatura.status)}>
                     {assinatura.status === 'ativa' ? (
                       <CheckCircle className="h-3 w-3 mr-1" />
                     ) : (

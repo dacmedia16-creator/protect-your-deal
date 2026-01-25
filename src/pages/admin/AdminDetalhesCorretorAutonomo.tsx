@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { fichaStatusColors, subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -502,17 +503,7 @@ export default function AdminDetalhesCorretorAutonomo() {
     }).format(value);
   };
 
-  const statusColors: Record<string, string> = {
-    pendente: "bg-warning/10 text-warning border-warning/30",
-    confirmado: "bg-success/10 text-success border-success/30",
-    cancelado: "bg-destructive/10 text-destructive border-destructive/30",
-  };
-
-  const assinaturaStatusColors: Record<string, string> = {
-    ativa: "bg-success/10 text-success border-success/30",
-    suspensa: "bg-warning/10 text-warning border-warning/30",
-    cancelada: "bg-destructive/10 text-destructive border-destructive/30",
-  };
+  // Using fichaStatusColors and subscriptionStatusColors from lib/statusColors
 
   const tipoColors: Record<string, string> = {
     comprador: "bg-blue-500/10 text-blue-600 border-blue-500/30",
@@ -715,7 +706,7 @@ export default function AdminDetalhesCorretorAutonomo() {
                       <div className="space-y-1">
                         <Label className="text-muted-foreground text-xs">Status</Label>
                         <div>
-                          <Badge variant="outline" className={assinaturaStatusColors[assinatura.status] || ""}>
+                          <Badge variant="outline" className={getStatusColor(subscriptionStatusColors, assinatura.status)}>
                             {assinatura.status}
                           </Badge>
                         </div>
@@ -789,7 +780,7 @@ export default function AdminDetalhesCorretorAutonomo() {
                           <TableCell>{ficha.proprietario_nome || "-"}</TableCell>
                           <TableCell className="max-w-[200px] truncate">{ficha.imovel_endereco}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={statusColors[ficha.status] || ""}>
+                            <Badge variant="outline" className={getStatusColor(fichaStatusColors, ficha.status)}>
                               {ficha.status}
                             </Badge>
                           </TableCell>

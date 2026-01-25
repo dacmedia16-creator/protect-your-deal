@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getRoleBadgeVariant, roleLabels } from '@/lib/statusColors';
 import { formatPhone } from "@/lib/phone";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -487,16 +488,7 @@ export default function AdminUsuarios() {
   };
 
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "super_admin":
-        return "destructive";
-      case "imobiliaria_admin":
-        return "default";
-      default:
-        return "secondary";
-    }
-  };
+  // Using getRoleBadgeVariant from lib/statusColors
 
   const getRoleLabel = (role: string) => {
     switch (role) {
