@@ -236,14 +236,17 @@ export default function AdminDashboard() {
 
         {/* Alerts section */}
         {(stats?.assinaturasSuspensas || 0) > 0 && (
-          <Card className="border-destructive/50 bg-destructive/5">
+          <Card 
+            className="border-destructive/50 bg-destructive/5 cursor-pointer transition-all hover:shadow-md"
+            onClick={() => navigate('/admin/assinaturas?status=suspensa')}
+          >
             <CardHeader className="flex flex-row items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
               <CardTitle className="text-destructive">Atenção</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-destructive">
-                {stats?.assinaturasSuspensas} assinatura(s) suspensa(s) por inadimplência.
+                {stats?.assinaturasSuspensas} assinatura(s) suspensa(s) por inadimplência. Ver detalhes →
               </p>
             </CardContent>
           </Card>
@@ -271,7 +274,10 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/fichas')}
+          >
             <CardHeader>
               <CardTitle>Atividade</CardTitle>
             </CardHeader>
@@ -284,6 +290,7 @@ export default function AdminDashboard() {
                 <span className="text-sm text-muted-foreground">Total de fichas</span>
                 <span className="font-medium">{stats?.totalFichas}</span>
               </div>
+              <p className="text-xs text-muted-foreground text-right">Ver detalhes →</p>
             </CardContent>
           </Card>
         </div>
