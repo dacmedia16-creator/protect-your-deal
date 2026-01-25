@@ -266,59 +266,63 @@ export default function EmpresaDashboard() {
 
         {/* Stats grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Corretores</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalCorretores}</div>
-              {plano && (
-                <>
-                  <Progress value={corretoresPercent} className="h-1 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    de {plano.max_corretores} disponíveis
-                  </p>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Registros do Mês</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">{stats?.fichasMes}</span>
-                {stats?.taxaConfirmacao !== undefined && stats.taxaConfirmacao > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    ({stats.taxaConfirmacao}% confirmado)
-                  </span>
+          <Link to="/empresa/corretores">
+            <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Corretores</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.totalCorretores}</div>
+                {plano && (
+                  <>
+                    <Progress value={corretoresPercent} className="h-1 mt-2" />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      de {plano.max_corretores} disponíveis
+                    </p>
+                  </>
                 )}
-              </div>
-              {plano && (
-                <>
-                  <Progress value={fichasPercent} className="h-1 mt-2" />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    de {plano.max_fichas_mes} permitidos
-                  </p>
-                </>
-              )}
-              {/* Indicador de crescimento */}
-              {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
-                <p className={`text-xs mt-1 flex items-center gap-1 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
-                  {stats.crescimentoMoM > 0 ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/empresa/fichas">
+            <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Registros do Mês</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold">{stats?.fichasMes}</span>
+                  {stats?.taxaConfirmacao !== undefined && stats.taxaConfirmacao > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      ({stats.taxaConfirmacao}% confirmado)
+                    </span>
                   )}
-                  {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}% vs mês anterior
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                </div>
+                {plano && (
+                  <>
+                    <Progress value={fichasPercent} className="h-1 mt-2" />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      de {plano.max_fichas_mes} permitidos
+                    </p>
+                  </>
+                )}
+                {/* Indicador de crescimento */}
+                {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
+                  <p className={`text-xs mt-1 flex items-center gap-1 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
+                    {stats.crescimentoMoM > 0 ? (
+                      <TrendingUp className="h-3 w-3" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3" />
+                    )}
+                    {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}% vs mês anterior
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
 
           {surveyEnabled && (
             <Link to="/empresa/pesquisas">
