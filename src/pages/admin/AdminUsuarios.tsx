@@ -118,6 +118,7 @@ export default function AdminUsuarios() {
     nome: "",
     telefone: "",
     creci: "",
+    email: "",
     role: "",
     imobiliaria_id: "",
   });
@@ -367,6 +368,7 @@ export default function AdminUsuarios() {
       nome: user.profile?.nome || "",
       telefone: user.profile?.telefone || "",
       creci: user.profile?.creci || "",
+      email: user.email || "",
       role: user.role,
       imobiliaria_id: user.imobiliaria_id || "",
     });
@@ -386,6 +388,7 @@ export default function AdminUsuarios() {
           nome: editForm.nome || undefined,
           telefone: editForm.telefone || undefined,
           creci: editForm.creci || undefined,
+          email: editForm.email !== userToEdit.email ? editForm.email : undefined,
           role: editForm.role !== userToEdit.role ? editForm.role : undefined,
           imobiliaria_id: editForm.imobiliaria_id !== userToEdit.imobiliaria_id ? editForm.imobiliaria_id : undefined,
         },
@@ -1083,11 +1086,30 @@ export default function AdminUsuarios() {
               Editar Usuário
             </DialogTitle>
             <DialogDescription>
-              {userToEdit?.email}
+              Altere os dados do usuário
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
+            {/* Email de Login */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Mail className="h-4 w-4" />
+                Credenciais de Acesso
+              </div>
+              <div className="space-y-2">
+                <Label>Email de Login</Label>
+                <Input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Dados Pessoais */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
