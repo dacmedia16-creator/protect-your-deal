@@ -19,6 +19,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard } from '@/components/AnimatedContent';
 
 interface MonthlyRevenue {
   month: string;

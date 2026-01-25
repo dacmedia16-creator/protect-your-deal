@@ -15,6 +15,7 @@ import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar } from
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth, subMonths, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 interface Afiliado {
   id: string;

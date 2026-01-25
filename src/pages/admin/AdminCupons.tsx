@@ -15,6 +15,7 @@ import { Plus, Pencil, TicketX, Ticket, Percent, DollarSign, Calendar, Hash } fr
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AnimatedContent, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 interface Afiliado {
   id: string;

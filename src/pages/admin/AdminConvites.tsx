@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { AnimatedContent, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 interface Convite {
   id: string;

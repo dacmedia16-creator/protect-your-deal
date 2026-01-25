@@ -61,6 +61,7 @@ import { ptBR } from "date-fns/locale";
 import { UserAvatar } from "@/components/UserAvatar";
 import { PasswordInput } from "@/components/PasswordInput";
 import { generatePassword } from "@/lib/password";
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 interface UserWithRole {
   id: string;

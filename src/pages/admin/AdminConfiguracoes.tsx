@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AnimatedContent, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 type ConfiguracaoSistema = {
   id: string;

@@ -28,6 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Check, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { AnimatedContent, AnimatedList, AnimatedItem } from '@/components/AnimatedContent';
 
 interface Plano {
   id: string;
@@ -245,7 +246,7 @@ export default function AdminPlanos() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-6">
+      <AnimatedContent className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Planos</h1>
@@ -348,16 +349,16 @@ export default function AdminPlanos() {
           </Dialog>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <AnimatedList className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {planos.map((plano) => {
             const isGratuitoCpf = plano.nome.toLowerCase().includes('gratuito') && plano.tipo_cadastro === 'cpf';
             const isEnterprise = plano.valor_mensal === 0 && plano.max_corretores === 999;
             
             return (
-              <Card 
-                key={plano.id} 
-                className={`relative overflow-hidden flex flex-col ${
-                  !plano.ativo ? 'opacity-60' : ''
+              <AnimatedItem key={plano.id}>
+                <Card
+                  className={`relative overflow-hidden flex flex-col ${
+                    !plano.ativo ? 'opacity-60' : ''
                 } ${
                   isGratuitoCpf ? 'border-2 border-primary' : ''
                 }`}
@@ -455,9 +456,10 @@ export default function AdminPlanos() {
                   </Button>
                 </CardContent>
               </Card>
+              </AnimatedItem>
             );
           })}
-        </div>
+        </AnimatedList>
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
@@ -481,7 +483,7 @@ export default function AdminPlanos() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </AnimatedContent>
     </SuperAdminLayout>
   );
 }

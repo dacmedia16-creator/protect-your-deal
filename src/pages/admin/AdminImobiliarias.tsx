@@ -42,6 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { AnimatedContent, AnimatedList, AnimatedItem } from '@/components/AnimatedContent';
 
 interface Imobiliaria {
   id: string;
@@ -394,7 +395,7 @@ export default function AdminImobiliarias() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-6">
+      <AnimatedContent className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Imobiliárias</h1>
@@ -434,10 +435,10 @@ export default function AdminImobiliarias() {
             ) : (
               <>
                 {/* Mobile View - Cards */}
-                <div className="grid grid-cols-1 gap-3 md:hidden">
+                <AnimatedList className="grid grid-cols-1 gap-3 md:hidden">
                   {filteredImobiliarias.map((imob) => (
-                    <Card 
-                      key={imob.id}
+                    <AnimatedItem key={imob.id}>
+                      <Card
                       className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
                       onClick={() => navigate(`/admin/imobiliarias/${imob.id}`)}
                     >
@@ -507,8 +508,9 @@ export default function AdminImobiliarias() {
                         </div>
                       </CardContent>
                     </Card>
+                    </AnimatedItem>
                   ))}
-                </div>
+                </AnimatedList>
 
                 {/* Desktop View - Table */}
                 <div className="hidden md:block overflow-x-auto">
@@ -670,7 +672,7 @@ export default function AdminImobiliarias() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </AnimatedContent>
     </SuperAdminLayout>
   );
 }

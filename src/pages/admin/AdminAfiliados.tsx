@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { invokeWithRetry } from "@/lib/invokeWithRetry";
+import { AnimatedContent, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 interface Afiliado {
   id: string;

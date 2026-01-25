@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard } from '@/components/AnimatedContent';
 
 interface BackupFile {
   name: string;
