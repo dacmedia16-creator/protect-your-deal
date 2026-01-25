@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { getRoleBadgeVariant, roleLabels } from '@/lib/statusColors';
 import { formatPhone } from "@/lib/phone";
 import { useQuery } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2, MessageCircle, Loader2 } from "lucide-react";
+import { Search, KeyRound, Mail, Users, MoreVertical, Trash2, Edit, UserPlus, Phone, Building2, IdCard, Copy, Check, CheckCircle2, MessageCircle, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -86,11 +86,18 @@ interface Imobiliaria {
   nome: string;
 }
 
+type SortColumn = 'nome' | 'email' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
 export default function AdminUsuarios() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<SortColumn>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   // Reset password dialog
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
@@ -223,6 +230,65 @@ export default function AdminUsuarios() {
       (statusFilter === "inativo" && user.profile?.ativo === false);
     return matchesSearch && matchesRole && matchesImobiliaria && matchesStatus;
   });
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  const sortedUsers = useMemo(() => {
+    if (!filteredUsers) return [];
+    
+    return [...filteredUsers].sort((a, b) => {
+      let valueA: string | number;
+      let valueB: string | number;
+      
+      switch (sortColumn) {
+        case 'nome':
+          valueA = a.profile?.nome?.toLowerCase() || '';
+          valueB = b.profile?.nome?.toLowerCase() || '';
+          break;
+        case 'email':
+          valueA = a.email?.toLowerCase() || '';
+          valueB = b.email?.toLowerCase() || '';
+          break;
+        case 'created_at':
+          valueA = new Date(a.created_at).getTime();
+          valueB = new Date(b.created_at).getTime();
+          break;
+        default:
+          return 0;
+      }
+      
+      if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredUsers, sortColumn, sortDirection]);
+
+  const SortableTableHead = ({ column, label }: { column: SortColumn; label: string }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 transition-colors select-none"
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortColumn === column ? (
+          sortDirection === 'asc' ? (
+            <ArrowUp className="h-4 w-4 text-primary" />
+          ) : (
+            <ArrowDown className="h-4 w-4 text-primary" />
+          )
+        ) : (
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground/50" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   const handleResetPassword = async () => {
     if (!selectedUser) return;
@@ -655,14 +721,14 @@ export default function AdminUsuarios() {
                 </Card>
               ))}
             </>
-          ) : filteredUsers?.length === 0 ? (
+          ) : sortedUsers?.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
                 Nenhum usuário encontrado
               </CardContent>
             </Card>
           ) : (
-            filteredUsers?.map((user) => (
+            sortedUsers?.map((user) => (
               <Card
                 key={user.id}
                 className="cursor-pointer transition-all hover:shadow-md active:bg-muted/30"
@@ -775,13 +841,13 @@ export default function AdminUsuarios() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Email</TableHead>
+                    <SortableTableHead column="nome" label="Usuário" />
+                    <SortableTableHead column="email" label="Email" />
                     <TableHead>Role</TableHead>
                     <TableHead>Imobiliária</TableHead>
                     <TableHead>Contato</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Criado em</TableHead>
+                    <SortableTableHead column="created_at" label="Criado em" />
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -809,14 +875,14 @@ export default function AdminUsuarios() {
                         </TableRow>
                       ))}
                     </>
-                  ) : filteredUsers?.length === 0 ? (
+                  ) : sortedUsers?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers?.map((user) => (
+                    sortedUsers?.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
