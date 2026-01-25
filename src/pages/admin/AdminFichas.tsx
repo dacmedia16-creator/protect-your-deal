@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/accordion';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Loader2, Eye, Search, HardDrive, AlertTriangle, Building2, User, CheckCircle2, Shield, MapPin, Calendar } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -238,8 +239,46 @@ export default function AdminFichas() {
   if (loading) {
     return (
       <SuperAdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="space-y-6">
+          {/* Header skeleton */}
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-80" />
+          </div>
+
+          {/* Stats cards skeleton */}
+          <div className="grid gap-4 md:grid-cols-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-16 mb-1" />
+                  <Skeleton className="h-3 w-12" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Search skeleton */}
+          <Skeleton className="h-10 w-full max-w-md" />
+
+          {/* Accordion groups skeleton */}
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-5 w-5 rounded" />
+                    <Skeleton className="h-5 w-48 flex-1" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </SuperAdminLayout>
     );

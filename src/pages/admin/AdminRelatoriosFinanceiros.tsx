@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { TrendingUp, TrendingDown, DollarSign, CreditCard, ArrowLeft, CalendarIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
@@ -203,8 +204,96 @@ export default function AdminRelatoriosFinanceiros() {
   if (loading) {
     return (
       <SuperAdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="space-y-6">
+          {/* Header skeleton */}
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+          </div>
+
+          {/* Date filter card skeleton */}
+          <Card>
+            <CardHeader className="pb-3">
+              <Skeleton className="h-5 w-40" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex gap-2">
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-9 w-20" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-10 w-40" />
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-10 w-40" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats grid skeleton */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-4" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-24 mb-1" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Charts skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[350px] w-full" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-56" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[350px] w-full" />
+            </CardContent>
+          </Card>
+
+          {/* Bottom cards skeleton */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[300px] w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-44" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </SuperAdminLayout>
     );
