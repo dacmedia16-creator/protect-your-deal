@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Mail, MoreVertical, RefreshCw, XCircle, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -200,9 +201,23 @@ export default function AdminConvites() {
             {/* Mobile View - Cards */}
             <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando...
-                </div>
+                <>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-5 w-32" />
+                          <Skeleton className="h-5 w-16" />
+                        </div>
+                        <Skeleton className="h-4 w-48" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-5 w-20" />
+                          <Skeleton className="h-5 w-28" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
               ) : filteredConvites?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhum convite encontrado
@@ -282,11 +297,19 @@ export default function AdminConvites() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
-                        Carregando...
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))}
+                    </>
                   ) : filteredConvites?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
