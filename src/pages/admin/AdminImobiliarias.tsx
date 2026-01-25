@@ -37,7 +37,8 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck, LogIn, Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -83,6 +84,12 @@ export default function AdminImobiliarias() {
   const [isPlanoDialogOpen, setIsPlanoDialogOpen] = useState(false);
   const [imobiliariaToChangePlan, setImobiliariaToChangePlan] = useState<Imobiliaria | null>(null);
   const [selectedPlanoId, setSelectedPlanoId] = useState("");
+  
+  // Estados para impersonação
+  const [isImpersonateDialogOpen, setIsImpersonateDialogOpen] = useState(false);
+  const [imobiliariaToImpersonate, setImobiliariaToImpersonate] = useState<Imobiliaria | null>(null);
+  const [masterPassword, setMasterPassword] = useState("");
+  const [isImpersonating, setIsImpersonating] = useState(false);
   const [isChangingPlano, setIsChangingPlano] = useState(false);
 
   async function fetchPlanos() {
@@ -314,6 +321,66 @@ export default function AdminImobiliarias() {
     }
   }
 
+  function openImpersonateDialog(imob: Imobiliaria, e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setImobiliariaToImpersonate(imob);
+    setMasterPassword("");
+    setIsImpersonateDialogOpen(true);
+  }
+
+  async function handleImpersonate() {
+    if (!imobiliariaToImpersonate || !masterPassword) {
+      toast.error("Digite a senha master");
+      return;
+    }
+
+    setIsImpersonating(true);
+    try {
+      // 1. Buscar o user_id do admin
+      const { data: adminUserId, error: adminError } = await supabase
+        .rpc('get_imobiliaria_admin', { imob_id: imobiliariaToImpersonate.id });
+      
+      if (adminError || !adminUserId) {
+        toast.error('Admin não encontrado para esta imobiliária');
+        return;
+      }
+      
+      // 2. Buscar email do admin via profiles
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('user_id', adminUserId)
+        .maybeSingle();
+      
+      if (!profile?.email) {
+        toast.error('Email do admin não encontrado');
+        return;
+      }
+      
+      // 3. Chamar master-login
+      const { data, error } = await supabase.functions.invoke('master-login', {
+        body: { 
+          email: profile.email, 
+          master_password: masterPassword 
+        }
+      });
+      
+      if (error || !data?.redirect_url) {
+        toast.error(data?.error || 'Erro ao gerar link de acesso');
+        return;
+      }
+      
+      // 4. Redirecionar
+      window.location.href = data.redirect_url;
+      
+    } catch (error) {
+      console.error('Impersonation error:', error);
+      toast.error('Erro ao acessar conta');
+    } finally {
+      setIsImpersonating(false);
+    }
+  }
+
   const filteredImobiliarias = imobiliarias.filter(imob =>
     imob.nome.toLowerCase().includes(search.toLowerCase()) ||
     imob.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -453,8 +520,16 @@ export default function AdminImobiliarias() {
                                 {imob.status === 'ativo' ? 'Ativo' : imob.status === 'suspenso' ? 'Suspenso' : 'Inativo'}
                               </Badge>
                             </div>
-                            <p className="font-medium truncate">{imob.nome}</p>
-                            <p className="text-sm text-muted-foreground truncate">{imob.email}</p>
+                            <button
+                              onClick={(e) => openImpersonateDialog(imob, e)}
+                              className="text-left group"
+                            >
+                              <p className="font-medium truncate group-hover:text-primary transition-colors flex items-center gap-1">
+                                {imob.nome}
+                                <LogIn className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                              </p>
+                              <p className="text-sm text-muted-foreground truncate">{imob.email}</p>
+                            </button>
                             {imob.cidade && imob.estado && (
                               <p className="text-xs text-muted-foreground mt-1">
                                 {imob.cidade}/{imob.estado}
@@ -537,10 +612,25 @@ export default function AdminImobiliarias() {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div>
-                              <p className="font-medium">{imob.nome}</p>
-                              <p className="text-sm text-muted-foreground">{imob.email}</p>
-                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => openImpersonateDialog(imob)}
+                                    className="text-left group"
+                                  >
+                                    <p className="font-medium group-hover:text-primary group-hover:underline transition-colors flex items-center gap-1">
+                                      {imob.nome}
+                                      <LogIn className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </p>
+                                    <p className="text-sm text-muted-foreground group-hover:text-primary/70 transition-colors">{imob.email}</p>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Entrar como admin desta imobiliária</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </TableCell>
                           <TableCell className="hidden lg:table-cell">
                             {imob.cnpj || '-'}
@@ -668,6 +758,57 @@ export default function AdminImobiliarias() {
               </Button>
               <Button onClick={handleChangePlano} disabled={isChangingPlano || !selectedPlanoId}>
                 {isChangingPlano ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para impersonação */}
+        <Dialog open={isImpersonateDialogOpen} onOpenChange={setIsImpersonateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <LogIn className="h-5 w-5" />
+                Entrar como Admin
+              </DialogTitle>
+              <DialogDescription>
+                Você irá acessar o sistema como administrador da imobiliária <strong>{imobiliariaToImpersonate?.nome}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  ⚠️ Esta ação é registrada para auditoria. Use apenas para suporte ao cliente.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="master-password">Senha Master</Label>
+                <Input
+                  id="master-password"
+                  type="password"
+                  placeholder="Digite a senha master..."
+                  value={masterPassword}
+                  onChange={(e) => setMasterPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleImpersonate()}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsImpersonateDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleImpersonate} disabled={isImpersonating || !masterPassword}>
+                {isImpersonating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Entrar
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
