@@ -39,6 +39,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { GlobalSearch } from '@/components/admin/GlobalSearch';
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
@@ -294,9 +295,12 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           <LogoIcon size={24} />
           <span className="font-display font-bold text-lg">Super Admin</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <GlobalSearch />
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -305,10 +309,17 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 flex items-center gap-2 px-4 border-b border-sidebar-border">
-            <LogoIcon size={24} />
-            <span className="font-display font-bold text-lg text-sidebar-foreground">Super Admin</span>
+          {/* Logo + Search */}
+          <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-2">
+              <LogoIcon size={24} />
+              <span className="font-display font-bold text-lg text-sidebar-foreground">Super Admin</span>
+            </div>
+          </div>
+          
+          {/* Desktop Search */}
+          <div className="hidden lg:block px-3 py-3 border-b border-sidebar-border">
+            <GlobalSearch />
           </div>
 
           {/* Navigation */}
