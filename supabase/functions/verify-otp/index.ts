@@ -392,8 +392,8 @@ serve(async (req) => {
       .update({ status: newStatus })
       .eq('id', otp.ficha_id);
 
-    // Gerar backup do PDF automaticamente quando ficha estiver completa
-    if (newStatus === 'completo') {
+    // Gerar backup do PDF automaticamente quando ficha estiver completa ou finalizada parcialmente
+    if (newStatus === 'completo' || newStatus === 'finalizado_parcial') {
       console.log('[verify-otp] Ficha completa - gerando backup PDF...');
       try {
         // Executar de forma síncrona para garantir que o backup seja gerado

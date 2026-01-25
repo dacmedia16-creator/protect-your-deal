@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
+import { subscriptionStatusColors, getStatusColor, fichaStatusColors } from '@/lib/statusColors';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -1220,12 +1221,8 @@ export default function AdminDetalhesImobiliaria() {
                             <TableCell>{ficha.proprietario_nome || '-'}</TableCell>
                             <TableCell className="max-w-[200px] truncate">{ficha.imovel_endereco}</TableCell>
                             <TableCell>
-                              <Badge className={
-                                ficha.status === 'confirmado' ? 'bg-success text-success-foreground' :
-                                ficha.status === 'pendente' ? 'bg-warning text-warning-foreground' :
-                                'bg-muted text-muted-foreground'
-                              }>
-                                {ficha.status}
+                              <Badge variant="outline" className={getStatusColor(fichaStatusColors, ficha.status)}>
+                                {isFichaConfirmada(ficha.status) ? 'Confirmado' : ficha.status}
                               </Badge>
                             </TableCell>
                             <TableCell>

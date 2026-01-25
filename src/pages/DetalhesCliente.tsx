@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 
 export default function DetalhesCliente() {
   const { id } = useParams<{ id: string }>();
@@ -229,8 +230,8 @@ export default function DetalhesCliente() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-mono text-xs sm:text-sm text-primary">#{ficha.protocolo}</span>
-                          <Badge variant={ficha.status === 'completo' ? 'default' : 'secondary'} className="text-xs">
-                            {ficha.status === 'completo' ? 'Confirmado' : 'Pendente'}
+                          <Badge variant={isFichaConfirmada(ficha.status) ? 'default' : 'secondary'} className="text-xs">
+                            {isFichaConfirmada(ficha.status) ? 'Confirmado' : 'Pendente'}
                           </Badge>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">{ficha.imovel_endereco}</p>

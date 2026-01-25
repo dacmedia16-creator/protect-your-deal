@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -83,7 +84,7 @@ export default function FichasParceiro() {
   });
 
   const getStatusBadge = (ficha: FichaParceiro) => {
-    if (ficha.status === 'confirmado') {
+    if (isFichaConfirmada(ficha.status)) {
       return <Badge variant="success" className="flex items-center gap-1"><CheckCircle className="h-3 w-3" />Confirmada</Badge>;
     }
     

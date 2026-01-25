@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -223,8 +224,8 @@ export default function DetalhesImovel() {
                       </div>
                     </div>
                   </div>
-                  <Badge variant={ficha.status === 'completo' ? 'default' : 'secondary'} className="shrink-0 text-xs">
-                    {ficha.status === 'completo' ? 'Confirmado' : 'Pendente'}
+                  <Badge variant={isFichaConfirmada(ficha.status) ? 'default' : 'secondary'} className="shrink-0 text-xs">
+                    {isFichaConfirmada(ficha.status) ? 'Confirmado' : 'Pendente'}
                   </Badge>
                 </div>
               ))}

@@ -15,6 +15,7 @@ import {
   CalendarDays
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { isFichaConfirmada, isFichaPendente } from '@/lib/fichaStatus';
 import { ptBR } from 'date-fns/locale';
 import {
   ChartContainer,
@@ -59,8 +60,8 @@ export default function Relatorios() {
 
   // Calculate metrics
   const totalFichas = fichas.length;
-  const fichasConfirmadas = fichas.filter(f => f.status === 'confirmado').length;
-  const fichasPendentes = fichas.filter(f => f.status === 'pendente').length;
+  const fichasConfirmadas = fichas.filter(f => isFichaConfirmada(f.status)).length;
+  const fichasPendentes = fichas.filter(f => isFichaPendente(f.status)).length;
   const taxaConfirmacao = totalFichas > 0 ? Math.round((fichasConfirmadas / totalFichas) * 100) : 0;
 
   // Data for charts

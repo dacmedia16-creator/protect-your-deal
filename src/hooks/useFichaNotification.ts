@@ -5,6 +5,7 @@ import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 
 /**
  * Hook reutilizável para notificações de confirmação de fichas de visita.
@@ -54,7 +55,7 @@ export function useFichaNotification() {
           
           const novaConfirmacaoProprietario = newData.proprietario_confirmado_em && !oldData.proprietario_confirmado_em;
           const novaConfirmacaoComprador = newData.comprador_confirmado_em && !oldData.comprador_confirmado_em;
-          const fichaCompleta = newData.status === 'completo' && oldData.status !== 'completo';
+          const fichaCompleta = isFichaConfirmada(newData.status) && !isFichaConfirmada(oldData.status);
           
           if (novaConfirmacaoProprietario || novaConfirmacaoComprador) {
             playNotificationSound('success');
