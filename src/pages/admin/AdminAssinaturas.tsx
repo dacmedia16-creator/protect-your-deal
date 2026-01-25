@@ -448,129 +448,215 @@ export default function AdminAssinaturas() {
         </Card>
 
         <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Titular</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Início</TableHead>
-                  <TableHead>Próx. Cobrança</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredAssinaturas?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Nenhuma assinatura encontrada
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAssinaturas?.map((assinatura) => (
-                    <TableRow key={assinatura.id}>
-                      <TableCell>
-                        {assinatura.imobiliaria_id ? (
-                          <button
-                            onClick={() => navigate(`/admin/imobiliarias/${assinatura.imobiliaria_id}`)}
-                            className="font-medium hover:underline text-left flex items-center gap-2"
-                          >
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            {assinatura.imobiliaria?.nome || "-"}
-                          </button>
-                        ) : assinatura.user_id ? (
-                          <button
-                            onClick={() => navigate(`/admin/autonomos/${assinatura.user_id}`)}
-                            className="font-medium hover:underline text-left flex items-center gap-2"
-                          >
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <span>{assinatura.user?.nome || "Corretor Autônomo"}</span>
-                              <span className="block text-xs text-muted-foreground">Corretor Autônomo</span>
-                            </div>
-                          </button>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{assinatura.plano?.nome || "-"}</p>
+          <CardContent className="p-0 md:p-0">
+            {/* Mobile View - Cards */}
+            <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Carregando...
+                </div>
+              ) : filteredAssinaturas?.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma assinatura encontrada
+                </div>
+              ) : (
+                filteredAssinaturas?.map((assinatura) => (
+                  <Card 
+                    key={assinatura.id}
+                    className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+                    onClick={() => {
+                      if (assinatura.imobiliaria_id) {
+                        navigate(`/admin/imobiliarias/${assinatura.imobiliaria_id}`);
+                      } else if (assinatura.user_id) {
+                        navigate(`/admin/autonomos/${assinatura.user_id}`);
+                      }
+                    }}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {assinatura.imobiliaria_id ? (
+                              <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                            ) : (
+                              <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <p className="font-medium truncate">
+                              {assinatura.imobiliaria?.nome || assinatura.user?.nome || "-"}
+                            </p>
+                          </div>
                           <p className="text-sm text-muted-foreground">
-                            R$ {assinatura.plano?.valor_mensal?.toFixed(2) || "0,00"}/mês
+                            Plano: {assinatura.plano?.nome || "-"}
                           </p>
+                          {assinatura.proxima_cobranca && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Próx. cobrança: {format(new Date(assinatura.proxima_cobranca), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
+                          )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(assinatura.status)}>
-                          {getStatusLabel(assinatura.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(assinatura.data_inicio), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {assinatura.proxima_cobranca
-                          ? format(new Date(assinatura.proxima_cobranca), "dd/MM/yyyy", {
-                              locale: ptBR,
-                            })
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(assinatura)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {assinatura.status !== "ativa" && (
-                              <DropdownMenuItem
-                                onClick={() => handleChangeStatus(assinatura, "ativa")}
-                              >
-                                <Play className="h-4 w-4 mr-2" />
-                                Ativar
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge variant={getStatusBadgeVariant(assinatura.status)}>
+                            {getStatusLabel(assinatura.status)}
+                          </Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenuItem onClick={() => openEditDialog(assinatura)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
                               </DropdownMenuItem>
-                            )}
-                            {assinatura.status !== "suspensa" && (
-                              <DropdownMenuItem
-                                onClick={() => handleChangeStatus(assinatura, "suspensa")}
-                              >
-                                <Pause className="h-4 w-4 mr-2" />
-                                Suspender
-                              </DropdownMenuItem>
-                            )}
-                            {assinatura.status !== "cancelada" && (
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleChangeStatus(assinatura, "cancelada")}
-                              >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Cancelar
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              <DropdownMenuSeparator />
+                              {assinatura.status !== "ativa" && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(assinatura, "ativa")}>
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Ativar
+                                </DropdownMenuItem>
+                              )}
+                              {assinatura.status === "ativa" && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(assinatura, "suspensa")}>
+                                  <Pause className="h-4 w-4 mr-2" />
+                                  Suspender
+                                </DropdownMenuItem>
+                              )}
+                              {assinatura.status !== "cancelada" && (
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => handleChangeStatus(assinatura, "cancelada")}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Cancelar
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Titular</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Início</TableHead>
+                    <TableHead>Próx. Cobrança</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        Carregando...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredAssinaturas?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhuma assinatura encontrada
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredAssinaturas?.map((assinatura) => (
+                      <TableRow key={assinatura.id}>
+                        <TableCell>
+                          {assinatura.imobiliaria_id ? (
+                            <button
+                              onClick={() => navigate(`/admin/imobiliarias/${assinatura.imobiliaria_id}`)}
+                              className="font-medium hover:underline text-left flex items-center gap-2"
+                            >
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              {assinatura.imobiliaria?.nome || "-"}
+                            </button>
+                          ) : assinatura.user_id ? (
+                            <button
+                              onClick={() => navigate(`/admin/autonomos/${assinatura.user_id}`)}
+                              className="font-medium hover:underline text-left flex items-center gap-2"
+                            >
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              {assinatura.user?.nome || "-"}
+                            </button>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{assinatura.plano?.nome || "-"}</span>
+                            {assinatura.plano?.valor_mensal && (
+                              <span className="text-xs text-muted-foreground">
+                                R$ {assinatura.plano.valor_mensal.toFixed(2)}/mês
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeVariant(assinatura.status)}>
+                            {getStatusLabel(assinatura.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(assinatura.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>
+                          {assinatura.proxima_cobranca
+                            ? format(new Date(assinatura.proxima_cobranca), "dd/MM/yyyy", { locale: ptBR })
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditDialog(assinatura)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {assinatura.status !== "ativa" && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(assinatura, "ativa")}>
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Ativar
+                                </DropdownMenuItem>
+                              )}
+                              {assinatura.status === "ativa" && (
+                                <DropdownMenuItem onClick={() => handleChangeStatus(assinatura, "suspensa")}>
+                                  <Pause className="h-4 w-4 mr-2" />
+                                  Suspender
+                                </DropdownMenuItem>
+                              )}
+                              {assinatura.status !== "cancelada" && (
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => handleChangeStatus(assinatura, "cancelada")}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Cancelar
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

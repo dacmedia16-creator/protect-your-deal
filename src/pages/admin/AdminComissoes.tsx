@@ -303,7 +303,7 @@ export default function AdminComissoes() {
               Registro de Comissões
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 Carregando...
@@ -313,106 +313,177 @@ export default function AdminComissoes() {
                 Nenhuma comissão encontrada
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Afiliado</TableHead>
-                    <TableHead>Cupom</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="text-right">Valor Original</TableHead>
-                    <TableHead className="text-right">Desconto</TableHead>
-                    <TableHead className="text-right">Comissão</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile View - Cards */}
+                <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
                   {comissoes.map((comissao) => (
-                    <TableRow key={comissao.id}>
-                      <TableCell>
-                        {format(new Date(comissao.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {comissao.cupons?.afiliados?.nome || "-"}
-                          </span>
-                          {comissao.cupons?.afiliados?.pix_chave && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
-                              onClick={() => copyPixKey(comissao.cupons.afiliados.pix_chave!)}
-                            >
-                              <Copy className="h-3 w-3 mr-1" />
-                              Copiar PIX
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <code className="bg-muted px-2 py-1 rounded font-mono text-xs">
-                          {comissao.cupons?.codigo || "-"}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        {comissao.imobiliarias?.nome || "Corretor Autônomo"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        R$ {Number(comissao.valor_original).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        - R$ {Number(comissao.valor_desconto).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        R$ {Number(comissao.valor_comissao).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        {comissao.comissao_paga ? (
-                          <Badge variant="default" className="bg-green-600">
-                            <Check className="h-3 w-3 mr-1" />
-                            Pago
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Pendente
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {!comissao.comissao_paga && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleMarcarPago(comissao.id)}
-                            disabled={marcarPagoMutation.isPending}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Marcar Pago
-                          </Button>
-                        )}
-                        {comissao.comissao_paga && (
-                          <div className="flex flex-col gap-1">
-                            {comissao.comissao_paga_em && (
+                    <Card key={comissao.id} className="transition-all hover:shadow-md">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">{comissao.cupons?.afiliados?.nome || "-"}</span>
+                              {comissao.comissao_paga ? (
+                                <Badge variant="default" className="bg-green-600">
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Pago
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Pendente
+                                </Badge>
+                              )}
+                            </div>
+                            <code className="bg-muted px-2 py-0.5 rounded font-mono text-xs">
+                              {comissao.cupons?.codigo || "-"}
+                            </code>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {comissao.imobiliarias?.nome || "Corretor Autônomo"}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-sm font-medium">
+                                R$ {Number(comissao.valor_comissao).toFixed(2)}
+                              </span>
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(comissao.comissao_paga_em), "dd/MM/yyyy", { locale: ptBR })}
+                                ({format(new Date(comissao.created_at), "dd/MM/yyyy", { locale: ptBR })})
                               </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            {!comissao.comissao_paga && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMarcarPago(comissao.id)}
+                                disabled={marcarPagoMutation.isPending}
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Pagar
+                              </Button>
                             )}
-                            {comissao.observacao_pagamento && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <FileText className="h-3 w-3" />
-                                {comissao.observacao_pagamento}
-                              </span>
+                            {comissao.cupons?.afiliados?.pix_chave && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => copyPixKey(comissao.cupons.afiliados.pix_chave!)}
+                              >
+                                <Copy className="h-3 w-3 mr-1" />
+                                Copiar PIX
+                              </Button>
                             )}
                           </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop View - Table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Afiliado</TableHead>
+                        <TableHead>Cupom</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead className="text-right">Valor Original</TableHead>
+                        <TableHead className="text-right">Desconto</TableHead>
+                        <TableHead className="text-right">Comissão</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ação</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {comissoes.map((comissao) => (
+                        <TableRow key={comissao.id}>
+                          <TableCell>
+                            {format(new Date(comissao.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {comissao.cupons?.afiliados?.nome || "-"}
+                              </span>
+                              {comissao.cupons?.afiliados?.pix_chave && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                                  onClick={() => copyPixKey(comissao.cupons.afiliados.pix_chave!)}
+                                >
+                                  <Copy className="h-3 w-3 mr-1" />
+                                  Copiar PIX
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <code className="bg-muted px-2 py-1 rounded font-mono text-xs">
+                              {comissao.cupons?.codigo || "-"}
+                            </code>
+                          </TableCell>
+                          <TableCell>
+                            {comissao.imobiliarias?.nome || "Corretor Autônomo"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            R$ {Number(comissao.valor_original).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right text-green-600">
+                            - R$ {Number(comissao.valor_desconto).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            R$ {Number(comissao.valor_comissao).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {comissao.comissao_paga ? (
+                              <Badge variant="default" className="bg-green-600">
+                                <Check className="h-3 w-3 mr-1" />
+                                Pago
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Pendente
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {!comissao.comissao_paga && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMarcarPago(comissao.id)}
+                                disabled={marcarPagoMutation.isPending}
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Marcar Pago
+                              </Button>
+                            )}
+                            {comissao.comissao_paga && (
+                              <div className="flex flex-col gap-1">
+                                {comissao.comissao_paga_em && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(new Date(comissao.comissao_paga_em), "dd/MM/yyyy", { locale: ptBR })}
+                                  </span>
+                                )}
+                                {comissao.observacao_pagamento && (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <FileText className="h-3 w-3" />
+                                    {comissao.observacao_pagamento}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

@@ -16,7 +16,6 @@ import {
   UserPlus,
   Settings,
   LogOut,
-  
   Menu,
   Stethoscope,
   X,
@@ -29,33 +28,88 @@ import {
   UserCheck,
   Ticket,
   DollarSign,
-  Loader2
+  Loader2,
+  ChevronDown,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LogoIcon } from '@/components/LogoIcon';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 interface SuperAdminLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
-  { href: '/admin/fichas', icon: FileText, label: 'Registros' },
-  { href: '/admin/backups', icon: Archive, label: 'Backups' },
-  { href: '/admin/planos', icon: CreditCard, label: 'Planos' },
-  { href: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
-  { href: '/admin/financeiro', icon: TrendingUp, label: 'Financeiro' },
-  { href: '/admin/afiliados', icon: UserCheck, label: 'Afiliados' },
-  { href: '/admin/cupons', icon: Ticket, label: 'Cupons' },
-  { href: '/admin/comissoes', icon: DollarSign, label: 'Comissões' },
-  { href: '/admin/usuarios', icon: Users, label: 'Usuários' },
-  { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
-  { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
-  { href: '/admin/convites', icon: Mail, label: 'Convites' },
-  { href: '/admin/marketing', icon: Image, label: 'Marketing' },
-  { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
-  { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+  defaultOpen?: boolean;
+}
+
+interface NavItem {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Dashboard',
+    defaultOpen: true,
+    items: [
+      { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+    ],
+  },
+  {
+    label: 'Operações',
+    defaultOpen: true,
+    items: [
+      { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
+      { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
+      { href: '/admin/fichas', icon: FileText, label: 'Registros' },
+      { href: '/admin/backups', icon: Archive, label: 'Backups' },
+    ],
+  },
+  {
+    label: 'Usuários',
+    defaultOpen: true,
+    items: [
+      { href: '/admin/usuarios', icon: Users, label: 'Todos' },
+      { href: '/admin/usuarios-pendentes', icon: UserPlus, label: 'Pendentes' },
+      { href: '/admin/convites', icon: Mail, label: 'Convites' },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    defaultOpen: true,
+    items: [
+      { href: '/admin/planos', icon: Package, label: 'Planos' },
+      { href: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
+      { href: '/admin/financeiro', icon: TrendingUp, label: 'Relatórios' },
+    ],
+  },
+  {
+    label: 'Afiliados',
+    defaultOpen: false,
+    items: [
+      { href: '/admin/afiliados', icon: UserCheck, label: 'Lista' },
+      { href: '/admin/cupons', icon: Ticket, label: 'Cupons' },
+      { href: '/admin/comissoes', icon: DollarSign, label: 'Comissões' },
+    ],
+  },
+  {
+    label: 'Sistema',
+    defaultOpen: false,
+    items: [
+      { href: '/admin/marketing', icon: Image, label: 'Marketing' },
+      { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
+      { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
+    ],
+  },
 ];
 
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
@@ -66,6 +120,15 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const queryClient = useQueryClient();
   const { playNotificationSound } = useNotificationSound();
+  
+  // Track which groups are open
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    navGroups.forEach(group => {
+      initial[group.label] = group.defaultOpen ?? false;
+    });
+    return initial;
+  });
 
   const handleSignOut = async () => {
     if (isLoggingOut) return;
@@ -211,6 +274,18 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     '/admin/convites': convitesPendentesCount,
   };
 
+  const isItemActive = (href: string) => {
+    return location.pathname === href || 
+      (href !== '/admin' && location.pathname.startsWith(href));
+  };
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile header */}
@@ -237,35 +312,97 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href || 
-                (item.href !== '/admin' && location.pathname.startsWith(item.href));
-              const badgeCount = badgeCounts[item.href];
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            {navGroups.map((group) => {
+              const isGroupOpen = openGroups[group.label];
+              const hasActiveItem = group.items.some(item => isItemActive(item.href));
+              const groupBadgeCount = group.items.reduce((sum, item) => sum + (badgeCounts[item.href] || 0), 0);
               
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                  {badgeCount !== undefined && badgeCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="ml-auto h-5 min-w-5 flex items-center justify-center px-1.5 text-[10px]"
+              // For Dashboard, render directly without collapsible
+              if (group.label === 'Dashboard') {
+                return group.items.map(item => {
+                  const isActive = isItemActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        isActive 
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
                     >
-                      {badgeCount > 99 ? '99+' : badgeCount}
-                    </Badge>
-                  )}
-                </Link>
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  );
+                });
+              }
+
+              return (
+                <Collapsible
+                  key={group.label}
+                  open={isGroupOpen || hasActiveItem}
+                  onOpenChange={() => toggleGroup(group.label)}
+                >
+                  <CollapsibleTrigger className="w-full">
+                    <div className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-colors",
+                      hasActiveItem 
+                        ? "text-sidebar-primary-foreground/80" 
+                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                    )}>
+                      <span>{group.label}</span>
+                      <div className="flex items-center gap-1.5">
+                        {groupBadgeCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="h-4 min-w-4 flex items-center justify-center px-1 text-[9px]"
+                          >
+                            {groupBadgeCount > 99 ? '99+' : groupBadgeCount}
+                          </Badge>
+                        )}
+                        <ChevronDown className={cn(
+                          "h-4 w-4 transition-transform",
+                          (isGroupOpen || hasActiveItem) && "rotate-180"
+                        )} />
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-0.5 mt-1">
+                    {group.items.map((item) => {
+                      const isActive = isItemActive(item.href);
+                      const badgeCount = badgeCounts[item.href];
+                      
+                      return (
+                        <Link
+                          key={item.href}
+                          to={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ml-1",
+                            isActive 
+                              ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.label}
+                          {badgeCount !== undefined && badgeCount > 0 && (
+                            <Badge 
+                              variant="destructive" 
+                              className="ml-auto h-5 min-w-5 flex items-center justify-center px-1.5 text-[10px]"
+                            >
+                              {badgeCount > 99 ? '99+' : badgeCount}
+                            </Badge>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
               );
             })}
           </nav>

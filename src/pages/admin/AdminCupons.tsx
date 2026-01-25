@@ -358,7 +358,7 @@ export default function AdminCupons() {
               Lista de Cupons
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 Carregando...
@@ -368,109 +368,190 @@ export default function AdminCupons() {
                 Nenhum cupom cadastrado
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Afiliado</TableHead>
-                    <TableHead>Desconto</TableHead>
-                    <TableHead>Comissão</TableHead>
-                    <TableHead>Validade</TableHead>
-                    <TableHead className="text-center">Usos</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile View - Cards */}
+                <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
                   {cupons.map((cupom) => (
-                    <TableRow key={cupom.id}>
-                      <TableCell>
-                        <code className="bg-muted px-2 py-1 rounded font-mono text-sm">
-                          {cupom.codigo}
-                        </code>
-                      </TableCell>
-                      <TableCell>{cupom.afiliados?.nome || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="gap-1">
-                          {cupom.tipo_desconto === "percentual" ? (
-                            <>
-                              <Percent className="h-3 w-3" />
-                              {cupom.valor_desconto}%
-                            </>
-                          ) : (
-                            <>
-                              <DollarSign className="h-3 w-3" />
-                              R$ {Number(cupom.valor_desconto).toFixed(2)}
-                            </>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {cupom.comissao_percentual}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {cupom.valido_ate ? (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span className={isExpired(cupom.valido_ate) ? "text-destructive" : ""}>
-                              {format(new Date(cupom.valido_ate), "dd/MM/yyyy")}
-                            </span>
+                    <Card key={cupom.id} className="transition-all hover:shadow-md">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <code className="bg-muted px-2 py-1 rounded font-mono text-sm font-bold">
+                                {cupom.codigo}
+                              </code>
+                              {!cupom.ativo ? (
+                                <Badge variant="secondary">Inativo</Badge>
+                              ) : isExpired(cupom.valido_ate) ? (
+                                <Badge variant="destructive">Expirado</Badge>
+                              ) : isLimitReached(cupom) ? (
+                                <Badge variant="secondary">Limite</Badge>
+                              ) : (
+                                <Badge variant="default">Ativo</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{cupom.afiliados?.nome || "-"}</p>
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <Badge variant="outline" className="gap-1">
+                                {cupom.tipo_desconto === "percentual" ? (
+                                  <>
+                                    <Percent className="h-3 w-3" />
+                                    {cupom.valor_desconto}%
+                                  </>
+                                ) : (
+                                  <>
+                                    <DollarSign className="h-3 w-3" />
+                                    R$ {Number(cupom.valor_desconto).toFixed(2)}
+                                  </>
+                                )}
+                              </Badge>
+                              <Badge variant="secondary">
+                                {cupom.comissao_percentual}% comissão
+                              </Badge>
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Hash className="h-3 w-3" />
+                                {cupom.usos_atuais}{cupom.max_usos && `/${cupom.max_usos}`}
+                              </span>
+                            </div>
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground">Sem limite</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Hash className="h-3 w-3" />
-                          {cupom.usos_atuais}
-                          {cupom.max_usos && (
-                            <span className="text-muted-foreground">/ {cupom.max_usos}</span>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEdit(cupom)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => toggleStatusMutation.mutate({
+                                id: cupom.id,
+                                ativo: !cupom.ativo,
+                              })}
+                            >
+                              {cupom.ativo ? (
+                                <TicketX className="h-4 w-4 text-destructive" />
+                              ) : (
+                                <Ticket className="h-4 w-4 text-green-600" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {!cupom.ativo ? (
-                          <Badge variant="secondary">Inativo</Badge>
-                        ) : isExpired(cupom.valido_ate) ? (
-                          <Badge variant="destructive">Expirado</Badge>
-                        ) : isLimitReached(cupom) ? (
-                          <Badge variant="secondary">Limite atingido</Badge>
-                        ) : (
-                          <Badge variant="default">Ativo</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(cupom)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => toggleStatusMutation.mutate({
-                              id: cupom.id,
-                              ativo: !cupom.ativo,
-                            })}
-                          >
-                            {cupom.ativo ? (
-                              <TicketX className="h-4 w-4 text-destructive" />
-                            ) : (
-                              <Ticket className="h-4 w-4 text-green-600" />
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop View - Table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Afiliado</TableHead>
+                        <TableHead>Desconto</TableHead>
+                        <TableHead>Comissão</TableHead>
+                        <TableHead>Validade</TableHead>
+                        <TableHead className="text-center">Usos</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cupons.map((cupom) => (
+                        <TableRow key={cupom.id}>
+                          <TableCell>
+                            <code className="bg-muted px-2 py-1 rounded font-mono text-sm">
+                              {cupom.codigo}
+                            </code>
+                          </TableCell>
+                          <TableCell>{cupom.afiliados?.nome || "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="gap-1">
+                              {cupom.tipo_desconto === "percentual" ? (
+                                <>
+                                  <Percent className="h-3 w-3" />
+                                  {cupom.valor_desconto}%
+                                </>
+                              ) : (
+                                <>
+                                  <DollarSign className="h-3 w-3" />
+                                  R$ {Number(cupom.valor_desconto).toFixed(2)}
+                                </>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {cupom.comissao_percentual}%
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {cupom.valido_ate ? (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                <span className={isExpired(cupom.valido_ate) ? "text-destructive" : ""}>
+                                  {format(new Date(cupom.valido_ate), "dd/MM/yyyy")}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">Sem limite</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Hash className="h-3 w-3" />
+                              {cupom.usos_atuais}
+                              {cupom.max_usos && (
+                                <span className="text-muted-foreground">/ {cupom.max_usos}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {!cupom.ativo ? (
+                              <Badge variant="secondary">Inativo</Badge>
+                            ) : isExpired(cupom.valido_ate) ? (
+                              <Badge variant="destructive">Expirado</Badge>
+                            ) : isLimitReached(cupom) ? (
+                              <Badge variant="secondary">Limite atingido</Badge>
+                            ) : (
+                              <Badge variant="default">Ativo</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(cupom)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleStatusMutation.mutate({
+                                  id: cupom.id,
+                                  ativo: !cupom.ativo,
+                                })}
+                              >
+                                {cupom.ativo ? (
+                                  <TicketX className="h-4 w-4 text-destructive" />
+                                ) : (
+                                  <Ticket className="h-4 w-4 text-green-600" />
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
