@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatPhone } from "@/lib/phone";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -642,11 +643,34 @@ export default function AdminCorretoresAutonomos() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
+                  <>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-28" />
+                              <Skeleton className="h-3 w-16" />
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-36" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                        </TableCell>
+                        <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-6 w-16 mx-auto rounded" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded ml-auto" /></TableCell>
+                      </TableRow>
+                    ))}
+                  </>
                 ) : filteredCorretores?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
