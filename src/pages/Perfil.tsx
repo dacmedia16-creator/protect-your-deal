@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX, Smartphone, Download, Check, RefreshCw, Info } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2, Save, User, CheckCircle2, AlertCircle, Bell, Volume2, VolumeX, Smartphone, Download, Check, RefreshCw, Info, Lock, KeyRound } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { formatPhone, unformatPhone, isValidPhone } from '@/lib/phone';
 import { formatCPF, validateCPF } from '@/lib/cpf';
 import { forceAppRefresh, getAppExecutionModeLabel, getBuildVersion } from '@/lib/forceAppRefresh';
+import { PasswordInput } from '@/components/PasswordInput';
+import { getPasswordStrength } from '@/lib/password';
 
 interface Profile {
   id: string;
@@ -43,6 +45,13 @@ export default function Perfil() {
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
+  // Password change states
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  
   const handleInstallApp = async () => {
     if (isIOS) {
       navigate('/instalar');
@@ -58,6 +67,58 @@ export default function Perfil() {
     setRefreshing(true);
     toast.info('Atualizando app...');
     await forceAppRefresh();
+  };
+
+  const handleChangePassword = async () => {
+    if (!user?.email) {
+      toast.error('Erro ao identificar usuário');
+      return;
+    }
+
+    if (novaSenha.length < 6) {
+      toast.error('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    if (novaSenha !== confirmarSenha) {
+      toast.error('As senhas não coincidem');
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      // Verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: senhaAtual,
+      });
+
+      if (signInError) {
+        toast.error('Senha atual incorreta');
+        return;
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: novaSenha,
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      toast.success('Senha alterada com sucesso!');
+      setSenhaAtual('');
+      setNovaSenha('');
+      setConfirmarSenha('');
+      setIsChangingPassword(false);
+    } catch (error) {
+      console.error('Erro ao alterar senha:', error);
+      toast.error('Erro ao alterar senha');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const [nome, setNome] = useState('');
@@ -401,6 +462,88 @@ export default function Perfil() {
               />
             </div>
           </CardContent>
+        </Card>
+
+        {/* Security Card - Password Change */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Segurança
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsChangingPassword(!isChangingPassword);
+                  if (isChangingPassword) {
+                    setSenhaAtual('');
+                    setNovaSenha('');
+                    setConfirmarSenha('');
+                  }
+                }}
+              >
+                {isChangingPassword ? 'Cancelar' : 'Alterar Senha'}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+
+          {isChangingPassword && (
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="senhaAtual">Senha Atual</Label>
+                <PasswordInput
+                  value={senhaAtual}
+                  onChange={setSenhaAtual}
+                  placeholder="Digite sua senha atual"
+                  showGenerator={false}
+                  showStrength={false}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="novaSenha">Nova Senha</Label>
+                <PasswordInput
+                  value={novaSenha}
+                  onChange={setNovaSenha}
+                  placeholder="Mínimo 6 caracteres"
+                  showGenerator={true}
+                  showStrength={true}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmarSenha">Confirmar Nova Senha</Label>
+                <PasswordInput
+                  value={confirmarSenha}
+                  onChange={setConfirmarSenha}
+                  placeholder="Repita a nova senha"
+                  showGenerator={false}
+                  showStrength={false}
+                />
+                {confirmarSenha && novaSenha !== confirmarSenha && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    As senhas não coincidem
+                  </p>
+                )}
+              </div>
+
+              <Button
+                onClick={handleChangePassword}
+                disabled={changingPassword || !senhaAtual || !novaSenha || !confirmarSenha || novaSenha !== confirmarSenha}
+                className="w-full"
+              >
+                {changingPassword ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <KeyRound className="h-4 w-4 mr-2" />
+                )}
+                Salvar Nova Senha
+              </Button>
+            </CardContent>
+          )}
         </Card>
 
         {/* Appearance Card */}
