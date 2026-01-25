@@ -455,7 +455,7 @@ export default function EmpresaRelatorios() {
               <div class="stat-label">Total de Registros</div>
             </div>
             <div class="stat">
-              <div class="stat-value">${fichas.filter(f => f.status === 'completo').length}</div>
+              <div class="stat-value">${fichas.filter(f => isFichaConfirmada(f.status)).length}</div>
               <div class="stat-label">Completas</div>
             </div>
             <div class="stat">
