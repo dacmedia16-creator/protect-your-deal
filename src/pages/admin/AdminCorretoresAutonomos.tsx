@@ -587,233 +587,369 @@ export default function AdminCorretoresAutonomos() {
     }
   };
 
+  const renderDropdownMenu = (corretor: CorretorAutonomo, onClick?: (e: React.MouseEvent) => void) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={onClick}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="bg-popover">
+        <DropdownMenuItem onClick={() => openPlanoDialog(corretor)}>
+          <CreditCard className="h-4 w-4 mr-2" />
+          {corretor.assinatura ? "Alterar Plano" : "Vincular Plano"}
+        </DropdownMenuItem>
+        {corretor.assinatura && (
+          <DropdownMenuItem 
+            onClick={() => handleToggleAssinatura(corretor)}
+            disabled={isTogglingStatus === corretor.user_id}
+          >
+            <Power className="h-4 w-4 mr-2" />
+            {corretor.assinatura.status === "ativa" ? "Desativar Assinatura" : "Ativar Assinatura"}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={() => openLinkDialog(corretor)}>
+          <LinkIcon className="h-4 w-4 mr-2" />
+          Vincular a Imobiliária
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => {
+          setCorretorToReset(corretor);
+          setIsResetDialogOpen(true);
+        }}>
+          <KeyRound className="h-4 w-4 mr-2" />
+          Redefinir Senha
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          className="text-destructive"
+          onClick={() => {
+            setCorretorToDelete(corretor);
+            setIsDeleteDialogOpen(true);
+          }}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const getAssinaturaBadge = (corretor: CorretorAutonomo) => {
+    if (!corretor.assinatura) {
+      return (
+        <Badge variant="outline" className="text-muted-foreground flex-shrink-0">
+          Sem plano
+        </Badge>
+      );
+    }
+    return (
+      <Badge 
+        variant={corretor.assinatura.status === "ativa" ? "default" : "secondary"}
+        className={`flex-shrink-0 ${corretor.assinatura.status === "ativa" ? "bg-green-600" : ""}`}
+      >
+        {corretor.assinatura.status === "ativa" ? "Ativa" : "Suspensa"}
+      </Badge>
+    );
+  };
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Corretores Autônomos</h1>
-            <p className="text-muted-foreground">
-              Corretores sem vínculo com imobiliária
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-lg px-4 py-2 bg-amber-500/10 text-amber-600 border-amber-500/30">
-              <UserCircle className="h-5 w-5 mr-2" />
-              {corretores?.length || 0} autônomos
-            </Badge>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Novo Corretor Autônomo
-            </Button>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Buscar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        {/* Responsive Header */}
+        <AnimatedContent>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Corretores Autônomos</h1>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Corretores sem vínculo com imobiliária
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Badge variant="outline" className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-amber-500/10 text-amber-600 border-amber-500/30">
+                <UserCircle className="h-4 md:h-5 w-4 md:w-5 mr-2" />
+                {corretores?.length || 0} autônomos
+              </Badge>
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="w-full md:w-auto">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Novo Corretor
+              </Button>
+            </div>
+          </div>
+        </AnimatedContent>
 
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Corretor</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Assinatura</TableHead>
-                  <TableHead className="text-center">Pesquisa</TableHead>
-                  <TableHead className="text-center">Fichas</TableHead>
-                  <TableHead className="text-center">Clientes</TableHead>
-                  <TableHead className="text-center">Imóveis</TableHead>
-                  <TableHead>Cadastro</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <>
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <div className="space-y-2">
-                              <Skeleton className="h-4 w-28" />
-                              <Skeleton className="h-3 w-16" />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-36" />
-                            <Skeleton className="h-3 w-24" />
-                          </div>
-                        </TableCell>
-                        <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
-                        <TableCell className="text-center"><Skeleton className="h-6 w-16 mx-auto rounded" /></TableCell>
-                        <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                        <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                        <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded ml-auto" /></TableCell>
-                      </TableRow>
-                    ))}
-                  </>
-                ) : filteredCorretores?.length === 0 ? (
+        {/* Search Card */}
+        <AnimatedContent delay={0.1}>
+          <Card>
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-base md:text-lg">Buscar</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </AnimatedContent>
+
+        {/* Mobile Skeleton */}
+        {isLoading && (
+          <div className="space-y-3 md:hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                      <Skeleton className="h-3 w-20" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                    <Skeleton className="h-8 w-8 rounded flex-shrink-0" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Desktop Skeleton */}
+        {isLoading && (
+          <Card className="hidden md:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      Nenhum corretor autônomo encontrado
-                    </TableCell>
+                    <TableHead>Corretor</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Assinatura</TableHead>
+                    <TableHead className="text-center">Pesquisa</TableHead>
+                    <TableHead className="text-center">Fichas</TableHead>
+                    <TableHead className="text-center">Clientes</TableHead>
+                    <TableHead className="text-center">Imóveis</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ) : (
-                  filteredCorretores?.map((corretor) => (
-                    <TableRow key={corretor.id}>
+                </TableHeader>
+                <TableBody>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <TableRow key={i}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                            <UserCircle className="h-5 w-5 text-amber-600" />
-                          </div>
-                          <div>
-                            <button
-                              onClick={() => navigate(`/admin/autonomos/${corretor.user_id}`)}
-                              className="font-medium hover:underline hover:text-primary text-left"
-                            >
-                              {corretor.profile?.nome || "Sem nome"}
-                            </button>
-                            {corretor.profile?.creci && (
-                              <p className="text-xs text-muted-foreground">CRECI: {corretor.profile.creci}</p>
-                            )}
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-16" />
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm">{corretor.email || "-"}</p>
-                        <p className="text-xs text-muted-foreground">{corretor.profile?.telefone || "-"}</p>
-                      </TableCell>
-                      <TableCell>
-                        {corretor.assinatura ? (
-                          <Badge 
-                            variant={corretor.assinatura.status === "ativa" ? "default" : "secondary"}
-                            className={corretor.assinatura.status === "ativa" ? "bg-green-600" : ""}
-                          >
-                            {corretor.assinatura.status === "ativa" ? "✓" : "⏳"} {corretor.assinatura.plano_nome}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            Sem plano
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <button
-                          onClick={() => handleToggleSurvey(corretor)}
-                          disabled={isTogglingSurvey === corretor.user_id}
-                          className={`inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                            corretor.survey_enabled
-                              ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                          } ${isTogglingSurvey === corretor.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                          <ClipboardList className="h-3 w-3" />
-                          {isTogglingSurvey === corretor.user_id ? '...' : corretor.survey_enabled ? 'Ativa' : 'Inativa'}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <Badge variant="secondary" className="gap-1">
-                            <FileText className="h-3 w-3" />
-                            {corretor.stats.fichas}
-                          </Badge>
-                          {corretor.stats.fichasConfirmadas > 0 && (
-                            <span className="text-xs text-green-600">
-                              {corretor.stats.fichasConfirmadas} confirmada(s)
-                            </span>
-                          )}
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-36" />
+                          <Skeleton className="h-3 w-24" />
                         </div>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="gap-1">
-                          <UsersIcon className="h-3 w-3" />
-                          {corretor.stats.clientes}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="gap-1">
-                          <Home className="h-3 w-3" />
-                          {corretor.stats.imoveis}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(corretor.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                        </p>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openPlanoDialog(corretor)}>
-                              <CreditCard className="h-4 w-4 mr-2" />
-                              {corretor.assinatura ? "Alterar Plano" : "Vincular Plano"}
-                            </DropdownMenuItem>
-                            {corretor.assinatura && (
-                              <DropdownMenuItem 
-                                onClick={() => handleToggleAssinatura(corretor)}
-                                disabled={isTogglingStatus === corretor.user_id}
-                              >
-                                <Power className="h-4 w-4 mr-2" />
-                                {corretor.assinatura.status === "ativa" ? "Desativar Assinatura" : "Ativar Assinatura"}
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={() => openLinkDialog(corretor)}>
-                              <LinkIcon className="h-4 w-4 mr-2" />
-                              Vincular a Imobiliária
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {
-                              setCorretorToReset(corretor);
-                              setIsResetDialogOpen(true);
-                            }}>
-                              <KeyRound className="h-4 w-4 mr-2" />
-                              Redefinir Senha
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => {
-                                setCorretorToDelete(corretor);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                      <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-6 w-16 mx-auto rounded" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                      <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded ml-auto" /></TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Mobile Cards View */}
+        {!isLoading && (
+          <AnimatedList className="space-y-3 md:hidden">
+            {filteredCorretores?.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Nenhum corretor autônomo encontrado
+                </CardContent>
+              </Card>
+            ) : (
+              filteredCorretores?.map((corretor) => (
+                <AnimatedItem key={corretor.id}>
+                  <Card 
+                    className="cursor-pointer transition-all hover:shadow-md active:bg-muted/30"
+                    onClick={() => navigate(`/admin/autonomos/${corretor.user_id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        {/* Avatar */}
+                        <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                          <UserCircle className="h-5 w-5 text-amber-600" />
+                        </div>
+                        
+                        {/* Info */}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-semibold truncate">
+                              {corretor.profile?.nome || "Sem nome"}
+                            </p>
+                            {getAssinaturaBadge(corretor)}
+                          </div>
+                          
+                          {/* CRECI */}
+                          {corretor.profile?.creci && (
+                            <p className="text-xs text-muted-foreground">
+                              CRECI: {corretor.profile.creci}
+                            </p>
+                          )}
+                          
+                          {/* Plano */}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <CreditCard className="h-3 w-3" />
+                            <span>{corretor.assinatura?.plano_nome || "Nenhum plano"}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Actions */}
+                        {renderDropdownMenu(corretor, (e) => e.stopPropagation())}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </AnimatedItem>
+              ))
+            )}
+          </AnimatedList>
+        )}
+
+        {/* Desktop Table View */}
+        {!isLoading && (
+          <AnimatedContent delay={0.2} className="hidden md:block">
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Corretor</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Assinatura</TableHead>
+                      <TableHead className="text-center">Pesquisa</TableHead>
+                      <TableHead className="text-center">Fichas</TableHead>
+                      <TableHead className="text-center">Clientes</TableHead>
+                      <TableHead className="text-center">Imóveis</TableHead>
+                      <TableHead>Cadastro</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCorretores?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          Nenhum corretor autônomo encontrado
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredCorretores?.map((corretor) => (
+                        <TableRow key={corretor.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                                <UserCircle className="h-5 w-5 text-amber-600" />
+                              </div>
+                              <div>
+                                <button
+                                  onClick={() => navigate(`/admin/autonomos/${corretor.user_id}`)}
+                                  className="font-medium hover:underline hover:text-primary text-left"
+                                >
+                                  {corretor.profile?.nome || "Sem nome"}
+                                </button>
+                                {corretor.profile?.creci && (
+                                  <p className="text-xs text-muted-foreground">CRECI: {corretor.profile.creci}</p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm">{corretor.email || "-"}</p>
+                            <p className="text-xs text-muted-foreground">{corretor.profile?.telefone || "-"}</p>
+                          </TableCell>
+                          <TableCell>
+                            {corretor.assinatura ? (
+                              <Badge 
+                                variant={corretor.assinatura.status === "ativa" ? "default" : "secondary"}
+                                className={corretor.assinatura.status === "ativa" ? "bg-green-600" : ""}
+                              >
+                                {corretor.assinatura.status === "ativa" ? "✓" : "⏳"} {corretor.assinatura.plano_nome}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Sem plano
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <button
+                              onClick={() => handleToggleSurvey(corretor)}
+                              disabled={isTogglingSurvey === corretor.user_id}
+                              className={`inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                                corretor.survey_enabled
+                                  ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
+                                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                              } ${isTogglingSurvey === corretor.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <ClipboardList className="h-3 w-3" />
+                              {isTogglingSurvey === corretor.user_id ? '...' : corretor.survey_enabled ? 'Ativa' : 'Inativa'}
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <Badge variant="secondary" className="gap-1">
+                                <FileText className="h-3 w-3" />
+                                {corretor.stats.fichas}
+                              </Badge>
+                              {corretor.stats.fichasConfirmadas > 0 && (
+                                <span className="text-xs text-green-600">
+                                  {corretor.stats.fichasConfirmadas} confirmada(s)
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="gap-1">
+                              <UsersIcon className="h-3 w-3" />
+                              {corretor.stats.clientes}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="gap-1">
+                              <Home className="h-3 w-3" />
+                              {corretor.stats.imoveis}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(corretor.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {renderDropdownMenu(corretor)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </AnimatedContent>
+        )}
       </div>
 
       {/* Link to Imobiliaria Dialog */}
