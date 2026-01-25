@@ -42,7 +42,7 @@ export default function AdminUsuariosPendentes() {
   const [selectedImobiliarias, setSelectedImobiliarias] = useState<Record<string, string>>({});
   const [linkingUserId, setLinkingUserId] = useState<string | null>(null);
 
-  // Fetch pending users (corretores without imobiliaria_id)
+  // Fetch pending users (corretores without imobiliaria_id, excluding autonomous brokers)
   const { data: pendingUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ['pending-users'],
     queryFn: async () => {
@@ -56,12 +56,32 @@ export default function AdminUsuariosPendentes() {
       if (rolesError) throw rolesError;
       if (!roles || roles.length === 0) return [];
 
-      // Get profiles for these users
       const userIds = roles.map(r => r.user_id);
+
+      // Get autonomous brokers (those with individual subscriptions)
+      const { data: assinaturasAutonomas } = await supabase
+        .from('assinaturas')
+        .select('user_id')
+        .in('user_id', userIds)
+        .is('imobiliaria_id', null);
+
+      // IDs of users with autonomous subscriptions (not pending)
+      const autonomosComAssinatura = new Set(
+        assinaturasAutonomas?.map(a => a.user_id) || []
+      );
+
+      // Filter only truly pending users (no autonomous subscription)
+      const rolesPendentes = roles.filter(r => !autonomosComAssinatura.has(r.user_id));
+
+      if (rolesPendentes.length === 0) return [];
+
+      const pendingUserIds = rolesPendentes.map(r => r.user_id);
+
+      // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, telefone')
-        .in('user_id', userIds);
+        .in('user_id', pendingUserIds);
 
       if (profilesError) throw profilesError;
 
@@ -73,7 +93,7 @@ export default function AdminUsuariosPendentes() {
       const users = usersData?.users || [];
 
       // Combine data
-      return roles.map(role => {
+      return rolesPendentes.map(role => {
         const profile = profiles?.find(p => p.user_id === role.user_id);
         const authUser = users.find((u: any) => u.id === role.user_id);
         
@@ -167,12 +187,13 @@ export default function AdminUsuariosPendentes() {
           </CardHeader>
           <CardContent className="text-amber-700 dark:text-amber-300 text-sm">
             <p>
-              Usuários pendentes são aqueles que possuem uma conta e um papel (corretor) atribuído, 
-              mas ainda não foram vinculados a nenhuma imobiliária. Isso pode acontecer quando:
+              Usuários pendentes são corretores que deveriam estar vinculados a uma imobiliária, 
+              mas ainda não foram associados. <strong>Corretores autônomos não aparecem aqui</strong>, 
+              pois operam de forma independente com seu próprio plano.
             </p>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Um usuário criou uma conta fora do fluxo normal de convite</li>
-              <li>Houve um problema durante o registro da imobiliária</li>
+              <li>Um corretor aceitou um convite mas houve falha no vínculo</li>
+              <li>Houve um problema durante o registro vinculado</li>
               <li>O usuário foi migrado de um sistema legado</li>
             </ul>
           </CardContent>
@@ -222,7 +243,7 @@ export default function AdminUsuariosPendentes() {
                 <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
                 <p className="text-lg font-medium">Nenhum usuário pendente</p>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Todos os usuários estão vinculados a uma imobiliária
+                  Todos os corretores vinculados estão associados a uma imobiliária
                 </p>
               </div>
             ) : (
