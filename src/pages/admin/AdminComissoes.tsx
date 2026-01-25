@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth, subMonths, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -305,9 +306,56 @@ export default function AdminComissoes() {
           </CardHeader>
           <CardContent className="p-0 md:p-6">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Carregando...
-              </div>
+              <>
+                {/* Mobile skeleton */}
+                <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-5 w-28" />
+                          <Skeleton className="h-5 w-16" />
+                        </div>
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-4 w-36" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-5 w-20" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {/* Desktop skeleton */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                          <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-36" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-8 w-16" /></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             ) : !comissoes || comissoes.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhuma comissão encontrada

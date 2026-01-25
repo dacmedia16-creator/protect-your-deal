@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, CreditCard, MoreVertical, Play, Pause, XCircle, Edit, Plus, Building2, User } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -452,9 +453,23 @@ export default function AdminAssinaturas() {
             {/* Mobile View - Cards */}
             <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
               {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando...
-                </div>
+                <>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-4" />
+                          <Skeleton className="h-5 w-36" />
+                        </div>
+                        <Skeleton className="h-4 w-28" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-5 w-16" />
+                          <Skeleton className="h-5 w-24" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
               ) : filteredAssinaturas?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhuma assinatura encontrada
@@ -556,11 +571,23 @@ export default function AdminAssinaturas() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        Carregando...
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Skeleton className="h-4 w-4" />
+                              <Skeleton className="h-4 w-36" />
+                            </div>
+                          </TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                      ))}
+                    </>
                   ) : filteredAssinaturas?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">

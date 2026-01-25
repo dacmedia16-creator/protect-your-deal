@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock, Coins, CoinsIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -361,9 +362,53 @@ export default function AdminAfiliados() {
           </CardHeader>
           <CardContent className="p-0 md:p-6">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Carregando...
-              </div>
+              <>
+                {/* Mobile skeleton */}
+                <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-5 w-32" />
+                          <Skeleton className="h-5 w-16" />
+                        </div>
+                        <Skeleton className="h-4 w-48" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-5 w-20" />
+                          <Skeleton className="h-5 w-24" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {/* Desktop skeleton */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                        <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-8" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-8" /></TableCell>
+                          <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             ) : !afiliados || afiliados.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhum afiliado cadastrado

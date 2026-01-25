@@ -36,7 +36,8 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Loader2, Power, CreditCard, ClipboardCheck } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -335,8 +336,69 @@ export default function AdminImobiliarias() {
   if (loading) {
     return (
       <SuperAdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="space-y-6">
+          {/* Header skeleton */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <Skeleton className="h-8 w-40 mb-2" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-10 w-40" />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-10 w-full max-w-md" />
+            </CardHeader>
+            <CardContent>
+              {/* Mobile skeleton */}
+              <div className="grid grid-cols-1 gap-3 md:hidden">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-10" />
+                        <Skeleton className="h-5 w-32" />
+                      </div>
+                      <Skeleton className="h-4 w-48" />
+                      <div className="flex gap-2">
+                        <Skeleton className="h-5 w-16" />
+                        <Skeleton className="h-5 w-20" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop skeleton */}
+              <div className="hidden md:block rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead><Skeleton className="h-4 w-8" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                      <TableHead><Skeleton className="h-4 w-12" /></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-10" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </SuperAdminLayout>
     );
