@@ -12,6 +12,7 @@ interface RequestBody {
   creci?: string;
   role?: 'corretor' | 'imobiliaria_admin';
   imobiliaria_id?: string | null;
+  email?: string;
 }
 
 Deno.serve(async (req) => {
@@ -77,7 +78,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: RequestBody = await req.json();
-    const { user_id, nome, telefone, creci, role, imobiliaria_id } = body;
+    const { user_id, nome, telefone, creci, role, imobiliaria_id, email } = body;
 
     if (!user_id) {
       return new Response(
@@ -102,6 +103,30 @@ Deno.serve(async (req) => {
     }
 
     console.log('Updating user:', user_id);
+
+    // Update email in auth if provided
+    if (email) {
+      const { error: emailError } = await supabaseAdmin.auth.admin.updateUserById(
+        user_id,
+        { email: email }
+      );
+
+      if (emailError) {
+        console.error('Email update error:', emailError);
+        return new Response(
+          JSON.stringify({ error: 'Erro ao atualizar email: ' + emailError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Also update email in profiles table
+      await supabaseAdmin
+        .from('profiles')
+        .update({ email: email })
+        .eq('user_id', user_id);
+
+      console.log('Email updated to:', email);
+    }
 
     // Update profile if name, phone or creci provided
     if (nome || telefone !== undefined || creci !== undefined) {
