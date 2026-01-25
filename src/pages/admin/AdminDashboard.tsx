@@ -75,8 +75,9 @@ export default function AdminDashboard() {
           .eq('status', 'ativa');
 
         const receitaMensal = activeSubscriptions?.reduce((total, sub) => {
-          const plano = Array.isArray(sub.plano) ? sub.plano[0] : sub.plano;
-          return total + (plano?.valor_mensal || 0);
+          // O Supabase retorna objeto direto quando se usa fkey específica
+          const valorPlano = sub.plano?.valor_mensal ?? 0;
+          return total + valorPlano;
         }, 0) || 0;
 
         setStats({
