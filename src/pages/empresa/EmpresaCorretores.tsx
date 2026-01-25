@@ -30,7 +30,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown, ArrowLeft, UserMinus } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Users, Mail, Trash2, Loader2, Send, UserPlus, Pencil, UserCheck, UserX, KeyRound, Users2, ShieldCheck, Shield, Crown, ArrowLeft, UserMinus, FileText } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { formatPhone } from '@/lib/phone';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -837,83 +838,76 @@ export default function EmpresaCorretores() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead className="hidden sm:table-cell">Equipe</TableHead>
-                      <TableHead className="hidden md:table-cell">CRECI</TableHead>
-                      <TableHead className="hidden lg:table-cell">Telefone</TableHead>
-                      <TableHead>Fichas</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCorretores.map((corretor) => (
-                      <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <button
-                              onClick={() => navigate(`/empresa/corretores/${corretor.user_id}`)}
-                              className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors block"
-                            >
-                              {corretor.nome}
-                            </button>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <Badge 
-                                variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} 
-                                className="gap-1 text-xs h-5"
-                              >
-                                {corretor.role === 'imobiliaria_admin' ? (
-                                  <>
-                                    <ShieldCheck className="h-3 w-3" />
-                                    Admin
-                                  </>
-                                ) : (
-                                  <>
-                                    <Shield className="h-3 w-3" />
-                                    Corretor
-                                  </>
-                                )}
-                              </Badge>
-                              {corretor.isLider && (
-                                <Badge 
-                                  variant="outline" 
-                                  className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-5" 
-                                  title={`Líder da equipe ${corretor.equipeQueLidera}`}
-                                >
-                                  <Crown className="h-3 w-3" />
-                                  Líder
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {corretor.equipe ? (
-                            <EquipeBadge nome={corretor.equipe.nome} cor={corretor.equipe.cor} />
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {corretor.creci || '-'}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {corretor.telefone ? formatPhone(corretor.telefone) : '-'}
-                        </TableCell>
-                        <TableCell>{corretor.fichas_count}</TableCell>
-                        <TableCell>
+              <>
+                {/* Mobile Layout - Cards clicáveis */}
+                <div className="space-y-3 md:hidden">
+                  {filteredCorretores.map((corretor) => (
+                    <Card 
+                      key={corretor.id}
+                      className={cn(
+                        "cursor-pointer hover:shadow-md active:bg-muted/30 transition-all",
+                        !corretor.ativo && "opacity-60"
+                      )}
+                      onClick={() => navigate(`/empresa/corretores/${corretor.user_id}`)}
+                    >
+                      <CardContent className="p-3 space-y-2">
+                        {/* Header: Nome + Status */}
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-medium">{corretor.nome}</span>
                           <Badge variant={corretor.ativo ? 'default' : 'secondary'}>
                             {corretor.ativo ? 'Ativo' : 'Inativo'}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
+                        </div>
+                        
+                        {/* Badges: Role + Líder + Equipe */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge 
+                            variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} 
+                            className="gap-1 text-xs h-5"
+                          >
+                            {corretor.role === 'imobiliaria_admin' ? (
+                              <>
+                                <ShieldCheck className="h-3 w-3" />
+                                Admin
+                              </>
+                            ) : (
+                              <>
+                                <Shield className="h-3 w-3" />
+                                Corretor
+                              </>
+                            )}
+                          </Badge>
+                          {corretor.isLider && (
+                            <Badge 
+                              variant="outline" 
+                              className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-5"
+                            >
+                              <Crown className="h-3 w-3" />
+                              Líder
+                            </Badge>
+                          )}
+                          {corretor.equipe && (
+                            <EquipeBadge nome={corretor.equipe.nome} cor={corretor.equipe.cor} />
+                          )}
+                        </div>
+                        
+                        {/* Info: CRECI + Fichas */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          {corretor.creci && <span>CRECI: {corretor.creci}</span>}
+                          <div className="flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            <span>{corretor.fichas_count} fichas</span>
+                          </div>
+                        </div>
+                        
+                        {/* Footer com menu de ações */}
+                        <div 
+                          className="flex justify-end pt-2 border-t border-border/50" 
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="sm">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -968,12 +962,151 @@ export default function EmpresaCorretores() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Layout - Tabela */}
+                <div className="overflow-x-auto hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead className="hidden sm:table-cell">Equipe</TableHead>
+                        <TableHead className="hidden md:table-cell">CRECI</TableHead>
+                        <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                        <TableHead>Fichas</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCorretores.map((corretor) => (
+                        <TableRow key={corretor.id} className={!corretor.ativo ? 'opacity-60' : ''}>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <button
+                                onClick={() => navigate(`/empresa/corretores/${corretor.user_id}`)}
+                                className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors block"
+                              >
+                                {corretor.nome}
+                              </button>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge 
+                                  variant={corretor.role === 'imobiliaria_admin' ? 'default' : 'outline'} 
+                                  className="gap-1 text-xs h-5"
+                                >
+                                  {corretor.role === 'imobiliaria_admin' ? (
+                                    <>
+                                      <ShieldCheck className="h-3 w-3" />
+                                      Admin
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Shield className="h-3 w-3" />
+                                      Corretor
+                                    </>
+                                  )}
+                                </Badge>
+                                {corretor.isLider && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-5" 
+                                    title={`Líder da equipe ${corretor.equipeQueLidera}`}
+                                  >
+                                    <Crown className="h-3 w-3" />
+                                    Líder
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            {corretor.equipe ? (
+                              <EquipeBadge nome={corretor.equipe.nome} cor={corretor.equipe.cor} />
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {corretor.creci || '-'}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {corretor.telefone ? formatPhone(corretor.telefone) : '-'}
+                          </TableCell>
+                          <TableCell>{corretor.fichas_count}</TableCell>
+                          <TableCell>
+                            <Badge variant={corretor.ativo ? 'default' : 'secondary'}>
+                              {corretor.ativo ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openEditDialog(corretor)}>
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openMoveEquipeDialog(corretor)}>
+                                  <Users2 className="h-4 w-4 mr-2" />
+                                  {corretor.equipe ? 'Mudar Equipe' : 'Adicionar à Equipe'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleCorretorAtivo(corretor)}>
+                                  {corretor.ativo ? (
+                                    <>
+                                      <UserX className="h-4 w-4 mr-2" />
+                                      Desativar
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserCheck className="h-4 w-4 mr-2" />
+                                      Ativar
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openResetPasswordDialog(corretor)}>
+                                  <KeyRound className="h-4 w-4 mr-2" />
+                                  Redefinir Senha
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handlePromoteCorretor(corretor)}
+                                  disabled={promoting}
+                                >
+                                  {corretor.role === 'corretor' ? (
+                                    <>
+                                      <ShieldCheck className="h-4 w-4 mr-2" />
+                                      Promover a Admin
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Shield className="h-4 w-4 mr-2" />
+                                      Rebaixar para Corretor
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => removeCorretor(corretor.user_id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Remover
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
