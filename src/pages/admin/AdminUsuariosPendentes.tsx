@@ -19,8 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { UserPlus, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Loader2, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
@@ -40,6 +50,8 @@ interface PendingUser {
 export default function AdminUsuariosPendentes() {
   const queryClient = useQueryClient();
   const [selectedImobiliarias, setSelectedImobiliarias] = useState<Record<string, string>>({});
+  const [userToDelete, setUserToDelete] = useState<PendingUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [linkingUserId, setLinkingUserId] = useState<string | null>(null);
 
   // Fetch pending users (corretores without imobiliaria_id, excluding autonomous brokers)
@@ -150,6 +162,36 @@ export default function AdminUsuariosPendentes() {
       setLinkingUserId(null);
     }
   });
+
+  // Mutation to delete user
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { user_id: userId }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Usuário excluído com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['pending-users'] });
+      setUserToDelete(null);
+      setIsDeleting(false);
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao excluir usuário: ${error.message}`);
+      setIsDeleting(false);
+    }
+  });
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    deleteUserMutation.mutate(userToDelete.user_id);
+  };
 
   const handleLink = (userId: string) => {
     const imobiliariaId = selectedImobiliarias[userId];
@@ -294,23 +336,32 @@ export default function AdminUsuariosPendentes() {
                           </Select>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            onClick={() => handleLink(user.user_id)}
-                            disabled={!selectedImobiliarias[user.user_id] || linkingUserId === user.user_id}
-                          >
-                            {linkingUserId === user.user_id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Vinculando...
-                              </>
-                            ) : (
-                              <>
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Vincular
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleLink(user.user_id)}
+                              disabled={!selectedImobiliarias[user.user_id] || linkingUserId === user.user_id}
+                            >
+                              {linkingUserId === user.user_id ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Vinculando...
+                                </>
+                              ) : (
+                                <>
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  Vincular
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => setUserToDelete(user)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -321,6 +372,49 @@ export default function AdminUsuariosPendentes() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Tem certeza que deseja excluir o usuário <strong>{userToDelete?.profile?.nome || userToDelete?.email || 'Sem nome'}</strong>?
+              </p>
+              <p className="text-destructive font-medium">
+                Esta ação é irreversível e irá:
+              </p>
+              <ul className="list-disc list-inside text-sm">
+                <li>Remover a conta de autenticação</li>
+                <li>Excluir o perfil do usuário</li>
+                <li>Liberar o telefone para reutilização</li>
+                <li>Preservar fichas de visita (se houver)</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SuperAdminLayout>
   );
 }
