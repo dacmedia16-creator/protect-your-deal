@@ -359,7 +359,7 @@ export default function AdminAfiliados() {
               Lista de Afiliados
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 md:p-6">
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">
                 Carregando...
@@ -369,127 +369,188 @@ export default function AdminAfiliados() {
                 Nenhum afiliado cadastrado
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead className="text-center">Cupons</TableHead>
-                    <TableHead className="text-center">Usos</TableHead>
-                    <TableHead className="text-right">Comissão Pendente</TableHead>
-                    <TableHead className="text-center">Comissão</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile View - Cards */}
+                <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
                   {afiliados.map((afiliado) => (
-                    <TableRow key={afiliado.id}>
-                      <TableCell className="font-medium">{afiliado.nome}</TableCell>
-                      <TableCell>{afiliado.email}</TableCell>
-                      <TableCell>{afiliado.telefone || "-"}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="gap-1">
-                          <Ticket className="h-3 w-3" />
-                          {afiliado.total_cupons}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">{afiliado.total_usos}</TableCell>
-                      <TableCell className="text-right">
-                        {afiliado.comissao_pendente && afiliado.comissao_pendente > 0 ? (
-                          <Badge variant="secondary" className="gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            R$ {afiliado.comissao_pendente.toFixed(2)}
-                          </Badge>
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Switch
-                            checked={afiliado.comissao_ativa}
-                            onCheckedChange={(checked) =>
-                              toggleComissaoMutation.mutate({
-                                id: afiliado.id,
-                                comissao_ativa: checked,
-                              })
-                            }
-                            disabled={toggleComissaoMutation.isPending}
-                          />
-                          <Coins className={`h-4 w-4 ${afiliado.comissao_ativa ? 'text-green-600' : 'text-muted-foreground'}`} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={afiliado.ativo ? "default" : "secondary"}>
-                          {afiliado.ativo ? "Ativo" : "Inativo"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(afiliado)}
-                            title="Editar"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => toggleStatusMutation.mutate({
-                              id: afiliado.id,
-                              ativo: !afiliado.ativo,
-                            })}
-                            title={afiliado.ativo ? "Desativar" : "Ativar"}
-                          >
-                            {afiliado.ativo ? (
-                              <UserX className="h-4 w-4 text-destructive" />
-                            ) : (
-                              <UserCheck className="h-4 w-4 text-green-600" />
-                            )}
-                          </Button>
-                          {!afiliado.user_id && (
+                    <Card key={afiliado.id} className="transition-all hover:shadow-md">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{afiliado.nome}</p>
+                            <p className="text-sm text-muted-foreground truncate">{afiliado.email}</p>
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <Badge variant={afiliado.ativo ? "default" : "secondary"}>
+                                {afiliado.ativo ? "Ativo" : "Inativo"}
+                              </Badge>
+                              <Badge variant="outline" className="gap-1">
+                                <Ticket className="h-3 w-3" />
+                                {afiliado.total_cupons} cupons
+                              </Badge>
+                              {afiliado.comissao_pendente && afiliado.comissao_pendente > 0 && (
+                                <Badge variant="secondary" className="gap-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  R$ {afiliado.comissao_pendente.toFixed(2)}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => criarAcessoMutation.mutate(afiliado.id)}
-                              disabled={criarAcessoMutation.isPending}
-                              title="Criar acesso ao painel"
+                              className="h-8 w-8"
+                              onClick={() => handleEdit(afiliado)}
                             >
-                              {criarAcessoMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => toggleStatusMutation.mutate({
+                                id: afiliado.id,
+                                ativo: !afiliado.ativo,
+                              })}
+                            >
+                              {afiliado.ativo ? (
+                                <UserX className="h-4 w-4 text-destructive" />
                               ) : (
-                                <KeyRound className="h-4 w-4 text-blue-600" />
+                                <UserCheck className="h-4 w-4 text-green-600" />
                               )}
                             </Button>
-                          )}
-                          {afiliado.user_id && (
-                            <>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop View - Table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead className="text-center">Cupons</TableHead>
+                        <TableHead className="text-center">Usos</TableHead>
+                        <TableHead className="text-right">Comissão Pendente</TableHead>
+                        <TableHead className="text-center">Comissão</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {afiliados.map((afiliado) => (
+                        <TableRow key={afiliado.id}>
+                          <TableCell className="font-medium">{afiliado.nome}</TableCell>
+                          <TableCell>{afiliado.email}</TableCell>
+                          <TableCell>{afiliado.telefone || "-"}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="gap-1">
+                              <Ticket className="h-3 w-3" />
+                              {afiliado.total_cupons}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">{afiliado.total_usos}</TableCell>
+                          <TableCell className="text-right">
+                            {afiliado.comissao_pendente && afiliado.comissao_pendente > 0 ? (
+                              <Badge variant="secondary" className="gap-1">
+                                <DollarSign className="h-3 w-3" />
+                                R$ {afiliado.comissao_pendente.toFixed(2)}
+                              </Badge>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Switch
+                                checked={afiliado.comissao_ativa}
+                                onCheckedChange={(checked) =>
+                                  toggleComissaoMutation.mutate({
+                                    id: afiliado.id,
+                                    comissao_ativa: checked,
+                                  })
+                                }
+                                disabled={toggleComissaoMutation.isPending}
+                              />
+                              <Coins className={`h-4 w-4 ${afiliado.comissao_ativa ? 'text-green-600' : 'text-muted-foreground'}`} />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={afiliado.ativo ? "default" : "secondary"}>
+                              {afiliado.ativo ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => {
-                                  setSelectedAfiliadoForPassword(afiliado);
-                                  setPasswordDialogOpen(true);
-                                }}
-                                title="Alterar senha"
+                                onClick={() => handleEdit(afiliado)}
+                                title="Editar"
                               >
-                                <Lock className="h-4 w-4 text-orange-600" />
+                                <Pencil className="h-4 w-4" />
                               </Button>
-                              <Badge variant="outline" className="text-xs ml-1">
-                                Acesso ativo
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleStatusMutation.mutate({
+                                  id: afiliado.id,
+                                  ativo: !afiliado.ativo,
+                                })}
+                                title={afiliado.ativo ? "Desativar" : "Ativar"}
+                              >
+                                {afiliado.ativo ? (
+                                  <UserX className="h-4 w-4 text-destructive" />
+                                ) : (
+                                  <UserCheck className="h-4 w-4 text-green-600" />
+                                )}
+                              </Button>
+                              {!afiliado.user_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => criarAcessoMutation.mutate(afiliado.id)}
+                                  disabled={criarAcessoMutation.isPending}
+                                  title="Criar acesso ao painel"
+                                >
+                                  {criarAcessoMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <KeyRound className="h-4 w-4 text-blue-600" />
+                                  )}
+                                </Button>
+                              )}
+                              {afiliado.user_id && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      setSelectedAfiliadoForPassword(afiliado);
+                                      setPasswordDialogOpen(true);
+                                    }}
+                                    title="Alterar senha"
+                                  >
+                                    <Lock className="h-4 w-4 text-orange-600" />
+                                  </Button>
+                                  <Badge variant="outline" className="text-xs ml-1">
+                                    Acesso ativo
+                                  </Badge>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

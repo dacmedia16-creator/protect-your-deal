@@ -196,100 +196,172 @@ export default function AdminConvites() {
         </Card>
 
         <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Imobiliária</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Expira em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredConvites?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Nenhum convite encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredConvites?.map((convite) => (
-                    <TableRow key={convite.id}>
-                      <TableCell>
-                        <p className="font-medium">{convite.email}</p>
-                      </TableCell>
-                      <TableCell>{convite.nome}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{getRoleLabel(convite.role)}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={() =>
-                            navigate(`/admin/imobiliarias/${convite.imobiliaria_id}`)
-                          }
-                          className="hover:underline"
-                        >
-                          {convite.imobiliaria?.nome || "-"}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(convite.status, convite.expira_em)}>
-                          {getStatusLabel(convite.status, convite.expira_em)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {format(new Date(convite.expira_em), "dd/MM/yyyy", {
-                            locale: ptBR,
-                          })}
+          <CardContent className="p-0 md:p-0">
+            {/* Mobile View - Cards */}
+            <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Carregando...
+                </div>
+              ) : filteredConvites?.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum convite encontrado
+                </div>
+              ) : (
+                filteredConvites?.map((convite) => (
+                  <Card 
+                    key={convite.id}
+                    className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+                    onClick={() => navigate(`/admin/imobiliarias/${convite.imobiliaria_id}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{convite.nome}</p>
+                          <p className="text-sm text-muted-foreground truncate">{convite.email}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline">{getRoleLabel(convite.role)}</Badge>
+                            <Badge variant={getStatusBadgeVariant(convite.status, convite.expira_em)}>
+                              {getStatusLabel(convite.status, convite.expira_em)}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {convite.imobiliaria?.nome || "-"}
+                          </p>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={convite.status === "aceito"}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {convite.status !== "aceito" && (
-                              <DropdownMenuItem onClick={() => handleResendConvite(convite)}>
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Renovar Convite
-                              </DropdownMenuItem>
-                            )}
-                            {convite.status === "pendente" && (
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleCancelConvite(convite)}
-                              >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Cancelar
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(convite.expira_em), "dd/MM", { locale: ptBR })}
+                          </div>
+                          {convite.status !== "aceito" && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onClick={() => handleResendConvite(convite)}>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  Renovar
+                                </DropdownMenuItem>
+                                {convite.status === "pendente" && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => handleCancelConvite(convite)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Cancelar
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Imobiliária</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Expira em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        Carregando...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredConvites?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        Nenhum convite encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredConvites?.map((convite) => (
+                      <TableRow key={convite.id}>
+                        <TableCell>
+                          <p className="font-medium">{convite.email}</p>
+                        </TableCell>
+                        <TableCell>{convite.nome}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{getRoleLabel(convite.role)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            onClick={() =>
+                              navigate(`/admin/imobiliarias/${convite.imobiliaria_id}`)
+                            }
+                            className="hover:underline"
+                          >
+                            {convite.imobiliaria?.nome || "-"}
+                          </button>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeVariant(convite.status, convite.expira_em)}>
+                            {getStatusLabel(convite.status, convite.expira_em)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(convite.expira_em), "dd/MM/yyyy", {
+                              locale: ptBR,
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={convite.status === "aceito"}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {convite.status !== "aceito" && (
+                                <DropdownMenuItem onClick={() => handleResendConvite(convite)}>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  Renovar Convite
+                                </DropdownMenuItem>
+                              )}
+                              {convite.status === "pendente" && (
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => handleCancelConvite(convite)}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Cancelar
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

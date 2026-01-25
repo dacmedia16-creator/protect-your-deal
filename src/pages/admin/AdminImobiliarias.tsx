@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +68,7 @@ interface Plano {
 }
 
 export default function AdminImobiliarias() {
+  const navigate = useNavigate();
   const [imobiliarias, setImobiliarias] = useState<Imobiliaria[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -381,73 +382,41 @@ export default function AdminImobiliarias() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[70px]">Código</TableHead>
-                      <TableHead>Nome</TableHead>
-                      <TableHead className="hidden md:table-cell">CNPJ</TableHead>
-                      <TableHead className="hidden lg:table-cell">Localização</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden sm:table-cell">Assinatura</TableHead>
-                      <TableHead className="hidden sm:table-cell">Corretores</TableHead>
-                      <TableHead className="hidden lg:table-cell">Cadastro</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredImobiliarias.map((imob) => (
-                      <TableRow key={imob.id}>
-                        <TableCell>
-                          <span className="font-mono font-semibold text-primary">
-                            {imob.codigo || '-'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{imob.nome}</p>
-                            <p className="text-sm text-muted-foreground">{imob.email}</p>
+              <>
+                {/* Mobile View - Cards */}
+                <div className="grid grid-cols-1 gap-3 md:hidden">
+                  {filteredImobiliarias.map((imob) => (
+                    <Card 
+                      key={imob.id}
+                      className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+                      onClick={() => navigate(`/admin/imobiliarias/${imob.id}`)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-mono text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                #{imob.codigo || '-'}
+                              </span>
+                              <Badge className={statusColors[imob.status]}>
+                                {imob.status === 'ativo' ? 'Ativo' : imob.status === 'suspenso' ? 'Suspenso' : 'Inativo'}
+                              </Badge>
+                            </div>
+                            <p className="font-medium truncate">{imob.nome}</p>
+                            <p className="text-sm text-muted-foreground truncate">{imob.email}</p>
+                            {imob.cidade && imob.estado && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {imob.cidade}/{imob.estado}
+                              </p>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {imob.cnpj || '-'}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {imob.cidade && imob.estado ? `${imob.cidade}/${imob.estado}` : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusColors[imob.status]}>
-                            {imob.status === 'ativo' ? 'Ativo' : imob.status === 'suspenso' ? 'Suspenso' : 'Inativo'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge variant="outline" className={assinaturaColors[imob.assinatura_status || 'sem_assinatura']}>
-                            {imob.assinatura_status === 'ativa' && 'Ativa'}
-                            {imob.assinatura_status === 'trial' && 'Trial'}
-                            {imob.assinatura_status === 'pendente' && 'Pendente'}
-                            {imob.assinatura_status === 'suspensa' && 'Suspensa'}
-                            {imob.assinatura_status === 'cancelada' && 'Cancelada'}
-                            {imob.assinatura_status === 'sem_assinatura' && 'Sem assinatura'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            {imob.corretores_count}
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground">
-                          {format(new Date(imob.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="shrink-0">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                               <DropdownMenuItem asChild>
                                 <Link to={`/admin/imobiliarias/${imob.id}`}>
                                   <Eye className="h-4 w-4 mr-2" />
@@ -456,28 +425,12 @@ export default function AdminImobiliarias() {
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => toggleStatus(imob)}>
                                 <Ban className="h-4 w-4 mr-2" />
-                                {imob.status === 'ativo' ? 'Suspender Imobiliária' : 'Ativar Imobiliária'}
+                                {imob.status === 'ativo' ? 'Suspender' : 'Ativar'}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openPlanoDialog(imob)}>
                                 <CreditCard className="h-4 w-4 mr-2" />
                                 Alterar Plano
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => toggleSurveyFeature(imob)}
-                                disabled={isTogglingFeature === imob.id}
-                              >
-                                <ClipboardCheck className="h-4 w-4 mr-2" />
-                                {imob.survey_enabled ? 'Desabilitar Pesquisa' : 'Habilitar Pesquisa'}
-                              </DropdownMenuItem>
-                              {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
-                                <DropdownMenuItem 
-                                  onClick={() => toggleAssinatura(imob)}
-                                  disabled={isTogglingAssinatura === imob.id}
-                                >
-                                  <Power className="h-4 w-4 mr-2" />
-                                  {imob.assinatura_status === 'ativa' ? 'Desativar Assinatura' : 'Ativar Assinatura'}
-                                </DropdownMenuItem>
-                              )}
                               <DropdownMenuItem 
                                 onClick={() => deleteImobiliaria(imob.id)}
                                 className="text-destructive focus:text-destructive"
@@ -487,12 +440,140 @@ export default function AdminImobiliarias() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>
+                        </div>
+                        <div className="flex items-center gap-3 mt-3 pt-3 border-t">
+                          <Badge variant="outline" className={assinaturaColors[imob.assinatura_status || 'sem_assinatura']}>
+                            {imob.assinatura_status === 'ativa' && 'Assinatura Ativa'}
+                            {imob.assinatura_status === 'trial' && 'Trial'}
+                            {imob.assinatura_status === 'pendente' && 'Pendente'}
+                            {imob.assinatura_status === 'suspensa' && 'Suspensa'}
+                            {imob.assinatura_status === 'cancelada' && 'Cancelada'}
+                            {imob.assinatura_status === 'sem_assinatura' && 'Sem assinatura'}
+                          </Badge>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground ml-auto">
+                            <Users className="h-4 w-4" />
+                            <span>{imob.corretores_count}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop View - Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[70px]">Código</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead className="hidden lg:table-cell">CNPJ</TableHead>
+                        <TableHead className="hidden lg:table-cell">Localização</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Assinatura</TableHead>
+                        <TableHead>Corretores</TableHead>
+                        <TableHead className="hidden lg:table-cell">Cadastro</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredImobiliarias.map((imob) => (
+                        <TableRow key={imob.id}>
+                          <TableCell>
+                            <span className="font-mono font-semibold text-primary">
+                              {imob.codigo || '-'}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{imob.nome}</p>
+                              <p className="text-sm text-muted-foreground">{imob.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {imob.cnpj || '-'}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {imob.cidade && imob.estado ? `${imob.cidade}/${imob.estado}` : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={statusColors[imob.status]}>
+                              {imob.status === 'ativo' ? 'Ativo' : imob.status === 'suspenso' ? 'Suspenso' : 'Inativo'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={assinaturaColors[imob.assinatura_status || 'sem_assinatura']}>
+                              {imob.assinatura_status === 'ativa' && 'Ativa'}
+                              {imob.assinatura_status === 'trial' && 'Trial'}
+                              {imob.assinatura_status === 'pendente' && 'Pendente'}
+                              {imob.assinatura_status === 'suspensa' && 'Suspensa'}
+                              {imob.assinatura_status === 'cancelada' && 'Cancelada'}
+                              {imob.assinatura_status === 'sem_assinatura' && 'Sem assinatura'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              {imob.corretores_count}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-muted-foreground">
+                            {format(new Date(imob.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link to={`/admin/imobiliarias/${imob.id}`}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    Ver detalhes
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toggleStatus(imob)}>
+                                  <Ban className="h-4 w-4 mr-2" />
+                                  {imob.status === 'ativo' ? 'Suspender Imobiliária' : 'Ativar Imobiliária'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openPlanoDialog(imob)}>
+                                  <CreditCard className="h-4 w-4 mr-2" />
+                                  Alterar Plano
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => toggleSurveyFeature(imob)}
+                                  disabled={isTogglingFeature === imob.id}
+                                >
+                                  <ClipboardCheck className="h-4 w-4 mr-2" />
+                                  {imob.survey_enabled ? 'Desabilitar Pesquisa' : 'Habilitar Pesquisa'}
+                                </DropdownMenuItem>
+                                {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
+                                  <DropdownMenuItem
+                                    onClick={() => toggleAssinatura(imob)}
+                                    disabled={isTogglingAssinatura === imob.id}
+                                  >
+                                    <Power className="h-4 w-4 mr-2" />
+                                    {imob.assinatura_status === 'ativa' ? 'Desativar Assinatura' : 'Ativar Assinatura'}
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem 
+                                  onClick={() => deleteImobiliaria(imob.id)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
