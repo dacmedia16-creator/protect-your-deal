@@ -5,6 +5,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
+import { STATUS_CONFIRMADO } from '@/lib/fichaStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -79,12 +80,13 @@ export default function EmpresaDashboard() {
           .gte('created_at', currentMonthStart.toISOString());
 
         // Count fichas confirmadas this month (para taxa de confirmação)
+        // Usar in() para considerar todos os status de confirmação
         const { count: fichasConfirmadas } = await supabase
           .from('fichas_visita')
           .select('*', { count: 'exact', head: true })
           .eq('imobiliaria_id', imobiliariaId)
           .gte('created_at', currentMonthStart.toISOString())
-          .eq('status', 'completo');
+          .in('status', STATUS_CONFIRMADO as unknown as string[]);
 
         // Count fichas do mês anterior (para crescimento MoM)
         const lastMonthStart = startOfMonth(subMonths(new Date(), 1));

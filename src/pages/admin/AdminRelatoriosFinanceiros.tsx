@@ -106,8 +106,8 @@ export default function AdminRelatoriosFinanceiros() {
         const cancelledSubscriptions = allSubscriptions?.filter(s => s.status === 'cancelada') || [];
 
         const receitaMensalAtual = activeSubscriptions.reduce((total, sub) => {
-          const plano = Array.isArray(sub.plano) ? sub.plano[0] : sub.plano;
-          return total + (plano?.valor_mensal || 0);
+          const valorPlano = sub.plano?.valor_mensal ?? 0;
+          return total + valorPlano;
         }, 0);
 
         const ticketMedio = activeSubscriptions.length > 0 
@@ -135,8 +135,8 @@ export default function AdminRelatoriosFinanceiros() {
 
           const revenueSubscriptions = subscriptionsAtMonth.filter(s => s.status === 'ativa' || s.status === 'suspensa');
           const revenue = revenueSubscriptions.reduce((total, sub) => {
-            const plano = Array.isArray(sub.plano) ? sub.plano[0] : sub.plano;
-            return total + (plano?.valor_mensal || 0);
+            const valorPlano = sub.plano?.valor_mensal ?? 0;
+            return total + valorPlano;
           }, 0);
 
           months.push({
@@ -174,8 +174,7 @@ export default function AdminRelatoriosFinanceiros() {
         // Calculate plan distribution (only active subscriptions)
         const planCounts: Record<string, number> = {};
         activeSubscriptions.forEach(sub => {
-          const plano = Array.isArray(sub.plano) ? sub.plano[0] : sub.plano;
-          const planName = plano?.nome || 'Sem plano';
+          const planName = sub.plano?.nome || 'Sem plano';
           planCounts[planName] = (planCounts[planName] || 0) + 1;
         });
 

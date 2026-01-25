@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -214,7 +215,7 @@ export default function EmpresaRelatorios() {
       months.push({
         month: monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1),
         fichas: monthFichas.length,
-        confirmadas: monthFichas.filter(f => f.status === 'completo').length
+        confirmadas: monthFichas.filter(f => isFichaConfirmada(f.status)).length
       });
     }
     
@@ -227,7 +228,7 @@ export default function EmpresaRelatorios() {
     
     fichas.forEach(f => {
       const existing = corretorMap.get(f.user_id);
-      const isConfirmada = f.status === 'completo';
+      const isConfirmada = isFichaConfirmada(f.status);
       const isVenda = f.convertido_venda === true;
       const valorVenda = f.valor_venda || 0;
       
@@ -311,13 +312,13 @@ export default function EmpresaRelatorios() {
       const existing = corretorMap.get(f.user_id);
       if (existing) {
         existing.fichasMes++;
-        if (f.status === 'completo') existing.confirmadas++;
+        if (isFichaConfirmada(f.status)) existing.confirmadas++;
       } else {
         corretorMap.set(f.user_id, {
           user_id: f.user_id,
           nome: f.corretor_nome || 'Desconhecido',
           fichasMes: 1,
-          confirmadas: f.status === 'completo' ? 1 : 0
+          confirmadas: isFichaConfirmada(f.status) ? 1 : 0
         });
       }
     });
@@ -331,7 +332,7 @@ export default function EmpresaRelatorios() {
   // Calculate overall metrics
   const overallMetrics = useMemo(() => {
     const totalFichas = fichas.length;
-    const confirmadas = fichas.filter(f => f.status === 'completo').length;
+    const confirmadas = fichas.filter(f => isFichaConfirmada(f.status)).length;
     const taxaConfirmacao = totalFichas > 0 ? (confirmadas / totalFichas) * 100 : 0;
     
     // Sales metrics
