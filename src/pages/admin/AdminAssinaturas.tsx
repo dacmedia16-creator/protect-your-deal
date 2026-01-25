@@ -182,10 +182,26 @@ export default function AdminAssinaturas() {
     return !assinaturas?.some((a) => a.imobiliaria_id === imob.id && a.status === "ativa");
   });
 
+  // Contagem de planos gratuitos (baseado no valor do plano, não no status)
+  const gratuitoCount = useMemo(() => {
+    if (!assinaturas) return 0;
+    return assinaturas.filter(a => 
+      a.plano?.valor_mensal === 0 || a.plano?.nome?.toLowerCase() === 'gratuito'
+    ).length;
+  }, [assinaturas]);
+
   const filteredAssinaturas = assinaturas?.filter((assinatura) => {
     const nomeDisplay = assinatura.imobiliaria?.nome || assinatura.user?.nome || "";
     const matchesSearch = searchTerm === "" || 
       nomeDisplay.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Tratamento especial para filtro "gratuito" - baseado no plano, não no status
+    if (statusFilter === 'gratuito') {
+      return matchesSearch && 
+        (assinatura.plano?.valor_mensal === 0 || 
+         assinatura.plano?.nome?.toLowerCase() === 'gratuito');
+    }
+    
     const matchesStatus = statusFilter === "all" || assinatura.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -358,7 +374,7 @@ export default function AdminAssinaturas() {
             onClick={() => setStatusFilter(statusFilter === 'gratuito' ? 'all' : 'gratuito')}
           >
             <CardContent className="p-3 text-center">
-              <p className="text-2xl font-bold text-purple-500">{statusCounts.gratuito || 0}</p>
+              <p className="text-2xl font-bold text-purple-500">{gratuitoCount}</p>
               <p className="text-xs text-muted-foreground">Gratuito</p>
             </CardContent>
           </Card>
@@ -607,11 +623,14 @@ export default function AdminAssinaturas() {
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">{assinatura.plano?.nome || "-"}</span>
-                            {assinatura.plano?.valor_mensal && (
-                              <span className="text-xs text-muted-foreground">
-                                R$ {assinatura.plano.valor_mensal.toFixed(2)}/mês
-                              </span>
-                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {assinatura.plano?.valor_mensal === 0 
+                                ? "Gratuito"
+                                : assinatura.plano?.valor_mensal != null
+                                  ? `R$ ${assinatura.plano.valor_mensal.toFixed(2).replace('.', ',')}/mês`
+                                  : "-"
+                              }
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>

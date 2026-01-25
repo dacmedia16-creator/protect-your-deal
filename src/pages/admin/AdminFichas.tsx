@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -189,7 +190,7 @@ export default function AdminFichas() {
     const autonomos = new Set(
       fichas.filter((f) => !f.imobiliaria_id).map((f) => f.user_id)
     );
-    const completos = fichas.filter((f) => f.status === 'completo' || f.status === 'finalizado_parcial').length;
+    const completos = fichas.filter((f) => isFichaConfirmada(f.status)).length;
     const comBackup = fichas.filter((f) => f.backup_gerado_em).length;
 
     return {
