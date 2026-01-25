@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
@@ -109,14 +110,7 @@ export default function EmpresaFichas() {
     cancelado: 'Cancelado',
   };
 
-  const statusColors: Record<string, string> = {
-    pendente: 'bg-warning/20 text-warning border-warning/30',
-    aguardando_proprietario: 'bg-warning/20 text-warning border-warning/30',
-    aguardando_comprador: 'bg-warning/20 text-warning border-warning/30',
-    completo: 'bg-success/20 text-success border-success/30',
-    finalizado_parcial: 'bg-success/20 text-success border-success/30',
-    cancelado: 'bg-muted text-muted-foreground',
-  };
+  // Using fichaStatusColors from lib/statusColors
 
   if (loading) {
     return (
@@ -174,7 +168,7 @@ export default function EmpresaFichas() {
                             #{ficha.protocolo}
                           </span>
                           <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                            <Badge variant="outline" className={statusColors[ficha.status]}>
+                            <Badge variant="outline" className={getStatusColor(fichaStatusColors, ficha.status)}>
                               {statusLabels[ficha.status] || ficha.status}
                             </Badge>
                             {ficha.convertido_venda && (
@@ -267,7 +261,7 @@ export default function EmpresaFichas() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1.5">
-                              <Badge variant="outline" className={statusColors[ficha.status]}>
+                              <Badge variant="outline" className={getStatusColor(fichaStatusColors, ficha.status)}>
                                 {statusLabels[ficha.status] || ficha.status}
                               </Badge>
                               {ficha.convertido_venda && (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getInviteBadgeVariant } from '@/lib/statusColors';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
@@ -125,12 +126,7 @@ export default function AdminConvites() {
     }
   };
 
-  const getStatusBadgeVariant = (status: string, expiraEm: string) => {
-    if (status === "aceito") return "default";
-    if (status === "cancelado") return "outline";
-    if (new Date(expiraEm) < new Date()) return "destructive";
-    return "secondary";
-  };
+  // Using getInviteBadgeVariant from lib/statusColors
 
   const getStatusLabel = (status: string, expiraEm: string) => {
     if (status === "aceito") return "Aceito";
@@ -236,7 +232,7 @@ export default function AdminConvites() {
                           <p className="text-sm text-muted-foreground truncate">{convite.email}</p>
                           <div className="flex items-center gap-2 mt-2">
                             <Badge variant="outline">{getRoleLabel(convite.role)}</Badge>
-                            <Badge variant={getStatusBadgeVariant(convite.status, convite.expira_em)}>
+                            <Badge variant={getInviteBadgeVariant(convite.status, convite.expira_em)}>
                               {getStatusLabel(convite.status, convite.expira_em)}
                             </Badge>
                           </div>
@@ -337,7 +333,7 @@ export default function AdminConvites() {
                           </button>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(convite.status, convite.expira_em)}>
+                          <Badge variant={getInviteBadgeVariant(convite.status, convite.expira_em)}>
                             {getStatusLabel(convite.status, convite.expira_em)}
                           </Badge>
                         </TableCell>

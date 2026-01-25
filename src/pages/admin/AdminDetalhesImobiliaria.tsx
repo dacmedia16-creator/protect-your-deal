@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -564,13 +565,7 @@ export default function AdminDetalhesImobiliaria() {
     }
   };
 
-  const statusColors: Record<string, string> = {
-    ativa: 'bg-success text-success-foreground',
-    trial: 'bg-warning text-warning-foreground',
-    pendente: 'bg-warning text-warning-foreground',
-    suspensa: 'bg-destructive text-destructive-foreground',
-    cancelada: 'bg-muted text-muted-foreground',
-  };
+  // Using subscriptionStatusColors from lib/statusColors
 
   if (loading) {
     return (
@@ -864,7 +859,7 @@ export default function AdminDetalhesImobiliaria() {
                   <div className="p-4 rounded-lg bg-muted/50 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Status</span>
-                      <Badge className={statusColors[assinatura.status]}>
+                      <Badge className={getStatusColor(subscriptionStatusColors, assinatura.status)}>
                         {assinatura.status}
                       </Badge>
                     </div>

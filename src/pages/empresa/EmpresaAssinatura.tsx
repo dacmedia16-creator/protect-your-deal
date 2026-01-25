@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
@@ -138,13 +139,7 @@ export default function EmpresaAssinatura() {
 
   const currentPlano = assinatura?.plano;
 
-  const statusColors: Record<string, string> = {
-    ativa: 'bg-success text-success-foreground',
-    trial: 'bg-warning text-warning-foreground',
-    pendente: 'bg-warning text-warning-foreground',
-    suspensa: 'bg-destructive text-destructive-foreground',
-    cancelada: 'bg-muted text-muted-foreground',
-  };
+  // Using subscriptionStatusColors from lib/statusColors
 
   const statusLabels: Record<string, string> = {
     ativa: 'Ativa',
@@ -181,7 +176,7 @@ export default function EmpresaAssinatura() {
                   <CreditCard className="h-5 w-5" />
                   Sua Assinatura
                 </CardTitle>
-                <Badge className={statusColors[assinatura.status]}>
+                <Badge className={getStatusColor(subscriptionStatusColors, assinatura.status)}>
                   {statusLabels[assinatura.status] || assinatura.status}
                 </Badge>
               </div>
