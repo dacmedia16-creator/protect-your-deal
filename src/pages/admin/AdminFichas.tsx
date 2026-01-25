@@ -32,6 +32,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard, AnimatedList, AnimatedItem } from '@/components/AnimatedContent';
 
 interface Ficha {
   id: string;
@@ -280,77 +281,87 @@ export default function AdminFichas() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-6">
+      <AnimatedContent className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Registros de Visita</h1>
           <p className="text-muted-foreground">Visualize todos os registros do sistema</p>
         </div>
 
         {/* Cards de Estatísticas */}
-        <div className="grid gap-4 md:grid-cols-5">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">registros</p>
-            </CardContent>
-          </Card>
+        <AnimatedStatsGrid className="grid gap-4 md:grid-cols-5">
+          <AnimatedStatCard>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.total}</div>
+                <p className="text-xs text-muted-foreground">registros</p>
+              </CardContent>
+            </Card>
+          </AnimatedStatCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Imobiliárias</CardTitle>
-              <Building2 className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.imobiliarias}</div>
-              <p className="text-xs text-muted-foreground">com registros</p>
-            </CardContent>
-          </Card>
+          <AnimatedStatCard>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Imobiliárias</CardTitle>
+                <Building2 className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.imobiliarias}</div>
+                <p className="text-xs text-muted-foreground">com registros</p>
+              </CardContent>
+            </Card>
+          </AnimatedStatCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Autônomos</CardTitle>
-              <User className="h-4 w-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.autonomos}</div>
-              <p className="text-xs text-muted-foreground">corretores</p>
-            </CardContent>
-          </Card>
+          <AnimatedStatCard>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Autônomos</CardTitle>
+                <User className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.autonomos}</div>
+                <p className="text-xs text-muted-foreground">corretores</p>
+              </CardContent>
+            </Card>
+          </AnimatedStatCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completos</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completos}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.total > 0
-                  ? `${Math.round((stats.completos / stats.total) * 100)}%`
-                  : '0%'}
-              </p>
-            </CardContent>
-          </Card>
+          <AnimatedStatCard>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completos</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.completos}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.total > 0
+                    ? `${Math.round((stats.completos / stats.total) * 100)}%`
+                    : '0%'}
+                </p>
+              </CardContent>
+            </Card>
+          </AnimatedStatCard>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Com Backup</CardTitle>
-              <Shield className="h-4 w-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.comBackup}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.total > 0
-                  ? `${Math.round((stats.comBackup / stats.total) * 100)}%`
-                  : '0%'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          <AnimatedStatCard>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Com Backup</CardTitle>
+                <Shield className="h-4 w-4 text-emerald-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.comBackup}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.total > 0
+                    ? `${Math.round((stats.comBackup / stats.total) * 100)}%`
+                    : '0%'}
+                </p>
+              </CardContent>
+            </Card>
+          </AnimatedStatCard>
+        </AnimatedStatsGrid>
 
         {/* Busca */}
         <div className="flex items-center gap-4">
@@ -533,7 +544,7 @@ export default function AdminFichas() {
             ))}
           </Accordion>
         )}
-      </div>
+      </AnimatedContent>
     </SuperAdminLayout>
   );
 }

@@ -44,6 +44,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
 
 interface Plano {
   id: string;
@@ -312,7 +313,7 @@ export default function AdminAssinaturas() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-6">
+      <AnimatedContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Assinaturas</h1>
@@ -671,7 +672,7 @@ export default function AdminAssinaturas() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </AnimatedContent>
 
       {/* Edit Assinatura Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

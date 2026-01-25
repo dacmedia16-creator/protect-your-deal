@@ -4,6 +4,7 @@ import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Building2, Users, FileText, TrendingUp, AlertCircle } from 'lucide-react';
+import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard } from '@/components/AnimatedContent';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardStats {
@@ -151,15 +152,16 @@ export default function AdminDashboard() {
 
   return (
     <SuperAdminLayout>
-      <div className="space-y-6">
+      <AnimatedContent className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Visão geral do sistema</p>
         </div>
 
         {/* Stats grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card 
+        <AnimatedStatsGrid className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <AnimatedStatCard>
+            <Card
             className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
             onClick={() => navigate('/admin/imobiliarias')}
           >
@@ -174,8 +176,10 @@ export default function AdminDashboard() {
               </p>
             </CardContent>
           </Card>
+          </AnimatedStatCard>
 
-          <Card 
+          <AnimatedStatCard>
+            <Card
             className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
             onClick={() => navigate('/admin/usuarios')}
           >
@@ -188,8 +192,10 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">usuários ativos · Ver detalhes →</p>
             </CardContent>
           </Card>
+          </AnimatedStatCard>
 
-          <Card 
+          <AnimatedStatCard>
+            <Card
             className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
             onClick={() => navigate('/admin/fichas')}
           >
@@ -204,8 +210,10 @@ export default function AdminDashboard() {
               </p>
             </CardContent>
           </Card>
+          </AnimatedStatCard>
 
-          <Card 
+          <AnimatedStatCard>
+            <Card
             className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
             onClick={() => navigate('/admin/financeiro')}
           >
@@ -222,7 +230,8 @@ export default function AdminDashboard() {
               </p>
             </CardContent>
           </Card>
-        </div>
+          </AnimatedStatCard>
+        </AnimatedStatsGrid>
 
         {/* Alerts section */}
         {(stats?.assinaturasSuspensas || 0) > 0 && (
@@ -277,7 +286,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </AnimatedContent>
     </SuperAdminLayout>
   );
 }
