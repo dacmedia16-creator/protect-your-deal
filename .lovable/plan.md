@@ -1,171 +1,101 @@
 
 
-## Plano: Sistema de Monitoramento de Login e Sessões
+## Plano: Corrigir Múltiplas Sessões Duplicadas
 
-### Objetivo
-Implementar um sistema para rastrear quando os usuários fazem login e quanto tempo permanecem logados no sistema.
+### Problema Identificado
 
----
+Analisando os dados do banco, encontrei:
+- 3 sessões criadas para o mesmo usuário em menos de 15 segundos
+- Sessões com duração negativa (-90s, -107s)
+- O `hasRegisteredSession.current` não está funcionando corretamente
 
-### Impacto no Sistema Existente
+### Causa Raiz
 
-A implementação é **não-destrutiva** e **aditiva**:
+1. **Múltiplos eventos `SIGNED_IN`**: O Supabase dispara este evento em várias situações (login, refresh de token, navegação)
+2. **Dependência instável no useEffect**: O `registerSession` está nas dependências do useEffect, causando re-execução
+3. **Falta de verificação de sessão existente**: Não verifica se já existe uma sessão ativa no localStorage antes de criar nova
 
-| Componente | Impacto |
-|------------|---------|
-| Login/Logout | Funciona normalmente - tracking em background |
-| Master Login | Sem alteração - sessões identificadas como suporte |
-| Performance | Mínimo - operações assíncronas |
-| RLS existentes | Nenhum - tabela isolada |
-| Rotas protegidas | Sem alteração |
+### Solução Proposta
 
----
+#### 1. Verificar sessão existente antes de registrar
 
-### Arquitetura da Solução
+Antes de inserir nova sessão, verificar se:
+- Já existe `session_id` no localStorage
+- A sessão ainda está ativa (sem `logout_at`)
 
-```text
-┌─────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│   AuthProvider      │────▶│  user_sessions       │────▶│  Admin Dashboard    │
-│   (useAuth.tsx)     │     │  (nova tabela)       │     │  (visualização)     │
-│                     │     │                      │     │                     │
-│  - onSignIn()       │     │  - user_id           │     │  - Sessões ativas   │
-│  - onSignOut()      │     │  - login_at          │     │  - Tempo médio      │
-│  - beforeunload     │     │  - logout_at         │     │  - Histórico        │
-└─────────────────────┘     │  - session_duration  │     └─────────────────────┘
-                            │  - ip_address        │
-                            │  - user_agent        │
-                            └──────────────────────┘
+```typescript
+// Em registerSession
+const existingSessionId = getStoredSessionId();
+if (existingSessionId) {
+  // Verificar se sessão ainda está ativa no banco
+  const { data: existingSession } = await supabase
+    .from('user_sessions')
+    .select('id, logout_at')
+    .eq('id', existingSessionId)
+    .maybeSingle();
+  
+  if (existingSession && !existingSession.logout_at) {
+    // Sessão ainda ativa, não criar nova
+    return existingSessionId;
+  }
+}
 ```
 
----
+#### 2. Remover dependência instável do useEffect
 
-### Etapas de Implementação
+Mover a lógica de registro para fora do useEffect ou usar refs para evitar re-execução:
 
-#### 1. Criar tabela `user_sessions` no banco de dados
+```typescript
+const registerSessionRef = useRef(registerSession);
+registerSessionRef.current = registerSession;
 
-Nova tabela para armazenar dados de sessão:
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      // ... código existente ...
+      
+      if (event === 'SIGNED_IN' && session?.user && !hasRegisteredSession.current) {
+        hasRegisteredSession.current = true;
+        setTimeout(() => {
+          registerSessionRef.current(session.user).catch(console.warn);
+        }, 100);
+      }
+    }
+  );
+  // ...
+}, []); // Sem registerSession nas dependências
+```
 
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| `id` | uuid | Identificador único |
-| `user_id` | uuid | Referência ao usuário |
-| `imobiliaria_id` | uuid | Imobiliária do usuário (para filtros) |
-| `login_at` | timestamptz | Momento do login |
-| `logout_at` | timestamptz | Momento do logout (null se ativo) |
-| `session_duration_seconds` | integer | Duração calculada automaticamente |
-| `ip_address` | text | IP do usuário |
-| `user_agent` | text | Navegador/dispositivo |
-| `logout_type` | text | 'manual', 'timeout', 'browser_close' |
-| `is_impersonation` | boolean | Identifica sessões de suporte |
+#### 3. Corrigir trigger de duração negativa
 
-#### 2. Criar políticas RLS
-
-- Super admin pode ver todas as sessões
-- Admin da imobiliária pode ver sessões da sua imobiliária
-- Usuários comuns podem ver apenas suas próprias sessões
-
-#### 3. Criar função de banco para calcular duração
-
-Trigger que calcula automaticamente a duração da sessão quando `logout_at` é preenchido.
-
-#### 4. Criar hook `useSessionTracking`
-
-Hook dedicado para gerenciar o tracking de sessão separado da lógica de auth:
-- Armazena `session_id` no localStorage
-- Registra login após autenticação
-- Atualiza logout via `beforeunload` usando `sendBeacon`
-
-#### 5. Integrar no `AuthProvider`
-
-Modificações mínimas e não-destrutivas:
-- Após `signIn`: chamar função de registro (background)
-- Antes `signOut`: atualizar registro (background)
-- Listener `beforeunload`: capturar fechamento de aba
-
-#### 6. Adicionar visualização no Admin Dashboard
-
-Nova página `/admin/sessoes` com:
-- Sessões ativas no momento
-- Tempo médio de sessão
-- Histórico de logins por usuário
-- Filtros por imobiliária/período
-
----
-
-### Detalhes Técnicos
-
-#### Nova Tabela SQL
+O trigger atual não trata corretamente o caso onde `logout_at` já tem valor. Ajustar:
 
 ```sql
-CREATE TABLE public.user_sessions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  imobiliaria_id uuid REFERENCES imobiliarias(id),
-  login_at timestamptz NOT NULL DEFAULT now(),
-  logout_at timestamptz,
-  session_duration_seconds integer,
-  ip_address text,
-  user_agent text,
-  logout_type text DEFAULT 'unknown',
-  is_impersonation boolean DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
--- Trigger para calcular duração
-CREATE OR REPLACE FUNCTION calculate_session_duration()
+CREATE OR REPLACE FUNCTION public.calculate_session_duration()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.logout_at IS NOT NULL AND OLD.logout_at IS NULL THEN
+  -- Calcular apenas se logout_at está sendo definido agora
+  IF NEW.logout_at IS NOT NULL AND 
+     (OLD.logout_at IS NULL OR OLD.logout_at IS DISTINCT FROM NEW.logout_at) THEN
     NEW.session_duration_seconds := 
       EXTRACT(EPOCH FROM (NEW.logout_at - NEW.login_at))::integer;
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public';
 ```
 
-#### Arquivos a Modificar/Criar
+### Arquivos a Modificar
 
-| Arquivo | Ação |
-|---------|------|
-| `src/hooks/useSessionTracking.ts` | Criar - Hook para tracking |
-| `src/hooks/useAuth.tsx` | Modificar - Integrar tracking (3 linhas) |
-| `src/pages/admin/AdminSessoes.tsx` | Criar - Página de visualização |
-| `src/components/layouts/SuperAdminLayout.tsx` | Modificar - Adicionar link menu |
+| Arquivo | Mudança |
+|---------|---------|
+| `src/hooks/useSessionTracking.ts` | Adicionar verificação de sessão existente |
+| `src/hooks/useAuth.tsx` | Remover dependência instável, usar ref |
 
-#### Proteção contra falhas
+### Impacto
 
-```typescript
-// Exemplo de como o tracking é não-bloqueante
-const registrarSessao = async (userId: string) => {
-  try {
-    await supabase.from('user_sessions').insert({...});
-  } catch (error) {
-    // Falha silenciosa - não afeta o login
-    console.warn('Falha ao registrar sessão:', error);
-  }
-};
-```
-
----
-
-### Métricas Disponíveis
-
-Após implementação, será possível consultar:
-
-- Horários de pico de uso
-- Tempo médio de sessão por usuário/imobiliária
-- Frequência de logins
-- Usuários mais ativos
-- Sessões abandonadas (sem logout)
-- Identificação de sessões de suporte (impersonation)
-
----
-
-### Considerações de Segurança
-
-- RLS habilitado para proteger dados de sessão
-- Dados sensíveis (IP, user_agent) visíveis apenas para admins
-- Trigger `SECURITY DEFINER` para cálculo de duração
-- Sessões de impersonation claramente identificadas
+- **Zero impacto** no fluxo de autenticação
+- Corrige duplicação de sessões
+- Evita durações negativas
+- Mantém compatibilidade com sessões existentes
 
