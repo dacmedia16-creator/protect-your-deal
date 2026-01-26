@@ -61,6 +61,22 @@ export function useSessionTracking() {
     options: SessionTrackingOptions = {}
   ): Promise<string | null> => {
     try {
+      // Check if there's already an active session
+      const existingSessionId = getStoredSessionId();
+      if (existingSessionId) {
+        const { data: existingSession } = await supabase
+          .from('user_sessions')
+          .select('id, logout_at')
+          .eq('id', existingSessionId)
+          .maybeSingle();
+        
+        // Session still active, don't create new one
+        if (existingSession && !existingSession.logout_at) {
+          sessionIdRef.current = existingSessionId;
+          return existingSessionId;
+        }
+      }
+
       const imobiliariaId = await getUserImobiliariaId(user.id);
       
       const { data, error } = await supabase
@@ -88,7 +104,7 @@ export function useSessionTracking() {
       console.warn('Failed to register session:', error);
       return null;
     }
-  }, [getUserImobiliariaId, storeSessionId]);
+  }, [getUserImobiliariaId, storeSessionId, getStoredSessionId]);
 
   // End session (on logout)
   const endSession = useCallback(async (logoutType: 'manual' | 'browser_close' | 'timeout' = 'manual') => {
