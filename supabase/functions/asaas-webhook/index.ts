@@ -55,35 +55,61 @@ serve(async (req) => {
     const asaasWebhookToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN');
 
     // ========================================
-    // VALIDAÇÃO DE SEGURANÇA DO WEBHOOK
+    // VALIDAÇÃO DE SEGURANÇA DO WEBHOOK (OBRIGATÓRIA)
     // ========================================
     // A Asaas envia o token de autenticação no header 'asaas-access-token'
-    // Este token é configurado no painel da Asaas em Integrações > Webhooks
-    const receivedToken = req.headers.get('asaas-access-token');
-    
-    if (asaasWebhookToken) {
-      // Se o token está configurado, validar obrigatoriamente
-      if (!receivedToken) {
-        console.error('Webhook rejected: Missing asaas-access-token header');
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized: Missing authentication token' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      if (receivedToken !== asaasWebhookToken) {
-        console.error('Webhook rejected: Invalid asaas-access-token');
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      console.log('Webhook authentication successful');
-    } else {
-      // Token não configurado - log de alerta mas continua processando
-      console.warn('⚠️ SECURITY WARNING: ASAAS_WEBHOOK_TOKEN not configured. Webhook validation disabled!');
+    // Este token deve ser configurado no painel da Asaas em Integrações > Webhooks
+
+    if (!asaasWebhookToken) {
+      // Token não configurado no servidor - bloquear por segurança
+      console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN not configured. Rejecting all webhook requests.');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const receivedToken = req.headers.get('asaas-access-token');
+
+    if (!receivedToken) {
+      console.error('Webhook rejected: Missing asaas-access-token header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Comparação segura usando timing-safe comparison para prevenir timing attacks
+    const encoder = new TextEncoder();
+    const expectedBuffer = encoder.encode(asaasWebhookToken);
+    const receivedBuffer = encoder.encode(receivedToken);
+
+    // Verificar tamanho primeiro (se diferentes, já rejeitar)
+    if (expectedBuffer.length !== receivedBuffer.length) {
+      console.error('Webhook rejected: Invalid asaas-access-token (length mismatch)');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Comparação timing-safe
+    let isValid = true;
+    for (let i = 0; i < expectedBuffer.length; i++) {
+      if (expectedBuffer[i] !== receivedBuffer[i]) {
+        isValid = false;
+      }
+    }
+
+    if (!isValid) {
+      console.error('Webhook rejected: Invalid asaas-access-token');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Webhook authentication successful');
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
