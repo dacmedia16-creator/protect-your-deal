@@ -1,105 +1,51 @@
 
+## Plano: Desativar Verificação de Versão no Preview
 
-## Plano: Corrigir Duplicação de Sessões de Usuários
-
-### Causa Raiz Identificada
-
-O `sendBeacon` no `beforeunload` **falha silenciosamente** porque:
-1. Falta o header HTTP `Prefer: return=minimal` exigido pelo PostgREST
-2. A RLS policy `"Usuário pode atualizar sua sessão" (user_id = auth.uid())` bloqueia a requisição pois o beacon usa anon key sem JWT
-
-Quando o beacon falha, a sessão antiga permanece "ativa" no banco (sem `logout_at`). Na próxima vez que o usuário acessa, o localStorage está vazio e uma nova sessão é criada.
+### Problema
+O overlay de atualização fica em loop infinito no preview do Lovable porque o `VITE_BUILD_ID` permanece estático mesmo após recarregar a página.
 
 ### Solução
+Adicionar uma verificação no início do componente para não renderizar nada quando estiver em ambiente de desenvolvimento/preview.
 
-Implementar uma abordagem mais robusta com **duas camadas de proteção**:
+### Implementação
 
-#### 1. Verificar sessão ativa do mesmo usuário no banco (não apenas localStorage)
+**Arquivo:** `src/components/VersionCheckWithOverlay.tsx`
 
-Antes de criar nova sessão, verificar se já existe uma sessão ativa para o mesmo `user_id`:
+Adicionar verificação logo no início do componente:
 
 ```typescript
-// Em registerSession, antes de inserir
-const { data: activeUserSession } = await supabase
-  .from('user_sessions')
-  .select('id')
-  .eq('user_id', user.id)
-  .is('logout_at', null)
-  .order('login_at', { ascending: false })
-  .limit(1)
-  .maybeSingle();
+export function VersionCheckWithOverlay() {
+  // Não verificar versão em ambiente de desenvolvimento/preview
+  const isDevEnvironment = import.meta.env.DEV || 
+    window.location.hostname.includes('lovableproject.com') ||
+    window.location.hostname.includes('localhost');
 
-if (activeUserSession) {
-  // Reutilizar sessão existente
-  storeSessionId(activeUserSession.id);
-  sessionIdRef.current = activeUserSession.id;
-  return activeUserSession.id;
+  // ... resto dos hooks ...
+
+  // Retornar null antes do JSX se for ambiente de dev
+  if (isDevEnvironment) {
+    return null;
+  }
+
+  return (
+    <UpdateCountdownOverlay ... />
+  );
 }
 ```
 
-#### 2. Criar constraint UNIQUE parcial no banco
+### Detalhes Técnicos
 
-Adicionar constraint que impede múltiplas sessões ativas por usuário:
-
-```sql
-CREATE UNIQUE INDEX idx_user_sessions_one_active_per_user 
-ON public.user_sessions (user_id) 
-WHERE logout_at IS NULL;
-```
-
-Isso garante **a nível de banco** que só pode existir uma sessão ativa por usuário.
-
-#### 3. Tratar conflito no INSERT
-
-Quando tentar criar sessão e a constraint bloquear, buscar e reutilizar a sessão existente:
-
-```typescript
-const { data, error } = await supabase
-  .from('user_sessions')
-  .insert({ user_id: user.id, ... })
-  .select('id')
-  .single();
-
-if (error?.code === '23505') {
-  // Unique violation - sessão já existe
-  // Buscar a sessão ativa e reutilizá-la
-}
-```
-
-### Arquivos a Modificar
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/useSessionTracking.ts` | Adicionar verificação de sessão ativa no banco por `user_id` |
-| Migração SQL | Criar índice UNIQUE parcial `idx_user_sessions_one_active_per_user` |
-
-### Limpeza de Dados Existentes
-
-Antes de criar o índice UNIQUE, encerrar sessões duplicadas antigas mantendo apenas a mais recente:
-
-```sql
--- Encerrar sessões antigas (não deletar, apenas fechar)
-UPDATE public.user_sessions
-SET logout_at = login_at + INTERVAL '1 second',
-    logout_type = 'timeout'
-WHERE id NOT IN (
-  SELECT DISTINCT ON (user_id) id
-  FROM public.user_sessions
-  WHERE logout_at IS NULL
-  ORDER BY user_id, login_at DESC
-)
-AND logout_at IS NULL;
-```
+| Condição | Descrição |
+|----------|-----------|
+| `import.meta.env.DEV` | Vite define como `true` em modo desenvolvimento |
+| `lovableproject.com` | Domínio do preview do Lovable |
+| `localhost` | Desenvolvimento local |
 
 ### Resultado Esperado
 
-- **Uma sessão ativa por usuário** garantida no banco
-- Tentativas de criar sessões duplicadas reutilizam a sessão existente
-- Dados históricos preservados (apenas marcados como encerrados)
+- **Preview Lovable**: Overlay nunca aparece (correto para desenvolvimento)
+- **App publicado** (`protect-your-deal.lovable.app`): Continua funcionando normalmente
+- **PWA instalado**: Atualiza corretamente para usuários reais
 
 ### Impacto
-
-- Usuários com múltiplas abas: todas compartilham a mesma sessão
-- Dashboard de sessões: mostrará corretamente uma sessão por usuário online
-- Métricas de tempo médio: serão mais precisas
-
+Nenhum impacto para usuários finais. Apenas melhora a experiência de desenvolvimento.
