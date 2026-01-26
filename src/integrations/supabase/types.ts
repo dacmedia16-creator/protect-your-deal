@@ -164,6 +164,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "assinaturas_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "assinaturas_plano_id_fkey"
             columns: ["plano_id"]
             isOneToOne: false
@@ -227,6 +234,13 @@ export type Database = {
             referencedRelation: "imobiliarias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "audit_logs_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clientes: {
@@ -278,6 +292,13 @@ export type Database = {
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
         ]
@@ -432,6 +453,13 @@ export type Database = {
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
         ]
@@ -619,6 +647,13 @@ export type Database = {
             referencedRelation: "imobiliarias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cupons_usos_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       equipes: {
@@ -664,6 +699,13 @@ export type Database = {
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipes_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
           {
@@ -846,6 +888,13 @@ export type Database = {
             referencedRelation: "imobiliarias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fichas_visita_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       imobiliaria_feature_flags: {
@@ -879,6 +928,13 @@ export type Database = {
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imobiliaria_feature_flags_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
         ]
@@ -986,6 +1042,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "imoveis_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "imoveis_proprietario_id_fkey"
             columns: ["proprietario_id"]
             isOneToOne: false
@@ -1073,6 +1136,13 @@ export type Database = {
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modulos_contratados_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
           {
@@ -1239,6 +1309,13 @@ export type Database = {
             referencedRelation: "imobiliarias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       survey_responses: {
@@ -1364,6 +1441,13 @@ export type Database = {
             referencedRelation: "imobiliarias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "surveys_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       templates_mensagem: {
@@ -1406,6 +1490,13 @@ export type Database = {
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_mensagem_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
             referencedColumns: ["id"]
           },
         ]
@@ -1467,6 +1558,13 @@ export type Database = {
             referencedRelation: "imobiliarias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       webhook_logs: {
@@ -1507,6 +1605,18 @@ export type Database = {
           id: string | null
           logo_url: string | null
           nome: string | null
+        }
+        Insert: {
+          codigo?: number | null
+          id?: string | null
+          logo_url?: string | null
+          nome?: string | null
+        }
+        Update: {
+          codigo?: number | null
+          id?: string | null
+          logo_url?: string | null
+          nome?: string | null
         }
         Relationships: []
       }
