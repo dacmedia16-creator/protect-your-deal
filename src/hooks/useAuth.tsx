@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode, useRef, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { APP_URL } from '@/lib/appConfig';
@@ -21,6 +21,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { registerSession, endSession } = useSessionTracking();
   const hasRegisteredSession = useRef(false);
+  const registerSessionRef = useRef(registerSession);
+  
+  // Keep ref updated with latest function
+  registerSessionRef.current = registerSession;
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -35,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           hasRegisteredSession.current = true;
           // Defer to avoid blocking auth flow
           setTimeout(() => {
-            registerSession(session.user).catch(console.warn);
+            registerSessionRef.current(session.user).catch(console.warn);
           }, 100);
         }
 
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [registerSession]);
+  }, []); // Empty dependency array - uses ref for registerSession
 
   const signUp = async (email: string, password: string, nome: string) => {
     const redirectUrl = `${APP_URL}/`;
