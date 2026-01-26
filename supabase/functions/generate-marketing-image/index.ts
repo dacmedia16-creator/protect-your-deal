@@ -68,10 +68,11 @@ const visualScenarios: Record<string, string> = {
   'feature': `
 A photorealistic scene of a well-dressed Brazilian real estate agent (modern business casual, 
 30-45 years old) standing next to a client in front of a high-end property. The client is 
-signing something on their smartphone with an expression of security and confidence.
+typing a verification code on their smartphone with an expression of security and confidence.
 The agent looks professional and trustworthy, gesturing towards the phone screen.
-Visual elements: smartphone with minimalist interface suggesting digital signature, 
+Visual elements: smartphone with clean PIN/code input interface showing number buttons (NOT a handwriting signature pad), 
 subtle protection icons (shield, checkmark) as floating overlays.
+IMPORTANT: The confirmation is done by TYPING a code on the phone keyboard, NOT by handwriting or using a stylus/pen.
 Setting: elegant, modern property entrance - could be luxury apartment building or upscale house.
 Lighting: professional advertising photography, warm and inviting.
 `,
@@ -144,11 +145,13 @@ Person holding phone should look professional and confident.
   'pdf': `
 Display a premium, professional PDF document visible on a tablet or large smartphone screen.
 The document shows a clean, official visit receipt layout with visible sections 
-for signatures (digital signature style), dates, and property info.
+for TYPED confirmations (name fields with typed text, NOT handwritten signatures), 
+OTP verification codes, dates, and property info.
 Background: executive desk setting with subtle real estate elements (property keys, 
 branded folder, pen).
 Emphasize: professionalism, legal documentation, permanent record keeping.
 The document should look official and trustworthy.
+IMPORTANT: No handwritten signatures or signature pads - all confirmations are typed text.
 `,
   'crm': `
 Show an organized, beautiful CRM dashboard on a laptop or tablet screen in a modern office.
@@ -189,7 +192,7 @@ Hero composition combining key brand elements in an aspirational scene:
 A confident, successful real estate agent (professionally dressed, warm smile) standing 
 with a satisfied client in front of an impressive modern property.
 The agent holds a smartphone showing a clean app interface with checkmarks.
-The client could be holding keys or signing something digitally.
+The client could be holding keys or typing a confirmation code on their smartphone.
 Background: stunning high-end property facade - modern architecture, landscaping.
 Emphasize: complete solution, total professionalism, trust, success, modern real estate.
 This is the flagship, "about us" style hero image.
@@ -378,6 +381,14 @@ Leave the TOP-LEFT CORNER AREA completely CLEAN and CLEAR - no text, no icons, n
 The logo will be added programmatically after image generation.
 Ensure the top-left corner has a simple, uncluttered background (solid color, gradient, or subtle blur - NOT faces, text, or complex details).
 Reserve approximately 15% of the image width in the top-left corner for logo placement.
+
+=== CRITICAL PRODUCT DETAIL ===
+VisitaProva uses TYPED OTP codes for confirmation, NOT handwritten signatures.
+- Show people TYPING on phone keyboards, not drawing signatures with stylus/pen
+- Show PIN/code input screens, not signature pad interfaces
+- The confirmation process involves entering a 6-digit code sent via WhatsApp
+- NEVER show: stylus pens, signature drawing, handwritten cursive signatures on screens
+- DO show: phone keyboards, number pads, typed text fields, code input screens
 
 === EMOTIONAL TONE ===
 The image should evoke:
