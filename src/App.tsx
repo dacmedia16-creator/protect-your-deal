@@ -90,7 +90,7 @@ import AdminMarketingImages from "./pages/admin/AdminMarketingImages";
 import AdminAfiliados from "./pages/admin/AdminAfiliados";
 import AdminCupons from "./pages/admin/AdminCupons";
 import AdminComissoes from "./pages/admin/AdminComissoes";
-
+import AdminSessoes from "./pages/admin/AdminSessoes";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
@@ -263,7 +263,11 @@ const App = () => (
                     <AdminComissoes />
                   </ProtectedRoute>
                 } />
-
+                <Route path="/admin/sessoes" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminSessoes />
+                  </ProtectedRoute>
+                } />
                 {/* Imobiliaria Admin routes */}
                 <Route path="/empresa" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
