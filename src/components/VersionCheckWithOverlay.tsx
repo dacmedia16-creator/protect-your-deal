@@ -35,6 +35,17 @@ function isServerVersionNewer(serverVersion: string, localVersion: string): bool
  * Componente que verifica atualizações e exibe overlay com countdown.
  */
 export function VersionCheckWithOverlay() {
+  // Não verificar versão em ambiente de desenvolvimento/preview
+  const isDevEnvironment = import.meta.env.DEV || 
+    window.location.hostname.includes('lovableproject.com') ||
+    window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview') ||
+    window.location.hostname.includes('localhost');
+
+  // Retornar null imediatamente em ambiente de desenvolvimento
+  if (isDevEnvironment) {
+    return null;
+  }
+
   const [showOverlay, setShowOverlay] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [isStandalone, setIsStandalone] = useState(false);
