@@ -31,6 +31,7 @@ import {
   Loader2,
   ChevronDown,
   Package,
+  Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -106,6 +107,7 @@ const navGroups: NavGroup[] = [
     label: 'Sistema',
     defaultOpen: false,
     items: [
+      { href: '/admin/sessoes', icon: Activity, label: 'Sessões' },
       { href: '/admin/marketing', icon: Image, label: 'Marketing' },
       { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
       { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },

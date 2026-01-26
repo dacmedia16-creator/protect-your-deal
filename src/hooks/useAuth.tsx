@@ -1,7 +1,8 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useRef, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { APP_URL } from '@/lib/appConfig';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 
 interface AuthContextType {
   user: User | null;
@@ -18,14 +19,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { registerSession, endSession } = useSessionTracking();
+  const hasRegisteredSession = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Register session on sign in (only once per session)
+        if (event === 'SIGNED_IN' && session?.user && !hasRegisteredSession.current) {
+          hasRegisteredSession.current = true;
+          // Defer to avoid blocking auth flow
+          setTimeout(() => {
+            registerSession(session.user).catch(console.warn);
+          }, 100);
+        }
+
+        // Reset flag on sign out
+        if (event === 'SIGNED_OUT') {
+          hasRegisteredSession.current = false;
+        }
       }
     );
 
@@ -37,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [registerSession]);
 
   const signUp = async (email: string, password: string, nome: string) => {
     const redirectUrl = `${APP_URL}/`;
@@ -62,6 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // End session tracking before logout
+    try {
+      await endSession('manual');
+    } catch (err) {
+      console.warn('Failed to end session tracking:', err);
+    }
+
     // Verificar se há sessão antes de tentar logout
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     
@@ -69,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Já está deslogado, apenas limpar estado local
       setUser(null);
       setSession(null);
+      hasRegisteredSession.current = false;
       return;
     }
     
@@ -77,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Mesmo com erro, limpar estado local
     setUser(null);
     setSession(null);
+    hasRegisteredSession.current = false;
     
     // Ignorar erro "Session not found" - não é problema real
     if (error && !error.message.includes('session_not_found') && !error.message.includes('Session not found')) {

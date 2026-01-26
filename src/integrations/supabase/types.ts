@@ -1567,6 +1567,63 @@ export type Database = {
           },
         ]
       }
+      user_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          imobiliaria_id: string | null
+          ip_address: string | null
+          is_impersonation: boolean | null
+          login_at: string
+          logout_at: string | null
+          logout_type: string | null
+          session_duration_seconds: number | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          ip_address?: string | null
+          is_impersonation?: boolean | null
+          login_at?: string
+          logout_at?: string | null
+          logout_type?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          ip_address?: string | null
+          is_impersonation?: boolean | null
+          login_at?: string
+          logout_at?: string | null
+          logout_type?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_sessions_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           created_at: string | null
