@@ -1,54 +1,105 @@
 
 
-## Plano: Limpar Sessões Duplicadas do Banco de Dados
+## Plano: Corrigir Duplicação de Sessões de Usuários
 
-### Análise dos Dados Atuais
+### Causa Raiz Identificada
 
-| Usuário | Total Sessões | Para Deletar | Sessões Ativas |
-|---------|---------------|--------------|----------------|
-| 726c5b8a... | 7 | 6 | 5 |
-| 48d00459... | 2 | 1 | 1 |
-| 1c342604... | 1 | 0 | 0 |
-| fd13d8a0... | 1 | 0 | 0 |
+O `sendBeacon` no `beforeunload` **falha silenciosamente** porque:
+1. Falta o header HTTP `Prefer: return=minimal` exigido pelo PostgREST
+2. A RLS policy `"Usuário pode atualizar sua sessão" (user_id = auth.uid())` bloqueia a requisição pois o beacon usa anon key sem JWT
 
-**Problemas identificados:**
-- Sessões duplicadas criadas em segundos de diferença
-- Durações negativas (-90s, -105s, -107s, -109s)
-- Múltiplas sessões "ativas" (sem logout_at) para o mesmo usuário
+Quando o beacon falha, a sessão antiga permanece "ativa" no banco (sem `logout_at`). Na próxima vez que o usuário acessa, o localStorage está vazio e uma nova sessão é criada.
 
 ### Solução
 
-Executar uma migração SQL que:
+Implementar uma abordagem mais robusta com **duas camadas de proteção**:
 
-1. **Deleta sessões duplicadas** - mantém apenas a mais recente por usuário
-2. **Corrige durações negativas** - zera durações inválidas
+#### 1. Verificar sessão ativa do mesmo usuário no banco (não apenas localStorage)
 
-### Query de Limpeza
+Antes de criar nova sessão, verificar se já existe uma sessão ativa para o mesmo `user_id`:
+
+```typescript
+// Em registerSession, antes de inserir
+const { data: activeUserSession } = await supabase
+  .from('user_sessions')
+  .select('id')
+  .eq('user_id', user.id)
+  .is('logout_at', null)
+  .order('login_at', { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+if (activeUserSession) {
+  // Reutilizar sessão existente
+  storeSessionId(activeUserSession.id);
+  sessionIdRef.current = activeUserSession.id;
+  return activeUserSession.id;
+}
+```
+
+#### 2. Criar constraint UNIQUE parcial no banco
+
+Adicionar constraint que impede múltiplas sessões ativas por usuário:
 
 ```sql
--- 1. Deletar sessões duplicadas (manter apenas a mais recente por usuário)
-DELETE FROM user_sessions
+CREATE UNIQUE INDEX idx_user_sessions_one_active_per_user 
+ON public.user_sessions (user_id) 
+WHERE logout_at IS NULL;
+```
+
+Isso garante **a nível de banco** que só pode existir uma sessão ativa por usuário.
+
+#### 3. Tratar conflito no INSERT
+
+Quando tentar criar sessão e a constraint bloquear, buscar e reutilizar a sessão existente:
+
+```typescript
+const { data, error } = await supabase
+  .from('user_sessions')
+  .insert({ user_id: user.id, ... })
+  .select('id')
+  .single();
+
+if (error?.code === '23505') {
+  // Unique violation - sessão já existe
+  // Buscar a sessão ativa e reutilizá-la
+}
+```
+
+### Arquivos a Modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/hooks/useSessionTracking.ts` | Adicionar verificação de sessão ativa no banco por `user_id` |
+| Migração SQL | Criar índice UNIQUE parcial `idx_user_sessions_one_active_per_user` |
+
+### Limpeza de Dados Existentes
+
+Antes de criar o índice UNIQUE, encerrar sessões duplicadas antigas mantendo apenas a mais recente:
+
+```sql
+-- Encerrar sessões antigas (não deletar, apenas fechar)
+UPDATE public.user_sessions
+SET logout_at = login_at + INTERVAL '1 second',
+    logout_type = 'timeout'
 WHERE id NOT IN (
   SELECT DISTINCT ON (user_id) id
-  FROM user_sessions
+  FROM public.user_sessions
+  WHERE logout_at IS NULL
   ORDER BY user_id, login_at DESC
-);
-
--- 2. Corrigir durações negativas existentes
-UPDATE user_sessions
-SET session_duration_seconds = NULL
-WHERE session_duration_seconds < 0;
+)
+AND logout_at IS NULL;
 ```
 
 ### Resultado Esperado
 
-- **7 sessões deletadas** (duplicadas)
-- **4 sessões mantidas** (uma por usuário, a mais recente)
-- **0 durações negativas** restantes
+- **Uma sessão ativa por usuário** garantida no banco
+- Tentativas de criar sessões duplicadas reutilizam a sessão existente
+- Dados históricos preservados (apenas marcados como encerrados)
 
 ### Impacto
 
-- **Zero impacto** em usuários ativos (sessão mais recente é preservada)
-- Dados históricos de sessões duplicadas serão perdidos
-- localStorage dos usuários pode ter IDs de sessões deletadas (será criada nova no próximo login)
+- Usuários com múltiplas abas: todas compartilham a mesma sessão
+- Dashboard de sessões: mostrará corretamente uma sessão por usuário online
+- Métricas de tempo médio: serão mais precisas
 
