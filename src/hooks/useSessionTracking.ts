@@ -61,7 +61,7 @@ export function useSessionTracking() {
     options: SessionTrackingOptions = {}
   ): Promise<string | null> => {
     try {
-      // Check if there's already an active session
+      // First check localStorage for existing session
       const existingSessionId = getStoredSessionId();
       if (existingSessionId) {
         const { data: existingSession } = await supabase
@@ -70,13 +70,31 @@ export function useSessionTracking() {
           .eq('id', existingSessionId)
           .maybeSingle();
         
-        // Session still active, don't create new one
+        // Session still active, reuse it
         if (existingSession && !existingSession.logout_at) {
           sessionIdRef.current = existingSessionId;
           return existingSessionId;
         }
       }
 
+      // Check database for any active session for this user (regardless of localStorage)
+      const { data: activeUserSession } = await supabase
+        .from('user_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .is('logout_at', null)
+        .order('login_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeUserSession) {
+        // Reuse existing active session from database
+        storeSessionId(activeUserSession.id);
+        sessionIdRef.current = activeUserSession.id;
+        return activeUserSession.id;
+      }
+
+      // No active session found, create new one
       const imobiliariaId = await getUserImobiliariaId(user.id);
       
       const { data, error } = await supabase
@@ -91,6 +109,21 @@ export function useSessionTracking() {
         .single();
 
       if (error) {
+        // Handle unique constraint violation (another session was just created)
+        if (error.code === '23505') {
+          const { data: conflictSession } = await supabase
+            .from('user_sessions')
+            .select('id')
+            .eq('user_id', user.id)
+            .is('logout_at', null)
+            .maybeSingle();
+          
+          if (conflictSession) {
+            storeSessionId(conflictSession.id);
+            sessionIdRef.current = conflictSession.id;
+            return conflictSession.id;
+          }
+        }
         console.warn('Failed to register session:', error.message);
         return null;
       }
