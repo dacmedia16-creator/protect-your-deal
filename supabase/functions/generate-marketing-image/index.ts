@@ -11,7 +11,7 @@ interface MarketingImageRequest {
   titulo: string;
   subtitulo: string;
   funcionalidade: string;
-  formato: 'quadrado' | 'vertical';
+  formato: 'quadrado' | 'vertical' | 'stories';
   estilo: 'claro' | 'escuro';
   onlyDescription?: boolean;
 }
@@ -59,26 +59,141 @@ const funcionalidadeDescriptionsForText: Record<string, string> = {
   'geral': 'plataforma completa de gestão de visitas imobiliárias com segurança e praticidade'
 };
 
-// Descrições de funcionalidades para contexto visual (prompt de imagem)
-const funcionalidadeDescriptionsForImage: Record<string, string> = {
-  'otp-whatsapp': 'WhatsApp OTP verification - show phone with WhatsApp icon and security lock',
-  'qr-code': 'QR Code scanning - show phone scanning QR code with checkmark',
-  'pdf': 'PDF document generation - show professional document with signature icon',
-  'crm': 'CRM system - show organized client cards and property listings',
-  'mobile': 'Mobile app - show smartphone with app interface mockup',
-  'parcerias': 'Partnership system - show two people/hands connecting or handshake icon',
-  'dashboard': 'Dashboard analytics - show charts, graphs, and metrics display',
-  'geral': 'Complete real estate management - show shield with house icon',
+// ============================================================
+// NOVOS PROMPTS PREMIUM - FOTOGRAFIA PUBLICITÁRIA REALISTA
+// ============================================================
+
+// Templates de cenário visual realista por tipo de post
+const visualScenarios: Record<string, string> = {
+  'feature': `
+A photorealistic scene of a well-dressed Brazilian real estate agent (modern business casual, 
+30-45 years old) standing next to a client in front of a high-end property. The client is 
+signing something on their smartphone with an expression of security and confidence.
+The agent looks professional and trustworthy, gesturing towards the phone screen.
+Visual elements: smartphone with minimalist interface suggesting digital signature, 
+subtle protection icons (shield, checkmark) as floating overlays.
+Setting: elegant, modern property entrance - could be luxury apartment building or upscale house.
+Lighting: professional advertising photography, warm and inviting.
+`,
+  'antes-depois': `
+A conceptual split-image representing invisible risk in real estate transactions.
+LEFT SIDE: A stressed, overwhelmed agent surrounded by scattered WhatsApp messages on screen, 
+loose paper contracts, handwritten notes, and visual symbols of legal conflict (warning signs, 
+red X marks). Chaotic, disorganized desk. Cold, harsh lighting.
+RIGHT SIDE: A calm, confident agent with everything organized - phone showing clean app interface 
+with green checkmarks, neat digital documents on screen, satisfied expression. Modern, clean 
+workspace. Warm, professional lighting.
+Visual concept: "Those who document don't argue later."
+Clear visual contrast between chaos and control, old vs new methods.
+`,
+  'dica': `
+A professional real estate agent (well-groomed, business casual) confidently showing their 
+smartphone screen to a property owner at a property entrance. The phone displays a clean 
+interface with a green verification checkmark. The owner looks reassured and satisfied, 
+nodding in approval.
+Background: upscale residential property entrance with modern architecture.
+Lighting: warm golden hour, professional lifestyle photography style.
+Both people appear trustworthy and professional.
+`,
+  'estatistica': `
+Clean, modern infographic style with a real estate context. A large, bold statistic number 
+prominently displayed (use abstract placeholder like "98%" or "3x"). 
+Background: subtly blurred modern high-end property with silhouettes of happy professionals 
+- an agent and client shaking hands or celebrating.
+Style: data-driven, corporate, trustworthy. Mix of infographic elements with photorealistic background.
+Color emphasis on the number with brand colors.
+`,
+  'depoimento': `
+Portrait-style photo of a confident, successful Brazilian real estate agent in their 30s-40s.
+Professionally dressed (blazer, modern business attire), looking directly at camera with 
+a genuine, subtle smile that conveys trust and success.
+Background: modern real estate office with glass walls, or upscale property lobby - slightly blurred 
+to keep focus on the person.
+Style: editorial portrait, authentic, relatable. Professional lighting.
+Could include large quotation marks as design elements framing the person.
+`,
+  'carrossel': `
+Clean, premium carousel slide design with consistent visual language for a series.
+Feature a smartphone at an angle showing a clean VisitaProva-style app interface mockup.
+Background: abstract premium gradient transitioning from dark navy (#0F172A) to deep slate.
+Include subtle real estate iconography: small house icons, key symbols, checkmarks.
+Modern geometric accents and subtle grid patterns for visual interest.
+Numbered corner indicator (like "01" or "→") suggesting series continuation.
+`
 };
 
-// Templates de prompt para imagem
-const templateDescriptions: Record<string, string> = {
-  'feature': 'Modern tech-style feature highlight with prominent icon, clean layout',
-  'dica': 'Professional tip card with lightbulb icon, educational and friendly style',
-  'antes-depois': 'Side-by-side visual comparison: traditional method (paper, pen, chaos) vs digital method (app, organization, modernity)',
-  'estatistica': 'Clean infographic with large number display, data-driven style, minimalist charts',
-  'depoimento': 'Elegant testimonial card with large quotation marks, profile placeholder',
-  'carrossel': 'Carousel slide with corner numbering, consistent design for series',
+// Contexto específico por funcionalidade
+const funcionalidadeScenes: Record<string, string> = {
+  'otp-whatsapp': `
+Focus on the moment of OTP confirmation via WhatsApp. 
+Show a smartphone with WhatsApp-style interface open, displaying a verification code message 
+(use abstract numbers like "1234" or asterisks).
+The phone is held by a professional-looking hand (well-manicured, could show watch or blazer cuff).
+A luxury property is visible in the soft background.
+Emphasize: instant security verification, professional process, modern technology.
+Include subtle elements: lock icon, checkmark, shield overlay.
+`,
+  'qr-code': `
+Show a modern smartphone scanning a QR code on an official-looking document.
+The phone screen displays a green checkmark and "Verified" style confirmation.
+The document has a professional layout suggesting an official visit receipt.
+Background: professional setting - could be desk, property entrance, or office.
+Emphasize: instant verification, anti-fraud protection, cutting-edge technology.
+Person holding phone should look professional and confident.
+`,
+  'pdf': `
+Display a premium, professional PDF document visible on a tablet or large smartphone screen.
+The document shows a clean, official visit receipt layout with visible sections 
+for signatures (digital signature style), dates, and property info.
+Background: executive desk setting with subtle real estate elements (property keys, 
+branded folder, pen).
+Emphasize: professionalism, legal documentation, permanent record keeping.
+The document should look official and trustworthy.
+`,
+  'crm': `
+Show an organized, beautiful CRM dashboard on a laptop or tablet screen in a modern office.
+Display organized client cards, property listings with thumbnails, and activity timeline.
+The interface should look clean, modern, and professional.
+Background: contemporary real estate office with modern furniture, perhaps with 
+an agent working confidently.
+Emphasize: organization, efficiency, complete client overview, smart management.
+`,
+  'mobile': `
+Lifestyle shot of a real estate agent walking or standing outside a luxury property, 
+actively using their smartphone. Natural, candid moment.
+The phone screen subtly shows an app interface (don't need to be detailed).
+The agent is professionally dressed but in motion - showing the mobile, on-the-go nature.
+Style: lifestyle photography, natural outdoor lighting, professional but relaxed.
+Emphasize: mobility, convenience, always connected, work from anywhere.
+Property in background should be impressive and high-end.
+`,
+  'parcerias': `
+Two professional real estate agents collaborating or sealing a deal.
+Could be shaking hands, one showing their phone to the other displaying partnership details,
+or both looking at a shared screen/document with smiles.
+Setting: modern office meeting room or upscale property entrance.
+Both agents look professional, diverse, and successful.
+Emphasize: collaboration, trust between professionals, shared success, easy partnership.
+Subtle elements suggesting commission split or collaboration.
+`,
+  'dashboard': `
+Beautiful analytics dashboard with charts, performance graphs, and KPIs on a large screen 
+or modern monitor.
+Show visually appealing metrics: bar charts, line graphs, percentage indicators, visit counts.
+An agent or manager viewing the dashboard with an expression of satisfaction and insight.
+Style: tech-forward, data-driven, executive decision-making aesthetic.
+Emphasize: real-time insights, performance tracking, smart business decisions, analytics power.
+`,
+  'geral': `
+Hero composition combining key brand elements in an aspirational scene:
+A confident, successful real estate agent (professionally dressed, warm smile) standing 
+with a satisfied client in front of an impressive modern property.
+The agent holds a smartphone showing a clean app interface with checkmarks.
+The client could be holding keys or signing something digitally.
+Background: stunning high-end property facade - modern architecture, landscaping.
+Emphasize: complete solution, total professionalism, trust, success, modern real estate.
+This is the flagship, "about us" style hero image.
+`
 };
 
 async function generateDescription(
@@ -94,7 +209,8 @@ async function generateDescription(
   const descriptionPrompt = `Crie uma descrição profissional para um post de Instagram sobre o app VisitaProva.
 
 CONTEXTO:
-- App: VisitaProva - plataforma de gestão de visitas imobiliárias
+- App: VisitaProva - plataforma de gestão de visitas imobiliárias para PROVA DE INTERMEDIAÇÃO
+- O app protege o corretor juridicamente, registrando visitas com confirmação via WhatsApp
 - Funcionalidade destacada: ${funcDesc}
 - Título do post: ${titulo}
 - Subtítulo: ${subtitulo}
@@ -105,20 +221,21 @@ ${templateStyle}
 
 ESTRUTURA OBRIGATÓRIA (siga essa ordem):
 1. HOOK (primeira linha): Frase forte que chama atenção imediata. Use emoji relevante no início.
-2. PROBLEMA (2-3 linhas): Descreva uma dor/frustração que corretores enfrentam.
+2. PROBLEMA (2-3 linhas): Descreva uma dor/frustração que corretores enfrentam (ex: cliente que some, disputa de comissão, falta de prova).
 3. SOLUÇÃO (2-3 linhas): Como o VisitaProva resolve esse problema. Use ✅ ou 💡.
-4. BENEFÍCIO (1-2 linhas): O resultado positivo de usar a ferramenta.
+4. BENEFÍCIO (1-2 linhas): O resultado positivo - proteção jurídica, paz de espírito, profissionalismo.
 5. PERGUNTA (1 linha): Uma pergunta para gerar engajamento nos comentários.
 6. CTA (1 linha): Chamada para ação. Ex: "Link na bio" ou "Salve esse post".
 
 REGRAS IMPORTANTES:
 - Escreva em português brasileiro natural
 - Use emojis estrategicamente (máximo 1 por seção, não exagere)
-- Tom profissional mas acessível
+- Tom profissional mas acessível - fale de corretor para corretor
 - Máximo 250 palavras
 - NÃO inclua hashtags na descrição (serão adicionadas separadamente)
 - Evite jargões técnicos demais
 - Fale diretamente com o corretor (use "você")
+- Foque em PROTEÇÃO JURÍDICA e PROVA DE INTERMEDIAÇÃO como conceitos centrais
 
 Retorne APENAS o texto da descrição, sem explicações adicionais.`;
 
@@ -155,7 +272,7 @@ function getFallbackDescription(titulo: string, subtitulo: string): string {
 
 ${subtitulo}
 
-✅ Com o VisitaProva, sua rotina de visitas fica mais organizada e profissional.
+✅ Com o VisitaProva, sua prova de intermediação fica garantida. Proteção jurídica real para o seu trabalho.
 
 👉 Já conhece o app? Conta pra gente nos comentários!
 
@@ -171,6 +288,115 @@ function buildLegenda(descricao: string, funcionalidade: string): { legenda: str
 ${allHashtags.join(' ')}`;
 
   return { legenda, hashtags: allHashtags };
+}
+
+function getAspectRatioAndDimensions(formato: string): { aspectRatio: string; dimensions: string; width: number; height: number } {
+  switch (formato) {
+    case 'quadrado':
+      return { aspectRatio: '1:1', dimensions: '1080x1080 pixels', width: 1080, height: 1080 };
+    case 'vertical':
+      return { aspectRatio: '4:5', dimensions: '1080x1350 pixels', width: 1080, height: 1350 };
+    case 'stories':
+      return { aspectRatio: '9:16', dimensions: '1080x1920 pixels', width: 1080, height: 1920 };
+    default:
+      return { aspectRatio: '1:1', dimensions: '1080x1080 pixels', width: 1080, height: 1080 };
+  }
+}
+
+function buildPremiumImagePrompt(
+  template: string,
+  funcionalidade: string,
+  formato: string,
+  estilo: string
+): string {
+  const { aspectRatio, dimensions } = getAspectRatioAndDimensions(formato);
+  const visualScenario = visualScenarios[template] || visualScenarios['feature'];
+  const funcScene = funcionalidadeScenes[funcionalidade] || funcionalidadeScenes['geral'];
+
+  // Color palette based on style
+  const colorPalette = estilo === 'claro'
+    ? `Light, airy backgrounds with professional studio lighting. 
+Soft whites, light creams, subtle gray tones.
+Accent colors: deep navy blue (#2563EB), subtle gold or warm touches, emerald green (#10B981) for trust indicators and checkmarks.
+Overall feel: clean, bright, modern, trustworthy.`
+    : `Rich, sophisticated dark tones for a premium executive feel.
+Deep navy (#0F172A), charcoal blacks, dark gradients.
+Accent colors: bright electric blue (#60A5FA), gold/amber highlights for warmth, emerald green (#10B981) for trust indicators.
+Overall feel: premium, executive, authoritative, modern tech.`;
+
+  // Format-specific instructions
+  const formatInstructions = formato === 'stories' 
+    ? `CRITICAL: This is for Instagram STORIES - VERTICAL PORTRAIT orientation.
+The image MUST be much TALLER than wide. Aspect ratio 9:16.
+HEIGHT is approximately 1.78x the WIDTH.
+Think phone screen in portrait mode.
+Leave some space at top and bottom for text overlays.`
+    : formato === 'vertical'
+    ? `This is for Instagram FEED VERTICAL post - PORTRAIT orientation.
+The image should be taller than wide. Aspect ratio 4:5.
+Optimized for feed scroll - vertical rectangle.`
+    : `This is for Instagram FEED SQUARE post.
+The image MUST be PERFECTLY SQUARE. Aspect ratio 1:1.
+Width equals height exactly.`;
+
+  return `Create a PREMIUM ADVERTISING PHOTOGRAPHY image for VisitaProva, 
+a Brazilian real estate visit management platform focused on LEGAL PROTECTION and 
+PROOF OF BROKERAGE INTERMEDIATION.
+
+=== CRITICAL: IMAGE DIMENSIONS ===
+Aspect ratio: ${aspectRatio}
+Output size: ${dimensions}
+${formatInstructions}
+
+=== VISUAL STYLE: ULTRA-REALISTIC ADVERTISING PHOTOGRAPHY ===
+Style: Professional advertising campaign photography
+Quality: High-end commercial photography, magazine-quality
+Target market: Premium Brazilian real estate sector
+Aesthetic: PropTech / LegalTech startup meets luxury real estate
+
+IMPORTANT VISUAL RULES:
+- PHOTOREALISTIC - must look like a real professional photo shoot
+- Include REAL, ATTRACTIVE PEOPLE when the scenario calls for it
+- Brazilian market aesthetic - diverse, professional, aspirational
+- Professional advertising lighting - studio quality or golden hour outdoor
+- NO cheesy stock photo vibes - authentic, premium feel
+- NO text or Portuguese words in the image (text added separately)
+- Clean composition with clear focal point
+
+=== COLOR PALETTE ===
+${colorPalette}
+
+=== MAIN SCENARIO ===
+${visualScenario}
+
+=== FEATURE CONTEXT ===
+${funcScene}
+
+=== BRAND ELEMENTS (SUBTLE INTEGRATION) ===
+Include the VisitaProva "VP" logo with these specifications:
+- Geometric ROUNDED SQUARE frame with dark slate (#0F172A) background
+- WHITE/LIGHT GRAY horizontal and vertical GRID LINES creating a matrix pattern
+- The letters "VP" in BRIGHT BLUE (#60A5FA) overlaid on the grid
+- Logo placement: corner (top-left or bottom-right) - subtle, not dominant
+- Logo size: approximately 10-15% of image width - professional watermark style
+- The logo represents security, organization, and technology
+
+=== EMOTIONAL TONE ===
+The image should evoke:
+- SECURITY and PROTECTION - the viewer feels safe
+- PROFESSIONALISM and TRUST - high credibility
+- MODERNITY and INNOVATION - cutting-edge technology
+- SUCCESS and CONFIDENCE - aspirational lifestyle
+- LEGAL AUTHORITY - official, documented, protected
+
+=== IMPLICIT MESSAGE ===
+Without any text, the image should communicate:
+"This is how modern, protected real estate professionals work.
+Legal security is invisible but always present.
+Professional documentation prevents future disputes."
+
+TARGET AUDIENCE: Brazilian real estate agents and agencies seeking to protect their 
+brokerage intermediation with documented, verified proof of property visits.`;
 }
 
 serve(async (req) => {
@@ -209,76 +435,14 @@ serve(async (req) => {
       });
     }
 
-    // Gerar imagem completa
-    console.log('Generating marketing image...');
+    // Gerar imagem completa com prompts premium
+    console.log('Generating premium marketing image...');
 
-    // Dimensões baseadas no formato
-    const aspectRatio = formato === 'quadrado' ? '1:1' : '4:5';
-    const dimensions = formato === 'quadrado' 
-      ? '1080x1080 pixels'
-      : '1080x1350 pixels';
+    const { width: targetWidth, height: targetHeight } = getAspectRatioAndDimensions(formato);
+    const prompt = buildPremiumImagePrompt(template, funcionalidade, formato, estilo);
 
-    // Cores baseadas no estilo
-    const colors = estilo === 'claro'
-      ? 'light background (white or soft gradient), with emerald green (#10B981) and royal blue (#3B82F6) accents'
-      : 'dark background (black, deep navy, or dark gradient), with emerald green (#10B981) and electric blue (#60A5FA) accents';
-
-    const templateDesc = templateDescriptions[template] || templateDescriptions['feature'];
-    const funcDescImage = funcionalidadeDescriptionsForImage[funcionalidade] || funcionalidadeDescriptionsForImage['geral'];
-
-    // Prompt em inglês para melhor qualidade de geração
-    const prompt = `Create a professional Instagram marketing image for "VisitaProva", a Brazilian real estate management app.
-
-=== CRITICAL: IMAGE DIMENSIONS ===
-ASPECT RATIO: ${aspectRatio}
-${formato === 'quadrado' 
-  ? 'The image MUST be PERFECTLY SQUARE (1:1 ratio). Width equals height. Example: 1080x1080 pixels.' 
-  : 'The image MUST be VERTICAL/PORTRAIT orientation (4:5 ratio). Height is GREATER than width. The image is TALLER than it is wide. Example: 1080x1350 pixels.'}
-DO NOT generate a landscape (horizontal) image under any circumstances.
-${formato === 'vertical' ? 'PORTRAIT MODE ONLY. HEIGHT > WIDTH.' : ''}
-
-=== BRAND LOGO (MUST INCLUDE) ===
-Include the VisitaProva "VP" logo with these EXACT specifications:
-- A geometric ROUNDED SQUARE frame with dark slate (#0F172A) background
-- Inside the square: WHITE/LIGHT GRAY horizontal and vertical GRID LINES creating a matrix pattern
-- The letters "VP" prominently displayed in BRIGHT BLUE (#60A5FA) overlaid on the grid
-- The VP letters should be bold, modern, and clearly visible against the dark background
-- Logo placement: TOP-LEFT corner or BOTTOM-RIGHT corner of the image
-- Logo size: approximately 15-20% of the image width
-- The logo represents security, organization, and technology
-
-SPECIFICATIONS:
-- Output size: ${dimensions}
-- Visual style: ${colors}
-- Post type: ${templateDesc}
-- Feature to highlight: ${funcDescImage}
-
-VISUAL ELEMENTS TO INCLUDE:
-- The VisitaProva "VP" geometric grid logo (as described above) - THIS IS MANDATORY
-- Modern, tech-inspired abstract graphics that complement the logo style
-- Professional gradient backgrounds (dark navy, slate, or gradient with blue accents)
-- Clean geometric shapes and patterns that echo the grid design of the logo
-- Smartphone mockups showing the app (optional)
-- Icons representing the feature (locks, QR codes, documents, etc.)
-
-CRITICAL TEXT RULES:
-- Include the "VP" geometric logo as described above
-- The brand name "VisitaProva" can appear as text near the logo (optional)
-- DO NOT write any Portuguese sentences or phrases
-- DO NOT include the title or subtitle as text in the image
-- Use ONLY visual icons and graphics to represent concepts
-- If any text is needed besides the logo, use UPPERCASE without accents
-
-STYLE:
-- Clean, modern, and professional
-- Tech-focused aesthetic matching the geometric grid logo
-- High contrast for visual impact
-- Color palette: Dark slate (#0F172A), bright blue (#60A5FA), emerald green (#10B981), white
-- Instagram-ready composition
-
-TARGET AUDIENCE: Brazilian real estate agents looking to modernize their work`;
-
-    console.log('Sending image prompt to AI Gateway');
+    console.log('Sending premium image prompt to AI Gateway');
+    console.log('Prompt length:', prompt.length);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -355,11 +519,8 @@ TARGET AUDIENCE: Brazilian real estate agents looking to modernize their work`;
     }
 
     // Redimensionar imagem para garantir formato correto
-    console.log('Resizing image to correct dimensions...');
+    console.log('Resizing image to correct dimensions:', targetWidth, 'x', targetHeight);
     try {
-      const targetWidth = 1080;
-      const targetHeight = formato === 'quadrado' ? 1080 : 1350;
-      
       // Extrair base64 da imagem
       const base64Match = imageData.match(/^data:image\/\w+;base64,(.+)$/);
       if (base64Match) {

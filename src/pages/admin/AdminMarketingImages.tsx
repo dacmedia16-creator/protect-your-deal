@@ -60,7 +60,7 @@ export default function AdminMarketingImages() {
   const [titulo, setTitulo] = useState('');
   const [subtitulo, setSubtitulo] = useState('');
   const [funcionalidade, setFuncionalidade] = useState('geral');
-  const [formato, setFormato] = useState<'quadrado' | 'vertical'>('quadrado');
+  const [formato, setFormato] = useState<'quadrado' | 'vertical' | 'stories'>('quadrado');
   const [estilo, setEstilo] = useState<'claro' | 'escuro'>('escuro');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -287,8 +287,8 @@ const [legenda, setLegenda] = useState<string>('');
                 <Label>Formato</Label>
                 <RadioGroup 
                   value={formato} 
-                  onValueChange={(v) => setFormato(v as 'quadrado' | 'vertical')}
-                  className="flex gap-4"
+                  onValueChange={(v) => setFormato(v as 'quadrado' | 'vertical' | 'stories')}
+                  className="flex flex-wrap gap-4"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="quadrado" id="quadrado" />
@@ -300,6 +300,12 @@ const [legenda, setLegenda] = useState<string>('');
                     <RadioGroupItem value="vertical" id="vertical" />
                     <Label htmlFor="vertical" className="cursor-pointer">
                       Vertical (4:5)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="stories" id="stories" />
+                    <Label htmlFor="stories" className="cursor-pointer">
+                      Stories (9:16)
                     </Label>
                   </div>
                 </RadioGroup>
@@ -361,7 +367,11 @@ const [legenda, setLegenda] = useState<string>('');
             <CardContent>
               <div 
                 className={`relative bg-muted rounded-lg overflow-hidden flex items-center justify-center ${
-                  formato === 'quadrado' ? 'aspect-square' : 'aspect-[4/5]'
+                  formato === 'quadrado' 
+                    ? 'aspect-square' 
+                    : formato === 'vertical' 
+                      ? 'aspect-[4/5]' 
+                      : 'aspect-[9/16] max-h-[600px]'
                 }`}
               >
                 {isGenerating ? (
