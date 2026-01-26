@@ -372,19 +372,12 @@ ${visualScenario}
 === FEATURE CONTEXT ===
 ${funcScene}
 
-=== BRAND ELEMENTS (SUBTLE INTEGRATION) ===
-Include the VisitaProva "VP" logo with these EXACT specifications:
-- OUTER SHAPE: Dark navy/slate (#0F172A) rounded square with subtle rounded corners
-- INNER FRAME: A white/light gray rounded rectangle frame inside the square
-- GRID PATTERN: White/light gray horizontal and vertical lines creating a connection matrix pattern
-- CONNECTION DOTS: Small circular dots at grid intersections - mix of white and bright blue dots
-- The dots suggest connection points, like a network or circuit board pattern
-- "VP" LETTERS: Bold, modern "VP" text in BRIGHT BLUE (#60A5FA) positioned on the right side of the grid
-- The "VP" overlays part of the grid, creating depth
-- Overall aesthetic: tech/network visualization, suggests connectivity and verification
-- Logo placement: corner (top-left or bottom-right) - subtle, professional watermark style
-- Logo size: approximately 10-15% of image width
-- The logo represents: security, digital connections, verification network, modern technology
+=== BRAND ELEMENTS ===
+DO NOT include any logo, brand mark, "VP" text, or company watermark in the generated image.
+Leave the TOP-LEFT CORNER AREA completely CLEAN and CLEAR - no text, no icons, no busy patterns there.
+The logo will be added programmatically after image generation.
+Ensure the top-left corner has a simple, uncluttered background (solid color, gradient, or subtle blur - NOT faces, text, or complex details).
+Reserve approximately 15% of the image width in the top-left corner for logo placement.
 
 === EMOTIONAL TONE ===
 The image should evoke:
@@ -523,7 +516,7 @@ serve(async (req) => {
       });
     }
 
-    // Redimensionar imagem para garantir formato correto
+    // Redimensionar imagem para garantir formato correto e adicionar logo overlay
     console.log('Resizing image to correct dimensions:', targetWidth, 'x', targetHeight);
     try {
       // Extrair base64 da imagem
@@ -546,6 +539,43 @@ serve(async (req) => {
         const resized = img.cover(targetWidth, targetHeight);
         console.log(`Resized image size: ${resized.width}x${resized.height}`);
         
+        // Carregar e sobrepor logo real
+        console.log('Loading logo for overlay...');
+        try {
+          const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+          const logoUrl = `${SUPABASE_URL}/storage/v1/object/public/logos-imobiliarias/vp-logo.png`;
+          
+          const logoResponse = await fetch(logoUrl);
+          if (logoResponse.ok) {
+            const logoBuffer = await logoResponse.arrayBuffer();
+            const logoImage = await Image.decode(new Uint8Array(logoBuffer));
+            console.log(`Logo loaded: ${logoImage.width}x${logoImage.height}`);
+            
+            // Calcular tamanho do logo (12% da largura da imagem)
+            const logoSize = Math.round(resized.width * 0.12);
+            
+            // Redimensionar logo mantendo proporção
+            const logoAspect = logoImage.width / logoImage.height;
+            const logoWidth = logoSize;
+            const logoHeight = Math.round(logoSize / logoAspect);
+            
+            const resizedLogo = logoImage.resize(logoWidth, logoHeight);
+            console.log(`Logo resized to: ${resizedLogo.width}x${resizedLogo.height}`);
+            
+            // Margem do canto (3% da largura)
+            const margin = Math.round(resized.width * 0.03);
+            
+            // Sobrepor logo no canto superior esquerdo
+            resized.composite(resizedLogo, margin, margin);
+            console.log('Logo overlay applied successfully');
+          } else {
+            console.warn('Could not fetch logo, continuing without overlay:', logoResponse.status);
+          }
+        } catch (logoError) {
+          console.error('Error loading logo for overlay:', logoError);
+          // Continua sem logo se houver erro
+        }
+        
         // Re-codificar para PNG
         const outputBytes = await resized.encode();
         
@@ -557,11 +587,11 @@ serve(async (req) => {
         const newBase64 = btoa(binaryStr);
         imageData = `data:image/png;base64,${newBase64}`;
         
-        console.log('Image successfully resized to', targetWidth, 'x', targetHeight);
+        console.log('Image successfully processed:', targetWidth, 'x', targetHeight);
       }
     } catch (resizeError) {
-      console.error('Error resizing image:', resizeError);
-      // Continua com a imagem original se houver erro no redimensionamento
+      console.error('Error processing image:', resizeError);
+      // Continua com a imagem original se houver erro
     }
 
     // Gerar descrição profissional
