@@ -42,7 +42,6 @@ export function VersionCheckWithOverlay() {
   const hasRegisteredRef = useRef(false);
   const checkingRef = useRef(false);
   const deferredUntilRef = useRef<number | null>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const forceUpdateRef = useRef<() => void>();
 
   // Detect if running as installed PWA
@@ -57,12 +56,6 @@ export function VersionCheckWithOverlay() {
    */
   const forceUpdate = useCallback(async () => {
     console.log('🔄 Forçando atualização do app...');
-    
-    // Clear any countdown immediately
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
 
     try {
       // Unregister service workers
@@ -188,28 +181,30 @@ export function VersionCheckWithOverlay() {
     console.log('🕐 Iniciando countdown de atualização...');
     setCountdown(COUNTDOWN_SECONDS);
     setShowOverlay(true);
+  }, []);
 
-    // Clear any existing interval
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
+  // Separate effect to manage the countdown interval
+  // This prevents the interval from being cleared when other state changes
+  useEffect(() => {
+    if (!showOverlay) {
+      return;
     }
 
-    countdownIntervalRef.current = setInterval(() => {
+    console.log('⏱️ Iniciando intervalo de countdown...');
+    
+    const intervalId = setInterval(() => {
       setCountdown(prev => {
         const next = prev - 1;
         console.log(`⏱️ Countdown: ${next}`);
-        
-        if (next <= 0) {
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-          }
-          return 0;
-        }
         return next;
       });
     }, 1000);
-  }, []);
+
+    return () => {
+      console.log('⏱️ Limpando intervalo de countdown');
+      clearInterval(intervalId);
+    };
+  }, [showOverlay]);
 
   /**
    * Adia a atualização por 30 minutos.
@@ -217,10 +212,7 @@ export function VersionCheckWithOverlay() {
   const deferUpdate = useCallback(() => {
     deferredUntilRef.current = Date.now() + DEFER_DURATION_MS;
     setShowOverlay(false);
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
+    setCountdown(COUNTDOWN_SECONDS); // Reset for next time
     console.log('⏰ Atualização adiada por 30 minutos');
   }, []);
 
@@ -268,9 +260,6 @@ export function VersionCheckWithOverlay() {
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(intervalId);
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
