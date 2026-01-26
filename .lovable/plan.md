@@ -1,113 +1,171 @@
 
-## Plano: Tornar Validação do Webhook Asaas Obrigatória
 
-### Vulnerabilidade Identificada
-O código atual (linhas 64-86) implementa verificação do token, mas tem uma falha crítica:
+## Plano: Sistema de Monitoramento de Login e Sessões
 
-```typescript
-if (asaasWebhookToken) {
-  // Valida token...
-} else {
-  // ⚠️ PROBLEMA: Apenas loga um warning e continua processando!
-  console.warn('⚠️ SECURITY WARNING: ASAAS_WEBHOOK_TOKEN not configured...');
-}
-```
-
-Se o secret `ASAAS_WEBHOOK_TOKEN` não estiver configurado, **qualquer requisição é aceita**, permitindo que atacantes:
-- Falsifiquem eventos de pagamento confirmado
-- Ativem assinaturas sem pagar
-- Manipulem estados de contas
-
-### Solução
-Tornar a validação **obrigatória** - rejeitar requisições se o token não estiver configurado ou não corresponder.
+### Objetivo
+Implementar um sistema para rastrear quando os usuários fazem login e quanto tempo permanecem logados no sistema.
 
 ---
 
-### Mudanças no Arquivo
+### Impacto no Sistema Existente
 
-**Arquivo:** `supabase/functions/asaas-webhook/index.ts`
+A implementação é **não-destrutiva** e **aditiva**:
 
-**Linhas 64-86** - Substituir a validação condicional por validação obrigatória:
+| Componente | Impacto |
+|------------|---------|
+| Login/Logout | Funciona normalmente - tracking em background |
+| Master Login | Sem alteração - sessões identificadas como suporte |
+| Performance | Mínimo - operações assíncronas |
+| RLS existentes | Nenhum - tabela isolada |
+| Rotas protegidas | Sem alteração |
+
+---
+
+### Arquitetura da Solução
+
+```text
+┌─────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│   AuthProvider      │────▶│  user_sessions       │────▶│  Admin Dashboard    │
+│   (useAuth.tsx)     │     │  (nova tabela)       │     │  (visualização)     │
+│                     │     │                      │     │                     │
+│  - onSignIn()       │     │  - user_id           │     │  - Sessões ativas   │
+│  - onSignOut()      │     │  - login_at          │     │  - Tempo médio      │
+│  - beforeunload     │     │  - logout_at         │     │  - Histórico        │
+└─────────────────────┘     │  - session_duration  │     └─────────────────────┘
+                            │  - ip_address        │
+                            │  - user_agent        │
+                            └──────────────────────┘
+```
+
+---
+
+### Etapas de Implementação
+
+#### 1. Criar tabela `user_sessions` no banco de dados
+
+Nova tabela para armazenar dados de sessão:
+
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `id` | uuid | Identificador único |
+| `user_id` | uuid | Referência ao usuário |
+| `imobiliaria_id` | uuid | Imobiliária do usuário (para filtros) |
+| `login_at` | timestamptz | Momento do login |
+| `logout_at` | timestamptz | Momento do logout (null se ativo) |
+| `session_duration_seconds` | integer | Duração calculada automaticamente |
+| `ip_address` | text | IP do usuário |
+| `user_agent` | text | Navegador/dispositivo |
+| `logout_type` | text | 'manual', 'timeout', 'browser_close' |
+| `is_impersonation` | boolean | Identifica sessões de suporte |
+
+#### 2. Criar políticas RLS
+
+- Super admin pode ver todas as sessões
+- Admin da imobiliária pode ver sessões da sua imobiliária
+- Usuários comuns podem ver apenas suas próprias sessões
+
+#### 3. Criar função de banco para calcular duração
+
+Trigger que calcula automaticamente a duração da sessão quando `logout_at` é preenchido.
+
+#### 4. Criar hook `useSessionTracking`
+
+Hook dedicado para gerenciar o tracking de sessão separado da lógica de auth:
+- Armazena `session_id` no localStorage
+- Registra login após autenticação
+- Atualiza logout via `beforeunload` usando `sendBeacon`
+
+#### 5. Integrar no `AuthProvider`
+
+Modificações mínimas e não-destrutivas:
+- Após `signIn`: chamar função de registro (background)
+- Antes `signOut`: atualizar registro (background)
+- Listener `beforeunload`: capturar fechamento de aba
+
+#### 6. Adicionar visualização no Admin Dashboard
+
+Nova página `/admin/sessoes` com:
+- Sessões ativas no momento
+- Tempo médio de sessão
+- Histórico de logins por usuário
+- Filtros por imobiliária/período
+
+---
+
+### Detalhes Técnicos
+
+#### Nova Tabela SQL
+
+```sql
+CREATE TABLE public.user_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  imobiliaria_id uuid REFERENCES imobiliarias(id),
+  login_at timestamptz NOT NULL DEFAULT now(),
+  logout_at timestamptz,
+  session_duration_seconds integer,
+  ip_address text,
+  user_agent text,
+  logout_type text DEFAULT 'unknown',
+  is_impersonation boolean DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Trigger para calcular duração
+CREATE OR REPLACE FUNCTION calculate_session_duration()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.logout_at IS NOT NULL AND OLD.logout_at IS NULL THEN
+    NEW.session_duration_seconds := 
+      EXTRACT(EPOCH FROM (NEW.logout_at - NEW.login_at))::integer;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+#### Arquivos a Modificar/Criar
+
+| Arquivo | Ação |
+|---------|------|
+| `src/hooks/useSessionTracking.ts` | Criar - Hook para tracking |
+| `src/hooks/useAuth.tsx` | Modificar - Integrar tracking (3 linhas) |
+| `src/pages/admin/AdminSessoes.tsx` | Criar - Página de visualização |
+| `src/components/layouts/SuperAdminLayout.tsx` | Modificar - Adicionar link menu |
+
+#### Proteção contra falhas
 
 ```typescript
-// ========================================
-// VALIDAÇÃO DE SEGURANÇA DO WEBHOOK (OBRIGATÓRIA)
-// ========================================
-// A Asaas envia o token de autenticação no header 'asaas-access-token'
-// Este token deve ser configurado no painel da Asaas em Integrações > Webhooks
-
-if (!asaasWebhookToken) {
-  // Token não configurado no servidor - bloquear por segurança
-  console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN not configured. Rejecting all webhook requests.');
-  return new Response(
-    JSON.stringify({ error: 'Server configuration error' }),
-    { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-const receivedToken = req.headers.get('asaas-access-token');
-
-if (!receivedToken) {
-  console.error('Webhook rejected: Missing asaas-access-token header');
-  return new Response(
-    JSON.stringify({ error: 'Unauthorized: Missing authentication token' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-// Comparação segura usando timing-safe comparison para prevenir timing attacks
-const encoder = new TextEncoder();
-const expectedBuffer = encoder.encode(asaasWebhookToken);
-const receivedBuffer = encoder.encode(receivedToken);
-
-// Verificar tamanho primeiro (se diferentes, já rejeitar)
-if (expectedBuffer.length !== receivedBuffer.length) {
-  console.error('Webhook rejected: Invalid asaas-access-token (length mismatch)');
-  return new Response(
-    JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-// Comparação timing-safe
-let isValid = true;
-for (let i = 0; i < expectedBuffer.length; i++) {
-  if (expectedBuffer[i] !== receivedBuffer[i]) {
-    isValid = false;
+// Exemplo de como o tracking é não-bloqueante
+const registrarSessao = async (userId: string) => {
+  try {
+    await supabase.from('user_sessions').insert({...});
+  } catch (error) {
+    // Falha silenciosa - não afeta o login
+    console.warn('Falha ao registrar sessão:', error);
   }
-}
-
-if (!isValid) {
-  console.error('Webhook rejected: Invalid asaas-access-token');
-  return new Response(
-    JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-console.log('Webhook authentication successful');
+};
 ```
 
 ---
 
-### Melhorias de Segurança Implementadas
+### Métricas Disponíveis
 
-| Antes | Depois |
-|-------|--------|
-| Token não configurado → Log warning e **continua** | Token não configurado → **Rejeita com 500** |
-| Comparação simples `===` | **Timing-safe comparison** para prevenir timing attacks |
-| Atacantes podem burlar | Todas requisições sem token válido são rejeitadas |
+Após implementação, será possível consultar:
 
----
-
-### Pré-requisito Verificado ✅
-O secret `ASAAS_WEBHOOK_TOKEN` **já está configurado** no sistema, então a mudança não quebrará o funcionamento atual - apenas tornará a validação obrigatória em vez de opcional.
+- Horários de pico de uso
+- Tempo médio de sessão por usuário/imobiliária
+- Frequência de logins
+- Usuários mais ativos
+- Sessões abandonadas (sem logout)
+- Identificação de sessões de suporte (impersonation)
 
 ---
 
-### Resultado
-Após esta correção:
-- ❌ Requisições sem token → Rejeitadas (401)
-- ❌ Requisições com token inválido → Rejeitadas (401)
-- ❌ Servidor sem token configurado → Erro (500) - força correção
-- ✅ Requisições com token válido da Asaas → Processadas normalmente
+### Considerações de Segurança
+
+- RLS habilitado para proteger dados de sessão
+- Dados sensíveis (IP, user_agent) visíveis apenas para admins
+- Trigger `SECURITY DEFINER` para cálculo de duração
+- Sessões de impersonation claramente identificadas
+
