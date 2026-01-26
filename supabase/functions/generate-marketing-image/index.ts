@@ -373,13 +373,18 @@ ${visualScenario}
 ${funcScene}
 
 === BRAND ELEMENTS (SUBTLE INTEGRATION) ===
-Include the VisitaProva "VP" logo with these specifications:
-- Geometric ROUNDED SQUARE frame with dark slate (#0F172A) background
-- WHITE/LIGHT GRAY horizontal and vertical GRID LINES creating a matrix pattern
-- The letters "VP" in BRIGHT BLUE (#60A5FA) overlaid on the grid
-- Logo placement: corner (top-left or bottom-right) - subtle, not dominant
-- Logo size: approximately 10-15% of image width - professional watermark style
-- The logo represents security, organization, and technology
+Include the VisitaProva "VP" logo with these EXACT specifications:
+- OUTER SHAPE: Dark navy/slate (#0F172A) rounded square with subtle rounded corners
+- INNER FRAME: A white/light gray rounded rectangle frame inside the square
+- GRID PATTERN: White/light gray horizontal and vertical lines creating a connection matrix pattern
+- CONNECTION DOTS: Small circular dots at grid intersections - mix of white and bright blue dots
+- The dots suggest connection points, like a network or circuit board pattern
+- "VP" LETTERS: Bold, modern "VP" text in BRIGHT BLUE (#60A5FA) positioned on the right side of the grid
+- The "VP" overlays part of the grid, creating depth
+- Overall aesthetic: tech/network visualization, suggests connectivity and verification
+- Logo placement: corner (top-left or bottom-right) - subtle, professional watermark style
+- Logo size: approximately 10-15% of image width
+- The logo represents: security, digital connections, verification network, modern technology
 
 === EMOTIONAL TONE ===
 The image should evoke:
