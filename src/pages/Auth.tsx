@@ -152,22 +152,21 @@ export default function Auth() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('imobiliarias_publicas')
-          .select('id, nome')
-          .eq('codigo', codigo)
-          .maybeSingle();
+        // Usar RPC SECURITY DEFINER para bypassar RLS (usuário não autenticado)
+        const { data: imobiliarias, error } = await supabase.rpc('get_imobiliarias_publicas');
 
         if (error) {
           setCodigoError('Erro ao validar código');
           setImobiliariaEncontrada(null);
-        } else if (!data) {
-          setCodigoError('Código não encontrado');
-          setImobiliariaEncontrada(null);
         } else {
-          // A VIEW já filtra apenas imobiliárias ativas
-          setImobiliariaEncontrada({ id: data.id, nome: data.nome });
-          setCodigoError('');
+          const imobiliaria = imobiliarias?.find((i: { codigo: number }) => i.codigo === codigo);
+          if (!imobiliaria) {
+            setCodigoError('Código não encontrado');
+            setImobiliariaEncontrada(null);
+          } else {
+            setImobiliariaEncontrada({ id: imobiliaria.id, nome: imobiliaria.nome });
+            setCodigoError('');
+          }
         }
       } catch (error) {
         setCodigoError('Erro ao validar código');
@@ -370,10 +369,19 @@ export default function Auth() {
 
         toast({
           title: 'Conta criada com sucesso!',
-          description: `Você foi vinculado à ${imobiliariaEncontrada.nome}. Faça login para continuar.`,
+          description: `Você foi vinculado à ${imobiliariaEncontrada.nome}.`,
         });
         
-        // Limpar formulário e mudar para aba de login
+        // Redirecionar para seleção de equipe se disponível
+        const userId = data?.user_id;
+        const imobiliariaId = data?.imobiliaria_id;
+        if (userId && imobiliariaId) {
+          navigate(`/selecionar-equipe?vinculado=true&user_id=${userId}&imobiliaria_id=${imobiliariaId}&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
+        } else {
+          navigate(`/cadastro-concluido?vinculado=true&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
+        }
+        
+        // Limpar formulário
         setSignupData({ email: '', password: '', nome: '', telefone: '', cpf: '' });
         setVincularImobiliaria(false);
         setCodigoImobiliaria('');
