@@ -12,8 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { DesktopNav } from "@/components/DesktopNav";
-import { MobileNav } from "@/components/MobileNav";
+import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 
 interface EmailTemplate {
   id: string;
@@ -225,36 +224,16 @@ const ConfiguracoesEmail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 sm:pb-0">
-      <DesktopNav />
+    <SuperAdminLayout>
+      <div className="space-y-6">
       
-      {/* Mobile Header */}
-      <header className="sm:hidden bg-card border-b border-border px-4 py-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/integracoes')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-semibold">Configurar Email</h1>
-            <p className="text-sm text-muted-foreground">Zoho Mail SMTP</p>
-          </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold">Email Sistema</h1>
+          <p className="text-muted-foreground">Gerenciamento de emails transacionais via Zoho Mail SMTP</p>
         </div>
-      </header>
-      
-      {/* Desktop Header */}
-      <div className="hidden sm:block container mx-auto px-4 py-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/integracoes')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Configurar Email</h1>
-            <p className="text-muted-foreground">Zoho Mail SMTP</p>
-          </div>
-        </div>
-      </div>
 
-      <main className="p-4 space-y-4 max-w-4xl mx-auto">
+      
         <Tabs defaultValue="conexao">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="conexao">Conexão</TabsTrigger>
@@ -342,7 +321,7 @@ const ConfiguracoesEmail = () => {
             <Button 
               variant="secondary"
               className="w-full"
-              onClick={() => navigate('/integracoes/email/historico')}
+              onClick={() => navigate('/admin/email/historico')}
             >
               Ver Histórico de Emails Enviados
             </Button>
@@ -426,7 +405,7 @@ const ConfiguracoesEmail = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      
 
       {/* Edit Template Modal */}
       <Dialog open={!!editingTemplate} onOpenChange={() => setEditingTemplate(null)}>
@@ -499,9 +478,8 @@ const ConfiguracoesEmail = () => {
           </div>
         </DialogContent>
       </Dialog>
-      
-      <MobileNav />
-    </div>
+      </div>
+    </SuperAdminLayout>
   );
 };
 

@@ -107,6 +107,7 @@ const navGroups: NavGroup[] = [
     label: 'Sistema',
     defaultOpen: false,
     items: [
+      { href: '/admin/email', icon: Mail, label: 'Email Sistema' },
       { href: '/admin/sessoes', icon: Activity, label: 'Sessões' },
       { href: '/admin/marketing', icon: Image, label: 'Marketing' },
       { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
