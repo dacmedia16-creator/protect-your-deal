@@ -1,108 +1,114 @@
 
-# Plano: Resolver Erro SMTP 554 5.7.8 do Zoho Mail
 
-## Problema Identificado
+# Plano: Validar Email do Destinatário Antes de Enviar
 
-O erro **"554 5.7.8 Access Restricted"** indica que as credenciais SMTP estao sendo rejeitadas pelo servidor Zoho. A edge function e a configuracao dos secrets estao corretas, mas as App Passwords nao estao funcionando.
+## Objetivo
 
----
-
-## Causas Provaveis
-
-| Causa | Descricao | Probabilidade |
-|-------|-----------|---------------|
-| App Passwords nao geradas | As senhas inseridas sao senhas de login, nao App Passwords | Alta |
-| 2FA nao habilitado | App Passwords requerem Two-Factor Authentication ativo | Alta |
-| Datacenter incorreto | O servidor SMTP pode ser diferente para contas do Brasil | Media |
+Adicionar validação no início da edge function `send-email` para verificar se o destinatário tem um email válido. Se não tiver, retornar sucesso silencioso (sem erro) e logar apropriadamente.
 
 ---
 
-## Solucao: Passos para Corrigir
-
-### Passo 1: Verificar 2FA no Zoho
-
-Para cada conta de email (noreply, suporte, contato, denis):
-
-1. Acessar https://accounts.zoho.com/
-2. Fazer login com a conta de email
-3. Ir em **Security > Multi-Factor Authentication**
-4. Se o 2FA nao estiver ativo, **ativar agora**
-
-### Passo 2: Gerar App Passwords Corretamente
-
-Apos ativar o 2FA:
-
-1. Na mesma pagina de Security, clicar em **App Passwords**
-2. Clicar em **Generate New App Password**
-3. Dar um nome descritivo (ex: "VisitaProva SMTP")
-4. **Copiar a senha gerada imediatamente** (so aparece uma vez)
-5. Repetir para cada conta de email
-
-### Passo 3: Verificar Servidor SMTP Correto
-
-No Zoho Mail de cada conta:
-
-1. Ir em **Settings > Mail Accounts > Primary Account**
-2. Clicar em **SMTP**
-3. Verificar qual servidor esta listado:
-   - Se `smtppro.zoho.com` - OK, nao precisa mudar
-   - Se `smtppro.zoho.com.br` ou `smtppro.zoho.in` - precisa atualizar a edge function
-
-### Passo 4: Atualizar Secrets no Backend
-
-Apos gerar as App Passwords corretas:
-
-1. Abrir o painel do backend
-2. Atualizar os secrets com as novas App Passwords:
-   - `ZOHO_SMTP_PASSWORD` - App Password do noreply@
-   - `ZOHO_SUPORTE_PASSWORD` - App Password do suporte@
-   - `ZOHO_CONTATO_PASSWORD` - App Password do contato@
-   - `ZOHO_DENIS_PASSWORD` - App Password do denis@
-
-### Passo 5: Testar Novamente
-
-Voltar a pagina de Email Sistema e testar a conexao SMTP.
-
----
-
-## Mudancas no Codigo (Se Necessario)
-
-Se o datacenter for diferente de `smtppro.zoho.com`, sera necessario atualizar a edge function:
+## Mudança Proposta
 
 **Arquivo:** `supabase/functions/send-email/index.ts`
 
-Adicionar suporte a diferentes datacenters via variavel de ambiente:
+### 1. Adicionar Função de Validação de Email
 
 ```typescript
-function createTransporter(credentials: SMTPCredentials) {
-  const host = Deno.env.get("ZOHO_SMTP_HOST") || "smtppro.zoho.com";
-  return nodemailer.createTransport({
-    host: host,
-    port: 465,
-    secure: true,
-    auth: {
-      user: credentials.user,
-      pass: credentials.pass,
-    },
+// Validar se o email é válido
+function isValidEmail(email?: string): boolean {
+  if (!email || email.trim() === '') return false;
+  // Regex básico para validar formato de email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+```
+
+### 2. Validar Antes de Enviar (ação `send-template`)
+
+Antes da linha que busca o template, adicionar:
+
+```typescript
+// Validar email do destinatário
+if (!isValidEmail(to)) {
+  console.log(`Skipping email send: invalid or missing recipient email: "${to}"`);
+  
+  // Logar como "skipped" (não é erro, é comportamento esperado)
+  await supabaseAdmin.from('email_logs').insert({
+    to_email: to || 'não informado',
+    subject: `[${template_tipo}] - não enviado`,
+    template_tipo: template_tipo,
+    status: 'skipped',
+    error_message: 'Destinatário sem email válido',
+    user_id: userId,
+    ficha_id: ficha_id || null,
+    from_email: null,
   });
+  
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      skipped: true, 
+      reason: "Destinatário sem email válido" 
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+```
+
+### 3. Validar Antes de Enviar (ação `send`)
+
+Mesmo comportamento para envios diretos:
+
+```typescript
+// Validar email do destinatário
+if (!isValidEmail(to)) {
+  console.log(`Skipping direct email: invalid or missing recipient: "${to}"`);
+  
+  await supabaseAdmin.from('email_logs').insert({
+    to_email: to || 'não informado',
+    subject: subject || 'não informado',
+    template_tipo: null,
+    status: 'skipped',
+    error_message: 'Destinatário sem email válido',
+    user_id: userId,
+    ficha_id: ficha_id || null,
+    from_email: null,
+  });
+  
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      skipped: true, 
+      reason: "Destinatário sem email válido" 
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
 }
 ```
 
 ---
 
-## Checklist de Verificacao
+## Comportamento Resultante
 
-- [ ] 2FA esta ativado em todas as 4 contas Zoho?
-- [ ] App Passwords foram geradas (nao senhas de login)?
-- [ ] O servidor SMTP correto foi identificado nas configuracoes do Zoho?
-- [ ] Os secrets foram atualizados com as App Passwords corretas?
-- [ ] Teste de conexao passou com sucesso?
+| Cenário | Comportamento | Status HTTP | Resposta |
+|---------|---------------|-------------|----------|
+| Email válido | Envia normalmente | 200 | `{ success: true, messageId: "..." }` |
+| Email vazio/null | Não envia, retorna sucesso | 200 | `{ success: true, skipped: true, reason: "..." }` |
+| Email inválido | Não envia, retorna sucesso | 200 | `{ success: true, skipped: true, reason: "..." }` |
 
 ---
 
-## Proximos Passos Apos Resolver
+## Benefícios
 
-1. Testar envio de email real para validar
-2. Implementar interface completa de multi-remetentes conforme plano original
-3. Associar templates a remetentes especificos
+1. **Sem erros desnecessários** - Códigos que chamam a edge function não quebram
+2. **Rastreabilidade** - Emails não enviados são logados com status `skipped`
+3. **Transparência** - A resposta indica que foi pulado (`skipped: true`)
+4. **Compatibilidade** - Não afeta fluxos existentes que passam emails válidos
+
+---
+
+## Nota sobre a Tabela email_logs
+
+O status `skipped` é um novo valor. A coluna `status` já aceita texto livre, então não precisa de migração de banco de dados.
 
