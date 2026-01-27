@@ -98,6 +98,14 @@ function replaceVariables(content: string, variables: Record<string, string>): s
   return result;
 }
 
+// Verificar se é chamada interna do sistema (SERVICE_ROLE_KEY)
+function isInternalCall(authHeader: string | null): boolean {
+  if (!authHeader) return false;
+  const token = authHeader.replace('Bearer ', '');
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  return token === serviceRoleKey;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -108,6 +116,9 @@ serve(async (req) => {
     const body: SendEmailRequest = await req.json();
     const { action, to, subject, html, text, template_tipo, variables, ficha_id, from_email } = body;
 
+    const authHeader = req.headers.get("Authorization");
+    const isInternal = isInternalCall(authHeader);
+
     // Initialize Supabase client for logging
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -115,10 +126,9 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get user ID from auth header if present
+    // Get user ID from auth header if present (only for non-internal calls)
     let userId: string | null = null;
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader) {
+    if (authHeader && !isInternal) {
       const supabaseUser = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_ANON_KEY") ?? "",
