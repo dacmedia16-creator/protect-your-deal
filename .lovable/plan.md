@@ -1,133 +1,83 @@
 
-# Correção: Busca de Imobiliária e Redirecionamento para Equipe no Auth.tsx
+# Correção: Link "Acessar Minha Conta" não funciona no email de boas-vindas
 
-## Problemas Identificados
+## Problema Identificado
 
-### Problema 1: Busca da Imobiliária (RLS bloqueando)
-Na página `/auth`, o código está usando uma query direta para a view `imobiliarias_publicas` que herda RLS da tabela base, bloqueando acesso para usuários não autenticados.
+O botão "Acessar Minha Conta" no email de boas-vindas está mostrando `[{link}]` ao invés de uma URL clicável porque a variável `{link}` **não está sendo passada** ao template.
 
-**Localização:** `src/pages/Auth.tsx`, linhas 155-159
+### Diagnóstico Técnico
 
-```typescript
-// Código atual (PROBLEMÁTICO)
-const { data, error } = await supabase
-  .from('imobiliarias_publicas')
-  .select('id, nome')
-  .eq('codigo', codigo)
-  .maybeSingle();
+**Template de email (`boas_vindas`) espera:**
+```html
+<a href="{link}" style="...">Acessar Minha Conta</a>
 ```
 
-### Problema 2: Sem Redirecionamento para Seleção de Equipe
-Após cadastro vinculado bem-sucedido, o código não redireciona para a página de seleção de equipe como deveria. Apenas mostra um toast e limpa o formulário.
+**Variáveis que estão sendo passadas (linhas 357-360 da edge function):**
+```typescript
+variables: {
+  nome: corretor.nome,  // ✅ Usado no template
+  email: corretor.email, // ❌ Não usado no template
+}
+// ❌ {link} NÃO está sendo passado!
+```
 
-**Localização:** `src/pages/Auth.tsx`, linhas 371-380
-
-### Problema 3: Edge Function não retorna `imobiliaria_id`
-A edge function `registro-corretor-autonomo` não retorna o `imobiliaria_id` na resposta, necessário para o redirecionamento.
-
-**Localização:** `supabase/functions/registro-corretor-autonomo/index.ts`, linhas 386-396
+**Resultado:** A função `replaceVariables()` no `send-email` não encontra a variável `{link}` e deixa o texto literal no HTML.
 
 ---
 
 ## Solução
 
-### Mudança 1: Usar RPC ao invés de query direta (Auth.tsx)
+Adicionar a variável `link` ao objeto `variables` na edge function `registro-corretor-autonomo`, apontando para a página de login do VisitaProva.
 
-Alterar o useEffect de validação do código (linhas 134-181) para usar `supabase.rpc('get_imobiliarias_publicas')` que é `SECURITY DEFINER` e bypassa RLS.
+### Mudança no arquivo
+
+**Arquivo:** `supabase/functions/registro-corretor-autonomo/index.ts`
+
+**Localização:** Linhas 353-361
 
 **De:**
 ```typescript
-const { data, error } = await supabase
-  .from('imobiliarias_publicas')
-  .select('id, nome')
-  .eq('codigo', codigo)
-  .maybeSingle();
+const emailPayload = {
+  action: 'send-template',
+  to: corretor.email,
+  template_tipo: 'boas_vindas',
+  variables: {
+    nome: corretor.nome,
+    email: corretor.email,
+  }
+};
 ```
 
 **Para:**
 ```typescript
-const { data: imobiliarias, error } = await supabase.rpc('get_imobiliarias_publicas');
-
-if (error) throw error;
-
-const imobiliaria = imobiliarias?.find((i: { codigo: number }) => i.codigo === codigo);
-```
-
-### Mudança 2: Adicionar redirecionamento para seleção de equipe (Auth.tsx)
-
-Após cadastro vinculado bem-sucedido, redirecionar para a página de seleção de equipe passando os parâmetros necessários.
-
-**Adicionar após o toast de sucesso (linha 374):**
-```typescript
-// Redirecionar para seleção de equipe
-const userId = data?.user_id;
-const imobiliariaId = data?.imobiliaria_id;
-if (userId && imobiliariaId) {
-  navigate(`/selecionar-equipe?vinculado=true&user_id=${userId}&imobiliaria_id=${imobiliariaId}&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
-} else {
-  navigate(`/cadastro-concluido?vinculado=true&imobiliaria=${encodeURIComponent(imobiliariaEncontrada.nome)}`);
-}
-```
-
-### Mudança 3: Retornar `imobiliaria_id` na edge function
-
-Adicionar `imobiliaria_id` à resposta de sucesso da edge function.
-
-**De:**
-```typescript
-return new Response(
-  JSON.stringify({ 
-    success: true,
-    message: ...,
-    user_id: userId,
-    linked_to_imobiliaria: !!imobiliariaId,
-    requires_activation: !!imobiliariaId,
-  }),
-```
-
-**Para:**
-```typescript
-return new Response(
-  JSON.stringify({ 
-    success: true,
-    message: ...,
-    user_id: userId,
-    imobiliaria_id: imobiliariaId, // ADICIONADO
-    linked_to_imobiliaria: !!imobiliariaId,
-    requires_activation: !!imobiliariaId,
-  }),
+const emailPayload = {
+  action: 'send-template',
+  to: corretor.email,
+  template_tipo: 'boas_vindas',
+  variables: {
+    nome: corretor.nome,
+    email: corretor.email,
+    link: 'https://visitaprova.com.br/auth',
+  }
+};
 ```
 
 ---
 
-## Arquivos a Modificar
+## Por que usar `/auth` ao invés de `/`?
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Auth.tsx` | Usar RPC para buscar imobiliária + adicionar redirecionamento para equipe |
-| `supabase/functions/registro-corretor-autonomo/index.ts` | Retornar `imobiliaria_id` na resposta |
+| URL | Comportamento |
+|-----|---------------|
+| `/auth` | Página de login - usuário pode entrar diretamente |
+| `/` | Landing page - requer clique extra para acessar login |
 
----
-
-## Por que essa solução funciona
-
-| Método | RLS | Usuário Anônimo |
-|--------|-----|-----------------|
-| View direta `imobiliarias_publicas` | Herda da tabela | Bloqueado |
-| Função RPC `get_imobiliarias_publicas()` | SECURITY DEFINER | Funciona |
-
-O fluxo completo ficará:
-1. Usuário digita código da imobiliária → RPC busca e valida
-2. Usuário preenche formulário e clica "Criar conta"
-3. Edge function cria usuário e retorna `user_id` + `imobiliaria_id`
-4. Frontend redireciona para `/selecionar-equipe` com os parâmetros
-5. Página de seleção de equipe exibe equipes disponíveis (usando outra RPC `SECURITY DEFINER`)
+Como o email é para um usuário recém-cadastrado que precisa fazer login, `/auth` é o destino mais adequado.
 
 ---
 
 ## Impacto
 
-- Corrige a busca de imobiliárias na página de login/cadastro
-- Habilita a seleção de equipe após cadastro vinculado
-- Mantém consistência com o fluxo do `RegistroVinculado.tsx`
-- Não afeta outras funcionalidades
+- ✅ Link do botão funcionará corretamente
+- ✅ Não afeta outros templates de email
+- ✅ Consistente com o domínio principal `visitaprova.com.br`
+- ✅ Após correção, novos cadastros receberão emails com links funcionais
