@@ -347,6 +347,42 @@ Deno.serve(async (req) => {
 
     console.log("Broker registration completed successfully", imobiliariaId ? "(linked to imobiliaria)" : "(autonomous)");
 
+    // Send welcome email (non-blocking)
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const emailPayload = {
+        action: 'send-template',
+        to: corretor.email,
+        template_tipo: 'boas_vindas',
+        variables: {
+          nome: corretor.nome,
+          email: corretor.email,
+        }
+      };
+
+      console.log("Sending welcome email to:", corretor.email);
+      
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      if (emailResponse.ok) {
+        const emailResult = await emailResponse.json();
+        console.log("Welcome email sent successfully:", emailResult);
+      } else {
+        const errorText = await emailResponse.text();
+        console.error("Failed to send welcome email:", errorText);
+      }
+    } catch (emailError) {
+      // Non-blocking: log error but don't fail registration
+      console.error("Error sending welcome email:", emailError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
