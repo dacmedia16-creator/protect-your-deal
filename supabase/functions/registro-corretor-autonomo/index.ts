@@ -390,6 +390,7 @@ Deno.serve(async (req) => {
           ? "Cadastro realizado com sucesso! Aguarde a ativação pelo administrador da imobiliária."
           : "Cadastro realizado com sucesso!",
         user_id: userId,
+        imobiliaria_id: imobiliariaId,
         linked_to_imobiliaria: !!imobiliariaId,
         requires_activation: !!imobiliariaId,
       }),
