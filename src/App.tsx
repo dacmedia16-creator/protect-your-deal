@@ -270,6 +270,16 @@ const App = () => (
                     <AdminSessoes />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/email" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <ConfiguracoesEmail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/email/historico" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <HistoricoEmails />
+                  </ProtectedRoute>
+                } />
                 {/* Imobiliaria Admin routes */}
                 <Route path="/empresa" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
@@ -391,16 +401,6 @@ const App = () => (
                 <Route path="/integracoes/templates" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
                     <TemplatesMensagem />
-                  </ProtectedRoute>
-                } />
-                <Route path="/integracoes/email" element={
-                  <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
-                    <ConfiguracoesEmail />
-                  </ProtectedRoute>
-                } />
-                <Route path="/integracoes/email/historico" element={
-                  <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
-                    <HistoricoEmails />
                   </ProtectedRoute>
                 } />
                 <Route path="/relatorios" element={

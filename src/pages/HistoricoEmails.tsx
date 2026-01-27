@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { DesktopNav } from "@/components/DesktopNav";
-import { MobileNav } from "@/components/MobileNav";
+import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -110,42 +109,21 @@ const HistoricoEmails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 sm:pb-0">
-      <DesktopNav />
-      
-      {/* Mobile Header */}
-      <header className="sm:hidden bg-card border-b border-border px-4 py-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/integracoes/email')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-xl font-semibold">Histórico de Emails</h1>
-            <p className="text-sm text-muted-foreground">Últimos 100 emails enviados</p>
-          </div>
-        </div>
-      </header>
-      
-      {/* Desktop Header */}
-      <div className="hidden sm:block container mx-auto px-4 py-6">
+    <SuperAdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/integracoes/email')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Histórico de Emails</h1>
-              <p className="text-muted-foreground">Últimos 100 emails enviados</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold">Histórico de Emails</h1>
+            <p className="text-muted-foreground">Últimos 100 emails enviados pelo sistema</p>
           </div>
           <Button variant="outline" onClick={loadLogs} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
           </Button>
         </div>
-      </div>
 
-      <main className="p-4 max-w-4xl mx-auto">
+      
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -198,21 +176,8 @@ const HistoricoEmails = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Mobile refresh button */}
-        <Button 
-          variant="outline" 
-          className="w-full mt-4 sm:hidden"
-          onClick={loadLogs} 
-          disabled={loading}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
-      </main>
-      
-      <MobileNav />
-    </div>
+      </div>
+    </SuperAdminLayout>
   );
 };
 
