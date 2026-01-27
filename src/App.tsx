@@ -61,6 +61,8 @@ import FormImovel from "./pages/FormImovel";
 import DetalhesImovel from "./pages/DetalhesImovel";
 import Integracoes from "./pages/Integracoes";
 import TemplatesMensagem from "./pages/TemplatesMensagem";
+import ConfiguracoesEmail from "./pages/ConfiguracoesEmail";
+import HistoricoEmails from "./pages/HistoricoEmails";
 import Perfil from "./pages/Perfil";
 import Relatorios from "./pages/Relatorios";
 import CorretorAssinatura from "./pages/CorretorAssinatura";
@@ -389,6 +391,16 @@ const App = () => (
                 <Route path="/integracoes/templates" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
                     <TemplatesMensagem />
+                  </ProtectedRoute>
+                } />
+                <Route path="/integracoes/email" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
+                    <ConfiguracoesEmail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/integracoes/email/historico" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>
+                    <HistoricoEmails />
                   </ProtectedRoute>
                 } />
                 <Route path="/relatorios" element={

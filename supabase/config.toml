@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.register-version]
 verify_jwt = true
+
+[functions.send-email]
+verify_jwt = true

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText, Mail, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,10 @@ const Integracoes = () => {
   const [testingZiontalk, setTestingZiontalk] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const [testPhone, setTestPhone] = useState('');
+
+  // Zoho Mail state
+  const [zohoStatus, setZohoStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
+  const [testingZoho, setTestingZoho] = useState(false);
 
   const testZiontalkConnection = async () => {
     setTestingZiontalk(true);
@@ -101,6 +105,41 @@ const Integracoes = () => {
       });
     } finally {
       setSendingTest(false);
+    }
+  };
+
+  const testZohoConnection = async () => {
+    setTestingZoho(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: { action: 'test-connection' }
+      });
+
+      if (error) throw error;
+
+      if (data?.connected) {
+        setZohoStatus('connected');
+        toast({
+          title: "Conexão estabelecida!",
+          description: "A integração com Zoho Mail está funcionando.",
+        });
+      } else {
+        setZohoStatus('error');
+        toast({
+          title: "Falha na conexão",
+          description: data?.message || "Não foi possível conectar ao Zoho Mail.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      setZohoStatus('error');
+      toast({
+        title: "Erro ao testar conexão",
+        description: error.message || "Verifique as credenciais SMTP.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingZoho(false);
     }
   };
 
@@ -228,6 +267,66 @@ const Integracoes = () => {
             >
               <FileText className="h-4 w-4 mr-2" />
               Configurar Templates de Mensagem
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Zoho Mail Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Mail className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Zoho Mail</CardTitle>
+                  <CardDescription>Envio de emails transacionais</CardDescription>
+                </div>
+              </div>
+              <Badge 
+                variant={
+                  zohoStatus === 'connected' ? 'default' : 
+                  zohoStatus === 'error' ? 'destructive' : 
+                  'secondary'
+                }
+              >
+                {zohoStatus === 'connected' && <CheckCircle className="h-3 w-3 mr-1" />}
+                {zohoStatus === 'error' && <XCircle className="h-3 w-3 mr-1" />}
+                {zohoStatus === 'connected' ? 'Conectado' : 
+                 zohoStatus === 'error' ? 'Erro' : 
+                 'Não testado'}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Envie emails de boas-vindas, confirmações de pagamento e notificações automáticas.
+            </p>
+
+            {/* Test Connection */}
+            <Button 
+              onClick={testZohoConnection} 
+              disabled={testingZoho}
+              variant="outline"
+              className="w-full"
+            >
+              {testingZoho ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Testar Conexão SMTP
+            </Button>
+
+            {/* Configure Email */}
+            <Button 
+              variant="secondary"
+              className="w-full"
+              onClick={() => navigate('/integracoes/email')}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configurar Email e Templates
             </Button>
           </CardContent>
         </Card>
