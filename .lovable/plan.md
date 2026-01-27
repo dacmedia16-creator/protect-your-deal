@@ -1,83 +1,51 @@
 
-# Correção: Link "Acessar Minha Conta" não funciona no email de boas-vindas
+Objetivo: fazer o botão/link “Acessar Minha Conta” sempre sair com uma URL real (e clicável) no email de boas-vindas, mesmo se alguma chamada esquecer de enviar a variável `link`.
 
-## Problema Identificado
+Diagnóstico (com base no que vimos)
+- O template `boas_vindas` no banco está correto: ele usa `<a href="{link}">Acessar Minha Conta</a>`.
+- O seu print mostrando `[{link}]Acessar Minha Conta` é típico de quando o cliente de email está exibindo a mensagem em modo “texto simples”, convertendo links HTML para o formato `[URL]Texto`. Como a URL ficou `{link}`, ele exibiu `[{link}]...`.
+- Já confirmamos que `registro-corretor-autonomo` foi alterada para enviar `link`, mas no teste ainda ficou “{link}”, então precisamos **garantir** que a variável chegue ou ter um **fallback** no serviço de email.
 
-O botão "Acessar Minha Conta" no email de boas-vindas está mostrando `[{link}]` ao invés de uma URL clicável porque a variável `{link}` **não está sendo passada** ao template.
+Causa mais provável
+- O email que você abriu pode ter sido um envio anterior (sem `link`) ou alguma chamada ao envio de template ainda está indo sem `link`.
+- Como não temos no log o conteúdo final do HTML nem as variáveis recebidas, o caminho mais seguro é:
+  1) adicionar logging mínimo para confirmar as variáveis recebidas
+  2) criar um fallback no envio do template para nunca deixar `{link}` sem valor no `boas_vindas`.
 
-### Diagnóstico Técnico
+Implementação proposta (mudanças de código)
+1) “Blindagem” no serviço de envio de email (função `send-email`)
+   - Antes de aplicar `replaceVariables`, normalizar as variáveis:
+     - Converter tudo para string (evita casos de `null`, `number`, etc).
+     - Se `template_tipo === 'boas_vindas'` e `vars.link` estiver vazio/ausente, definir:
+       - `vars.link = 'https://visitaprova.com.br/auth'`
+   - Resultado: mesmo se algum fluxo esquecer de mandar `link`, o email sai correto.
 
-**Template de email (`boas_vindas`) espera:**
-```html
-<a href="{link}" style="...">Acessar Minha Conta</a>
-```
+2) Logs de diagnóstico (temporários, mas úteis)
+   - No `send-email`, logar (sem dados sensíveis) apenas:
+     - `template_tipo`
+     - `Object.keys(vars)`
+     - Um aviso se ainda sobrar `{link}` no `finalHtml` após o replace (isso indicaria falha real de substituição).
+   - No `registro-corretor-autonomo`, logar que está enviando `link` (ex.: “Welcome email vars: nome, email, link”), sem imprimir o email inteiro.
 
-**Variáveis que estão sendo passadas (linhas 357-360 da edge function):**
-```typescript
-variables: {
-  nome: corretor.nome,  // ✅ Usado no template
-  email: corretor.email, // ❌ Não usado no template
-}
-// ❌ {link} NÃO está sendo passado!
-```
+3) Validação / Teste após a correção
+   - Fazer 1 novo cadastro teste (ou reenviar um “boas_vindas” via chamada interna) e conferir:
+     - Se o email chegar em HTML com botão
+     - E, mesmo em “texto simples”, aparecer como:
+       - `[https://visitaprova.com.br/auth]Acessar Minha Conta`
+     - Em paralelo, checar os logs do `send-email` para confirmar que `link` estava presente (ou foi aplicado via fallback).
 
-**Resultado:** A função `replaceVariables()` no `send-email` não encontra a variável `{link}` e deixa o texto literal no HTML.
+Critério de pronto
+- Qualquer email de boas-vindas novo deve ter link funcional:
+  - HTML: botão abrindo a página de login
+  - Texto simples: mostrar a URL real entre colchetes (ou a URL no corpo) sem `{link}`.
 
----
+Risco / impacto
+- Impacto baixo e positivo: só afeta o template `boas_vindas` quando `link` vier ausente.
+- Não quebra outros templates e reduz chance de regressão no futuro.
 
-## Solução
+Observação rápida para o seu teste
+- Vale confirmar se você abriu o email mais recente (o mais novo na caixa de entrada). Se tiver mais de um “Bem-vindo ao VisitaProva”, pode existir um antigo sem o link corrigido.
 
-Adicionar a variável `link` ao objeto `variables` na edge function `registro-corretor-autonomo`, apontando para a página de login do VisitaProva.
-
-### Mudança no arquivo
-
-**Arquivo:** `supabase/functions/registro-corretor-autonomo/index.ts`
-
-**Localização:** Linhas 353-361
-
-**De:**
-```typescript
-const emailPayload = {
-  action: 'send-template',
-  to: corretor.email,
-  template_tipo: 'boas_vindas',
-  variables: {
-    nome: corretor.nome,
-    email: corretor.email,
-  }
-};
-```
-
-**Para:**
-```typescript
-const emailPayload = {
-  action: 'send-template',
-  to: corretor.email,
-  template_tipo: 'boas_vindas',
-  variables: {
-    nome: corretor.nome,
-    email: corretor.email,
-    link: 'https://visitaprova.com.br/auth',
-  }
-};
-```
-
----
-
-## Por que usar `/auth` ao invés de `/`?
-
-| URL | Comportamento |
-|-----|---------------|
-| `/auth` | Página de login - usuário pode entrar diretamente |
-| `/` | Landing page - requer clique extra para acessar login |
-
-Como o email é para um usuário recém-cadastrado que precisa fazer login, `/auth` é o destino mais adequado.
-
----
-
-## Impacto
-
-- ✅ Link do botão funcionará corretamente
-- ✅ Não afeta outros templates de email
-- ✅ Consistente com o domínio principal `visitaprova.com.br`
-- ✅ Após correção, novos cadastros receberão emails com links funcionais
+Arquivos envolvidos (quando eu for implementar no modo padrão)
+- `supabase/functions/send-email/index.ts` (fallback + logs)
+- `supabase/functions/registro-corretor-autonomo/index.ts` (log adicional opcional, e manter `link` como já está)
