@@ -656,6 +656,67 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          ficha_id: string | null
+          id: string
+          imobiliaria_id: string | null
+          status: string
+          subject: string
+          template_tipo: string | null
+          to_email: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          ficha_id?: string | null
+          id?: string
+          imobiliaria_id?: string | null
+          status?: string
+          subject: string
+          template_tipo?: string | null
+          to_email: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          ficha_id?: string | null
+          id?: string
+          imobiliaria_id?: string | null
+          status?: string
+          subject?: string
+          template_tipo?: string | null
+          to_email?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_visita"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipes: {
         Row: {
           ativa: boolean | null
@@ -1443,6 +1504,63 @@ export type Database = {
           },
           {
             foreignKeyName: "surveys_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias_publicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates_email: {
+        Row: {
+          assunto: string
+          ativo: boolean
+          conteudo_html: string
+          conteudo_texto: string | null
+          created_at: string
+          id: string
+          imobiliaria_id: string | null
+          nome: string
+          tipo: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assunto: string
+          ativo?: boolean
+          conteudo_html: string
+          conteudo_texto?: string | null
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          nome: string
+          tipo: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assunto?: string
+          ativo?: boolean
+          conteudo_html?: string
+          conteudo_texto?: string | null
+          created_at?: string
+          id?: string
+          imobiliaria_id?: string | null
+          nome?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_email_imobiliaria_id_fkey"
+            columns: ["imobiliaria_id"]
+            isOneToOne: false
+            referencedRelation: "imobiliarias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_email_imobiliaria_id_fkey"
             columns: ["imobiliaria_id"]
             isOneToOne: false
             referencedRelation: "imobiliarias_publicas"
