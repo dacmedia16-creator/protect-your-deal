@@ -357,6 +357,7 @@ Deno.serve(async (req) => {
         variables: {
           nome: corretor.nome,
           email: corretor.email,
+          link: 'https://visitaprova.com.br/auth',
         }
       };
 
