@@ -66,19 +66,21 @@ export default function RegistroVinculado() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('imobiliarias_publicas')
-          .select('id, nome')
-          .eq('codigo', codigo)
-          .maybeSingle();
+        const { data: imobiliarias, error } = await supabase
+          .rpc('get_imobiliarias_publicas');
 
         if (error) throw error;
 
-        if (!data) {
+        // Filtrar pelo código no resultado
+        const imobiliaria = imobiliarias?.find(
+          (i: { codigo: number }) => i.codigo === codigo
+        );
+
+        if (!imobiliaria) {
           setCodigoError('Código não encontrado');
           setImobiliariaEncontrada(null);
         } else {
-          setImobiliariaEncontrada({ id: data.id!, nome: data.nome! });
+          setImobiliariaEncontrada({ id: imobiliaria.id, nome: imobiliaria.nome });
           setCodigoError('');
         }
       } catch (error) {
