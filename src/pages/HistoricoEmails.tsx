@@ -19,6 +19,7 @@ interface EmailLog {
   status: string;
   error_message: string | null;
   created_at: string;
+  from_email: string | null;
 }
 
 const HistoricoEmails = () => {
@@ -158,6 +159,11 @@ const HistoricoEmails = () => {
                       <p className="text-sm text-muted-foreground truncate mt-1">
                         {log.subject}
                       </p>
+                      {log.from_email && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          De: {log.from_email}
+                        </p>
+                      )}
                       {log.error_message && (
                         <p className="text-xs text-destructive mt-1">
                           Erro: {log.error_message}
