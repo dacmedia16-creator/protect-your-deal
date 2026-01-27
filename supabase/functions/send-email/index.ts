@@ -68,8 +68,11 @@ function getCredentials(fromEmail?: string): SMTPCredentials {
 
 // Create transporter with specific credentials
 function createTransporter(credentials: SMTPCredentials) {
+  // Support different Zoho datacenters via environment variable
+  const host = Deno.env.get("ZOHO_SMTP_HOST") || "smtppro.zoho.com";
+  
   return nodemailer.createTransport({
-    host: "smtppro.zoho.com",
+    host: host,
     port: 465,
     secure: true,
     auth: {
