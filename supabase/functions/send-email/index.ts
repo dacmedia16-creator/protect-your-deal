@@ -25,6 +25,13 @@ interface SMTPCredentials {
   displayName: string;
 }
 
+// Validar se o email é válido
+function isValidEmail(email?: string): boolean {
+  if (!email || email.trim() === '') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+}
+
 // Get SMTP credentials based on sender email
 function getCredentials(fromEmail?: string): SMTPCredentials {
   // Default fallback to noreply
@@ -161,10 +168,35 @@ serve(async (req) => {
 
     // Send with template action
     if (action === 'send-template') {
-      if (!template_tipo || !to) {
+      if (!template_tipo) {
         return new Response(
-          JSON.stringify({ error: "template_tipo e to são obrigatórios" }),
+          JSON.stringify({ error: "template_tipo é obrigatório" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validar email do destinatário
+      if (!isValidEmail(to)) {
+        console.log(`Skipping email send: invalid or missing recipient email: "${to}"`);
+        
+        await supabaseAdmin.from('email_logs').insert({
+          to_email: to || 'não informado',
+          subject: `[${template_tipo}] - não enviado`,
+          template_tipo: template_tipo,
+          status: 'skipped',
+          error_message: 'Destinatário sem email válido',
+          user_id: userId,
+          ficha_id: ficha_id || null,
+          from_email: null,
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            skipped: true, 
+            reason: "Destinatário sem email válido" 
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -255,10 +287,35 @@ serve(async (req) => {
 
     // Direct send action
     if (action === 'send') {
-      if (!to || !subject || (!html && !text)) {
+      if (!subject || (!html && !text)) {
         return new Response(
-          JSON.stringify({ error: "to, subject e (html ou text) são obrigatórios" }),
+          JSON.stringify({ error: "subject e (html ou text) são obrigatórios" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validar email do destinatário
+      if (!isValidEmail(to)) {
+        console.log(`Skipping direct email: invalid or missing recipient: "${to}"`);
+        
+        await supabaseAdmin.from('email_logs').insert({
+          to_email: to || 'não informado',
+          subject: subject || 'não informado',
+          template_tipo: null,
+          status: 'skipped',
+          error_message: 'Destinatário sem email válido',
+          user_id: userId,
+          ficha_id: ficha_id || null,
+          from_email: null,
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            skipped: true, 
+            reason: "Destinatário sem email válido" 
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
