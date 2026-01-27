@@ -239,11 +239,30 @@ serve(async (req) => {
 
       const transporter = createTransporter(credentials);
 
-      // Replace variables in template
-      const vars = variables || {};
+      // Replace variables in template - normalize and apply fallbacks
+      const vars: Record<string, string> = {};
+      if (variables) {
+        for (const [key, value] of Object.entries(variables)) {
+          vars[key] = value != null ? String(value) : '';
+        }
+      }
+      
+      // Fallback for boas_vindas template: ensure link is always present
+      if (template_tipo === 'boas_vindas' && (!vars.link || vars.link.trim() === '')) {
+        vars.link = 'https://visitaprova.com.br/auth';
+        console.log("Applied fallback link for boas_vindas template");
+      }
+      
+      console.log(`Template '${template_tipo}' variables: [${Object.keys(vars).join(', ')}]`);
+      
       const finalSubject = replaceVariables(template.assunto, vars);
       const finalHtml = replaceVariables(template.conteudo_html, vars);
       const finalText = template.conteudo_texto ? replaceVariables(template.conteudo_texto, vars) : undefined;
+      
+      // Warn if {link} still exists in final HTML (debug)
+      if (finalHtml.includes('{link}')) {
+        console.warn("WARNING: {link} placeholder still present in finalHtml after replacement!");
+      }
 
       console.log(`Sending template email '${template_tipo}' from ${credentials.user} to ${to}`);
 

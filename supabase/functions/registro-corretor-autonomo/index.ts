@@ -361,6 +361,7 @@ Deno.serve(async (req) => {
         }
       };
 
+      console.log("Welcome email vars:", Object.keys(emailPayload.variables).join(', '));
       console.log("Sending welcome email to:", corretor.email);
       
       const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
