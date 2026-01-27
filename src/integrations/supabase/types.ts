@@ -661,6 +661,7 @@ export type Database = {
           created_at: string
           error_message: string | null
           ficha_id: string | null
+          from_email: string | null
           id: string
           imobiliaria_id: string | null
           status: string
@@ -673,6 +674,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           ficha_id?: string | null
+          from_email?: string | null
           id?: string
           imobiliaria_id?: string | null
           status?: string
@@ -685,6 +687,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           ficha_id?: string | null
+          from_email?: string | null
           id?: string
           imobiliaria_id?: string | null
           status?: string
@@ -716,6 +719,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_remetentes: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string | null
+          email: string
+          id: string
+          nome_exibicao: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string | null
+          email: string
+          id?: string
+          nome_exibicao?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          nome_exibicao?: string
+        }
+        Relationships: []
       }
       equipes: {
         Row: {
@@ -1521,6 +1551,7 @@ export type Database = {
           id: string
           imobiliaria_id: string | null
           nome: string
+          remetente_email: string | null
           tipo: string
           updated_at: string
           user_id: string | null
@@ -1534,6 +1565,7 @@ export type Database = {
           id?: string
           imobiliaria_id?: string | null
           nome: string
+          remetente_email?: string | null
           tipo: string
           updated_at?: string
           user_id?: string | null
@@ -1547,6 +1579,7 @@ export type Database = {
           id?: string
           imobiliaria_id?: string | null
           nome?: string
+          remetente_email?: string | null
           tipo?: string
           updated_at?: string
           user_id?: string | null

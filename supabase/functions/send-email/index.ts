@@ -16,6 +16,67 @@ interface SendEmailRequest {
   template_tipo?: string;
   variables?: Record<string, string>;
   ficha_id?: string;
+  from_email?: string;
+}
+
+interface SMTPCredentials {
+  user: string;
+  pass: string;
+  displayName: string;
+}
+
+// Get SMTP credentials based on sender email
+function getCredentials(fromEmail?: string): SMTPCredentials {
+  // Default fallback to noreply
+  const defaultUser = Deno.env.get("ZOHO_SMTP_USER") || "noreply@visitaprova.com.br";
+  const defaultPass = Deno.env.get("ZOHO_SMTP_PASSWORD") || "";
+  
+  if (!fromEmail) {
+    return { user: defaultUser, pass: defaultPass, displayName: "VisitaProva" };
+  }
+
+  const emailLower = fromEmail.toLowerCase();
+  
+  // Check for specific email accounts
+  if (emailLower.includes("suporte")) {
+    const user = Deno.env.get("ZOHO_SUPORTE_USER");
+    const pass = Deno.env.get("ZOHO_SUPORTE_PASSWORD");
+    if (user && pass) {
+      return { user, pass, displayName: "Suporte VisitaProva" };
+    }
+  }
+  
+  if (emailLower.includes("contato")) {
+    const user = Deno.env.get("ZOHO_CONTATO_USER");
+    const pass = Deno.env.get("ZOHO_CONTATO_PASSWORD");
+    if (user && pass) {
+      return { user, pass, displayName: "Contato VisitaProva" };
+    }
+  }
+  
+  if (emailLower.includes("denis")) {
+    const user = Deno.env.get("ZOHO_DENIS_USER");
+    const pass = Deno.env.get("ZOHO_DENIS_PASSWORD");
+    if (user && pass) {
+      return { user, pass, displayName: "Denis - VisitaProva" };
+    }
+  }
+
+  // Fallback to default noreply
+  return { user: defaultUser, pass: defaultPass, displayName: "VisitaProva" };
+}
+
+// Create transporter with specific credentials
+function createTransporter(credentials: SMTPCredentials) {
+  return nodemailer.createTransport({
+    host: "smtppro.zoho.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: credentials.user,
+      pass: credentials.pass,
+    },
+  });
 }
 
 // Substituir variáveis no template
@@ -34,30 +95,8 @@ serve(async (req) => {
   }
 
   try {
-    const ZOHO_SMTP_USER = Deno.env.get("ZOHO_SMTP_USER");
-    const ZOHO_SMTP_PASSWORD = Deno.env.get("ZOHO_SMTP_PASSWORD");
-
-    if (!ZOHO_SMTP_USER || !ZOHO_SMTP_PASSWORD) {
-      console.error("SMTP credentials not configured");
-      return new Response(
-        JSON.stringify({ error: "Credenciais SMTP não configuradas" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Create SMTP transporter
-    const transporter = nodemailer.createTransport({
-      host: "smtppro.zoho.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: ZOHO_SMTP_USER,
-        pass: ZOHO_SMTP_PASSWORD,
-      },
-    });
-
     const body: SendEmailRequest = await req.json();
-    const { action, to, subject, html, text, template_tipo, variables, ficha_id } = body;
+    const { action, to, subject, html, text, template_tipo, variables, ficha_id, from_email } = body;
 
     // Initialize Supabase client for logging
     const supabaseAdmin = createClient(
@@ -84,12 +123,28 @@ serve(async (req) => {
 
     // Test connection action
     if (action === 'test-connection') {
-      console.log("Testing SMTP connection...");
-      try {
-        await transporter.verify();
-        console.log("SMTP connection successful");
+      console.log("Testing SMTP connection for:", from_email || "default");
+      
+      const credentials = getCredentials(from_email);
+      
+      if (!credentials.pass) {
+        console.error("SMTP credentials not configured for:", from_email || "default");
         return new Response(
-          JSON.stringify({ connected: true, message: "Conexão SMTP estabelecida com sucesso" }),
+          JSON.stringify({ connected: false, message: "Credenciais SMTP não configuradas para este remetente" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      try {
+        const transporter = createTransporter(credentials);
+        await transporter.verify();
+        console.log("SMTP connection successful for:", credentials.user);
+        return new Response(
+          JSON.stringify({ 
+            connected: true, 
+            message: `Conexão SMTP estabelecida com sucesso para ${credentials.user}`,
+            email: credentials.user
+          }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (verifyError: any) {
@@ -110,10 +165,10 @@ serve(async (req) => {
         );
       }
 
-      // Fetch template from database
+      // Fetch template from database (now including remetente_email)
       const { data: template, error: templateError } = await supabaseAdmin
         .from('templates_email')
-        .select('*')
+        .select('*, remetente_email')
         .eq('tipo', template_tipo)
         .eq('ativo', true)
         .maybeSingle();
@@ -126,17 +181,30 @@ serve(async (req) => {
         );
       }
 
+      // Determine sender email: use from_email param, or template's remetente_email, or default
+      const senderEmail = from_email || template.remetente_email || 'noreply@visitaprova.com.br';
+      const credentials = getCredentials(senderEmail);
+
+      if (!credentials.pass) {
+        return new Response(
+          JSON.stringify({ error: "Credenciais SMTP não configuradas para o remetente" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const transporter = createTransporter(credentials);
+
       // Replace variables in template
       const vars = variables || {};
       const finalSubject = replaceVariables(template.assunto, vars);
       const finalHtml = replaceVariables(template.conteudo_html, vars);
       const finalText = template.conteudo_texto ? replaceVariables(template.conteudo_texto, vars) : undefined;
 
-      console.log(`Sending template email '${template_tipo}' to ${to}`);
+      console.log(`Sending template email '${template_tipo}' from ${credentials.user} to ${to}`);
 
       try {
         const info = await transporter.sendMail({
-          from: `"VisitaProva" <${ZOHO_SMTP_USER}>`,
+          from: `"${credentials.displayName}" <${credentials.user}>`,
           to: to,
           subject: finalSubject,
           html: finalHtml,
@@ -145,7 +213,7 @@ serve(async (req) => {
 
         console.log("Email sent successfully:", info.messageId);
 
-        // Log success
+        // Log success with from_email
         await supabaseAdmin.from('email_logs').insert({
           to_email: to,
           subject: finalSubject,
@@ -153,16 +221,17 @@ serve(async (req) => {
           status: 'sent',
           user_id: userId,
           ficha_id: ficha_id || null,
+          from_email: credentials.user,
         });
 
         return new Response(
-          JSON.stringify({ success: true, messageId: info.messageId }),
+          JSON.stringify({ success: true, messageId: info.messageId, from: credentials.user }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (sendError: any) {
         console.error("Error sending email:", sendError);
 
-        // Log failure
+        // Log failure with from_email
         await supabaseAdmin.from('email_logs').insert({
           to_email: to,
           subject: finalSubject,
@@ -171,6 +240,7 @@ serve(async (req) => {
           error_message: sendError.message,
           user_id: userId,
           ficha_id: ficha_id || null,
+          from_email: credentials.user,
         });
 
         return new Response(
@@ -189,11 +259,22 @@ serve(async (req) => {
         );
       }
 
-      console.log(`Sending direct email to ${to}`);
+      const credentials = getCredentials(from_email);
+
+      if (!credentials.pass) {
+        return new Response(
+          JSON.stringify({ error: "Credenciais SMTP não configuradas" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const transporter = createTransporter(credentials);
+
+      console.log(`Sending direct email from ${credentials.user} to ${to}`);
 
       try {
         const info = await transporter.sendMail({
-          from: `"VisitaProva" <${ZOHO_SMTP_USER}>`,
+          from: `"${credentials.displayName}" <${credentials.user}>`,
           to: to,
           subject: subject,
           html: html,
@@ -202,7 +283,7 @@ serve(async (req) => {
 
         console.log("Email sent successfully:", info.messageId);
 
-        // Log success
+        // Log success with from_email
         await supabaseAdmin.from('email_logs').insert({
           to_email: to,
           subject: subject,
@@ -210,16 +291,17 @@ serve(async (req) => {
           status: 'sent',
           user_id: userId,
           ficha_id: ficha_id || null,
+          from_email: credentials.user,
         });
 
         return new Response(
-          JSON.stringify({ success: true, messageId: info.messageId }),
+          JSON.stringify({ success: true, messageId: info.messageId, from: credentials.user }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (sendError: any) {
         console.error("Error sending email:", sendError);
 
-        // Log failure
+        // Log failure with from_email
         await supabaseAdmin.from('email_logs').insert({
           to_email: to,
           subject: subject,
@@ -228,6 +310,7 @@ serve(async (req) => {
           error_message: sendError.message,
           user_id: userId,
           ficha_id: ficha_id || null,
+          from_email: credentials.user,
         });
 
         return new Response(

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Send, Loader2, CheckCircle, XCircle, RefreshCw, Eye, Edit, Save, X } from "lucide-react";
+import { Mail, Send, Loader2, CheckCircle, XCircle, RefreshCw, Eye, Edit, Save, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +24,16 @@ interface EmailTemplate {
   conteudo_html: string;
   conteudo_texto: string | null;
   ativo: boolean;
+  remetente_email?: string;
+}
+
+interface EmailRemetente {
+  id: string;
+  email: string;
+  nome_exibicao: string;
+  categoria: string;
+  ativo: boolean;
+  created_at: string;
 }
 
 const ConfiguracoesEmail = () => {
@@ -32,18 +44,24 @@ const ConfiguracoesEmail = () => {
   // Connection status
   const [smtpStatus, setSmtpStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
   const [testingConnection, setTestingConnection] = useState(false);
+  const [testingRemetente, setTestingRemetente] = useState<string | null>(null);
 
   // Test email
   const [testEmail, setTestEmail] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
+  const [selectedTestRemetente, setSelectedTestRemetente] = useState('');
 
   // Templates
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   
+  // Remetentes
+  const [remetentes, setRemetentes] = useState<EmailRemetente[]>([]);
+  const [loadingRemetentes, setLoadingRemetentes] = useState(true);
+  
   // Edit modal
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
-  const [editForm, setEditForm] = useState({ assunto: '', conteudo_html: '', conteudo_texto: '' });
+  const [editForm, setEditForm] = useState({ assunto: '', conteudo_html: '', conteudo_texto: '', remetente_email: '' });
   const [savingTemplate, setSavingTemplate] = useState(false);
 
   // Preview modal
@@ -52,6 +70,7 @@ const ConfiguracoesEmail = () => {
   useEffect(() => {
     if (user) {
       loadTemplates();
+      loadRemetentes();
     }
   }, [user]);
 
@@ -75,23 +94,50 @@ const ConfiguracoesEmail = () => {
     }
   };
 
-  const testSmtpConnection = async () => {
-    setTestingConnection(true);
+  const loadRemetentes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_remetentes')
+        .select('*')
+        .order('categoria');
+
+      if (error) throw error;
+      setRemetentes(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar remetentes",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRemetentes(false);
+    }
+  };
+
+  const testSmtpConnection = async (fromEmail?: string) => {
+    const targetEmail = fromEmail || 'noreply@visitaprova.com.br';
+    
+    if (fromEmail) {
+      setTestingRemetente(fromEmail);
+    } else {
+      setTestingConnection(true);
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: { action: 'test-connection' }
+        body: { action: 'test-connection', from_email: targetEmail }
       });
 
       if (error) throw error;
 
       if (data?.connected) {
-        setSmtpStatus('connected');
+        if (!fromEmail) setSmtpStatus('connected');
         toast({
           title: "Conexão estabelecida!",
-          description: "O servidor SMTP está funcionando corretamente.",
+          description: data?.message || "O servidor SMTP está funcionando corretamente.",
         });
       } else {
-        setSmtpStatus('error');
+        if (!fromEmail) setSmtpStatus('error');
         toast({
           title: "Falha na conexão",
           description: data?.message || "Não foi possível conectar ao servidor SMTP.",
@@ -99,7 +145,7 @@ const ConfiguracoesEmail = () => {
         });
       }
     } catch (error: any) {
-      setSmtpStatus('error');
+      if (!fromEmail) setSmtpStatus('error');
       toast({
         title: "Erro ao testar conexão",
         description: error.message,
@@ -107,6 +153,7 @@ const ConfiguracoesEmail = () => {
       });
     } finally {
       setTestingConnection(false);
+      setTestingRemetente(null);
     }
   };
 
@@ -132,13 +179,15 @@ const ConfiguracoesEmail = () => {
               <h1 style="color: #2563eb;">VisitaProva</h1>
               <h2>Email de Teste</h2>
               <p>Este é um email de teste enviado pelo sistema VisitaProva.</p>
-              <p>Se você recebeu este email, a integração com o Zoho Mail está funcionando corretamente!</p>
+              <p>Se você recebeu este email, a integração está funcionando corretamente!</p>
               <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
-                Enviado em: ${new Date().toLocaleString('pt-BR')}
+                Enviado em: ${new Date().toLocaleString('pt-BR')}<br/>
+                Remetente: ${selectedTestRemetente || 'noreply@visitaprova.com.br'}
               </p>
             </div>
           `,
           text: 'Este é um email de teste enviado pelo sistema VisitaProva. Se você recebeu este email, a integração está funcionando!',
+          from_email: selectedTestRemetente || undefined,
         }
       });
 
@@ -147,7 +196,7 @@ const ConfiguracoesEmail = () => {
       if (data?.success) {
         toast({
           title: "Email enviado!",
-          description: `Email de teste enviado para ${testEmail}.`,
+          description: `Email de teste enviado de ${data.from} para ${testEmail}.`,
         });
         setTestEmail('');
       } else {
@@ -168,12 +217,36 @@ const ConfiguracoesEmail = () => {
     }
   };
 
+  const toggleRemetenteAtivo = async (remetente: EmailRemetente) => {
+    try {
+      const { error } = await supabase
+        .from('email_remetentes')
+        .update({ ativo: !remetente.ativo })
+        .eq('id', remetente.id);
+
+      if (error) throw error;
+
+      toast({
+        title: remetente.ativo ? "Remetente desativado" : "Remetente ativado",
+        description: `${remetente.email} foi ${remetente.ativo ? 'desativado' : 'ativado'}.`,
+      });
+      loadRemetentes();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar remetente",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const openEditModal = (template: EmailTemplate) => {
     setEditingTemplate(template);
     setEditForm({
       assunto: template.assunto,
       conteudo_html: template.conteudo_html,
       conteudo_texto: template.conteudo_texto || '',
+      remetente_email: template.remetente_email || 'noreply@visitaprova.com.br',
     });
   };
 
@@ -188,6 +261,7 @@ const ConfiguracoesEmail = () => {
           assunto: editForm.assunto,
           conteudo_html: editForm.conteudo_html,
           conteudo_texto: editForm.conteudo_texto || null,
+          remetente_email: editForm.remetente_email,
         })
         .eq('id', editingTemplate.id);
 
@@ -210,6 +284,26 @@ const ConfiguracoesEmail = () => {
     }
   };
 
+  const getCategoriaLabel = (categoria: string) => {
+    const labels: Record<string, string> = {
+      sistema: 'Sistema',
+      suporte: 'Suporte',
+      comercial: 'Comercial',
+      admin: 'Admin',
+    };
+    return labels[categoria] || categoria;
+  };
+
+  const getCategoriaColor = (categoria: string) => {
+    const colors: Record<string, string> = {
+      sistema: 'bg-blue-500/10 text-blue-500',
+      suporte: 'bg-orange-500/10 text-orange-500',
+      comercial: 'bg-green-500/10 text-green-500',
+      admin: 'bg-purple-500/10 text-purple-500',
+    };
+    return colors[categoria] || 'bg-muted text-muted-foreground';
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -223,6 +317,8 @@ const ConfiguracoesEmail = () => {
     return null;
   }
 
+  const activeRemetentes = remetentes.filter(r => r.ativo);
+
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
@@ -234,11 +330,114 @@ const ConfiguracoesEmail = () => {
         </div>
 
       
-        <Tabs defaultValue="conexao">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="remetentes">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="remetentes">Remetentes</TabsTrigger>
             <TabsTrigger value="conexao">Conexão</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
           </TabsList>
+
+          {/* Tab Remetentes */}
+          <TabsContent value="remetentes" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Remetentes de Email
+                </CardTitle>
+                <CardDescription>
+                  Gerencie os emails disponíveis para envio. Cada template pode usar um remetente diferente.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingRemetentes ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : remetentes.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhum remetente configurado.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {remetentes.map((remetente) => (
+                      <div 
+                        key={remetente.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-2 rounded-lg ${getCategoriaColor(remetente.categoria)}`}>
+                            <Mail className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{remetente.nome_exibicao}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {getCategoriaLabel(remetente.categoria)}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{remetente.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => testSmtpConnection(remetente.email)}
+                            disabled={testingRemetente === remetente.email}
+                          >
+                            {testingRemetente === remetente.email ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-1" />
+                                Testar
+                              </>
+                            )}
+                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={remetente.ativo}
+                              onCheckedChange={() => toggleRemetenteAtivo(remetente)}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {remetente.ativo ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Uso Recomendado</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-blue-500/10 text-blue-500 border-0">Sistema</Badge>
+                    <span>OTPs, confirmações automáticas, lembretes de visita</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-orange-500/10 text-orange-500 border-0">Suporte</Badge>
+                    <span>Respostas a tickets, notificações de problemas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-500/10 text-green-500 border-0">Comercial</Badge>
+                    <span>Boas-vindas, upsell, renovações de assinatura</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-purple-500/10 text-purple-500 border-0">Admin</Badge>
+                    <span>Comunicações especiais, clientes VIP</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="conexao" className="space-y-4">
             {/* Connection Status */}
@@ -271,7 +470,7 @@ const ConfiguracoesEmail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button 
-                  onClick={testSmtpConnection} 
+                  onClick={() => testSmtpConnection()} 
                   disabled={testingConnection}
                   variant="outline"
                   className="w-full"
@@ -281,39 +480,55 @@ const ConfiguracoesEmail = () => {
                   ) : (
                     <RefreshCw className="h-4 w-4 mr-2" />
                   )}
-                  Testar Conexão SMTP
+                  Testar Conexão SMTP (noreply)
                 </Button>
 
                 {/* Test Email */}
-                {smtpStatus === 'connected' && (
-                  <div className="space-y-3 pt-2 border-t">
-                    <Label htmlFor="testEmail">Enviar email de teste</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="testEmail"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={testEmail}
-                        onChange={(e) => setTestEmail(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button 
-                        onClick={sendTestEmail}
-                        disabled={sendingTest || !testEmail}
-                        size="icon"
-                      >
-                        {sendingTest ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                      </Button>
+                <div className="space-y-3 pt-2 border-t">
+                  <Label>Enviar email de teste</Label>
+                  
+                  {activeRemetentes.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Remetente</Label>
+                      <Select value={selectedTestRemetente} onValueChange={setSelectedTestRemetente}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o remetente" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeRemetentes.map((r) => (
+                            <SelectItem key={r.id} value={r.email}>
+                              {r.nome_exibicao} ({r.email})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Digite um email para testar o envio de mensagens.
-                    </p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={sendTestEmail}
+                      disabled={sendingTest || !testEmail}
+                      size="icon"
+                    >
+                      {sendingTest ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
-                )}
+                  <p className="text-xs text-muted-foreground">
+                    Digite um email para testar o envio de mensagens.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
@@ -361,6 +576,11 @@ const ConfiguracoesEmail = () => {
                           <p className="text-sm text-muted-foreground truncate">
                             {template.assunto}
                           </p>
+                          {template.remetente_email && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              De: {template.remetente_email}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 ml-4">
                           <Button
@@ -417,6 +637,28 @@ const ConfiguracoesEmail = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Remetente selector */}
+            <div className="space-y-2">
+              <Label htmlFor="remetente">Remetente</Label>
+              <Select 
+                value={editForm.remetente_email} 
+                onValueChange={(value) => setEditForm(prev => ({ ...prev, remetente_email: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o remetente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {remetentes.map((r) => (
+                    <SelectItem key={r.id} value={r.email}>
+                      {r.nome_exibicao} ({r.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Define qual email será usado para enviar este tipo de mensagem.
+              </p>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="assunto">Assunto</Label>
               <Input
@@ -469,13 +711,15 @@ const ConfiguracoesEmail = () => {
             <DialogTitle>Preview: {previewTemplate?.nome}</DialogTitle>
             <DialogDescription>
               Assunto: {previewTemplate?.assunto}
+              {previewTemplate?.remetente_email && (
+                <span className="block mt-1">De: {previewTemplate.remetente_email}</span>
+              )}
             </DialogDescription>
           </DialogHeader>
-          <div className="border rounded-lg p-4 bg-white">
-            <div 
-              dangerouslySetInnerHTML={{ __html: previewTemplate?.conteudo_html || '' }}
-            />
-          </div>
+          <div 
+            className="border rounded-lg p-4 bg-white"
+            dangerouslySetInnerHTML={{ __html: previewTemplate?.conteudo_html || '' }}
+          />
         </DialogContent>
       </Dialog>
       </div>
