@@ -233,7 +233,7 @@ const Index = () => {
                   <Link to="/auth">Entrar</Link>
                 </Button>
                 <Button asChild className="hidden sm:inline-flex">
-                  <Link to="/registro/tipo">Criar Conta Grátis</Link>
+                  <a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta Grátis</a>
                 </Button>
               </>
             )}
@@ -298,9 +298,9 @@ const Index = () => {
                           <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
                         </Button>
                         <Button asChild className="w-full">
-                          <Link to="/registro/tipo" onClick={() => setMobileMenuOpen(false)}>
+                          <a href="https://visitaprova.com.br/registro?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
                             Criar Conta Grátis
-                          </Link>
+                          </a>
                         </Button>
                       </>
                     )}
@@ -331,9 +331,9 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-base shadow-lg" asChild>
-                <Link to="/registro/tipo">
+                <a href="https://visitaprova.com.br/registro?plano=gratuito">
                   Criar Conta Grátis
-                </Link>
+                </a>
               </Button>
               <Button size="lg" variant="outline" className="text-base" asChild>
                 <Link to="/como-funciona">Ver Como Funciona</Link>
