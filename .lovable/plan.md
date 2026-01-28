@@ -1,40 +1,30 @@
 
-
-# Restaurar Link de Seleção de Tipo de Cadastro
+# Atualizar Link do Botao "Criar Conta Gratis"
 
 ## Resumo
 
-Corrigir os botões "Criar Conta Grátis" e os CTAs dos planos para levarem à página de seleção de tipo de cadastro (`/registro/tipo`), em vez de ir diretamente para o cadastro de corretor autônomo.
+Alterar todos os botoes "Criar Conta Gratis" para usar o link externo completo `https://visitaprova.com.br/registro?plano=gratuito`.
 
-## Alterações
+## Alteracoes Necessarias
 
-### 1. Header Desktop (linha 236)
-- **De:** `/registro-autonomo?plano=gratuito`
-- **Para:** `/registro/tipo`
+### Arquivo: `src/pages/Index.tsx`
 
-### 2. Menu Mobile (linha 301)
-- **De:** `/registro-autonomo?plano=gratuito`
-- **Para:** `/registro/tipo`
+| Local | Linha | Link Atual | Novo Link |
+|-------|-------|------------|-----------|
+| Header Desktop | 236 | `/registro/tipo` | `https://visitaprova.com.br/registro?plano=gratuito` |
+| Menu Mobile | 301 | `/registro/tipo` | `https://visitaprova.com.br/registro?plano=gratuito` |
+| Hero CTA | 334 | `/registro/tipo` | `https://visitaprova.com.br/registro?plano=gratuito` |
 
-### 3. Hero CTA Principal (linha 334)
-- **De:** `/registro-autonomo?plano=gratuito`
-- **Para:** `/registro/tipo`
+### Detalhes Tecnicos
 
-### 4. Cards de Planos (linha 573)
-- **De:** Lógica condicional CPF/CNPJ
-- **Para:** Sempre `/registro/tipo?plano=...`
+Como o link e externo (URL completa), sera necessario trocar o componente `Link` do react-router por uma tag `<a>` padrao:
 
-## Comportamento Após a Correção
+```tsx
+// De:
+<Link to="/registro/tipo">Criar Conta Gratis</Link>
 
-1. Usuário clica em "Criar Conta Grátis"
-2. É levado para `/registro/tipo`
-3. Escolhe entre:
-   - Pessoa Física (Corretor Autônomo)
-   - Vincular a Imobiliária
-   - Pessoa Jurídica (Imobiliária/Empresa)
-4. É redirecionado para o formulário correto com o plano selecionado
+// Para:
+<a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta Gratis</a>
+```
 
-## Arquivo a Modificar
-
-- `src/pages/Index.tsx` (4 alterações pontuais)
-
+Isso garante que o navegador trate como navegacao externa para o dominio de producao.
