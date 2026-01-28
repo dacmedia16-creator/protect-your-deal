@@ -233,7 +233,7 @@ const Index = () => {
                   <Link to="/auth">Entrar</Link>
                 </Button>
                 <Button asChild className="hidden sm:inline-flex">
-                  <Link to="/registro-autonomo?plano=gratuito">Criar Conta Grátis</Link>
+                  <Link to="/registro/tipo">Criar Conta Grátis</Link>
                 </Button>
               </>
             )}
@@ -298,7 +298,7 @@ const Index = () => {
                           <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
                         </Button>
                         <Button asChild className="w-full">
-                          <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
+                          <Link to="/registro/tipo" onClick={() => setMobileMenuOpen(false)}>
                             Criar Conta Grátis
                           </Link>
                         </Button>
@@ -331,7 +331,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-base shadow-lg" asChild>
-                <Link to="/registro-autonomo?plano=gratuito">
+                <Link to="/registro/tipo">
                   Criar Conta Grátis
                 </Link>
               </Button>
@@ -570,7 +570,7 @@ const Index = () => {
                         </ul>
 
                         <Button className="w-full" variant={isIndividual ? 'default' : 'outline'} asChild>
-                          <Link to={plano.tipo_cadastro === 'cpf' ? `/registro-autonomo?plano=${plano.nome.toLowerCase().replace(/\s+/g, '-')}` : '/registro'}>
+                          <Link to={`/registro/tipo?plano=${plano.nome.toLowerCase().replace(/\s+/g, '-')}`}>
                             {plano.valor_mensal === 0 ? 'Começar Grátis' : 'Escolher Plano'}
                           </Link>
                         </Button>
