@@ -299,17 +299,20 @@ export default function RegistroImobiliaria() {
                     setSelectedPlano(value);
                   }
                 }}>
-                  {/* Opção Gratuito CPF - redireciona para registro autônomo */}
+                  {/* Opção Gratuito CPF - Card destacado */}
                   {planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
                     <label
-                      className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors border-border hover:border-primary/50"
+                      className="flex items-start gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer transition-colors hover:bg-primary/5 relative"
                       onClick={() => navigate('/registro-autonomo?plano=gratuito')}
                     >
+                      <div className="absolute -top-3 left-4 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                        Comece Grátis
+                      </div>
                       <RadioGroupItem value="cpf-gratuito" className="mt-1" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">Gratuito CPF</span>
-                          <span className="font-bold text-primary">Grátis</span>
+                          <span className="font-bold text-primary">R$ 0,00</span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">Para corretores autônomos (pessoa física)</p>
                         <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
@@ -351,7 +354,7 @@ export default function RegistroImobiliaria() {
                           <UserPlus className="h-4 w-4 text-green-600" />
                           Vincular a Imobiliária
                         </span>
-                        <span className="font-bold text-green-600">Grátis</span>
+                        <span className="text-sm text-muted-foreground">Usa plano da empresa</span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
                         Já trabalha em uma imobiliária? Vincule-se usando o código dela
