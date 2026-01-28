@@ -5,11 +5,11 @@ import videoThumbnail from '@/assets/video-thumbnail.jpg';
 import { LogoIcon } from '@/components/LogoIcon';
 import { 
   ArrowLeft, 
-  ArrowRight,
   ClipboardCheck, 
   Send, 
   CheckCircle2, 
-  Download
+  Download,
+  Scale
 } from 'lucide-react';
 
 const ComoFunciona = () => {
@@ -114,14 +114,22 @@ const ComoFunciona = () => {
               </AnimatedSection>
             ))}
           </div>
+          
+          {/* Micro-copy de autoridade jurídica */}
+          <AnimatedSection delay={800} className="max-w-2xl mx-auto text-center p-6 rounded-xl bg-card border border-primary/20">
+            <Scale className="h-8 w-8 text-primary mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">Registro digital com validade como prova documental.</strong><br />
+              Cada comprovante possui protocolo único e QR Code para verificação instantânea.
+            </p>
+          </AnimatedSection>
         </div>
 
         {/* CTA */}
-        <AnimatedSection delay={800} className="text-center">
+        <AnimatedSection delay={900} className="text-center mt-12">
           <Button size="lg" className="text-base" asChild>
             <Link to="/registro-autonomo?plano=gratuito">
-              Começar Agora Grátis
-              <ArrowRight className="ml-2 h-5 w-5" />
+              Criar Conta Grátis
             </Link>
           </Button>
         </AnimatedSection>
