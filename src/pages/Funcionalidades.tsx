@@ -10,7 +10,6 @@ import {
   Users, 
   Download,
   Smartphone,
-  ArrowRight,
   CheckCircle2,
   ClipboardList,
   BarChart3,
@@ -36,9 +35,9 @@ const Funcionalidades = () => {
     {
       id: 'fichas-digitais',
       icon: FileCheck,
-      title: 'Registros de Visita Digitais',
-      subtitle: 'Substitua o papel por registros completos e organizados',
-      description: 'Crie registros de visita profissionais com todos os dados necessários: informações do imóvel, dados do proprietário e comprador, data e horário da visita. Tudo armazenado de forma segura na nuvem.',
+      title: 'Nunca Mais Perca uma Ficha',
+      subtitle: 'Todos os dados organizados na nuvem',
+      description: 'Crie registros de visita profissionais com todos os dados necessários: informações do imóvel, dados do proprietário e comprador, data e horário da visita. Tudo armazenado de forma segura e acessível de qualquer lugar.',
       benefits: [
         'Preenchimento rápido e intuitivo',
         'Dados sempre acessíveis',
@@ -51,8 +50,8 @@ const Funcionalidades = () => {
     {
       id: 'confirmacao-otp',
       icon: MessageSquare,
-      title: 'Confirmação via WhatsApp',
-      subtitle: 'Segurança jurídica com confirmação de ambas as partes',
+      title: 'Prova Irrefutável',
+      subtitle: 'Proprietário e comprador confirmam via WhatsApp',
       description: 'Envie códigos de confirmação (OTP) diretamente para o WhatsApp do proprietário e do comprador. Cada um confirma sua participação inserindo o código recebido, garantindo consentimento registrado.',
       benefits: [
         'Envio instantâneo via WhatsApp',
@@ -66,8 +65,8 @@ const Funcionalidades = () => {
     {
       id: 'qrcode',
       icon: QrCode,
-      title: 'QR Code de Verificação',
-      subtitle: 'Autenticidade verificável a qualquer momento',
+      title: 'Autenticidade Verificável',
+      subtitle: 'Qualquer pessoa pode confirmar a validade',
       description: 'Cada comprovante gerado possui um QR Code exclusivo que permite a verificação instantânea da autenticidade do documento. Qualquer pessoa pode escanear e confirmar a validade.',
       benefits: [
         'Verificação instantânea',
@@ -81,8 +80,8 @@ const Funcionalidades = () => {
     {
       id: 'comprovante-pdf',
       icon: Download,
-      title: 'Comprovante em PDF',
-      subtitle: 'Documento profissional pronto para download',
+      title: 'Documento Profissional',
+      subtitle: 'PDF pronto para qualquer negociação ou disputa',
       description: 'Após a confirmação de ambas as partes, gere um comprovante PDF completo com todas as informações da visita, assinaturas digitais, QR Code e protocolo único. Ideal para arquivo e comprovação.',
       benefits: [
         'Design profissional',
@@ -223,7 +222,7 @@ const Funcionalidades = () => {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button asChild className="hidden sm:inline-flex">
-              <Link to="/registro-autonomo?plano=gratuito">Começar Grátis</Link>
+              <Link to="/registro-autonomo?plano=gratuito">Criar Conta Grátis</Link>
             </Button>
 
             {/* Mobile menu */}
@@ -279,7 +278,7 @@ const Funcionalidades = () => {
                     </Button>
                     <Button asChild className="w-full">
                       <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
-                        Começar Grátis
+                        Criar Conta Grátis
                       </Link>
                     </Button>
                   </div>
@@ -424,27 +423,21 @@ const Funcionalidades = () => {
         <div className="container mx-auto px-4 text-center">
           <AnimatedSection>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary-foreground mb-4">
-              Pronto para experimentar?
+              Trabalhe com mais segurança desde a primeira visita
             </h2>
           </AnimatedSection>
           <AnimatedSection delay={100}>
             <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
-              Comece gratuitamente e descubra como o VisitaProva pode 
-              transformar a forma como você trabalha.
+              Pare de depender de papéis que se perdem. 
+              Comece a construir sua carteira com provas sólidas.
             </p>
           </AnimatedSection>
           <AnimatedSection delay={200}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" className="text-base" asChild>
-                <Link to="/registro-autonomo?plano=gratuito">
-                  Começar Grátis
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-                <Link to="/#planos">Ver Planos</Link>
-              </Button>
-            </div>
+            <Button size="lg" variant="secondary" className="text-base" asChild>
+              <Link to="/registro-autonomo?plano=gratuito">
+                Criar Conta Grátis
+              </Link>
+            </Button>
           </AnimatedSection>
         </div>
       </section>

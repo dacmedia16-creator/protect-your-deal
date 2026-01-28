@@ -17,20 +17,22 @@ import {
   QrCode, 
   Users, 
   CheckCircle2,
-  ArrowRight,
   ClipboardCheck,
   Send,
   Download,
   Check,
-  Sparkles,
   HelpCircle,
   Smartphone,
   Menu,
   MapPin,
   Phone,
-  Building2,
   Star,
   Wand2,
+  Shield,
+  Award,
+  Scale,
+  FileX,
+  Building,
 } from 'lucide-react';
 
 interface Plano {
@@ -77,51 +79,79 @@ const Index = () => {
     );
   }
 
+  // Proposta de Valor - 4 benefícios diretos
+  const valuePropositions = [
+    {
+      icon: Shield,
+      title: 'Evite conflitos de comissão',
+      description: 'Tenha prova documental de que foi você quem apresentou o imóvel ao comprador.'
+    },
+    {
+      icon: FileCheck,
+      title: 'Comprove cada visita',
+      description: 'Registro com confirmação das duas partes via WhatsApp, com data, hora e aceite legal.'
+    },
+    {
+      icon: Award,
+      title: 'Mais profissionalismo',
+      description: 'Impressione proprietários e compradores com um processo moderno e organizado.'
+    },
+    {
+      icon: Scale,
+      title: 'Segurança jurídica',
+      description: 'Comprovante com QR Code verificável e protocolo único para cada visita.'
+    }
+  ];
+
+  // Comparativo Papel vs VisitaProva
+  const comparisons = [
+    { paper: 'Pode ser contestada ou perdida', visitaprova: 'Registro digital com backup automático' },
+    { paper: 'Sem validação das partes', visitaprova: 'Confirmação OTP via WhatsApp' },
+    { paper: 'Difícil comprovar autenticidade', visitaprova: 'QR Code + Protocolo único verificável' },
+    { paper: 'Informações incompletas', visitaprova: 'Formulário padronizado e completo' },
+    { paper: 'Demora para localizar', visitaprova: 'Busca instantânea por cliente ou imóvel' }
+  ];
+
   const features = [
     {
       icon: FileCheck,
-      title: 'Registros Digitais',
-      description: 'Crie registros de visita completos com todos os dados do imóvel, comprador e proprietário.'
+      title: 'Nunca mais perca uma ficha',
+      description: 'Todos os dados organizados na nuvem, acessíveis de qualquer lugar, a qualquer hora.'
     },
     {
       icon: MessageSquare,
-      title: 'Confirmação via OTP',
-      description: 'Envie códigos de confirmação via WhatsApp para ambas as partes com segurança.'
+      title: 'Prova irrefutável',
+      description: 'Proprietário e comprador confirmam a visita via WhatsApp com código único.'
     },
     {
       icon: QrCode,
-      title: 'QR Code de Verificação',
-      description: 'Cada comprovante possui um QR Code único para verificação de autenticidade.'
-    },
-    {
-      icon: Users,
-      title: 'Trabalho em Parceria',
-      description: 'Convide outros corretores para trabalhar juntos em um mesmo registro de visita.'
-    },
-    {
-      icon: FileCheck,
-      title: 'Protocolo Único',
-      description: 'Cada visita recebe um protocolo exclusivo para rastreabilidade completa.'
+      title: 'Autenticidade verificável',
+      description: 'Qualquer pessoa pode escanear o QR Code e confirmar a validade do comprovante.'
     },
     {
       icon: Download,
-      title: 'Comprovante PDF',
-      description: 'Gere comprovantes profissionais em PDF após a confirmação de ambas as partes.'
+      title: 'Documento profissional',
+      description: 'PDF pronto para apresentar em qualquer negociação ou disputa de comissão.'
+    },
+    {
+      icon: Users,
+      title: 'Trabalho em parceria',
+      description: 'Divida visitas com outros corretores mantendo proteção jurídica para ambos.'
     },
     {
       icon: Smartphone,
-      title: 'App para Celular',
-      description: 'Instale o app no seu celular e acesse seus registros rapidamente, de qualquer lugar.'
+      title: 'App no seu celular',
+      description: 'Instale o app e acesse seus registros rapidamente, de qualquer lugar.'
     },
     {
       icon: Star,
-      title: 'Pesquisas Pós-Visita',
-      description: 'Receba feedback automático dos compradores após cada visita confirmada, direto no WhatsApp.'
+      title: 'Feedback automático',
+      description: 'Receba avaliações dos compradores após cada visita, direto no WhatsApp.'
     },
     {
       icon: Wand2,
       title: 'Assistente Sofia',
-      description: 'Nossa IA te ajuda a usar o sistema, responde dúvidas e sugere ações em tempo real.'
+      description: 'IA que te ajuda a usar o sistema, responde dúvidas e sugere ações.'
     }
   ];
 
@@ -202,11 +232,8 @@ const Index = () => {
                 <Button variant="ghost" asChild className="hidden sm:inline-flex">
                   <Link to="/auth">Entrar</Link>
                 </Button>
-                <Button variant="outline" asChild className="hidden sm:inline-flex">
-                  <Link to="/registro-autonomo?plano=gratuito">Teste Grátis</Link>
-                </Button>
                 <Button asChild className="hidden sm:inline-flex">
-                  <Link to="/registro">Cadastrar</Link>
+                  <Link to="/registro-autonomo?plano=gratuito">Criar Conta Grátis</Link>
                 </Button>
               </>
             )}
@@ -270,13 +297,10 @@ const Index = () => {
                         <Button variant="outline" asChild className="w-full">
                           <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
                         </Button>
-                        <Button variant="outline" asChild className="w-full">
-                          <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
-                            Teste Grátis
-                          </Link>
-                        </Button>
                         <Button asChild className="w-full">
-                          <Link to="/registro" onClick={() => setMobileMenuOpen(false)}>Cadastrar</Link>
+                          <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
+                            Criar Conta Grátis
+                          </Link>
                         </Button>
                       </>
                     )}
@@ -288,65 +312,113 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section - CRO Otimizado */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                <LogoIcon size={16} />
-                Segurança e praticidade para corretores
-              </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                <Smartphone className="h-4 w-4" />
-                Disponível como App
-              </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Shield className="h-4 w-4" />
+              Proteja sua comissão desde a primeira visita
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
-              Fichas de Visita Digitais com{' '}
-              <span className="text-primary">Confirmação Segura</span>
+              Prove Suas Visitas.{' '}
+              <span className="text-primary">Proteja Sua Comissão.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Elimine papéis e ganhe segurança jurídica. Confirme visitas via WhatsApp, 
-              gere comprovantes PDF com QR Code e acesse tudo pelo app no seu celular.
+              Nunca mais perca um cliente por falta de comprovação. 
+              Registros digitais com confirmação via WhatsApp e comprovante PDF verificável.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
-              <Button size="lg" className="text-base bg-primary hover:bg-primary/90 text-primary-foreground animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] shadow-lg shadow-primary/30" asChild>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-base shadow-lg" asChild>
                 <Link to="/registro-autonomo?plano=gratuito">
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Teste Grátis
-                </Link>
-              </Button>
-              <Button size="lg" className="text-base" asChild>
-                <Link to="/registro">
-                  Começar Agora
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  Criar Conta Grátis
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base" asChild>
-                <Link to="/como-funciona">Como Funciona</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base" asChild>
-                <Link to="/funcionalidades">Funcionalidades</Link>
+                <Link to="/como-funciona">Ver Como Funciona</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-muted/30">
+      {/* Proposta de Valor */}
+      <section className="py-16 border-b border-border/40">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-heading font-bold mb-3">
+              Por que corretores escolhem o VisitaProva?
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {valuePropositions.map((prop, index) => (
+              <div key={index} className="text-center p-6">
+                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <prop.icon className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-heading font-semibold text-lg mb-2">{prop.title}</h3>
+                <p className="text-muted-foreground text-sm">{prop.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Diferenciação - Papel vs VisitaProva */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-heading font-bold mb-3">
+              Ficha de papel vs VisitaProva
+            </h2>
+            <p className="text-muted-foreground">
+              Compare e veja por que o digital é a escolha certa
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Header */}
+              <div className="p-4 bg-destructive/10 rounded-t-lg border border-destructive/20">
+                <div className="flex items-center gap-2 justify-center">
+                  <FileX className="h-5 w-5 text-destructive" />
+                  <span className="font-semibold text-destructive">Ficha de Papel</span>
+                </div>
+              </div>
+              <div className="p-4 bg-primary/10 rounded-t-lg border border-primary/20">
+                <div className="flex items-center gap-2 justify-center">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <span className="font-semibold text-primary">VisitaProva</span>
+                </div>
+              </div>
+              {/* Rows */}
+              {comparisons.map((comp, index) => (
+                <>
+                  <div key={`paper-${index}`} className="p-4 bg-card border border-border/50 text-sm text-muted-foreground">
+                    {comp.paper}
+                  </div>
+                  <div key={`vp-${index}`} className="p-4 bg-card border border-border/50 text-sm font-medium">
+                    {comp.visitaprova}
+                  </div>
+                </>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - Benefícios */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Tudo que você precisa em um só lugar
+              Tudo que você precisa para trabalhar com segurança
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Funcionalidades pensadas para facilitar o dia a dia do corretor de imóveis.
+              Funcionalidades pensadas para proteger sua comissão e facilitar seu dia a dia.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <div 
                 key={index}
@@ -364,7 +436,7 @@ const Index = () => {
       </section>
 
       {/* How it Works Section */}
-      <section id="como-funciona" className="py-20">
+      <section id="como-funciona" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
@@ -375,7 +447,7 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
             {steps.map((step, index) => (
               <div key={index} className="relative">
                 <div className="text-6xl font-heading font-bold text-primary/10 absolute -top-4 -left-2">
@@ -391,11 +463,38 @@ const Index = () => {
               </div>
             ))}
           </div>
+          
+          {/* Micro-copy de autoridade */}
+          <div className="max-w-2xl mx-auto text-center p-6 rounded-xl bg-card border border-primary/20">
+            <Scale className="h-8 w-8 text-primary mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">Registro digital com validade como prova documental.</strong><br />
+              Cada comprovante possui protocolo único e QR Code para verificação instantânea.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Prova Social / Autoridade */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Building className="h-4 w-4" />
+              Feito para a realidade do mercado imobiliário
+            </div>
+            <p className="text-lg text-muted-foreground mb-4">
+              Desenvolvido em parceria com corretores ativos para resolver problemas reais do dia a dia.
+            </p>
+            <p className="text-sm text-muted-foreground/80">
+              Utilizado por corretores e imobiliárias que valorizam segurança e profissionalismo.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="planos" className="py-20 bg-muted/30">
+      <section id="planos" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
@@ -411,54 +510,80 @@ const Index = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center">
-              {planos.map((plano) => (
-                <Card key={plano.id} className="relative overflow-hidden hover:shadow-lg transition-shadow">
-                  {plano.valor_mensal === 0 && (
-                    <div className="absolute top-3 right-3">
-                      <Badge variant="success">Grátis</Badge>
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-xl">{plano.nome}</CardTitle>
-                    <CardDescription>{plano.descricao}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-3xl font-bold">
-                      {plano.valor_mensal === 0 ? (
-                        'Grátis'
-                      ) : plano.valor_mensal === -1 ? (
-                        <span className="text-lg">Sob consulta</span>
-                      ) : (
-                        <>
-                          R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
-                          <span className="text-sm font-normal text-muted-foreground">/mês</span>
-                        </>
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center mb-8">
+                {planos.map((plano) => {
+                  const isIndividual = plano.nome.toLowerCase().includes('individual');
+                  const profileHint = plano.valor_mensal === 0 
+                    ? 'Ideal para começar' 
+                    : isIndividual 
+                      ? 'Ideal para corretores autônomos'
+                      : plano.max_corretores > 1 
+                        ? 'Ideal para imobiliárias em crescimento' 
+                        : '';
+                  
+                  return (
+                    <Card key={plano.id} className={`relative overflow-hidden hover:shadow-lg transition-shadow ${isIndividual ? 'ring-2 ring-primary' : ''}`}>
+                      {/* Badge "Mais escolhido" para plano Individual */}
+                      {isIndividual && (
+                        <Badge className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 bg-primary text-primary-foreground z-10">
+                          Mais escolhido
+                        </Badge>
                       )}
-                    </div>
-                    
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-primary" />
-                        {plano.max_fichas_mes === -1 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
-                      </li>
-                      {plano.max_corretores > 1 && (
-                        <li className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary" />
-                          {plano.max_corretores === -1 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}
-                        </li>
+                      {plano.valor_mensal === 0 && !isIndividual && (
+                        <div className="absolute top-3 right-3">
+                          <Badge variant="success">Grátis</Badge>
+                        </div>
                       )}
-                    </ul>
+                      <CardHeader className={isIndividual ? 'pt-10' : ''}>
+                        <CardTitle className="text-xl">{plano.nome}</CardTitle>
+                        <CardDescription>{plano.descricao}</CardDescription>
+                        {profileHint && (
+                          <p className="text-xs text-primary font-medium mt-1">{profileHint}</p>
+                        )}
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="text-3xl font-bold">
+                          {plano.valor_mensal === 0 ? (
+                            'Grátis'
+                          ) : plano.valor_mensal === -1 ? (
+                            <span className="text-lg">Sob consulta</span>
+                          ) : (
+                            <>
+                              R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
+                              <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                            </>
+                          )}
+                        </div>
+                        
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-primary" />
+                            {plano.max_fichas_mes === -1 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
+                          </li>
+                          {plano.max_corretores > 1 && (
+                            <li className="flex items-center gap-2">
+                              <Check className="h-4 w-4 text-primary" />
+                              {plano.max_corretores === -1 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}
+                            </li>
+                          )}
+                        </ul>
 
-                    <Button className="w-full" asChild>
-                      <Link to={plano.tipo_cadastro === 'cpf' ? `/registro-autonomo?plano=${plano.nome.toLowerCase().replace(/\s+/g, '-')}` : '/registro'}>
-                        {plano.valor_mensal === 0 ? 'Começar Grátis' : 'Escolher Plano'}
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        <Button className="w-full" variant={isIndividual ? 'default' : 'outline'} asChild>
+                          <Link to={plano.tipo_cadastro === 'cpf' ? `/registro-autonomo?plano=${plano.nome.toLowerCase().replace(/\s+/g, '-')}` : '/registro'}>
+                            {plano.valor_mensal === 0 ? 'Começar Grátis' : 'Escolher Plano'}
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              {/* Frase de reforço */}
+              <p className="text-center text-muted-foreground font-medium">
+                Menos risco. Mais controle. Mais profissionalismo.
+              </p>
+            </>
           )}
         </div>
       </section>
@@ -599,20 +724,19 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - Emocional */}
       <section className="py-20 bg-primary">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary-foreground mb-4">
-            Pronto para modernizar suas visitas?
+            Trabalhe com mais segurança desde a primeira visita
           </h2>
           <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
-            Junte-se a centenas de corretores que já utilizam o VisitaProva para 
-            garantir segurança e profissionalismo em cada visita.
+            Pare de depender de papéis que se perdem. 
+            Comece a construir sua carteira com provas sólidas.
           </p>
           <Button size="lg" variant="secondary" className="text-base" asChild>
             <Link to="/registro-autonomo?plano=gratuito">
-              Criar Conta Gratuita
-              <ArrowRight className="ml-2 h-5 w-5" />
+              Criar Conta Grátis
             </Link>
           </Button>
         </div>
