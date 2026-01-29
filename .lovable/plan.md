@@ -1,54 +1,49 @@
 
 
-# Corrigir Exibição do Card "Gratuito CPF"
+# Atualizar Aba "Criar Conta" para Link Externo
 
-## Problema Identificado
+## Resumo
 
-O card "Gratuito CPF" não está aparecendo porque depende de uma condição que verifica se existe um plano gratuito na lista de planos carregados:
-
-```tsx
-{planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
-```
-
-Porém, a query que busca os planos filtra apenas por `tipo_cadastro = 'cnpj'`:
-
-```tsx
-.eq('tipo_cadastro', 'cnpj')
-```
-
-Como o plano gratuito é do tipo `cpf`, ele não é carregado e a condição falha.
-
-## Solução
-
-Remover a condição que depende da lista de planos. O card "Gratuito CPF" deve **sempre** aparecer, pois é um atalho fixo para o registro de corretor autônomo.
+Modificar o botão/aba "Criar Conta" na página `/auth` para redirecionar ao link externo `https://visitaprova.com.br/registro?plano=gratuito` ao invés de exibir o formulário de cadastro.
 
 ## Alteração
 
-### Arquivo: `src/pages/auth/RegistroImobiliaria.tsx`
+### Arquivo: `src/pages/Auth.tsx`
 
-**Linha 301-302:** Remover a condição `planos.some(...)`
+#### Localização: Linhas 503-507
 
 **De:**
 ```tsx
-{planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
-  <label
-    className="flex items-start gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer transition-colors hover:bg-primary/5 relative"
-    onClick={() => navigate('/registro-autonomo?plano=gratuito')}
-  >
+<Tabs defaultValue="login" className="w-full">
+  <TabsList className="grid w-full grid-cols-2 mb-6">
+    <TabsTrigger value="login">Entrar</TabsTrigger>
+    <TabsTrigger value="signup">Criar Conta</TabsTrigger>
+  </TabsList>
 ```
 
 **Para:**
 ```tsx
-{/* Card Gratuito CPF - sempre visível */}
-<label
-  className="flex items-start gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer transition-colors hover:bg-primary/5 relative"
-  onClick={() => navigate('/registro-autonomo?plano=gratuito')}
->
+<Tabs defaultValue="login" className="w-full">
+  <TabsList className="grid w-full grid-cols-2 mb-6">
+    <TabsTrigger value="login">Entrar</TabsTrigger>
+    <TabsTrigger value="signup" asChild>
+      <a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta</a>
+    </TabsTrigger>
+  </TabsList>
 ```
 
-Também será necessário remover o fechamento correspondente `)}` ao final do card (aproximadamente linha 321).
+## Detalhes Técnicos
+
+| Aspecto | Descrição |
+|---------|-----------|
+| Componente | `TabsTrigger` com prop `asChild` |
+| Método | Usar `asChild` para renderizar como `<a>` externo |
+| Comportamento | Clique redireciona para URL externa |
+| Impacto | A aba "signup" não será mais acessível por tabs, apenas via link externo |
 
 ## Resultado
 
-O card "Gratuito CPF" com o badge "Comece Grátis" aparecerá sempre no topo da lista de planos, independente dos planos carregados do banco de dados.
+- Ao clicar em "Criar Conta", o usuário será redirecionado para `https://visitaprova.com.br/registro?plano=gratuito`
+- A aba "Entrar" continua funcionando normalmente para login
+- Mantém visual consistente com o design atual das tabs
 
