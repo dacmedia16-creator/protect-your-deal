@@ -503,7 +503,9 @@ export default function Auth() {
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
+              <TabsTrigger value="signup" asChild>
+                <a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta</a>
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
