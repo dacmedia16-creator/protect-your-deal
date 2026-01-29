@@ -503,9 +503,12 @@ export default function Auth() {
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup" asChild>
-                <a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta</a>
-              </TabsTrigger>
+              <a 
+                href="https://visitaprova.com.br/registro?plano=gratuito"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                Criar Conta
+              </a>
             </TabsList>
             
             <TabsContent value="login">
@@ -583,179 +586,6 @@ export default function Auth() {
               </Card>
             </TabsContent>
             
-            <TabsContent value="signup">
-              <Card className="border-0 shadow-soft">
-                <CardHeader className="space-y-1">
-                  <CardTitle className="font-display text-2xl">Crie sua conta</CardTitle>
-                  <CardDescription>
-                    Comece a proteger suas comissões hoje
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSignup} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-nome">Nome completo</Label>
-                      <Input
-                        id="signup-nome"
-                        type="text"
-                        placeholder="João Silva"
-                        value={signupData.nome}
-                        onChange={(e) => setSignupData({ ...signupData, nome: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-telefone">Telefone (WhatsApp)</Label>
-                      <Input
-                        id="signup-telefone"
-                        type="tel"
-                        inputMode="numeric"
-                        placeholder="(00) 00000-0000"
-                        value={signupData.telefone}
-                        onChange={(e) => setSignupData({ 
-                          ...signupData, 
-                          telefone: formatPhone(e.target.value) 
-                        })}
-                        maxLength={15}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-cpf">CPF</Label>
-                      <Input
-                        id="signup-cpf"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="000.000.000-00"
-                        value={signupData.cpf}
-                        onChange={(e) => setSignupData({ 
-                          ...signupData, 
-                          cpf: formatCPF(e.target.value) 
-                        })}
-                        maxLength={14}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={signupData.email}
-                        onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Senha</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={signupData.password}
-                        onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                        required
-                      />
-                    </div>
-                    
-                    {/* Vinculação à imobiliária */}
-                    <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="vincularImobiliaria"
-                          checked={vincularImobiliaria}
-                          onCheckedChange={(checked) => {
-                            setVincularImobiliaria(!!checked);
-                            if (!checked) {
-                              setCodigoImobiliaria('');
-                              setImobiliariaEncontrada(null);
-                              setCodigoError('');
-                            }
-                          }}
-                        />
-                        <Label htmlFor="vincularImobiliaria" className="cursor-pointer text-sm">
-                          Desejo me vincular a uma imobiliária
-                        </Label>
-                      </div>
-
-                      {vincularImobiliaria && (
-                        <div className="space-y-2">
-                          <Label htmlFor="codigoImobiliaria">Código da Imobiliária</Label>
-                          <div className="relative">
-                            <Input
-                              id="codigoImobiliaria"
-                              type="text"
-                              inputMode="numeric"
-                              value={codigoImobiliaria}
-                              onChange={(e) => setCodigoImobiliaria(e.target.value.replace(/\D/g, ''))}
-                              placeholder="Ex: 100"
-                              className={codigoError ? 'border-destructive' : imobiliariaEncontrada ? 'border-green-500' : ''}
-                            />
-                            {validatingCodigo && (
-                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                            )}
-                          </div>
-                          {codigoError && <p className="text-sm text-destructive">{codigoError}</p>}
-                          {imobiliariaEncontrada && (
-                            <div className="flex items-center gap-2 text-sm text-green-600">
-                              <Building2 className="h-4 w-4" />
-                              <span>{imobiliariaEncontrada.nome}</span>
-                              <Check className="h-4 w-4" />
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            Peça o código para o administrador da imobiliária
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Cupom de desconto */}
-                    <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-                      <div className="flex items-center gap-2">
-                        <Ticket className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="codigoCupom" className="text-sm font-medium">
-                          Cupom de desconto (opcional)
-                        </Label>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          id="codigoCupom"
-                          type="text"
-                          value={codigoCupom}
-                          onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
-                          placeholder="Digite seu cupom"
-                          className={cupomInfo ? (cupomInfo.valido ? 'border-green-500 pr-10' : 'border-destructive pr-10') : ''}
-                        />
-                        {validatingCupom && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                        )}
-                        {cupomInfo && !validatingCupom && (
-                          cupomInfo.valido ? (
-                            <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
-                          )
-                        )}
-                      </div>
-                      {cupomInfo && (
-                        <p className={`text-sm ${cupomInfo.valido ? 'text-green-600' : 'text-destructive'}`}>
-                          {cupomInfo.valido 
-                            ? `${cupomInfo.tipo_desconto === 'percentual' 
-                                ? `${cupomInfo.valor_desconto}%` 
-                                : `R$ ${cupomInfo.valor_desconto.toFixed(2).replace('.', ',')}`
-                              } de desconto no 1º mês!`
-                            : cupomInfo.mensagem
-                          }
-                        </p>
-                      )}
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? 'Criando conta...' : 'Criar conta'}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </div>
       </div>
