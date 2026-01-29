@@ -1,81 +1,54 @@
 
-# Reorganizar Cards de Planos no Registro
 
-## Resumo
+# Corrigir Exibição do Card "Gratuito CPF"
 
-Modificar a tela de seleção de planos (`RegistroImobiliaria.tsx`) para:
-1. Remover o badge "Grátis" do card "Vincular a Imobiliária"
-2. Criar um card destacado separado para o plano "Gratuito CPF"
+## Problema Identificado
 
-## Alteracoes
+O card "Gratuito CPF" não está aparecendo porque depende de uma condição que verifica se existe um plano gratuito na lista de planos carregados:
+
+```tsx
+{planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
+```
+
+Porém, a query que busca os planos filtra apenas por `tipo_cadastro = 'cnpj'`:
+
+```tsx
+.eq('tipo_cadastro', 'cnpj')
+```
+
+Como o plano gratuito é do tipo `cpf`, ele não é carregado e a condição falha.
+
+## Solução
+
+Remover a condição que depende da lista de planos. O card "Gratuito CPF" deve **sempre** aparecer, pois é um atalho fixo para o registro de corretor autônomo.
+
+## Alteração
 
 ### Arquivo: `src/pages/auth/RegistroImobiliaria.tsx`
 
-#### 1. Card "Vincular a Imobiliaria" (linhas 342-364)
-
-**Remover o badge "Gratis":**
-- Linha 354: Remover `<span className="font-bold text-green-600">Grátis</span>`
-- Substituir por texto descritivo ou deixar vazio
+**Linha 301-302:** Remover a condição `planos.some(...)`
 
 **De:**
 ```tsx
-<span className="font-bold text-green-600">Grátis</span>
+{planos.some(p => p.nome.toLowerCase() === 'gratuito' || p.valor_mensal === 0) && (
+  <label
+    className="flex items-start gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer transition-colors hover:bg-primary/5 relative"
+    onClick={() => navigate('/registro-autonomo?plano=gratuito')}
+  >
 ```
 
 **Para:**
 ```tsx
-{/* Sem indicacao de preco - usa plano da imobiliaria */}
-```
-
-Ou alternativamente, indicar que usa o plano da empresa:
-```tsx
-<span className="text-sm text-muted-foreground">Usa plano da empresa</span>
-```
-
-#### 2. Card "Gratuito CPF" (linhas 302-321)
-
-**Transformar em card destacado separado:**
-- Adicionar visual diferenciado (borda colorida, icone de destaque)
-- Manter posicao no topo como opcao gratuita principal
-- Adicionar badge "Comece Gratis" ou similar
-
-**De:**
-```tsx
+{/* Card Gratuito CPF - sempre visível */}
 <label
-  className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer transition-colors border-border hover:border-primary/50"
+  className="flex items-start gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer transition-colors hover:bg-primary/5 relative"
   onClick={() => navigate('/registro-autonomo?plano=gratuito')}
 >
 ```
 
-**Para:**
-```tsx
-<label
-  className="flex items-start gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer transition-colors hover:border-primary hover:bg-primary/5 relative"
-  onClick={() => navigate('/registro-autonomo?plano=gratuito')}
->
-  {/* Badge destaque */}
-  <div className="absolute -top-3 left-4 bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
-    Comece Gratis
-  </div>
-  ...
-</label>
-```
+Também será necessário remover o fechamento correspondente `)}` ao final do card (aproximadamente linha 321).
 
-## Resultado Visual Esperado
+## Resultado
 
-| Card | Aparencia |
-|------|-----------|
-| Gratuito CPF | Card com borda primaria + badge "Comece Gratis" no topo |
-| Profissional | Card normal com preco R$ 79,90/mes |
-| Vincular a Imobiliaria | Card com fundo verde claro, SEM badge de preco, texto "Usa plano da empresa" |
-| Planos CNPJ | Cards normais com precos |
+O card "Gratuito CPF" com o badge "Comece Grátis" aparecerá sempre no topo da lista de planos, independente dos planos carregados do banco de dados.
 
-## Comportamento
-
-- Todos os cliques continuam redirecionando para as mesmas rotas
-- Apenas mudanca visual para clareza do usuario
-- "Vincular a Imobiliaria" fica claro que nao e um plano proprio, mas sim vinculacao
-
-## Arquivo a Modificar
-
-- `src/pages/auth/RegistroImobiliaria.tsx` (alteracoes nas linhas 302-364)
