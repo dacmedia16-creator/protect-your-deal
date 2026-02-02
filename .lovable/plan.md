@@ -1,40 +1,81 @@
 
-Objetivo
-- Fazer a “aba/botão” **Criar Conta** na tela **/auth** abrir o link externo `https://visitaprova.com.br/registro?plano=gratuito` (e não trocar para a aba interna “signup” que mostra o formulário).
+# Plano: Admin não contabilizar como Corretor
 
-O que está acontecendo (por que não funciona hoje)
-- Mesmo tendo colocado `<TabsTrigger value="signup" asChild><a ... /></TabsTrigger>`, o Radix Tabs ainda trata esse item como um “trigger de aba” e acaba **selecionando a aba `signup`** ao invés de navegar para o link. Por isso aparece o formulário do print.
+## Problema Identificado
+Atualmente, as queries que contam o número de corretores vinculados a uma imobiliária estão buscando **TODOS** os registros em `user_roles` com o `imobiliaria_id`, incluindo usuários com role `imobiliaria_admin`. Isso causa:
 
-Abordagem (correção)
-- Parar de usar `TabsTrigger` para o “Criar Conta”.
-- Renderizar “Criar Conta” como um **link `<a>` normal**, estilizado com as mesmas classes visuais do `TabsTrigger`, porém **sem** comportamento de tabs.
-- (Opcional, mas recomendado) Remover o `TabsContent value="signup"` para não existir mais a tela interna de cadastro (evita confusão e garante que ninguém “caia” nela).
+- Admins serem contados no limite de corretores do plano
+- Estatísticas incorretas no dashboard da empresa
+- Card de uso do plano mostrando número inflado de corretores
 
-Mudanças no código (alta confiança)
-1) Arquivo: `src/pages/Auth.tsx`
-   - Na seção:
-     - `TabsList` (onde estão “Entrar” e “Criar Conta”)
-   - Substituir:
-     - `<TabsTrigger value="signup" asChild>...`
-   - Por:
-     - Um `<a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta</a>` simples
-     - Com `className` copiado/compatível com o estilo base do `TabsTrigger` (para manter o mesmo visual).
-     - Adicionar `rel="noreferrer"` (boa prática) e manter navegação na mesma aba (default).
-2) (Recomendado) Ainda em `src/pages/Auth.tsx`
-   - Remover completamente o bloco:
-     - `<TabsContent value="signup"> ...form... </TabsContent>`
-   - E, se ficar código morto, limpar:
-     - estados/handlers relacionados a `signup` que não serão mais usados (opcional para esta etapa; podemos fazer em seguida se você quiser).
+## Locais Afetados
 
-Critérios de aceite (como você valida)
-- Acessar `/auth`
-- Clicar em **Criar Conta**
-  - Deve navegar para `https://visitaprova.com.br/registro?plano=gratuito`
-  - Não deve mais “abrir” a tela interna de cadastro (o formulário do print).
+| Arquivo | Linha | Problema |
+|---------|-------|----------|
+| `src/pages/empresa/EmpresaDashboard.tsx` | 62-65 | Conta todos os roles da imobiliária |
+| `src/pages/empresa/EmpresaAssinatura.tsx` | 69-72 | Conta todos os roles da imobiliária |
+| `src/components/PlanUsageCard.tsx` | 51-54 | Conta todos os roles da imobiliária |
+| `src/pages/admin/AdminImobiliarias.tsx` | 124-127 | Conta todos os roles da imobiliária |
 
-Observações / Edge cases
-- Isso funciona tanto no navegador quanto em PWA, porque é uma navegação padrão por URL.
-- Se você quiser que abra em nova aba, dá para adicionar `target="_blank"` (me avise se prefere assim).
+---
 
-Arquivos envolvidos
-- `src/pages/Auth.tsx` (único arquivo necessário para a correção principal)
+## Solução
+
+Adicionar o filtro `.eq('role', 'corretor')` em cada uma das queries de contagem para excluir usuários com role `imobiliaria_admin`.
+
+### Mudanças Específicas
+
+**1. `src/pages/empresa/EmpresaDashboard.tsx` (linhas 62-65)**
+
+Antes:
+```typescript
+const { count: totalCorretores } = await supabase
+  .from('user_roles')
+  .select('*', { count: 'exact', head: true })
+  .eq('imobiliaria_id', imobiliariaId);
+```
+
+Depois:
+```typescript
+const { count: totalCorretores } = await supabase
+  .from('user_roles')
+  .select('*', { count: 'exact', head: true })
+  .eq('imobiliaria_id', imobiliariaId)
+  .eq('role', 'corretor');
+```
+
+**2. `src/pages/empresa/EmpresaAssinatura.tsx` (linhas 69-72)**
+
+Adicionar `.eq('role', 'corretor')` à query existente.
+
+**3. `src/components/PlanUsageCard.tsx` (linhas 51-54)**
+
+Adicionar `.eq('role', 'corretor')` à query existente.
+
+**4. `src/pages/admin/AdminImobiliarias.tsx` (linhas 124-127)**
+
+Adicionar `.eq('role', 'corretor')` à query existente.
+
+---
+
+## Comportamento Após a Mudança
+
+- Dashboard da Empresa: Mostrará apenas corretores (sem admin)
+- Card de Uso do Plano: Contagem correta de corretores vs limite
+- Página de Assinatura: Estatísticas precisas
+- Admin Imobiliárias: Contador de corretores por imobiliária correto
+
+---
+
+## Observação sobre `EmpresaCorretores.tsx`
+
+A página de listagem de corretores continuará mostrando admins na lista (isso é intencional para gerenciamento), mas a **contagem para limite do plano** não incluirá admins.
+
+---
+
+## Arquivos a Modificar
+
+1. `src/pages/empresa/EmpresaDashboard.tsx`
+2. `src/pages/empresa/EmpresaAssinatura.tsx`
+3. `src/components/PlanUsageCard.tsx`
+4. `src/pages/admin/AdminImobiliarias.tsx`
