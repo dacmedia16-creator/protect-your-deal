@@ -40,6 +40,14 @@ export function useSessionTracking() {
     sessionIdRef.current = null;
   }, []);
 
+  // Check if session is expired (more than 12 hours old)
+  const isSessionExpired = useCallback((loginAt: string): boolean => {
+    const loginDate = new Date(loginAt);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
+    return hoursDiff > 12;
+  }, []);
+
   // Get user's imobiliaria_id
   const getUserImobiliariaId = useCallback(async (userId: string): Promise<string | null> => {
     try {
@@ -66,12 +74,12 @@ export function useSessionTracking() {
       if (existingSessionId) {
         const { data: existingSession } = await supabase
           .from('user_sessions')
-          .select('id, logout_at')
+          .select('id, logout_at, login_at')
           .eq('id', existingSessionId)
           .maybeSingle();
         
-        // Session still active, reuse it
-        if (existingSession && !existingSession.logout_at) {
+        // Session still active AND not expired (less than 12 hours old)
+        if (existingSession && !existingSession.logout_at && !isSessionExpired(existingSession.login_at)) {
           sessionIdRef.current = existingSessionId;
           return existingSessionId;
         }
@@ -80,7 +88,7 @@ export function useSessionTracking() {
       // Check database for any active session for this user (regardless of localStorage)
       const { data: activeUserSession } = await supabase
         .from('user_sessions')
-        .select('id')
+        .select('id, login_at')
         .eq('user_id', user.id)
         .is('logout_at', null)
         .order('login_at', { ascending: false })
@@ -88,10 +96,21 @@ export function useSessionTracking() {
         .maybeSingle();
 
       if (activeUserSession) {
-        // Reuse existing active session from database
-        storeSessionId(activeUserSession.id);
-        sessionIdRef.current = activeUserSession.id;
-        return activeUserSession.id;
+        // Check if session is not expired (less than 12 hours old)
+        if (!isSessionExpired(activeUserSession.login_at)) {
+          storeSessionId(activeUserSession.id);
+          sessionIdRef.current = activeUserSession.id;
+          return activeUserSession.id;
+        }
+        
+        // Session expired - auto-close it before creating new one
+        await supabase
+          .from('user_sessions')
+          .update({
+            logout_at: new Date().toISOString(),
+            logout_type: 'timeout',
+          })
+          .eq('id', activeUserSession.id);
       }
 
       // No active session found, create new one
@@ -137,7 +156,7 @@ export function useSessionTracking() {
       console.warn('Failed to register session:', error);
       return null;
     }
-  }, [getUserImobiliariaId, storeSessionId, getStoredSessionId]);
+  }, [getUserImobiliariaId, storeSessionId, getStoredSessionId, isSessionExpired]);
 
   // End session (on logout)
   const endSession = useCallback(async (logoutType: 'manual' | 'browser_close' | 'timeout' = 'manual') => {
