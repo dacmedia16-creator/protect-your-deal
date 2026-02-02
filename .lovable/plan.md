@@ -1,81 +1,110 @@
 
-# Plano: Admin não contabilizar como Corretor
+# Plano: Organizar Lista de Corretores e Corrigir Contagem "Sem Equipe"
 
-## Problema Identificado
-Atualmente, as queries que contam o número de corretores vinculados a uma imobiliária estão buscando **TODOS** os registros em `user_roles` com o `imobiliaria_id`, incluindo usuários com role `imobiliaria_admin`. Isso causa:
+## Problemas Identificados
 
-- Admins serem contados no limite de corretores do plano
-- Estatísticas incorretas no dashboard da empresa
-- Card de uso do plano mostrando número inflado de corretores
+### 1. Contagem "Sem Equipe" Incorreta
+A estatística `semEquipe` na linha 589 está contando **todos** os usuários sem equipe, incluindo **Administradores** (`imobiliaria_admin`).
 
-## Locais Afetados
+No print do usuário: mostra "3 corretores sem equipe", mas na imagem vemos que 2 desses são **Admins** (Vinícios Geres e Vitor Baptista com badge verde "Admin") - que normalmente não precisam estar em equipe.
 
-| Arquivo | Linha | Problema |
-|---------|-------|----------|
-| `src/pages/empresa/EmpresaDashboard.tsx` | 62-65 | Conta todos os roles da imobiliária |
-| `src/pages/empresa/EmpresaAssinatura.tsx` | 69-72 | Conta todos os roles da imobiliária |
-| `src/components/PlanUsageCard.tsx` | 51-54 | Conta todos os roles da imobiliária |
-| `src/pages/admin/AdminImobiliarias.tsx` | 124-127 | Conta todos os roles da imobiliária |
+**Causa:** A lógica atual é:
+```typescript
+semEquipe: corretores.filter(c => !c.equipe).length
+```
+
+**Solução:** Filtrar apenas corretores (role = 'corretor') que não têm equipe:
+```typescript
+semEquipe: corretores.filter(c => c.role === 'corretor' && !c.equipe).length
+```
+
+### 2. Ordenação da Lista Ausente
+A lista está sendo renderizada na ordem que vem do banco de dados, sem ordenação por hierarquia ou performance.
+
+**Regra de Ordenação Solicitada:**
+1. Administradores (`imobiliaria_admin`) primeiro
+2. Líderes de Equipe (`isLider = true`) segundo
+3. Corretores ordenados por número de registros (`fichas_count` decrescente)
 
 ---
 
-## Solução
+## Mudanças no Código
 
-Adicionar o filtro `.eq('role', 'corretor')` em cada uma das queries de contagem para excluir usuários com role `imobiliaria_admin`.
+### Arquivo: `src/pages/empresa/EmpresaCorretores.tsx`
 
-### Mudanças Específicas
-
-**1. `src/pages/empresa/EmpresaDashboard.tsx` (linhas 62-65)**
+#### 1. Corrigir estatística "Sem Equipe" (linha 589)
 
 Antes:
 ```typescript
-const { count: totalCorretores } = await supabase
-  .from('user_roles')
-  .select('*', { count: 'exact', head: true })
-  .eq('imobiliaria_id', imobiliariaId);
+const stats = useMemo(() => ({
+  ativos: corretores.filter(c => c.ativo).length,
+  inativos: corretores.filter(c => !c.ativo).length,
+  semEquipe: corretores.filter(c => !c.equipe).length,
+}), [corretores]);
 ```
 
 Depois:
 ```typescript
-const { count: totalCorretores } = await supabase
-  .from('user_roles')
-  .select('*', { count: 'exact', head: true })
-  .eq('imobiliaria_id', imobiliariaId)
-  .eq('role', 'corretor');
+const stats = useMemo(() => ({
+  ativos: corretores.filter(c => c.ativo).length,
+  inativos: corretores.filter(c => !c.ativo).length,
+  // Apenas corretores sem equipe (não inclui admins, que não precisam de equipe)
+  semEquipe: corretores.filter(c => c.role === 'corretor' && !c.equipe).length,
+}), [corretores]);
 ```
 
-**2. `src/pages/empresa/EmpresaAssinatura.tsx` (linhas 69-72)**
+#### 2. Adicionar ordenação na lista filtrada (após linha 580)
 
-Adicionar `.eq('role', 'corretor')` à query existente.
+Adicionar lógica de ordenação ao `filteredCorretores`:
 
-**3. `src/components/PlanUsageCard.tsx` (linhas 51-54)**
+```typescript
+const filteredCorretores = corretores
+  .filter(c => {
+    const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
+      c.creci?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesEquipe = equipeFilter === 'all' || 
+      (equipeFilter === 'none' && !c.equipe) ||
+      c.equipe?.id === equipeFilter;
 
-Adicionar `.eq('role', 'corretor')` à query existente.
-
-**4. `src/pages/admin/AdminImobiliarias.tsx` (linhas 124-127)**
-
-Adicionar `.eq('role', 'corretor')` à query existente.
+    return matchesSearch && matchesEquipe;
+  })
+  .sort((a, b) => {
+    // 1. Admins primeiro
+    if (a.role === 'imobiliaria_admin' && b.role !== 'imobiliaria_admin') return -1;
+    if (a.role !== 'imobiliaria_admin' && b.role === 'imobiliaria_admin') return 1;
+    
+    // 2. Líderes depois dos admins
+    if (a.isLider && !b.isLider) return -1;
+    if (!a.isLider && b.isLider) return 1;
+    
+    // 3. Por número de fichas (decrescente)
+    return (b.fichas_count || 0) - (a.fichas_count || 0);
+  });
+```
 
 ---
 
-## Comportamento Após a Mudança
+## Resultado Esperado
 
-- Dashboard da Empresa: Mostrará apenas corretores (sem admin)
-- Card de Uso do Plano: Contagem correta de corretores vs limite
-- Página de Assinatura: Estatísticas precisas
-- Admin Imobiliárias: Contador de corretores por imobiliária correto
+### Antes (imagem do usuário):
+- Lista desordenada (Corretor, Admin, Líder, Corretor, Admin...)
+- "3 Sem Equipe" incluindo 2 admins
 
----
-
-## Observação sobre `EmpresaCorretores.tsx`
-
-A página de listagem de corretores continuará mostrando admins na lista (isso é intencional para gerenciamento), mas a **contagem para limite do plano** não incluirá admins.
+### Depois:
+- Lista ordenada:
+  1. Vinícios Geres (Admin)
+  2. Vitor Baptista (Admin)
+  3. Lindenilton Miler (Líder - 2 fichas)
+  4. Edilene Lima (Corretor - 1 ficha)
+  5. Marcia Regina... (Corretor - 1 ficha)
+  6. Demais corretores com 0 fichas
+- "1 Sem Equipe" (somente corretores sem equipe, não admins)
 
 ---
 
 ## Arquivos a Modificar
 
-1. `src/pages/empresa/EmpresaDashboard.tsx`
-2. `src/pages/empresa/EmpresaAssinatura.tsx`
-3. `src/components/PlanUsageCard.tsx`
-4. `src/pages/admin/AdminImobiliarias.tsx`
+1. `src/pages/empresa/EmpresaCorretores.tsx`
+   - Linha 571-580: Adicionar `.sort()` após `.filter()`
+   - Linha 589: Adicionar filtro de role na contagem `semEquipe`
