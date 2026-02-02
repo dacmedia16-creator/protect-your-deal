@@ -58,11 +58,12 @@ export default function EmpresaDashboard() {
       if (!imobiliariaId) return;
 
       try {
-        // Count corretores
+        // Count corretores (apenas role 'corretor', não inclui admins)
         const { count: totalCorretores } = await supabase
           .from('user_roles')
           .select('*', { count: 'exact', head: true })
-          .eq('imobiliaria_id', imobiliariaId);
+          .eq('imobiliaria_id', imobiliariaId)
+          .eq('role', 'corretor');
 
         // Count fichas
         const { count: totalFichas } = await supabase

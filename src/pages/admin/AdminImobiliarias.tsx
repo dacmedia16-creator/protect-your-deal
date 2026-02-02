@@ -120,11 +120,12 @@ export default function AdminImobiliarias() {
       // Fetch additional info for each imobiliaria
       const enrichedData = await Promise.all(
         (data || []).map(async (imob) => {
-          // Count corretores
+          // Count corretores (apenas role 'corretor', não inclui admins)
           const { count } = await supabase
             .from('user_roles')
             .select('*', { count: 'exact', head: true })
-            .eq('imobiliaria_id', imob.id);
+            .eq('imobiliaria_id', imob.id)
+            .eq('role', 'corretor');
 
           // Get subscription with plan info
           const { data: assData } = await supabase

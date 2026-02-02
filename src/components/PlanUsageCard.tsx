@@ -47,11 +47,12 @@ export function PlanUsageCard({ compact = false, className = '', showUpgradeButt
     queryFn: async () => {
       if (!imobiliariaId) return null;
 
-      // Fetch usage stats
+      // Fetch usage stats (apenas role 'corretor', não inclui admins)
       const { count: corretores } = await supabase
         .from('user_roles')
         .select('*', { count: 'exact', head: true })
-        .eq('imobiliaria_id', imobiliariaId);
+        .eq('imobiliaria_id', imobiliariaId)
+        .eq('role', 'corretor');
 
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
