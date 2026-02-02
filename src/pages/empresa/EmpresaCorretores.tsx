@@ -568,16 +568,29 @@ export default function EmpresaCorretores() {
     }
   }
 
-  const filteredCorretores = corretores.filter(c => {
-    const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
-      c.creci?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesEquipe = equipeFilter === 'all' || 
-      (equipeFilter === 'none' && !c.equipe) ||
-      c.equipe?.id === equipeFilter;
+  const filteredCorretores = corretores
+    .filter(c => {
+      const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
+        c.creci?.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesEquipe = equipeFilter === 'all' || 
+        (equipeFilter === 'none' && !c.equipe) ||
+        c.equipe?.id === equipeFilter;
 
-    return matchesSearch && matchesEquipe;
-  });
+      return matchesSearch && matchesEquipe;
+    })
+    .sort((a, b) => {
+      // 1. Admins primeiro
+      if (a.role === 'imobiliaria_admin' && b.role !== 'imobiliaria_admin') return -1;
+      if (a.role !== 'imobiliaria_admin' && b.role === 'imobiliaria_admin') return 1;
+      
+      // 2. Líderes depois dos admins
+      if (a.isLider && !b.isLider) return -1;
+      if (!a.isLider && b.isLider) return 1;
+      
+      // 3. Por número de fichas (decrescente)
+      return (b.fichas_count || 0) - (a.fichas_count || 0);
+    });
 
   const maxCorretores = assinatura?.plano?.max_corretores || 0;
   const canAddMore = corretores.length + convites.length < maxCorretores;
@@ -586,7 +599,8 @@ export default function EmpresaCorretores() {
   const stats = useMemo(() => ({
     ativos: corretores.filter(c => c.ativo).length,
     inativos: corretores.filter(c => !c.ativo).length,
-    semEquipe: corretores.filter(c => !c.equipe).length,
+    // Apenas corretores sem equipe (não inclui admins, que não precisam de equipe)
+    semEquipe: corretores.filter(c => c.role === 'corretor' && !c.equipe).length,
   }), [corretores]);
 
   if (loading) {
