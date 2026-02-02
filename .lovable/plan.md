@@ -1,110 +1,144 @@
 
-# Plano: Organizar Lista de Corretores e Corrigir Contagem "Sem Equipe"
+# Plano: Corrigir Registro de Sessões - Login do Edson Não Aparece
 
-## Problemas Identificados
+## Problema Identificado
 
-### 1. Contagem "Sem Equipe" Incorreta
-A estatística `semEquipe` na linha 589 está contando **todos** os usuários sem equipe, incluindo **Administradores** (`imobiliaria_admin`).
+### Análise dos Dados
+- **Sessão do Edson no banco:** `2026-02-01 17:17:14` (ontem)
+- **Hoje:** `2026-02-02` 
+- **Status da sessão:** `logout_at: null` (nunca foi encerrada)
+- **Nova sessão criada hoje:** NÃO
 
-No print do usuário: mostra "3 corretores sem equipe", mas na imagem vemos que 2 desses são **Admins** (Vinícios Geres e Vitor Baptista com badge verde "Admin") - que normalmente não precisam estar em equipe.
+### Causa Raiz
+O hook `useSessionTracking.ts` foi projetado para **reutilizar sessões ativas** para evitar duplicações. Porém, quando um usuário fecha o navegador sem fazer logout (comportamento comum), a sessão fica permanentemente "aberta" no banco.
 
-**Causa:** A lógica atual é:
+Quando o Edson fez login hoje, o sistema:
+1. Verificou se existe sessão ativa (sem `logout_at`)
+2. Encontrou a sessão de ontem (01/02)
+3. Reutilizou essa sessão antiga ao invés de criar uma nova
+4. Resultado: parece que ele não logou hoje
+
+Código problemático (linhas 80-95):
 ```typescript
-semEquipe: corretores.filter(c => !c.equipe).length
+const { data: activeUserSession } = await supabase
+  .from('user_sessions')
+  .select('id')
+  .eq('user_id', user.id)
+  .is('logout_at', null)  // ← Qualquer sessão "aberta" é reutilizada
+  ...
+if (activeUserSession) {
+  return activeUserSession.id;  // ← Retorna sessão de dias atrás!
+}
 ```
-
-**Solução:** Filtrar apenas corretores (role = 'corretor') que não têm equipe:
-```typescript
-semEquipe: corretores.filter(c => c.role === 'corretor' && !c.equipe).length
-```
-
-### 2. Ordenação da Lista Ausente
-A lista está sendo renderizada na ordem que vem do banco de dados, sem ordenação por hierarquia ou performance.
-
-**Regra de Ordenação Solicitada:**
-1. Administradores (`imobiliaria_admin`) primeiro
-2. Líderes de Equipe (`isLider = true`) segundo
-3. Corretores ordenados por número de registros (`fichas_count` decrescente)
 
 ---
 
-## Mudanças no Código
+## Solução
 
-### Arquivo: `src/pages/empresa/EmpresaCorretores.tsx`
+### Mudança Principal
+Adicionar validação de **expiração por tempo** - considerar uma sessão como "expirada" se foi criada há mais de **12 horas**, independente do `logout_at`.
 
-#### 1. Corrigir estatística "Sem Equipe" (linha 589)
+### Arquivo: `src/hooks/useSessionTracking.ts`
+
+#### 1. Criar função para verificar expiração
+
+```typescript
+// Verificar se sessão está expirada (mais de 12 horas)
+const isSessionExpired = useCallback((loginAt: string): boolean => {
+  const loginDate = new Date(loginAt);
+  const now = new Date();
+  const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
+  return hoursDiff > 12; // Sessão expira após 12 horas
+}, []);
+```
+
+#### 2. Atualizar lógica de verificação de sessão ativa (linhas 80-95)
 
 Antes:
 ```typescript
-const stats = useMemo(() => ({
-  ativos: corretores.filter(c => c.ativo).length,
-  inativos: corretores.filter(c => !c.ativo).length,
-  semEquipe: corretores.filter(c => !c.equipe).length,
-}), [corretores]);
+const { data: activeUserSession } = await supabase
+  .from('user_sessions')
+  .select('id')
+  .eq('user_id', user.id)
+  .is('logout_at', null)
+  .order('login_at', { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+if (activeUserSession) {
+  storeSessionId(activeUserSession.id);
+  return activeUserSession.id;
+}
 ```
 
 Depois:
 ```typescript
-const stats = useMemo(() => ({
-  ativos: corretores.filter(c => c.ativo).length,
-  inativos: corretores.filter(c => !c.ativo).length,
-  // Apenas corretores sem equipe (não inclui admins, que não precisam de equipe)
-  semEquipe: corretores.filter(c => c.role === 'corretor' && !c.equipe).length,
-}), [corretores]);
+const { data: activeUserSession } = await supabase
+  .from('user_sessions')
+  .select('id, login_at')  // ← Adicionar login_at
+  .eq('user_id', user.id)
+  .is('logout_at', null)
+  .order('login_at', { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+if (activeUserSession) {
+  // Verificar se a sessão não expirou (mais de 12 horas)
+  if (!isSessionExpired(activeUserSession.login_at)) {
+    storeSessionId(activeUserSession.id);
+    return activeUserSession.id;
+  }
+  
+  // Sessão expirada - encerrar automaticamente antes de criar nova
+  await supabase
+    .from('user_sessions')
+    .update({
+      logout_at: new Date().toISOString(),
+      logout_type: 'timeout',
+    })
+    .eq('id', activeUserSession.id);
+}
 ```
 
-#### 2. Adicionar ordenação na lista filtrada (após linha 580)
-
-Adicionar lógica de ordenação ao `filteredCorretores`:
+#### 3. Aplicar mesma lógica na verificação do localStorage (linhas 64-78)
 
 ```typescript
-const filteredCorretores = corretores
-  .filter(c => {
-    const matchesSearch = c.nome.toLowerCase().includes(search.toLowerCase()) ||
-      c.creci?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesEquipe = equipeFilter === 'all' || 
-      (equipeFilter === 'none' && !c.equipe) ||
-      c.equipe?.id === equipeFilter;
-
-    return matchesSearch && matchesEquipe;
-  })
-  .sort((a, b) => {
-    // 1. Admins primeiro
-    if (a.role === 'imobiliaria_admin' && b.role !== 'imobiliaria_admin') return -1;
-    if (a.role !== 'imobiliaria_admin' && b.role === 'imobiliaria_admin') return 1;
-    
-    // 2. Líderes depois dos admins
-    if (a.isLider && !b.isLider) return -1;
-    if (!a.isLider && b.isLider) return 1;
-    
-    // 3. Por número de fichas (decrescente)
-    return (b.fichas_count || 0) - (a.fichas_count || 0);
-  });
+if (existingSessionId) {
+  const { data: existingSession } = await supabase
+    .from('user_sessions')
+    .select('id, logout_at, login_at')  // ← Adicionar login_at
+    .eq('id', existingSessionId)
+    .maybeSingle();
+  
+  // Session still active AND not expired
+  if (existingSession && !existingSession.logout_at && !isSessionExpired(existingSession.login_at)) {
+    sessionIdRef.current = existingSessionId;
+    return existingSessionId;
+  }
+}
 ```
 
 ---
 
-## Resultado Esperado
+## Comportamento Após a Correção
 
-### Antes (imagem do usuário):
-- Lista desordenada (Corretor, Admin, Líder, Corretor, Admin...)
-- "3 Sem Equipe" incluindo 2 admins
+| Cenário | Antes | Depois |
+|---------|-------|--------|
+| Login no mesmo dia, mesma sessão | Reutiliza | Reutiliza |
+| Login após 12h+ | Reutiliza sessão antiga | Nova sessão criada |
+| Fechar navegador sem logout | Sessão fica "aberta" eternamente | Auto-encerra após 12h |
+| Admin vê sessões de hoje | Não vê login de hoje | Vê corretamente |
 
-### Depois:
-- Lista ordenada:
-  1. Vinícios Geres (Admin)
-  2. Vitor Baptista (Admin)
-  3. Lindenilton Miler (Líder - 2 fichas)
-  4. Edilene Lima (Corretor - 1 ficha)
-  5. Marcia Regina... (Corretor - 1 ficha)
-  6. Demais corretores com 0 fichas
-- "1 Sem Equipe" (somente corretores sem equipe, não admins)
+---
+
+## Efeito Colateral Positivo
+
+Sessões "órfãs" (sem logout) serão automaticamente encerradas com `logout_type: 'timeout'` quando o usuário fizer login novamente, limpando o histórico.
 
 ---
 
 ## Arquivos a Modificar
 
-1. `src/pages/empresa/EmpresaCorretores.tsx`
-   - Linha 571-580: Adicionar `.sort()` após `.filter()`
-   - Linha 589: Adicionar filtro de role na contagem `semEquipe`
+1. `src/hooks/useSessionTracking.ts`
+   - Adicionar função `isSessionExpired`
+   - Atualizar lógica nas linhas 64-78 e 80-95
