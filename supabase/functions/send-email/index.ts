@@ -17,6 +17,11 @@ interface SendEmailRequest {
   variables?: Record<string, string>;
   ficha_id?: string;
   from_email?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string; // base64
+    contentType: string;
+  }>;
 }
 
 interface SMTPCredentials {
@@ -273,6 +278,19 @@ serve(async (req) => {
           subject: finalSubject,
           html: finalHtml,
           text: finalText,
+          attachments: body.attachments?.map(att => {
+            // Decode base64 to Uint8Array for Deno compatibility
+            const binaryString = atob(att.content);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            return {
+              filename: att.filename,
+              content: bytes,
+              contentType: att.contentType,
+            };
+          }),
         });
 
         console.log("Email sent successfully:", info.messageId);
@@ -368,6 +386,19 @@ serve(async (req) => {
           subject: subject,
           html: html,
           text: text,
+          attachments: body.attachments?.map(att => {
+            // Decode base64 to Uint8Array for Deno compatibility
+            const binaryString = atob(att.content);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            return {
+              filename: att.filename,
+              content: bytes,
+              contentType: att.contentType,
+            };
+          }),
         });
 
         console.log("Email sent successfully:", info.messageId);

@@ -7,7 +7,8 @@ const corsHeaders = {
 };
 
 // Função para gerar backup do PDF em background (reutiliza generate-pdf)
-async function generateBackupPDF(supabase: any, fichaId: string, isPartial: boolean = false): Promise<void> {
+// Retorna os bytes do PDF para reutilização no envio de email
+async function generateBackupPDF(supabase: any, fichaId: string, isPartial: boolean = false): Promise<Uint8Array | null> {
   try {
     console.log('[verify-otp] Iniciando geração de backup PDF para ficha:', fichaId, 'isPartial:', isPartial);
     
@@ -20,7 +21,7 @@ async function generateBackupPDF(supabase: any, fichaId: string, isPartial: bool
     
     if (fichaError || !ficha) {
       console.error('[verify-otp] Erro ao buscar ficha para backup:', fichaError);
-      return;
+      return null;
     }
     
     console.log('[verify-otp] Ficha encontrada para backup:', { protocolo: ficha.protocolo, status: ficha.status });
@@ -47,11 +48,11 @@ async function generateBackupPDF(supabase: any, fichaId: string, isPartial: bool
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[verify-otp] Erro ao gerar PDF:', response.status, errorText);
-      return;
+      return null;
     }
     
     // Obter o PDF como bytes
-    const pdfBytes = await response.arrayBuffer();
+    const pdfBytes = new Uint8Array(await response.arrayBuffer());
     console.log('[verify-otp] PDF gerado com sucesso, tamanho:', pdfBytes.byteLength, 'bytes');
     
     // Salvar no storage
@@ -69,7 +70,7 @@ async function generateBackupPDF(supabase: any, fichaId: string, isPartial: bool
     
     if (uploadError) {
       console.error('[verify-otp] Erro ao fazer upload do backup:', uploadError);
-      return;
+      return pdfBytes; // Retorna o PDF mesmo se falhar o upload
     }
     
     // Atualizar ficha com timestamp do backup
@@ -84,8 +85,161 @@ async function generateBackupPDF(supabase: any, fichaId: string, isPartial: bool
     }
     
     console.log('[verify-otp] ✅ Backup PDF gerado e salvo com sucesso:', fileName);
+    return pdfBytes;
   } catch (error) {
     console.error('[verify-otp] ❌ Erro na geração do backup PDF:', error);
+    return null;
+  }
+}
+
+// Função para enviar emails de confirmação para os corretores
+async function sendCompletionEmails(
+  supabase: any, 
+  ficha: any, 
+  pdfBytes: Uint8Array
+): Promise<void> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    console.log('[verify-otp] Iniciando envio de emails de conclusão para ficha:', ficha.id);
+
+    // Converter PDF para base64
+    let pdfBase64 = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < pdfBytes.length; i += chunkSize) {
+      const chunk = pdfBytes.slice(i, i + chunkSize);
+      pdfBase64 += String.fromCharCode(...chunk);
+    }
+    pdfBase64 = btoa(pdfBase64);
+    
+    console.log('[verify-otp] PDF convertido para base64, tamanho:', pdfBase64.length);
+
+    // Buscar email do corretor principal
+    const { data: corretorPrincipal } = await supabase
+      .from('profiles')
+      .select('nome, email, user_id')
+      .eq('user_id', ficha.user_id)
+      .single();
+    
+    // Se não tem email no profile, buscar do auth.users
+    let emailPrincipal = corretorPrincipal?.email;
+    if (!emailPrincipal && ficha.user_id) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(ficha.user_id);
+      emailPrincipal = authUser?.user?.email;
+    }
+    
+    const dataVisita = new Date(ficha.data_visita).toLocaleDateString('pt-BR');
+    
+    const variables = {
+      nome: corretorPrincipal?.nome || 'Corretor',
+      protocolo: ficha.protocolo,
+      endereco: ficha.imovel_endereco,
+      data_visita: dataVisita,
+      link: `https://visitaprova.com.br/ficha/${ficha.id}`,
+    };
+    
+    // Enviar para corretor principal
+    if (emailPrincipal) {
+      console.log('[verify-otp] Enviando email para corretor principal:', emailPrincipal);
+      
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            action: 'send-template',
+            to: emailPrincipal,
+            template_tipo: 'ficha_completa',
+            variables,
+            ficha_id: ficha.id,
+            attachments: [{
+              filename: `comprovante-${ficha.protocolo}.pdf`,
+              content: pdfBase64,
+              contentType: 'application/pdf',
+            }],
+          }),
+        });
+        
+        if (response.ok) {
+          console.log('[verify-otp] ✅ Email enviado para corretor principal:', emailPrincipal);
+        } else {
+          const errorText = await response.text();
+          console.error('[verify-otp] ❌ Erro ao enviar email para corretor principal:', errorText);
+        }
+      } catch (emailError) {
+        console.error('[verify-otp] ❌ Erro ao enviar email para corretor principal:', emailError);
+      }
+    } else {
+      console.log('[verify-otp] Corretor principal sem email cadastrado');
+    }
+    
+    // Se tem corretor parceiro, enviar para ele também
+    if (ficha.corretor_parceiro_id) {
+      console.log('[verify-otp] Buscando email do corretor parceiro:', ficha.corretor_parceiro_id);
+      
+      const { data: corretorParceiro } = await supabase
+        .from('profiles')
+        .select('nome, email')
+        .eq('user_id', ficha.corretor_parceiro_id)
+        .single();
+      
+      let emailParceiro = corretorParceiro?.email;
+      if (!emailParceiro) {
+        const { data: authUser } = await supabase.auth.admin.getUserById(ficha.corretor_parceiro_id);
+        emailParceiro = authUser?.user?.email;
+      }
+      
+      if (emailParceiro) {
+        console.log('[verify-otp] Enviando email para corretor parceiro:', emailParceiro);
+        
+        const parceiroVariables = {
+          ...variables,
+          nome: corretorParceiro?.nome || 'Corretor Parceiro',
+        };
+        
+        try {
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({
+              action: 'send-template',
+              to: emailParceiro,
+              template_tipo: 'ficha_completa',
+              variables: parceiroVariables,
+              ficha_id: ficha.id,
+              attachments: [{
+                filename: `comprovante-${ficha.protocolo}.pdf`,
+                content: pdfBase64,
+                contentType: 'application/pdf',
+              }],
+            }),
+          });
+          
+          if (response.ok) {
+            console.log('[verify-otp] ✅ Email enviado para corretor parceiro:', emailParceiro);
+          } else {
+            const errorText = await response.text();
+            console.error('[verify-otp] ❌ Erro ao enviar email para corretor parceiro:', errorText);
+          }
+        } catch (emailError) {
+          console.error('[verify-otp] ❌ Erro ao enviar email para corretor parceiro:', emailError);
+        }
+      } else {
+        console.log('[verify-otp] Corretor parceiro sem email cadastrado');
+      }
+    }
+    
+    console.log('[verify-otp] Processamento de emails de conclusão finalizado');
+  } catch (error) {
+    // Não bloquear a confirmação se o envio de email falhar
+    console.error('[verify-otp] ❌ Erro ao enviar emails de conclusão:', error);
   }
 }
 
@@ -397,8 +551,14 @@ serve(async (req) => {
       console.log('[verify-otp] Ficha completa - gerando backup PDF...');
       try {
         // Executar de forma síncrona para garantir que o backup seja gerado
-        await generateBackupPDF(supabase, otp.ficha_id, false);
+        const pdfBytes = await generateBackupPDF(supabase, otp.ficha_id, false);
         console.log('[verify-otp] ✅ Backup gerado com sucesso após confirmação completa');
+        
+        // Enviar emails com PDF anexado apenas se ficha está completa (não finalizado_parcial)
+        if (newStatus === 'completo' && pdfBytes) {
+          console.log('[verify-otp] Enviando emails com PDF para os corretores...');
+          await sendCompletionEmails(supabase, updatedFicha, pdfBytes);
+        }
       } catch (err) {
         console.error('[verify-otp] ❌ Erro ao gerar backup após confirmação:', err);
       }
