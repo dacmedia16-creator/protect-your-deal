@@ -1,141 +1,241 @@
 
-# Plano: Corrigir Exclusão de Corretores pelo Admin da Imobiliária
+# Plano: Enviar Email com PDF para Corretores ao Completar Ficha
 
-## Problema Identificado
+## Objetivo
 
-Quando o admin da imobiliária (REMAX) exclui um corretor pela página "Corretores", a exclusão está incompleta:
+Quando uma ficha for confirmada por ambas as partes (status = `completo`), enviar automaticamente um email com o comprovante em PDF anexado para:
+1. **Corretor Principal** - quem criou a ficha (`user_id`)
+2. **Corretor Parceiro** - se houver (`corretor_parceiro_id`)
 
-| O que deveria acontecer | O que acontece hoje |
-|------------------------|---------------------|
-| Excluir user_roles | ✅ Funciona |
-| Excluir profiles | ❌ NÃO exclui |
-| Excluir auth.users | ❌ NÃO exclui |
-| Limpar telefone | ❌ NÃO limpa |
-| Limpar equipes_membros | ❌ NÃO limpa |
+---
 
-**Resultado**: 10 usuários "órfãos" ocupando telefones e aparecendo em queries de pendentes.
+## Análise Atual
+
+| Componente | Estado Atual |
+|------------|--------------|
+| Template `confirmacao_visita` | ✅ Existe (mas sem anexo) |
+| Função `send-email` | ✅ Suporta nodemailer |
+| Função `generate-pdf` | ✅ Retorna PDF em bytes |
+| Função `verify-otp` | ✅ Já gera backup quando ficha completa |
+| Emails dos corretores | ✅ Disponível em `profiles.email` ou `auth.users.email` |
 
 ---
 
 ## Solução Proposta
 
-### 1. Criar Edge Function `empresa-delete-corretor`
+### 1. Criar Novo Template de Email
 
-Nova função que permite ao admin da imobiliária excluir completamente corretores da SUA imobiliária.
+**Tipo**: `ficha_completa`  
+**Assunto**: `Registro confirmado! Protocolo {protocolo} 📋`
 
-**Validações de segurança:**
-- Verificar se quem chama é `imobiliaria_admin`
-- Verificar se o corretor pertence à mesma imobiliária
-- Não permitir auto-exclusão
-- Não permitir excluir outro admin
+Variáveis:
+- `{nome}` - Nome do corretor
+- `{protocolo}` - Protocolo da ficha
+- `{endereco}` - Endereço do imóvel
+- `{data_visita}` - Data da visita
+- `{link}` - Link para ver detalhes
 
-**Lógica de exclusão (mesma da admin-delete-user):**
-1. Limpar telefone (liberar para reuso)
-2. Excluir de equipes_membros
-3. Excluir de otp_queue
-4. Excluir de afiliados
-5. Excluir de templates_mensagem
-6. Nullificar audit_logs
-7. Transferir fichas_visita para o admin
-8. Limpar corretor_parceiro_id
-9. Excluir de auth.users (cascata para profiles e user_roles)
+### 2. Atualizar Função `send-email`
 
-### 2. Atualizar `EmpresaCorretores.tsx`
+Adicionar suporte a anexos (attachments) no nodemailer:
 
-Modificar a função `removeCorretor` para chamar a nova Edge Function em vez de apenas deletar user_roles.
-
-```typescript
-async function removeCorretor(userId: string) {
-  // Chamar empresa-delete-corretor
-  const { data, error } = await supabase.functions.invoke('empresa-delete-corretor', {
-    body: { user_id: userId }
-  });
+```text
+interface SendEmailRequest {
+  ...
+  attachments?: Array<{
+    filename: string;
+    content: string; // base64
+    contentType: string;
+  }>;
 }
 ```
 
-### 3. Limpeza dos Órfãos Existentes
+### 3. Atualizar Função `verify-otp`
 
-Criar migração SQL para limpar os 10 usuários órfãos atuais:
+Após gerar o backup do PDF, enviar emails para os corretores:
 
-| Nome | Telefone | Status |
-|------|----------|--------|
-| Eder souza | - | Órfão |
-| Denis Teste | - | Órfão |
-| Lucas alba santo | 12455666667 | Órfão |
-| Paulo rogerio | 12988777766 | Órfão |
-| Lucas alba | 22456677888 | Órfão (inativo) |
-| Marcos Eduardo | 12900000000 | Órfão (inativo) |
-| Teste Vinculado | 11999998888 | Órfão (inativo) |
-| Joao Carlos | 15997216772 | Órfão |
-| Maria Antonia | 15996237299 | Órfão |
-| eder souza | 15981788218 | Órfão (duplicado) |
+```text
+Fluxo:
+1. Quando newStatus = 'completo':
+   a. Gerar PDF via generate-pdf
+   b. Salvar backup no storage
+   c. Buscar email do corretor principal
+   d. Enviar email com PDF anexado para corretor principal
+   e. Se houver corretor_parceiro_id:
+      - Buscar email do corretor parceiro
+      - Enviar email com PDF anexado para corretor parceiro
+```
 
 ---
 
 ## Arquivos a Modificar
 
-1. **Criar**: `supabase/functions/empresa-delete-corretor/index.ts`
-2. **Editar**: `src/pages/empresa/EmpresaCorretores.tsx`
-3. **Criar**: Migração SQL para limpeza dos 10 órfãos
+| Arquivo | Ação |
+|---------|------|
+| `supabase/functions/send-email/index.ts` | Adicionar suporte a attachments |
+| `supabase/functions/verify-otp/index.ts` | Adicionar envio de emails após conclusão |
+| Migração SQL | Criar template `ficha_completa` |
 
 ---
 
 ## Seção Técnica
 
-### Edge Function: empresa-delete-corretor
+### Modificação no `send-email/index.ts`
+
+Adicionar campo `attachments` no tipo e no `sendMail`:
 
 ```typescript
-// Validação de permissão
-const { data: roleData } = await supabaseAdmin
-  .from('user_roles')
-  .select('role, imobiliaria_id')
-  .eq('user_id', currentUser.id)
-  .eq('role', 'imobiliaria_admin')
-  .single();
-
-// Verificar se corretor pertence à mesma imobiliária
-const { data: targetProfile } = await supabaseAdmin
-  .from('profiles')
-  .select('imobiliaria_id')
-  .eq('user_id', target_user_id)
-  .single();
-
-if (targetProfile.imobiliaria_id !== roleData.imobiliaria_id) {
-  throw new Error('Corretor não pertence à sua imobiliária');
+interface SendEmailRequest {
+  action: 'send' | 'send-template' | 'test-connection';
+  to?: string;
+  subject?: string;
+  html?: string;
+  text?: string;
+  template_tipo?: string;
+  variables?: Record<string, string>;
+  ficha_id?: string;
+  from_email?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string; // base64
+    contentType: string;
+  }>;
 }
 
-// ... lógica de exclusão completa
+// No sendMail:
+const info = await transporter.sendMail({
+  from: `"${credentials.displayName}" <${credentials.user}>`,
+  to: to,
+  subject: finalSubject,
+  html: finalHtml,
+  text: finalText,
+  attachments: body.attachments?.map(att => ({
+    filename: att.filename,
+    content: Buffer.from(att.content, 'base64'),
+    contentType: att.contentType,
+  })),
+});
 ```
 
-### Migração SQL para limpeza
+### Modificação no `verify-otp/index.ts`
 
-```sql
-DO $$
-DECLARE
-  orphan_ids UUID[] := ARRAY[
-    '953df447-de41-4db2-974c-f7b7a64f0b1d', -- Denis Teste
-    '9164bb5f-4f3b-40d5-894b-df768ee9b93e', -- eder souza
-    '49a47b05-2513-4005-a18c-3d7d278087a0', -- Eder souza
-    'fd13d8a0-9f78-4a73-95d2-83027596b28e', -- Joao Carlos
-    'b5bc59fb-5867-4150-afba-99862714429d', -- Lucas alba
-    'b0b6b80b-e329-46c0-a4cc-9914cef22354', -- Lucas alba santo
-    '1f4db4ba-7db3-464f-9826-22734572f0ec', -- Marcos Eduardo
-    'fe6df2cc-35e2-43d2-959d-909842d21943', -- Maria Antonia
-    '2a734251-9943-4688-930e-f9357031d125', -- Paulo rogerio
-    '3e04d381-f984-4184-bcfb-8e2aa32728a0'  -- Teste Vinculado
-  ];
-  orphan_id UUID;
-BEGIN
-  FOREACH orphan_id IN ARRAY orphan_ids LOOP
-    -- Limpar todas as referências
-    DELETE FROM equipes_membros WHERE user_id = orphan_id;
-    DELETE FROM otp_queue WHERE user_id = orphan_id;
-    UPDATE audit_logs SET user_id = NULL WHERE user_id = orphan_id;
-    UPDATE fichas_visita SET user_id = NULL WHERE user_id = orphan_id;
-    UPDATE fichas_visita SET corretor_parceiro_id = NULL WHERE corretor_parceiro_id = orphan_id;
-    DELETE FROM profiles WHERE user_id = orphan_id;
-  END LOOP;
-END $$;
+Adicionar função para enviar emails após conclusão:
+
+```typescript
+async function sendCompletionEmails(
+  supabase: any, 
+  ficha: any, 
+  pdfBytes: Uint8Array
+): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+  // Converter PDF para base64
+  const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+  
+  // Buscar email do corretor principal
+  const { data: corretorPrincipal } = await supabase
+    .from('profiles')
+    .select('nome, email, user_id')
+    .eq('user_id', ficha.user_id)
+    .single();
+  
+  // Se não tem email no profile, buscar do auth.users
+  let emailPrincipal = corretorPrincipal?.email;
+  if (!emailPrincipal) {
+    const { data: authUser } = await supabase.auth.admin.getUserById(ficha.user_id);
+    emailPrincipal = authUser?.user?.email;
+  }
+  
+  const variables = {
+    nome: corretorPrincipal?.nome || 'Corretor',
+    protocolo: ficha.protocolo,
+    endereco: ficha.imovel_endereco,
+    data_visita: new Date(ficha.data_visita).toLocaleDateString('pt-BR'),
+    link: `https://visitaprova.com.br/ficha/${ficha.id}`,
+  };
+  
+  // Enviar para corretor principal
+  if (emailPrincipal) {
+    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({
+        action: 'send-template',
+        to: emailPrincipal,
+        template_tipo: 'ficha_completa',
+        variables,
+        ficha_id: ficha.id,
+        attachments: [{
+          filename: `comprovante-${ficha.protocolo}.pdf`,
+          content: pdfBase64,
+          contentType: 'application/pdf',
+        }],
+      }),
+    });
+  }
+  
+  // Se tem corretor parceiro, enviar para ele também
+  if (ficha.corretor_parceiro_id) {
+    const { data: corretorParceiro } = await supabase
+      .from('profiles')
+      .select('nome, email')
+      .eq('user_id', ficha.corretor_parceiro_id)
+      .single();
+    
+    let emailParceiro = corretorParceiro?.email;
+    if (!emailParceiro) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(ficha.corretor_parceiro_id);
+      emailParceiro = authUser?.user?.email;
+    }
+    
+    if (emailParceiro) {
+      variables.nome = corretorParceiro?.nome || 'Corretor Parceiro';
+      
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        // ... mesmo payload adaptado
+      });
+    }
+  }
+}
+```
+
+### Template HTML
+
+```html
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="color: #2563eb;">VisitaProva</h1>
+  </div>
+  
+  <h2 style="color: #1e293b;">Registro Confirmado! 📋</h2>
+  
+  <p>Olá, <strong>{nome}</strong>!</p>
+  
+  <p>O registro de visita foi confirmado por ambas as partes.</p>
+  
+  <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 20px; margin: 20px 0;">
+    <p><strong>Protocolo:</strong> {protocolo}</p>
+    <p><strong>Endereço:</strong> {endereco}</p>
+    <p><strong>Data:</strong> {data_visita}</p>
+  </div>
+  
+  <p>📎 O comprovante em PDF está anexado a este email.</p>
+  
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="{link}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px;">Ver Detalhes</a>
+  </div>
+  
+  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+  <p style="color: #94a3b8; font-size: 12px; text-align: center;">VisitaProva</p>
+</body>
+</html>
 ```
 
 ---
@@ -143,8 +243,7 @@ END $$;
 ## Resultado Esperado
 
 Após implementação:
-- ✅ Admin da imobiliária pode excluir corretores completamente
-- ✅ Telefones liberados imediatamente
-- ✅ Não haverá mais usuários órfãos
-- ✅ Os 10 órfãos atuais serão limpos
-- ✅ Fichas são preservadas (transferidas ou órfãs)
+- ✅ Corretor principal recebe email com PDF anexado ao completar ficha
+- ✅ Corretor parceiro (se houver) recebe email com PDF anexado
+- ✅ Emails são logados em `email_logs` para rastreamento
+- ✅ Processo não bloqueia a confirmação (erros são apenas logados)
