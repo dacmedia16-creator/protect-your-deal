@@ -1,144 +1,104 @@
 
-# Plano: Corrigir Registro de Sessões - Login do Edson Não Aparece
 
-## Problema Identificado
+# Plano: Excluir Fernanda (15981888214) via Migração SQL
 
-### Análise dos Dados
-- **Sessão do Edson no banco:** `2026-02-01 17:17:14` (ontem)
-- **Hoje:** `2026-02-02` 
-- **Status da sessão:** `logout_at: null` (nunca foi encerrada)
-- **Nova sessão criada hoje:** NÃO
+## Objetivo
 
-### Causa Raiz
-O hook `useSessionTracking.ts` foi projetado para **reutilizar sessões ativas** para evitar duplicações. Porém, quando um usuário fecha o navegador sem fazer logout (comportamento comum), a sessão fica permanentemente "aberta" no banco.
+Limpar o registro órfão da **Fernanda a souza** (telefone 15981888214) do sistema, liberando o número de telefone para reutilização.
 
-Quando o Edson fez login hoje, o sistema:
-1. Verificou se existe sessão ativa (sem `logout_at`)
-2. Encontrou a sessão de ontem (01/02)
-3. Reutilizou essa sessão antiga ao invés de criar uma nova
-4. Resultado: parece que ele não logou hoje
+## Dados do Usuário a Excluir
 
-Código problemático (linhas 80-95):
-```typescript
-const { data: activeUserSession } = await supabase
-  .from('user_sessions')
-  .select('id')
-  .eq('user_id', user.id)
-  .is('logout_at', null)  // ← Qualquer sessão "aberta" é reutilizada
-  ...
-if (activeUserSession) {
-  return activeUserSession.id;  // ← Retorna sessão de dias atrás!
-}
-```
+| Campo | Valor |
+|-------|-------|
+| user_id | `b0e6b18e-decf-4994-9293-9e192490b15b` |
+| Nome | Fernanda a souza |
+| Telefone | 15981888214 |
+| Email | fernanda@vip7imoveis.com.br |
+| Imobiliária | Vip7 Imóveis |
+| Status | Órfã (sem user_roles) |
 
 ---
 
-## Solução
+## Migração SQL
 
-### Mudança Principal
-Adicionar validação de **expiração por tempo** - considerar uma sessão como "expirada" se foi criada há mais de **12 horas**, independente do `logout_at`.
+```sql
+-- Limpeza do usuário órfão: Fernanda a souza (15981888214)
+-- user_id: b0e6b18e-decf-4994-9293-9e192490b15b
 
-### Arquivo: `src/hooks/useSessionTracking.ts`
-
-#### 1. Criar função para verificar expiração
-
-```typescript
-// Verificar se sessão está expirada (mais de 12 horas)
-const isSessionExpired = useCallback((loginAt: string): boolean => {
-  const loginDate = new Date(loginAt);
-  const now = new Date();
-  const hoursDiff = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
-  return hoursDiff > 12; // Sessão expira após 12 horas
-}, []);
-```
-
-#### 2. Atualizar lógica de verificação de sessão ativa (linhas 80-95)
-
-Antes:
-```typescript
-const { data: activeUserSession } = await supabase
-  .from('user_sessions')
-  .select('id')
-  .eq('user_id', user.id)
-  .is('logout_at', null)
-  .order('login_at', { ascending: false })
-  .limit(1)
-  .maybeSingle();
-
-if (activeUserSession) {
-  storeSessionId(activeUserSession.id);
-  return activeUserSession.id;
-}
-```
-
-Depois:
-```typescript
-const { data: activeUserSession } = await supabase
-  .from('user_sessions')
-  .select('id, login_at')  // ← Adicionar login_at
-  .eq('user_id', user.id)
-  .is('logout_at', null)
-  .order('login_at', { ascending: false })
-  .limit(1)
-  .maybeSingle();
-
-if (activeUserSession) {
-  // Verificar se a sessão não expirou (mais de 12 horas)
-  if (!isSessionExpired(activeUserSession.login_at)) {
-    storeSessionId(activeUserSession.id);
-    return activeUserSession.id;
-  }
+DO $$
+DECLARE
+  target_user_id UUID := 'b0e6b18e-decf-4994-9293-9e192490b15b';
+BEGIN
+  -- 1. Limpar referências em equipes_membros (se houver)
+  DELETE FROM equipes_membros WHERE user_id = target_user_id;
   
-  // Sessão expirada - encerrar automaticamente antes de criar nova
-  await supabase
-    .from('user_sessions')
-    .update({
-      logout_at: new Date().toISOString(),
-      logout_type: 'timeout',
-    })
-    .eq('id', activeUserSession.id);
-}
-```
-
-#### 3. Aplicar mesma lógica na verificação do localStorage (linhas 64-78)
-
-```typescript
-if (existingSessionId) {
-  const { data: existingSession } = await supabase
-    .from('user_sessions')
-    .select('id, logout_at, login_at')  // ← Adicionar login_at
-    .eq('id', existingSessionId)
-    .maybeSingle();
+  -- 2. Limpar referências em otp_queue (se houver)
+  DELETE FROM otp_queue WHERE user_id = target_user_id;
   
-  // Session still active AND not expired
-  if (existingSession && !existingSession.logout_at && !isSessionExpired(existingSession.login_at)) {
-    sessionIdRef.current = existingSessionId;
-    return existingSessionId;
-  }
-}
+  -- 3. Limpar referências em afiliados (se houver)
+  DELETE FROM afiliados WHERE user_id = target_user_id;
+  
+  -- 4. Limpar referências em templates_mensagem (se houver)
+  DELETE FROM templates_mensagem WHERE user_id = target_user_id;
+  
+  -- 5. Nullificar user_id em audit_logs (preservar histórico)
+  UPDATE audit_logs SET user_id = NULL WHERE user_id = target_user_id;
+  
+  -- 6. Limpar referências em fichas_visita (user_id e corretor_parceiro_id)
+  UPDATE fichas_visita SET user_id = NULL WHERE user_id = target_user_id;
+  UPDATE fichas_visita SET corretor_parceiro_id = NULL WHERE corretor_parceiro_id = target_user_id;
+  
+  -- 7. Limpar referências em surveys
+  DELETE FROM surveys WHERE corretor_id = target_user_id;
+  
+  -- 8. Limpar referências em ficha_usage_log
+  DELETE FROM ficha_usage_log WHERE user_id = target_user_id;
+  
+  -- 9. Limpar referências em user_feature_flags
+  DELETE FROM user_feature_flags WHERE user_id = target_user_id;
+  
+  -- 10. Limpar referências em assinaturas
+  DELETE FROM assinaturas WHERE user_id = target_user_id;
+  
+  -- 11. Limpar referências em convites_parceiro
+  DELETE FROM convites_parceiro WHERE corretor_origem_id = target_user_id;
+  UPDATE convites_parceiro SET corretor_parceiro_id = NULL WHERE corretor_parceiro_id = target_user_id;
+  
+  -- 12. Limpar referências em user_roles (já não existe, mas por segurança)
+  DELETE FROM user_roles WHERE user_id = target_user_id;
+  
+  -- 13. Finalmente, excluir o perfil (libera o telefone)
+  DELETE FROM profiles WHERE user_id = target_user_id;
+  
+  RAISE NOTICE 'Usuário Fernanda a souza (15981888214) removido com sucesso!';
+END $$;
 ```
 
 ---
 
-## Comportamento Após a Correção
+## O Que Acontece
 
-| Cenário | Antes | Depois |
-|---------|-------|--------|
-| Login no mesmo dia, mesma sessão | Reutiliza | Reutiliza |
-| Login após 12h+ | Reutiliza sessão antiga | Nova sessão criada |
-| Fechar navegador sem logout | Sessão fica "aberta" eternamente | Auto-encerra após 12h |
-| Admin vê sessões de hoje | Não vê login de hoje | Vê corretamente |
+| Ação | Resultado |
+|------|-----------|
+| Perfil excluído | ✅ Telefone 15981888214 liberado |
+| Referências limpas | ✅ Nenhum dado órfão no sistema |
+| Registro auth.users | ⚠️ Permanece (não pode ser excluído via SQL) |
+
+### Sobre o registro em auth.users
+
+O registro em `auth.users` não pode ser excluído via migração SQL (requer API admin do Supabase). Porém:
+
+- Sem perfil, o usuário não consegue usar o sistema
+- Sem user_roles, não tem permissões
+- O email `fernanda@vip7imoveis.com.br` continua ocupado
+- Se necessário recriar com mesmo email, seria preciso usar a Edge Function `admin-delete-user` logado como super_admin
 
 ---
 
-## Efeito Colateral Positivo
+## Resultado Esperado
 
-Sessões "órfãs" (sem logout) serão automaticamente encerradas com `logout_type: 'timeout'` quando o usuário fizer login novamente, limpando o histórico.
+Após a migração:
+- ✅ Telefone **15981888214** disponível para novo cadastro
+- ✅ Nome "Fernanda a souza" removido de todas as listas
+- ✅ Nenhuma referência órfã no banco de dados
 
----
-
-## Arquivos a Modificar
-
-1. `src/hooks/useSessionTracking.ts`
-   - Adicionar função `isSessionExpired`
-   - Atualizar lógica nas linhas 64-78 e 80-95
