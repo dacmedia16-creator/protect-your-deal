@@ -341,24 +341,28 @@ export default function EmpresaCorretores() {
   }
 
   async function removeCorretor(userId: string) {
-    if (!confirm('Tem certeza que deseja remover este corretor? Ele perderá acesso à plataforma.')) {
+    if (!confirm('Tem certeza que deseja excluir este corretor permanentemente? Esta ação não pode ser desfeita. As fichas serão transferidas para você.')) {
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('imobiliaria_id', imobiliariaId);
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('empresa-delete-corretor', {
+        body: { user_id: userId },
+        headers: {
+          Authorization: `Bearer ${sessionData.session?.access_token}`,
+        },
+      });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
 
-      toast.success('Corretor removido com sucesso');
+      toast.success('Corretor excluído com sucesso');
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error removing corretor:', error);
-      toast.error('Erro ao remover corretor');
+      toast.error(error.message || 'Erro ao excluir corretor');
     }
   }
 
