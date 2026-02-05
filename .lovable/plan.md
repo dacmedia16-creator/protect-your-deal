@@ -1,70 +1,44 @@
 
-# Plano: Enviar Email com PDF para Corretores ao Completar Ficha
 
-## Objetivo
+# Plano: Corrigir Erro ao Excluir Corretor Autônomo
 
-Quando uma ficha for confirmada por ambas as partes (status = `completo`), enviar automaticamente um email com o comprovante em PDF anexado para:
-1. **Corretor Principal** - quem criou a ficha (`user_id`)
-2. **Corretor Parceiro** - se houver (`corretor_parceiro_id`)
+## Problema Identificado
+
+Ao tentar excluir o corretor autônomo (usuário `8d39a65b-2b59-4e51-abd5-aa8fa46f9e0e`), o sistema retorna erro:
+
+```
+AuthApiError: Database error deleting user
+```
+
+**Causa raiz**: A tabela `app_versions` tem uma foreign key `published_by` que referencia `auth.users`, mas **sem `ON DELETE CASCADE`**. Isso bloqueia a exclusão quando há registros associados ao usuário.
 
 ---
 
-## Análise Atual
+## Análise Técnica
 
-| Componente | Estado Atual |
-|------------|--------------|
-| Template `confirmacao_visita` | ✅ Existe (mas sem anexo) |
-| Função `send-email` | ✅ Suporta nodemailer |
-| Função `generate-pdf` | ✅ Retorna PDF em bytes |
-| Função `verify-otp` | ✅ Já gera backup quando ficha completa |
-| Emails dos corretores | ✅ Disponível em `profiles.email` ou `auth.users.email` |
+| Tabela | Registros do Usuário | ON DELETE | Status |
+|--------|---------------------|-----------|--------|
+| `profiles` | 1 | CASCADE | OK |
+| `user_roles` | 1 | CASCADE | OK |
+| `assinaturas` | 1 | CASCADE | OK |
+| `fichas_visita` | 0 | SET NULL | OK |
+| `clientes` | 0 | CASCADE | OK |
+| `imoveis` | 0 | CASCADE | OK |
+| `app_versions` | **2** | **NO ACTION** | **BLOQUEANDO** |
+| `user_sessions` | 3 | (sem FK) | Limpar |
+| `convites.convidado_por` | 0 | NO ACTION | OK |
 
 ---
 
-## Solução Proposta
+## Solução
 
-### 1. Criar Novo Template de Email
+Atualizar a função `admin-delete-user` para limpar as referências faltantes antes de deletar o usuário:
 
-**Tipo**: `ficha_completa`  
-**Assunto**: `Registro confirmado! Protocolo {protocolo} 📋`
+### Tabelas a Adicionar na Limpeza
 
-Variáveis:
-- `{nome}` - Nome do corretor
-- `{protocolo}` - Protocolo da ficha
-- `{endereco}` - Endereço do imóvel
-- `{data_visita}` - Data da visita
-- `{link}` - Link para ver detalhes
-
-### 2. Atualizar Função `send-email`
-
-Adicionar suporte a anexos (attachments) no nodemailer:
-
-```text
-interface SendEmailRequest {
-  ...
-  attachments?: Array<{
-    filename: string;
-    content: string; // base64
-    contentType: string;
-  }>;
-}
-```
-
-### 3. Atualizar Função `verify-otp`
-
-Após gerar o backup do PDF, enviar emails para os corretores:
-
-```text
-Fluxo:
-1. Quando newStatus = 'completo':
-   a. Gerar PDF via generate-pdf
-   b. Salvar backup no storage
-   c. Buscar email do corretor principal
-   d. Enviar email com PDF anexado para corretor principal
-   e. Se houver corretor_parceiro_id:
-      - Buscar email do corretor parceiro
-      - Enviar email com PDF anexado para corretor parceiro
-```
+1. **`app_versions.published_by`** → SET NULL
+2. **`user_sessions`** → DELETE (não tem FK para auth.users, mas é bom limpar)
+3. **`convites.convidado_por`** → SET NULL (prevenir problemas futuros)
 
 ---
 
@@ -72,178 +46,80 @@ Fluxo:
 
 | Arquivo | Ação |
 |---------|------|
-| `supabase/functions/send-email/index.ts` | Adicionar suporte a attachments |
-| `supabase/functions/verify-otp/index.ts` | Adicionar envio de emails após conclusão |
-| Migração SQL | Criar template `ficha_completa` |
+| `supabase/functions/admin-delete-user/index.ts` | Adicionar limpeza de `app_versions`, `user_sessions` e `convites` |
+| `supabase/functions/empresa-delete-corretor/index.ts` | Adicionar mesmas limpezas |
 
 ---
 
 ## Seção Técnica
 
-### Modificação no `send-email/index.ts`
+### Novo Código para `admin-delete-user/index.ts`
 
-Adicionar campo `attachments` no tipo e no `sendMail`:
-
-```typescript
-interface SendEmailRequest {
-  action: 'send' | 'send-template' | 'test-connection';
-  to?: string;
-  subject?: string;
-  html?: string;
-  text?: string;
-  template_tipo?: string;
-  variables?: Record<string, string>;
-  ficha_id?: string;
-  from_email?: string;
-  attachments?: Array<{
-    filename: string;
-    content: string; // base64
-    contentType: string;
-  }>;
-}
-
-// No sendMail:
-const info = await transporter.sendMail({
-  from: `"${credentials.displayName}" <${credentials.user}>`,
-  to: to,
-  subject: finalSubject,
-  html: finalHtml,
-  text: finalText,
-  attachments: body.attachments?.map(att => ({
-    filename: att.filename,
-    content: Buffer.from(att.content, 'base64'),
-    contentType: att.contentType,
-  })),
-});
-```
-
-### Modificação no `verify-otp/index.ts`
-
-Adicionar função para enviar emails após conclusão:
+Adicionar antes do step final de exclusão (entre steps 8 e 9):
 
 ```typescript
-async function sendCompletionEmails(
-  supabase: any, 
-  ficha: any, 
-  pdfBytes: Uint8Array
-): Promise<void> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// ====== STEP 9: Clear app_versions published_by ======
+console.log('[9/12] Clearing app_versions published_by...');
+const { count: appVersionsCount } = await supabaseAdmin
+  .from('app_versions')
+  .update({ published_by: null })
+  .eq('published_by', user_id);
 
-  // Converter PDF para base64
-  const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
-  
-  // Buscar email do corretor principal
-  const { data: corretorPrincipal } = await supabase
-    .from('profiles')
-    .select('nome, email, user_id')
-    .eq('user_id', ficha.user_id)
-    .single();
-  
-  // Se não tem email no profile, buscar do auth.users
-  let emailPrincipal = corretorPrincipal?.email;
-  if (!emailPrincipal) {
-    const { data: authUser } = await supabase.auth.admin.getUserById(ficha.user_id);
-    emailPrincipal = authUser?.user?.email;
-  }
-  
-  const variables = {
-    nome: corretorPrincipal?.nome || 'Corretor',
-    protocolo: ficha.protocolo,
-    endereco: ficha.imovel_endereco,
-    data_visita: new Date(ficha.data_visita).toLocaleDateString('pt-BR'),
-    link: `https://visitaprova.com.br/ficha/${ficha.id}`,
-  };
-  
-  // Enviar para corretor principal
-  if (emailPrincipal) {
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({
-        action: 'send-template',
-        to: emailPrincipal,
-        template_tipo: 'ficha_completa',
-        variables,
-        ficha_id: ficha.id,
-        attachments: [{
-          filename: `comprovante-${ficha.protocolo}.pdf`,
-          content: pdfBase64,
-          contentType: 'application/pdf',
-        }],
-      }),
-    });
-  }
-  
-  // Se tem corretor parceiro, enviar para ele também
-  if (ficha.corretor_parceiro_id) {
-    const { data: corretorParceiro } = await supabase
-      .from('profiles')
-      .select('nome, email')
-      .eq('user_id', ficha.corretor_parceiro_id)
-      .single();
-    
-    let emailParceiro = corretorParceiro?.email;
-    if (!emailParceiro) {
-      const { data: authUser } = await supabase.auth.admin.getUserById(ficha.corretor_parceiro_id);
-      emailParceiro = authUser?.user?.email;
-    }
-    
-    if (emailParceiro) {
-      variables.nome = corretorParceiro?.nome || 'Corretor Parceiro';
-      
-      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        // ... mesmo payload adaptado
-      });
-    }
-  }
-}
+console.log(`[9/12] Cleared ${appVersionsCount ?? 0} app_versions references`);
+
+// ====== STEP 10: Delete user_sessions ======
+console.log('[10/12] Deleting user_sessions...');
+const { count: sessionsCount } = await supabaseAdmin
+  .from('user_sessions')
+  .delete()
+  .eq('user_id', user_id);
+
+console.log(`[10/12] Deleted ${sessionsCount ?? 0} user_sessions`);
+
+// ====== STEP 11: Clear convites.convidado_por ======
+console.log('[11/12] Clearing convites.convidado_por...');
+const { count: convitesCount } = await supabaseAdmin
+  .from('convites')
+  .update({ convidado_por: null })
+  .eq('convidado_por', user_id);
+
+console.log(`[11/12] Cleared ${convitesCount ?? 0} convites references`);
+
+// ====== STEP 12: Delete user from auth.users ======
+// (código existente renumerado)
 ```
 
-### Template HTML
+### Mesma lógica para `empresa-delete-corretor/index.ts`
 
-```html
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="color: #2563eb;">VisitaProva</h1>
-  </div>
-  
-  <h2 style="color: #1e293b;">Registro Confirmado! 📋</h2>
-  
-  <p>Olá, <strong>{nome}</strong>!</p>
-  
-  <p>O registro de visita foi confirmado por ambas as partes.</p>
-  
-  <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 20px; margin: 20px 0;">
-    <p><strong>Protocolo:</strong> {protocolo}</p>
-    <p><strong>Endereço:</strong> {endereco}</p>
-    <p><strong>Data:</strong> {data_visita}</p>
-  </div>
-  
-  <p>📎 O comprovante em PDF está anexado a este email.</p>
-  
-  <div style="text-align: center; margin: 30px 0;">
-    <a href="{link}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px;">Ver Detalhes</a>
-  </div>
-  
-  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-  <p style="color: #94a3b8; font-size: 12px; text-align: center;">VisitaProva</p>
-</body>
-</html>
-```
+Aplicar as mesmas 3 novas etapas de limpeza.
 
 ---
 
 ## Resultado Esperado
 
 Após implementação:
-- ✅ Corretor principal recebe email com PDF anexado ao completar ficha
-- ✅ Corretor parceiro (se houver) recebe email com PDF anexado
-- ✅ Emails são logados em `email_logs` para rastreamento
-- ✅ Processo não bloqueia a confirmação (erros são apenas logados)
+- A exclusão de corretores autônomos funcionará corretamente
+- Registros em `app_versions` terão `published_by` definido como NULL
+- Sessões do usuário serão removidas
+- Referências em `convites` serão limpas
+- Todos os dados relacionados serão tratados antes da exclusão do usuário
+
+---
+
+## Fluxo Completo de Exclusão (12 Steps)
+
+```text
+1. Limpar telefone do profile
+2. Deletar equipes_membros
+3. Deletar otp_queue
+4. Deletar afiliados
+5. Nullificar audit_logs
+6. Deletar templates_mensagem
+7. Transferir/orphanar fichas_visita
+8. Limpar corretor_parceiro_id em fichas
+9. Limpar app_versions.published_by (NOVO)
+10. Deletar user_sessions (NOVO)
+11. Limpar convites.convidado_por (NOVO)
+12. Deletar usuário de auth.users
+```
+
