@@ -217,16 +217,43 @@ Deno.serve(async (req) => {
     console.log(`[7/9] Transferred ${transferredCount ?? 0} fichas to admin ${currentUser.id}`);
 
     // ====== STEP 8: Clear corretor_parceiro_id references ======
-    console.log('[8/9] Clearing corretor_parceiro_id references...');
+    console.log('[8/12] Clearing corretor_parceiro_id references...');
     const { count: partnerCount } = await supabaseAdmin
       .from('fichas_visita')
       .update({ corretor_parceiro_id: null })
       .eq('corretor_parceiro_id', targetUserId);
     
-    console.log(`[8/9] Cleared ${partnerCount ?? 0} corretor_parceiro_id references`);
+    console.log(`[8/12] Cleared ${partnerCount ?? 0} corretor_parceiro_id references`);
 
-    // ====== STEP 9: Delete user from auth.users (cascades to user_roles and profiles) ======
-    console.log('[9/9] Deleting user from auth.users...');
+    // ====== STEP 9: Clear app_versions published_by ======
+    console.log('[9/12] Clearing app_versions published_by...');
+    const { count: appVersionsCount } = await supabaseAdmin
+      .from('app_versions')
+      .update({ published_by: null })
+      .eq('published_by', targetUserId);
+
+    console.log(`[9/12] Cleared ${appVersionsCount ?? 0} app_versions references`);
+
+    // ====== STEP 10: Delete user_sessions ======
+    console.log('[10/12] Deleting user_sessions...');
+    const { count: sessionsCount } = await supabaseAdmin
+      .from('user_sessions')
+      .delete()
+      .eq('user_id', targetUserId);
+
+    console.log(`[10/12] Deleted ${sessionsCount ?? 0} user_sessions`);
+
+    // ====== STEP 11: Clear convites.convidado_por ======
+    console.log('[11/12] Clearing convites.convidado_por...');
+    const { count: convitesCount } = await supabaseAdmin
+      .from('convites')
+      .update({ convidado_por: null })
+      .eq('convidado_por', targetUserId);
+
+    console.log(`[11/12] Cleared ${convitesCount ?? 0} convites references`);
+
+    // ====== STEP 12: Delete user from auth.users (cascades to user_roles and profiles) ======
+    console.log('[12/12] Deleting user from auth.users...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
 
     if (deleteError) {
