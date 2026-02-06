@@ -108,7 +108,7 @@ export default function DetalhesFicha() {
   } | null>(null);
 
   // Rate limit state for OTP buttons (stores remaining SECONDS for precise countdown)
-  const RATE_LIMIT_MINUTES = 30;
+  const RATE_LIMIT_MINUTES = 3;
   const [rateLimitProprietario, setRateLimitProprietario] = useState<number | null>(null);
   const [rateLimitComprador, setRateLimitComprador] = useState<number | null>(null);
   
@@ -342,6 +342,15 @@ export default function DetalhesFicha() {
       const lastOtp = lastOtps.find(otp => otp.tipo === tipo);
       if (!lastOtp) return null;
       
+      // Ignore auto-sent OTPs (created within 30s of ficha creation)
+      if (ficha?.created_at) {
+        const otpTime = new Date(lastOtp.created_at).getTime();
+        const fichaTime = new Date(ficha.created_at).getTime();
+        if (Math.abs(otpTime - fichaTime) < 30000) {
+          return null; // Was auto-sent, don't block manual send
+        }
+      }
+      
       const lastSentTime = new Date(lastOtp.created_at).getTime();
       const nextAvailable = lastSentTime + RATE_LIMIT_MINUTES * 60 * 1000;
       const remainingMs = nextAvailable - Date.now();
@@ -361,7 +370,7 @@ export default function DetalhesFicha() {
     const interval = setInterval(updateLimits, 1000);
     
     return () => clearInterval(interval);
-  }, [lastOtps, role]);
+  }, [lastOtps, role, ficha?.created_at]);
 
   // Fetch corretores da mesma imobiliária para seleção no convite de parceiro
   const { data: corretoresImobiliaria } = useQuery({

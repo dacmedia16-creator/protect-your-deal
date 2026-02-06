@@ -201,10 +201,10 @@ serve(async (req) => {
       userRole = roleData?.role || null;
     }
 
-    // Rate limit: 30 minutes for corretor role only
-    const RATE_LIMIT_MINUTES = 30;
+    // Rate limit: 3 minutes for corretor role only
+    const RATE_LIMIT_MINUTES = 3;
     if (userRole === 'corretor') {
-      const thirtyMinutesAgo = new Date(Date.now() - RATE_LIMIT_MINUTES * 60 * 1000);
+      const rateLimitAgo = new Date(Date.now() - RATE_LIMIT_MINUTES * 60 * 1000);
       
       // Check for recent OTP send for this ficha/tipo
       const { data: recentOtp } = await supabase
@@ -212,27 +212,42 @@ serve(async (req) => {
         .select('created_at')
         .eq('ficha_id', ficha_id)
         .eq('tipo', tipo)
-        .gte('created_at', thirtyMinutesAgo.toISOString())
+        .gte('created_at', rateLimitAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (recentOtp) {
-        const lastSent = new Date(recentOtp.created_at);
-        const nextAvailable = new Date(lastSent.getTime() + RATE_LIMIT_MINUTES * 60 * 1000);
-        const minutesRemaining = Math.ceil((nextAvailable.getTime() - Date.now()) / 60000);
-        
-        console.log(`Rate limit hit for corretor ${userId}. Last OTP sent at ${lastSent.toISOString()}. Minutes remaining: ${minutesRemaining}`);
-        
-        return new Response(
-          JSON.stringify({ 
-            error: `Aguarde ${minutesRemaining} minuto${minutesRemaining > 1 ? 's' : ''} para enviar novamente.`,
-            rate_limited: true,
-            next_available: nextAvailable.toISOString(),
-            minutes_remaining: minutesRemaining
-          }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        // Check if this OTP was auto-sent (created within 30s of ficha creation)
+        const { data: fichaData } = await supabase
+          .from('fichas_visita')
+          .select('created_at')
+          .eq('id', ficha_id)
+          .single();
+
+        const otpTime = new Date(recentOtp.created_at).getTime();
+        const fichaTime = fichaData ? new Date(fichaData.created_at).getTime() : 0;
+        const wasAutoSent = fichaData && Math.abs(otpTime - fichaTime) < 30000; // 30 seconds
+
+        if (wasAutoSent) {
+          console.log(`[send-otp] Ignoring rate limit - OTP was auto-sent (${Math.abs(otpTime - fichaTime)}ms after ficha creation)`);
+        } else {
+          const lastSent = new Date(recentOtp.created_at);
+          const nextAvailable = new Date(lastSent.getTime() + RATE_LIMIT_MINUTES * 60 * 1000);
+          const minutesRemaining = Math.ceil((nextAvailable.getTime() - Date.now()) / 60000);
+          
+          console.log(`[send-otp] Rate limit hit for corretor ${userId}. Last OTP sent at ${lastSent.toISOString()}. Minutes remaining: ${minutesRemaining}`);
+          
+          return new Response(
+            JSON.stringify({ 
+              error: `Aguarde ${minutesRemaining} minuto${minutesRemaining > 1 ? 's' : ''} para enviar novamente.`,
+              rate_limited: true,
+              next_available: nextAvailable.toISOString(),
+              minutes_remaining: minutesRemaining
+            }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
     }
 
