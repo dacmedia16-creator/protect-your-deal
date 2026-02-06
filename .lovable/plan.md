@@ -1,61 +1,55 @@
 
+# Corrigir Rate Limit Excessivo no Envio de OTP
 
-# Corrigir Erro de Conexao na Confirmacao OTP
+## Problema
 
-## Resumo
+O rate limit de envio de OTP tem dois problemas:
 
-O problema principal e que as funcoes de backend do fluxo OTP (`get-otp-info`, `verify-otp`, `send-otp`) nao estao deployadas no servidor, retornando erro 404 quando o comprador/proprietario tenta acessar o link de confirmacao. Alem disso, os headers CORS dessas funcoes estao incompletos.
+1. **Tempo excessivo**: O rate limit e de 30 minutos, o que e muito longo. Se o corretor precisa reenviar (ex: numero errado, mensagem nao chegou), ele tem que esperar 30 minutos.
 
-## Acoes
+2. **OTPs auto-enviados contam no rate limit**: Quando a ficha e criada com auto-envio (padrao ON), o sistema cria o OTP automaticamente em 1-7 segundos. Quando o corretor abre a ficha para reenviar manualmente, o rate limit detecta esse OTP auto-enviado e bloqueia por 30 minutos, mesmo que o corretor nunca tenha clicado "enviar" manualmente.
 
-### 1. Corrigir headers CORS nas 3 funcoes OTP
+Dados reais do banco confirmam que quase todos os OTPs sao criados em menos de 12 segundos apos a ficha - sao auto-envios, nao envios manuais.
 
-Atualizar o header `Access-Control-Allow-Headers` para incluir os headers enviados pelo Supabase JS client v2.88+:
+## Solucao
 
-| Arquivo | Linha | Alteracao |
-|---------|-------|-----------|
-| `supabase/functions/get-otp-info/index.ts` | 6 | Adicionar headers CORS completos |
-| `supabase/functions/verify-otp/index.ts` | 6 | Adicionar headers CORS completos |
-| `supabase/functions/send-otp/index.ts` | 6 | Adicionar headers CORS completos |
+### 1. Reduzir rate limit de 30 para 3 minutos
 
-Headers atualizados:
-```text
-authorization, x-client-info, apikey, content-type,
-x-supabase-client-platform, x-supabase-client-platform-version,
-x-supabase-client-runtime, x-supabase-client-runtime-version
-```
+Tanto no backend quanto no frontend, alterar `RATE_LIMIT_MINUTES` de 30 para 3. Isso mantem a protecao contra spam mas permite reenvios rapidos quando necessario.
 
-### 2. Adicionar logs de diagnostico no get-otp-info
+**Arquivos:**
+- `supabase/functions/send-otp/index.ts` - linha 205: alterar `RATE_LIMIT_MINUTES = 30` para `RATE_LIMIT_MINUTES = 3`
+- `src/pages/DetalhesFicha.tsx` - linha 111: alterar `RATE_LIMIT_MINUTES = 30` para `RATE_LIMIT_MINUTES = 3`
 
-Incluir `console.log` no inicio da funcao para registrar quando uma requisicao chega e qual token foi recebido. Isso facilita debug futuro.
+### 2. Ignorar OTPs auto-enviados no rate limit do backend
 
-### 3. Melhorar mensagem de erro no frontend
+No `send-otp`, antes de aplicar o rate limit, verificar se o OTP recente foi criado automaticamente (dentro de 30 segundos da criacao da ficha). Se sim, permitir o envio manual sem rate limit.
 
-No arquivo `src/pages/ConfirmarVisita.tsx`, melhorar a mensagem de erro de conexao para incluir informacoes mais uteis ao usuario, como orientacao para tentar novamente em alguns instantes.
+**Arquivo:** `supabase/functions/send-otp/index.ts`
+- Apos buscar o `recentOtp`, buscar a data de criacao da ficha
+- Se a diferenca entre `recentOtp.created_at` e `ficha.created_at` for menor que 30 segundos, ignorar o rate limit (foi auto-enviado)
 
-### 4. Deployar as 3 funcoes OTP
+### 3. Ignorar OTPs auto-enviados no rate limit do frontend
 
-Apos as correcoes de codigo, deployar:
-- `get-otp-info`
-- `verify-otp`
-- `send-otp`
+No `DetalhesFicha.tsx`, na funcao `calculateRemainingSeconds`, comparar o `created_at` do OTP com o `created_at` da ficha. Se a diferenca for menor que 30 segundos, nao mostrar o countdown de rate limit.
 
-### 5. Testar o fluxo
+**Arquivo:** `src/pages/DetalhesFicha.tsx`
+- Alterar o `useEffect` que calcula o rate limit para comparar com `ficha.created_at`
 
-Chamar `get-otp-info` via HTTP para confirmar que retorna 200 em vez de 404.
+### 4. Deploy da funcao atualizada
+
+Deployar `send-otp` com as alteracoes.
 
 ## Arquivos modificados
 
-| Arquivo | Tipo de alteracao |
-|---------|-------------------|
-| `supabase/functions/get-otp-info/index.ts` | CORS + logs |
-| `supabase/functions/verify-otp/index.ts` | CORS |
-| `supabase/functions/send-otp/index.ts` | CORS |
-| `src/pages/ConfirmarVisita.tsx` | Mensagem de erro melhorada |
+| Arquivo | Alteracao |
+|---------|-----------|
+| `supabase/functions/send-otp/index.ts` | Reduzir rate limit + ignorar auto-envios |
+| `src/pages/DetalhesFicha.tsx` | Reduzir rate limit + ignorar auto-envios |
 
-## Impacto
+## Resultado esperado
 
-- Os links de confirmacao enviados para compradores e proprietarios voltarao a funcionar
-- Headers CORS completos evitam falhas intermitentes em diferentes navegadores
-- Logs de diagnostico facilitam debug de problemas futuros
-
+- Corretor cria ficha COM auto-envio: pode reenviar manualmente imediatamente
+- Corretor cria ficha SEM auto-envio: pode enviar imediatamente (sem mudanca)
+- Apos envio manual: aguarda 3 minutos antes de poder reenviar (anti-spam)
+- Apos segundo envio manual: aguarda 3 minutos novamente
