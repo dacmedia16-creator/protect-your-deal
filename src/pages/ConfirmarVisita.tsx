@@ -393,8 +393,11 @@ export default function ConfirmarVisita() {
                 <AlertCircle className="h-8 w-8 text-warning" />
               </div>
               <h2 className="font-display text-xl font-bold mb-2">Erro de conexão</h2>
-              <p className="text-muted-foreground mb-4">
-                Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.
+              <p className="text-muted-foreground mb-2">
+                Não foi possível conectar ao servidor de confirmação.
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Isso pode acontecer por instabilidade na internet ou no servidor. Aguarde alguns instantes e tente novamente.
               </p>
               <Button 
                 onClick={handleRetry} 
