@@ -50,38 +50,23 @@ export default function EmpresaFichas() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, convertido_venda')
-        .eq('imobiliaria_id', imobiliariaId)
-        .order('created_at', { ascending: false });
+        .rpc('get_fichas_empresa', { p_imobiliaria_id: imobiliariaId });
 
       if (error) throw error;
 
-      // Fetch corretor names (only for non-null user_ids)
-      const userIds = [...new Set((data || []).filter(f => f.user_id).map(f => f.user_id))];
-      
-      let corretorMap: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, nome')
-          .in('user_id', userIds);
-
-        corretorMap = (profiles || []).reduce((acc, p) => {
-          acc[p.user_id] = p.nome;
-          return acc;
-        }, {} as Record<string, string>);
-      }
-
-      const enrichedFichas = (data || []).map(f => ({
-        ...f,
-        corretor_nome: f.user_id 
-          ? (corretorMap[f.user_id] || 'Desconhecido')
-          : null, // Null indicates orphaned ficha
-        convertido_venda: f.convertido_venda ?? false
+      const fichasList = (data || []).map((f: any) => ({
+        id: f.id,
+        protocolo: f.protocolo,
+        imovel_endereco: f.imovel_endereco,
+        proprietario_nome: f.proprietario_nome,
+        comprador_nome: f.comprador_nome,
+        data_visita: f.data_visita,
+        status: f.status,
+        corretor_nome: f.corretor_nome,
+        convertido_venda: f.convertido_venda ?? false,
       }));
 
-      setFichas(enrichedFichas);
+      setFichas(fichasList);
     } catch (error) {
       console.error('Error fetching fichas:', error);
     } finally {
