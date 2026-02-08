@@ -190,10 +190,15 @@ serve(async (req) => {
     // Current page tracking - allows dynamic page creation
     let currentPage = page;
 
+    // Footer occupies y=25 to y=100, so content must stay above this area
+    const FOOTER_RESERVED = 110;
+
     // Helper function to ensure enough space, creates new page if needed
-    const ensureSpace = (neededSpace: number = 200): void => {
-      if (yPosition < neededSpace) {
-        console.log(`[generate-pdf] Creating new page - yPosition: ${yPosition}, needed: ${neededSpace}`);
+    // neededSpace = how many points of content we need to draw
+    // Total check = neededSpace + FOOTER_RESERVED (to avoid overlapping footer)
+    const ensureSpace = (neededSpace: number = 100): void => {
+      if (yPosition < neededSpace + FOOTER_RESERVED) {
+        console.log(`[generate-pdf] Creating new page - yPosition: ${yPosition}, needed: ${neededSpace} + ${FOOTER_RESERVED} footer`);
         currentPage = pdfDoc.addPage([595, 842]);
         yPosition = height - 50;
       }
@@ -622,7 +627,7 @@ serve(async (req) => {
         
         if (testWidth > obsMaxWidth) {
           // Check if we need a new page before drawing
-          if (yPosition < 130) {
+        if (yPosition < FOOTER_RESERVED + 20) {
             currentPage = pdfDoc.addPage([595, 842]);
             yPosition = height - 50;
             
@@ -652,7 +657,7 @@ serve(async (req) => {
       
       // Draw remaining text
       if (line.trim()) {
-        if (yPosition < 130) {
+        if (yPosition < FOOTER_RESERVED + 20) {
           currentPage = pdfDoc.addPage([595, 842]);
           yPosition = height - 50;
         }
