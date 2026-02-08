@@ -126,51 +126,28 @@ export default function AdminFichas() {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
-        .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, imobiliaria_id, backup_gerado_em')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_fichas_admin');
 
       if (error) throw error;
 
-      // Fetch corretor names
-      const userIds = [...new Set((data || []).map(f => f.user_id))];
-      let corretorMap: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, nome')
-          .in('user_id', userIds);
-
-        corretorMap = (profiles || []).reduce((acc, p) => {
-          acc[p.user_id] = p.nome;
-          return acc;
-        }, {} as Record<string, string>);
-      }
-
-      // Fetch imobiliaria names
-      const imobiliariaIds = [...new Set((data || []).filter(f => f.imobiliaria_id).map(f => f.imobiliaria_id as string))];
-      let imobiliariaMap: Record<string, string> = {};
-      if (imobiliariaIds.length > 0) {
-        const { data: imobiliarias } = await supabase
-          .from('imobiliarias')
-          .select('id, nome')
-          .in('id', imobiliariaIds);
-
-        imobiliariaMap = (imobiliarias || []).reduce((acc, i) => {
-          acc[i.id] = i.nome;
-          return acc;
-        }, {} as Record<string, string>);
-      }
-
-      const enrichedFichas = (data || []).map(f => ({
-        ...f,
-        corretor_nome: corretorMap[f.user_id] || 'Desconhecido',
-        imobiliaria_nome: f.imobiliaria_id ? imobiliariaMap[f.imobiliaria_id] || null : null,
-        is_autonomo: !f.imobiliaria_id
+      const fichasList = (data || []).map((f: any) => ({
+        id: f.id,
+        protocolo: f.protocolo,
+        imovel_endereco: f.imovel_endereco,
+        proprietario_nome: f.proprietario_nome,
+        comprador_nome: f.comprador_nome,
+        data_visita: f.data_visita,
+        status: f.status,
+        user_id: f.user_id,
+        imobiliaria_id: f.imobiliaria_id,
+        backup_gerado_em: f.backup_gerado_em,
+        convertido_venda: f.convertido_venda ?? false,
+        corretor_nome: f.corretor_nome,
+        imobiliaria_nome: f.imobiliaria_nome,
+        is_autonomo: !f.imobiliaria_id,
       }));
 
-      setFichas(enrichedFichas);
+      setFichas(fichasList);
     } catch (error) {
       console.error('Error fetching fichas:', error);
     } finally {
