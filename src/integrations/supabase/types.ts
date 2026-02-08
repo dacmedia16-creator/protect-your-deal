@@ -1861,6 +1861,22 @@ export type Database = {
           nome: string
         }[]
       }
+      get_fichas_empresa: {
+        Args: { p_imobiliaria_id: string }
+        Returns: {
+          comprador_nome: string
+          convertido_venda: boolean
+          corretor_nome: string
+          created_at: string
+          data_visita: string
+          id: string
+          imovel_endereco: string
+          proprietario_nome: string
+          protocolo: string
+          status: string
+          user_id: string
+        }[]
+      }
       get_imobiliaria_admin: { Args: { imob_id: string }; Returns: string }
       get_imobiliarias_publicas: {
         Args: never
