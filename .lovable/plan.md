@@ -1,64 +1,60 @@
 
-# Corrigir Nomes dos Corretores nos Registros da Empresa
+# Corrigir Nomes dos Corretores na Pagina Admin
 
 ## Problema
 
-Na pagina de registros da empresa (`/empresa/fichas`), todos os corretores aparecem como "Desconhecido". O codigo faz duas queries separadas:
-
-1. Busca as fichas (funciona - os registros aparecem)
-2. Busca os nomes na tabela `profiles` usando `.in('user_id', userIds)` (retorna vazio silenciosamente)
-
-A segunda query nao trata erros. Se a consulta falha por qualquer motivo relacionado as politicas de seguranca (RLS), o `corretorMap` fica vazio e todos os nomes aparecem como "Desconhecido".
+A pagina `AdminFichas.tsx` (super admin) tem o mesmo bug que foi corrigido na pagina da empresa: faz 2 queries separadas para buscar fichas e nomes dos corretores. A segunda query em `profiles` falha silenciosamente por problemas de RLS no lado do cliente, resultando em todos os corretores aparecendo como "Desconhecido".
 
 ## Dados Verificados
 
-- No banco de dados, os 28 registros da Vip7 tem `user_id` preenchido
-- Todos os 4 corretores tem perfis com `imobiliaria_id` correto
-- As politicas de seguranca da tabela `profiles` DEVERIAM permitir que o admin veja os perfis, mas algo esta falhando silenciosamente
+- A RLS de `profiles` TEM uma policy para super admin: `is_super_admin(auth.uid())`
+- No banco de dados, todos os corretores tem nomes preenchidos
+- O problema esta no padrao de 2 queries no frontend que nao trata erros da segunda query
 
 ## Solucao
 
-Criar uma funcao de banco de dados que retorna os registros ja com o nome do corretor, eliminando a necessidade da segunda query e o problema de RLS.
+Criar uma funcao RPC `get_fichas_admin()` no banco de dados, similar a `get_fichas_empresa`, que retorna TODAS as fichas com nomes dos corretores E das imobiliarias via JOINs no servidor.
 
 ### 1. Criar funcao no banco de dados
 
-Criar a funcao `get_fichas_empresa(p_imobiliaria_id uuid)` que:
-- Valida que o usuario logado e admin da imobiliaria ou super_admin
-- Faz um LEFT JOIN entre `fichas_visita` e `profiles` no servidor
-- Retorna os registros ja com o campo `corretor_nome` preenchido
-- Usa `SECURITY DEFINER` para acessar profiles sem depender de RLS do lado do cliente
+Funcao `get_fichas_admin()` que:
+- Valida que o usuario e super_admin
+- Faz LEFT JOIN entre `fichas_visita`, `profiles` e `imobiliarias` no servidor
+- Retorna os campos necessarios ja com `corretor_nome` e `imobiliaria_nome`
+- Usa `SECURITY DEFINER` para acessar os dados sem problemas de RLS do cliente
 
 ```text
-Funcao: get_fichas_empresa(p_imobiliaria_id uuid)
-Retorna: id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, 
-         data_visita, status, user_id, convertido_venda, corretor_nome, created_at
-Seguranca: SECURITY DEFINER com validacao de permissao interna
+Funcao: get_fichas_admin()
+Retorna: id, protocolo, imovel_endereco, proprietario_nome, comprador_nome,
+         data_visita, status, user_id, imobiliaria_id, backup_gerado_em,
+         convertido_venda, corretor_nome, imobiliaria_nome
+Seguranca: SECURITY DEFINER com validacao de super_admin
 ```
 
 ### 2. Atualizar o frontend
 
-No arquivo `src/pages/empresa/EmpresaFichas.tsx`:
-- Substituir as 2 queries separadas por uma unica chamada `supabase.rpc('get_fichas_empresa', { p_imobiliaria_id: imobiliariaId })`
-- Remover a logica de `corretorMap` (os nomes ja vem do banco)
-- Adicionar tratamento de erro adequado
+No arquivo `src/pages/admin/AdminFichas.tsx`:
+- Substituir as 3 queries separadas (fichas + profiles + imobiliarias) por uma unica chamada `supabase.rpc('get_fichas_admin')`
+- Remover a logica de `corretorMap` e `imobiliariaMap`
+- Mapear os dados retornados diretamente, incluindo `is_autonomo` (quando imobiliaria_id e null)
 
 ### 3. Beneficios
 
-- Elimina a dependencia de RLS na tabela `profiles` para esta consulta
-- Reduz de 2 queries para 1 (melhor performance)
-- Tratamento de erros adequado (a funcao retorna erro se o usuario nao tem permissao)
-- Corretor removido (user_id = null) continua mostrando "(Corretor removido)"
-- Corretor com perfil nao encontrado mostra "Desconhecido" em vez de falhar silenciosamente
+- Elimina o bug de RLS silencioso nas tabelas `profiles` e `imobiliarias`
+- Reduz de 3 queries para 1 (melhor performance)
+- Nomes dos corretores e imobiliarias aparecem corretamente
+- Corretor removido (user_id = null) continua tratado corretamente
 
 ## Arquivos modificados
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| Migration SQL | Criar funcao `get_fichas_empresa` |
-| `src/pages/empresa/EmpresaFichas.tsx` | Usar `supabase.rpc()` em vez de 2 queries |
+| Migration SQL | Criar funcao `get_fichas_admin` |
+| `src/pages/admin/AdminFichas.tsx` | Usar `supabase.rpc()` em vez de 3 queries separadas |
 
 ## Impacto
 
-- Todos os registros passarao a mostrar o nome correto do corretor
-- A pagina carregara mais rapido (1 query em vez de 2)
-- Sem risco de regressao em outras paginas (a alteracao e isolada)
+- Corrige os nomes dos corretores na pagina admin
+- Corrige os nomes das imobiliarias na mesma pagina
+- Sem risco de regressao (alteracao isolada na pagina admin)
+- Mesmo padrao ja usado com sucesso na pagina da empresa
