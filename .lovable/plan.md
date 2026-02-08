@@ -1,55 +1,64 @@
 
-# Corrigir Rate Limit Excessivo no Envio de OTP
+# Corrigir Nomes dos Corretores nos Registros da Empresa
 
 ## Problema
 
-O rate limit de envio de OTP tem dois problemas:
+Na pagina de registros da empresa (`/empresa/fichas`), todos os corretores aparecem como "Desconhecido". O codigo faz duas queries separadas:
 
-1. **Tempo excessivo**: O rate limit e de 30 minutos, o que e muito longo. Se o corretor precisa reenviar (ex: numero errado, mensagem nao chegou), ele tem que esperar 30 minutos.
+1. Busca as fichas (funciona - os registros aparecem)
+2. Busca os nomes na tabela `profiles` usando `.in('user_id', userIds)` (retorna vazio silenciosamente)
 
-2. **OTPs auto-enviados contam no rate limit**: Quando a ficha e criada com auto-envio (padrao ON), o sistema cria o OTP automaticamente em 1-7 segundos. Quando o corretor abre a ficha para reenviar manualmente, o rate limit detecta esse OTP auto-enviado e bloqueia por 30 minutos, mesmo que o corretor nunca tenha clicado "enviar" manualmente.
+A segunda query nao trata erros. Se a consulta falha por qualquer motivo relacionado as politicas de seguranca (RLS), o `corretorMap` fica vazio e todos os nomes aparecem como "Desconhecido".
 
-Dados reais do banco confirmam que quase todos os OTPs sao criados em menos de 12 segundos apos a ficha - sao auto-envios, nao envios manuais.
+## Dados Verificados
+
+- No banco de dados, os 28 registros da Vip7 tem `user_id` preenchido
+- Todos os 4 corretores tem perfis com `imobiliaria_id` correto
+- As politicas de seguranca da tabela `profiles` DEVERIAM permitir que o admin veja os perfis, mas algo esta falhando silenciosamente
 
 ## Solucao
 
-### 1. Reduzir rate limit de 30 para 3 minutos
+Criar uma funcao de banco de dados que retorna os registros ja com o nome do corretor, eliminando a necessidade da segunda query e o problema de RLS.
 
-Tanto no backend quanto no frontend, alterar `RATE_LIMIT_MINUTES` de 30 para 3. Isso mantem a protecao contra spam mas permite reenvios rapidos quando necessario.
+### 1. Criar funcao no banco de dados
 
-**Arquivos:**
-- `supabase/functions/send-otp/index.ts` - linha 205: alterar `RATE_LIMIT_MINUTES = 30` para `RATE_LIMIT_MINUTES = 3`
-- `src/pages/DetalhesFicha.tsx` - linha 111: alterar `RATE_LIMIT_MINUTES = 30` para `RATE_LIMIT_MINUTES = 3`
+Criar a funcao `get_fichas_empresa(p_imobiliaria_id uuid)` que:
+- Valida que o usuario logado e admin da imobiliaria ou super_admin
+- Faz um LEFT JOIN entre `fichas_visita` e `profiles` no servidor
+- Retorna os registros ja com o campo `corretor_nome` preenchido
+- Usa `SECURITY DEFINER` para acessar profiles sem depender de RLS do lado do cliente
 
-### 2. Ignorar OTPs auto-enviados no rate limit do backend
+```text
+Funcao: get_fichas_empresa(p_imobiliaria_id uuid)
+Retorna: id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, 
+         data_visita, status, user_id, convertido_venda, corretor_nome, created_at
+Seguranca: SECURITY DEFINER com validacao de permissao interna
+```
 
-No `send-otp`, antes de aplicar o rate limit, verificar se o OTP recente foi criado automaticamente (dentro de 30 segundos da criacao da ficha). Se sim, permitir o envio manual sem rate limit.
+### 2. Atualizar o frontend
 
-**Arquivo:** `supabase/functions/send-otp/index.ts`
-- Apos buscar o `recentOtp`, buscar a data de criacao da ficha
-- Se a diferenca entre `recentOtp.created_at` e `ficha.created_at` for menor que 30 segundos, ignorar o rate limit (foi auto-enviado)
+No arquivo `src/pages/empresa/EmpresaFichas.tsx`:
+- Substituir as 2 queries separadas por uma unica chamada `supabase.rpc('get_fichas_empresa', { p_imobiliaria_id: imobiliariaId })`
+- Remover a logica de `corretorMap` (os nomes ja vem do banco)
+- Adicionar tratamento de erro adequado
 
-### 3. Ignorar OTPs auto-enviados no rate limit do frontend
+### 3. Beneficios
 
-No `DetalhesFicha.tsx`, na funcao `calculateRemainingSeconds`, comparar o `created_at` do OTP com o `created_at` da ficha. Se a diferenca for menor que 30 segundos, nao mostrar o countdown de rate limit.
-
-**Arquivo:** `src/pages/DetalhesFicha.tsx`
-- Alterar o `useEffect` que calcula o rate limit para comparar com `ficha.created_at`
-
-### 4. Deploy da funcao atualizada
-
-Deployar `send-otp` com as alteracoes.
+- Elimina a dependencia de RLS na tabela `profiles` para esta consulta
+- Reduz de 2 queries para 1 (melhor performance)
+- Tratamento de erros adequado (a funcao retorna erro se o usuario nao tem permissao)
+- Corretor removido (user_id = null) continua mostrando "(Corretor removido)"
+- Corretor com perfil nao encontrado mostra "Desconhecido" em vez de falhar silenciosamente
 
 ## Arquivos modificados
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `supabase/functions/send-otp/index.ts` | Reduzir rate limit + ignorar auto-envios |
-| `src/pages/DetalhesFicha.tsx` | Reduzir rate limit + ignorar auto-envios |
+| Migration SQL | Criar funcao `get_fichas_empresa` |
+| `src/pages/empresa/EmpresaFichas.tsx` | Usar `supabase.rpc()` em vez de 2 queries |
 
-## Resultado esperado
+## Impacto
 
-- Corretor cria ficha COM auto-envio: pode reenviar manualmente imediatamente
-- Corretor cria ficha SEM auto-envio: pode enviar imediatamente (sem mudanca)
-- Apos envio manual: aguarda 3 minutos antes de poder reenviar (anti-spam)
-- Apos segundo envio manual: aguarda 3 minutos novamente
+- Todos os registros passarao a mostrar o nome correto do corretor
+- A pagina carregara mais rapido (1 query em vez de 2)
+- Sem risco de regressao em outras paginas (a alteracao e isolada)
