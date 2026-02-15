@@ -361,7 +361,7 @@ async function processQueueItem(
       // Meta channel: use approved template visita_prova
       console.log('[process-otp-queue] Usando template Meta visita_prova');
       sent = await sendTemplateViaZionTalk(telefone, {
-        nome: nome || 'Visitante',
+        nome: nome || (item.tipo === 'proprietario' ? 'Proprietário' : 'Visitante'),
         imovel: ficha.imovel_endereco,
         codigo,
         lembrete: 'Este código expira em 1 hora.',
