@@ -10,6 +10,7 @@ const BANNER_DISMISSED_KEY = 'pwa-install-banner-dismissed';
 const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function PWAInstallBanner() {
+  return null;
   const { isInstallable, isInstalled, isIOS, isAndroid, canShowManualInstall, isIOSWrongBrowser, install } = usePWAInstall();
   const [isDismissed, setIsDismissed] = useState(true);
   const [copied, setCopied] = useState(false);

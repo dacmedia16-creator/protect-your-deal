@@ -11,6 +11,7 @@ const SHOW_FAB_AFTER = 24 * 60 * 60 * 1000; // 24 hours after banner dismissed
 const FAB_DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function PWAInstallFAB() {
+  return null;
   const { isInstalled, isInstallable, isIOS, isAndroid, install } = usePWAInstall();
   const [show, setShow] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
