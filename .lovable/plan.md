@@ -1,58 +1,46 @@
 
 
-# Adicionar terceiro numero WhatsApp (Meta API 2)
+# Adicionar logging detalhado para diagnosticar meta2
 
-## Resumo
+## Problema
 
-Adicionar um terceiro canal WhatsApp usando a API oficial da Meta, com sua propria API Key separada. O novo canal sera chamado internamente de `meta2`.
+O envio via canal `meta2` retorna HTTP 201 (sucesso) mas a mensagem nao chega ao destinatario. Precisamos capturar headers de resposta e body completo para entender o que o ZionTalk esta retornando.
 
 ## Alteracoes
 
-### 1. Novo secret: `ZIONTALK_META2_API_KEY`
+### 1. `supabase/functions/process-otp-queue/index.ts`
 
-Sera solicitado ao usuario a API Key do terceiro numero via ZionTalk.
+Na funcao `sendTemplateViaZionTalk`, apos o fetch, adicionar:
 
-### 2. Edge Function: `supabase/functions/send-whatsapp/index.ts`
+- Log de **todos os headers de resposta** (iterando `response.headers`)
+- Log do **body completo** (sem truncar)
+- Log do **content-type** da resposta
+- Identificacao explicita quando o canal e `meta2` para facilitar filtragem nos logs
 
-- Expandir o tipo `channel` de `'default' | 'meta'` para `'default' | 'meta' | 'meta2'`
-- Atualizar `getApiKey()` para retornar `ZIONTALK_META2_API_KEY` quando channel = `'meta2'`
-- Atualizar `getChannelLabel()` para retornar label do terceiro numero
-- Atualizar `getDefaultChannel()` para aceitar `'meta2'` como valor valido
+Trecho afetado: linhas 150-153 (apos o fetch na funcao sendTemplateViaZionTalk)
 
-### 3. Edge Function: `supabase/functions/send-otp/index.ts`
+### 2. `supabase/functions/send-whatsapp/index.ts`
 
-- Expandir tipo do channel para incluir `'meta2'`
-- Atualizar `getDefaultChannel()` para aceitar `'meta2'`
-- Atualizar `sendViaZionTalk()` para mapear `'meta2'` ao secret correto
-- Atualizar `sendMetaTemplate()` para mapear `'meta2'` ao secret correto
-- Logica de envio: `meta2` segue o mesmo fluxo do `meta` (template)
+Na action `send-template` (linhas 199-207), adicionar o mesmo logging detalhado de headers e body completo quando o canal for `meta2`.
 
-### 4. Edge Function: `supabase/functions/process-otp-queue/index.ts`
+### 3. `supabase/functions/send-otp/index.ts`
 
-- Mesmas alteracoes do send-otp: expandir tipo, atualizar funcoes de key/label/channel
-
-### 5. Edge Function: `supabase/functions/otp-reminder/index.ts`
-
-- Mesmas alteracoes: expandir tipo, atualizar funcoes de key/label/channel
-
-### 6. Frontend: `src/pages/Integracoes.tsx`
-
-- Adicionar terceiro card "ZionTalk Meta 2 (API Oficial)" com icone diferenciado
-- Estado proprio para status, teste de conexao e envio de template de teste
-- Usa `channel: 'meta2'` nas chamadas
-
-### 7. Frontend: `src/pages/admin/AdminConfiguracoes.tsx`
-
-- Adicionar opcao "API Oficial Meta 2" no Select de canal padrao com valor `'meta2'`
+Mesma alteracao na funcao equivalente de envio de template, capturando headers e body completo para o canal `meta2`.
 
 ## Detalhes tecnicos
 
-Todas as funcoes de mapeamento channel -> secret seguem o padrao:
+O logging adicional seguira este padrao:
 
 ```text
-'default'  -> ZIONTALK_API_KEY
-'meta'     -> ZIONTALK_META_API_KEY
-'meta2'    -> ZIONTALK_META2_API_KEY
+// Apos o fetch da API ZionTalk:
+const responseHeaders: Record<string, string> = {};
+response.headers.forEach((value, key) => {
+  responseHeaders[key] = value;
+});
+console.log(`[func] Canal: ${channel} | Status: ${response.status}`);
+console.log(`[func] Response Headers:`, JSON.stringify(responseHeaders));
+console.log(`[func] Response Body COMPLETO:`, responseText);
 ```
 
-O canal `meta2` usa o mesmo fluxo de template que o `meta` (template `visita_prova`), apenas com API Key diferente (numero diferente).
+Isso permitira ver se o ZionTalk retorna algum campo de erro, message ID, status de entrega ou indicacao de numero invalido dentro do body da resposta 201.
+
