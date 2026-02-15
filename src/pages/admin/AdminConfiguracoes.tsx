@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { 
   Settings, 
   Bell, 
@@ -18,8 +19,11 @@ import {
   XCircle,
   Clock,
   Users,
-  Smartphone
+  Smartphone,
+  RefreshCw
 } from "lucide-react";
+import { format } from "date-fns";
+import { forceAppRefresh, getBuildVersion } from "@/lib/forceAppRefresh";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +46,30 @@ export default function AdminConfiguracoes() {
     manutencaoAtiva: false,
     registroAberto: true,
   });
+
+  const [serverVersion, setServerVersion] = useState<string | null>(null);
+  const [lastPublished, setLastPublished] = useState<string | null>(null);
+  const [isCheckingVersion, setIsCheckingVersion] = useState(false);
+
+  const localVersion = getBuildVersion();
+
+  const checkLatestVersion = async () => {
+    setIsCheckingVersion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('app-version');
+      if (error) throw error;
+      setServerVersion(data?.version || null);
+      setLastPublished(data?.published_at || null);
+      toast.success("Versão verificada com sucesso");
+    } catch (err) {
+      console.error('Erro ao verificar versão:', err);
+      toast.error("Erro ao verificar versão");
+    } finally {
+      setIsCheckingVersion(false);
+    }
+  };
+
+  const hasUpdate = serverVersion && serverVersion !== localVersion;
 
   // Fetch system configurations from database
   const { data: configuracoes, isLoading: isLoadingConfig } = useQuery({
@@ -428,11 +456,11 @@ export default function AdminConfiguracoes() {
           <CardHeader>
             <CardTitle>Informações do Sistema</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-1">
-                <Label className="text-muted-foreground">Versão</Label>
-                <p className="font-medium">1.0.0</p>
+                <Label className="text-muted-foreground">Versão Local</Label>
+                <p className="font-medium font-mono text-sm">{localVersion}</p>
               </div>
               <div className="space-y-1">
                 <Label className="text-muted-foreground">Ambiente</Label>
@@ -440,7 +468,41 @@ export default function AdminConfiguracoes() {
               </div>
               <div className="space-y-1">
                 <Label className="text-muted-foreground">Última Atualização</Label>
-                <p className="font-medium">26/12/2024</p>
+                <p className="font-medium">
+                  {lastPublished 
+                    ? format(new Date(lastPublished), 'dd/MM/yyyy HH:mm') 
+                    : '—'}
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex-1 space-y-1">
+                <Label className="text-muted-foreground">Versão no Servidor</Label>
+                <p className="font-medium font-mono text-sm">
+                  {serverVersion || 'Não verificada'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {hasUpdate && (
+                  <>
+                    <Badge variant="destructive" className="whitespace-nowrap">Nova versão disponível</Badge>
+                    <Button size="sm" onClick={() => forceAppRefresh()}>
+                      Atualizar Agora
+                    </Button>
+                  </>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={checkLatestVersion} 
+                  disabled={isCheckingVersion}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-1 ${isCheckingVersion ? 'animate-spin' : ''}`} />
+                  Verificar
+                </Button>
               </div>
             </div>
           </CardContent>
