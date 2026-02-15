@@ -448,7 +448,7 @@ serve(async (req) => {
       // Meta channel: use approved template visita_prova
       console.log('[send-otp] Usando template Meta visita_prova');
       sent = await sendTemplateViaZionTalk(telefone, {
-        nome: nome || 'Visitante',
+        nome: nome || (tipo === 'proprietario' ? 'Proprietário' : 'Visitante'),
         imovel: ficha.imovel_endereco,
         codigo,
         lembrete: 'Este código expira em 1 hora.',
