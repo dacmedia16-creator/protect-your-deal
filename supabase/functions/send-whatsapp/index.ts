@@ -16,7 +16,7 @@ interface SendMessageRequest {
   templateParams?: Record<string, string>;
   headerParams?: Record<string, string>;
   language?: string;
-  channel?: 'default' | 'meta';
+  channel?: 'default' | 'meta' | 'meta2';
   buttonUrlDynamicParams?: string[];
 }
 
@@ -28,16 +28,18 @@ function formatPhoneNumber(phone: string): string {
   return '+' + cleaned;
 }
 
-function getApiKey(channel?: 'default' | 'meta'): string | undefined {
-  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
-  return Deno.env.get(secretName);
+function getApiKey(channel?: 'default' | 'meta' | 'meta2'): string | undefined {
+  if (channel === 'meta2') return Deno.env.get('ZIONTALK_META2_API_KEY');
+  if (channel === 'meta') return Deno.env.get('ZIONTALK_META_API_KEY');
+  return Deno.env.get('ZIONTALK_API_KEY');
 }
 
-function getChannelLabel(channel?: 'default' | 'meta'): string {
+function getChannelLabel(channel?: 'default' | 'meta' | 'meta2'): string {
+  if (channel === 'meta2') return 'ZionTalk Meta 2 (API Oficial)';
   return channel === 'meta' ? 'ZionTalk Meta (API Oficial)' : 'ZionTalk';
 }
 
-async function getDefaultChannel(): Promise<'default' | 'meta'> {
+async function getDefaultChannel(): Promise<'default' | 'meta' | 'meta2'> {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -49,7 +51,8 @@ async function getDefaultChannel(): Promise<'default' | 'meta'> {
       .eq('chave', 'whatsapp_channel_padrao')
       .single();
     const val = data?.valor;
-    if (val === 'meta') return 'meta';
+    if (val === 'meta2' || val === '"meta2"') return 'meta2';
+    if (val === 'meta' || val === '"meta"') return 'meta';
     return 'default';
   } catch {
     return 'default';

@@ -27,7 +27,7 @@ function formatPhoneNumber(phone: string): string {
 }
 
 // Get configured WhatsApp channel from system settings
-async function getDefaultChannel(supabase: any): Promise<'default' | 'meta'> {
+async function getDefaultChannel(supabase: any): Promise<'default' | 'meta' | 'meta2'> {
   try {
     const { data } = await supabase
       .from('configuracoes_sistema')
@@ -35,6 +35,7 @@ async function getDefaultChannel(supabase: any): Promise<'default' | 'meta'> {
       .eq('chave', 'whatsapp_channel_padrao')
       .single();
     const val = data?.valor;
+    if (val === 'meta2' || val === '"meta2"') return 'meta2';
     if (val === 'meta' || val === '"meta"') return 'meta';
     return 'default';
   } catch (_e) {
@@ -43,8 +44,8 @@ async function getDefaultChannel(supabase: any): Promise<'default' | 'meta'> {
 }
 
 // Send WhatsApp message via ZionTalk (using correct API format)
-async function sendViaZionTalk(phone: string, message: string, channel: 'default' | 'meta' = 'default'): Promise<boolean> {
-  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+async function sendViaZionTalk(phone: string, message: string, channel: 'default' | 'meta' | 'meta2' = 'default'): Promise<boolean> {
+  const secretName = channel === 'meta2' ? 'ZIONTALK_META2_API_KEY' : channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
   const apiKey = Deno.env.get(secretName);
   console.log(`[send-otp] Canal WhatsApp configurado: ${channel}, usando secret: ${secretName}`);
 
@@ -108,9 +109,9 @@ async function sendViaZionTalk(phone: string, message: string, channel: 'default
 async function sendTemplateViaZionTalk(
   phone: string, 
   params: { nome: string; imovel: string; codigo: string; lembrete: string; token: string },
-  channel: 'default' | 'meta' = 'meta'
+  channel: 'default' | 'meta' | 'meta2' = 'meta'
 ): Promise<boolean> {
-  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  const secretName = channel === 'meta2' ? 'ZIONTALK_META2_API_KEY' : channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
   const apiKey = Deno.env.get(secretName);
   console.log(`[send-otp] Enviando template Meta visita_prova via ${secretName}`);
 
@@ -444,7 +445,7 @@ serve(async (req) => {
 
     let sent = false;
 
-    if (channel === 'meta') {
+    if (channel === 'meta' || channel === 'meta2') {
       // Meta channel: use approved template visita_prova
       console.log('[send-otp] Usando template Meta visita_prova');
       sent = await sendTemplateViaZionTalk(telefone, {
@@ -471,7 +472,7 @@ serve(async (req) => {
     }
 
     // Send second message with just the code for easy copying (only for non-meta channels)
-    if (sent && channel !== 'meta') {
+    if (sent && channel !== 'meta' && channel !== 'meta2') {
       console.log('[send-otp] Enviando mensagem separada com código para facilitar cópia');
       await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       
