@@ -2,10 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Correct ZionTalk API URL from documentation
 const ZIONTALK_API_URL = 'https://app.ziontalk.com/api';
 
 interface SendMessageRequest {
@@ -16,56 +15,57 @@ interface SendMessageRequest {
   templateParams?: Record<string, string>;
   headerParams?: Record<string, string>;
   language?: string;
+  channel?: 'default' | 'meta';
+  buttonUrlDynamicParams?: string[];
 }
 
 function formatPhoneNumber(phone: string): string {
-  // Remove all non-numeric characters
   let cleaned = phone.replace(/\D/g, '');
-  
-  // Add Brazil country code if not present
   if (!cleaned.startsWith('55')) {
     cleaned = '55' + cleaned;
   }
-  
-  // Return in E.164 format with +
   return '+' + cleaned;
 }
 
+function getApiKey(channel?: 'default' | 'meta'): string | undefined {
+  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  return Deno.env.get(secretName);
+}
+
+function getChannelLabel(channel?: 'default' | 'meta'): string {
+  return channel === 'meta' ? 'ZionTalk Meta (API Oficial)' : 'ZionTalk';
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const apiKey = Deno.env.get('ZIONTALK_API_KEY');
+    const { action, phone, message, templateName, templateParams, headerParams, language, channel, buttonUrlDynamicParams }: SendMessageRequest = await req.json();
+    
+    const apiKey = getApiKey(channel);
+    const channelLabel = getChannelLabel(channel);
     
     if (!apiKey) {
-      console.error('ZIONTALK_API_KEY not configured');
+      console.error(`API Key not configured for channel: ${channel || 'default'}`);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'ZionTalk API key não configurada' 
+          error: `API Key do ${channelLabel} não configurada` 
         }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { action, phone, message, templateName, templateParams, headerParams, language }: SendMessageRequest = await req.json();
-    console.log(`Action: ${action}, Phone: ${phone}`);
+    console.log(`Action: ${action}, Phone: ${phone}, Channel: ${channel || 'default'}`);
 
-    // ZionTalk uses Basic Auth with API key as username, empty password
     const authHeader = btoa(`${apiKey}:`);
 
     switch (action) {
       case 'test-connection': {
-        // Test by sending a minimal request to check auth
-        // We'll use the send_message endpoint with invalid data just to test auth
         const testUrl = `${ZIONTALK_API_URL}/send_message/`;
-        console.log(`Testing connection: ${testUrl}`);
+        console.log(`Testing connection (${channelLabel}): ${testUrl}`);
         
         const formData = new FormData();
         formData.append('msg', 'test');
@@ -73,9 +73,7 @@ serve(async (req) => {
 
         const response = await fetch(testUrl, {
           method: 'POST',
-          headers: {
-            'Authorization': `Basic ${authHeader}`,
-          },
+          headers: { 'Authorization': `Basic ${authHeader}` },
           body: formData,
         });
 
@@ -83,16 +81,13 @@ serve(async (req) => {
         const responseText = await response.text();
         console.log(`Test response: ${responseText.substring(0, 500)}`);
 
-        // 400/422 means auth worked but data is invalid (which is expected for test)
-        // 401/403 means auth failed
-        // 201 would mean it actually sent (unlikely with fake number)
         const authWorked = response.status !== 401 && response.status !== 403;
         
         return new Response(
           JSON.stringify({
             success: true,
             connected: authWorked,
-            message: authWorked ? 'Conexão estabelecida com ZionTalk' : 'Falha na autenticação - verifique a API Key',
+            message: authWorked ? `Conexão estabelecida com ${channelLabel}` : `Falha na autenticação do ${channelLabel} - verifique a API Key`,
             statusCode: response.status
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -102,20 +97,14 @@ serve(async (req) => {
       case 'send-text': {
         if (!phone || !message) {
           return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Telefone e mensagem são obrigatórios' 
-            }),
-            { 
-              status: 400, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
+            JSON.stringify({ success: false, error: 'Telefone e mensagem são obrigatórios' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
         const formattedPhone = formatPhoneNumber(phone);
         const url = `${ZIONTALK_API_URL}/send_message/`;
-        console.log(`Sending text message to ${formattedPhone}`);
+        console.log(`Sending text message to ${formattedPhone} via ${channelLabel}`);
 
         const formData = new FormData();
         formData.append('msg', message);
@@ -123,9 +112,7 @@ serve(async (req) => {
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Authorization': `Basic ${authHeader}`,
-          },
+          headers: { 'Authorization': `Basic ${authHeader}` },
           body: formData,
         });
 
@@ -133,7 +120,6 @@ serve(async (req) => {
         const responseText = await response.text();
         console.log(`Send message response: ${responseText.substring(0, 500)}`);
 
-        // ZionTalk returns 201 on success with no body
         const success = response.status === 201;
         
         return new Response(
@@ -142,60 +128,51 @@ serve(async (req) => {
             phone: formattedPhone,
             error: success ? null : responseText || 'Erro ao enviar mensagem'
           }),
-          { 
-            status: success ? 200 : response.status,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
+          { status: success ? 200 : response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'send-template': {
         if (!phone || !templateName) {
           return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Telefone e nome do template são obrigatórios' 
-            }),
-            { 
-              status: 400, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
+            JSON.stringify({ success: false, error: 'Telefone e nome do template são obrigatórios' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
         const formattedPhone = formatPhoneNumber(phone);
         const url = `${ZIONTALK_API_URL}/send_template_message/`;
-        console.log(`Sending template ${templateName} to ${formattedPhone}`);
+        console.log(`Sending template ${templateName} to ${formattedPhone} via ${channelLabel}`);
 
         const formData = new FormData();
         formData.append('mobile_phone', formattedPhone);
         formData.append('template_identifier', templateName);
-        
-        if (language) {
-          formData.append('language', language);
-        } else {
-          formData.append('language', 'pt_BR');
-        }
+        formData.append('language', language || 'pt_BR');
 
-        // Add header params if provided
+        // Header params
         if (headerParams) {
           for (const [key, value] of Object.entries(headerParams)) {
             formData.append(`headerParams[${key}]`, value);
           }
         }
 
-        // Add body params if provided
+        // Body params
         if (templateParams) {
           for (const [key, value] of Object.entries(templateParams)) {
             formData.append(`bodyParams[${key}]`, value);
           }
         }
 
+        // Button URL dynamic params (for Meta CTA buttons)
+        if (buttonUrlDynamicParams && buttonUrlDynamicParams.length > 0) {
+          buttonUrlDynamicParams.forEach((param, index) => {
+            formData.append(`buttonUrlDynamicParams[${index}]`, param);
+          });
+        }
+
         const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Authorization': `Basic ${authHeader}`,
-          },
+          headers: { 'Authorization': `Basic ${authHeader}` },
           body: formData,
         });
 
@@ -203,7 +180,6 @@ serve(async (req) => {
         const responseText = await response.text();
         console.log(`Send template response: ${responseText.substring(0, 500)}`);
 
-        // ZionTalk returns 201 on success with no body
         const success = response.status === 201;
         
         return new Response(
@@ -213,23 +189,14 @@ serve(async (req) => {
             template: templateName,
             error: success ? null : responseText || 'Erro ao enviar template'
           }),
-          { 
-            status: success ? 200 : response.status,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
+          { status: success ? 200 : response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       default:
         return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Ação desconhecida: ${action}` 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
+          JSON.stringify({ success: false, error: `Ação desconhecida: ${action}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
   } catch (error: unknown) {
@@ -237,14 +204,8 @@ serve(async (req) => {
     console.error('Error in send-whatsapp function:', errorMessage);
     
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage 
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ success: false, error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
