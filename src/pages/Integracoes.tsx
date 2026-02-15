@@ -111,9 +111,11 @@ const Integracoes = () => {
           templateName: 'visita_prova',
           templateParams: {
             nome: 'Teste',
-            aviso: 'Teste de integração',
+            imovel: 'Rua Exemplo, 123 - Centro',
+            codigo: '123456',
             lembrete: 'Este é um envio de teste via API Oficial Meta.'
           },
+          buttonUrlDynamicParams: ['confirmar/teste-123'],
           language: 'pt_BR',
           channel: 'meta'
         }
