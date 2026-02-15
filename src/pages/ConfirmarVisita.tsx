@@ -375,16 +375,6 @@ export default function ConfirmarVisita() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b bg-card py-4">
-        <div className="container mx-auto px-4 flex items-center justify-center gap-3">
-          <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center">
-            <Shield className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold">{PUBLIC_BRAND_NAME}</span>
-        </div>
-      </header>
-
       <main className="flex-1 container mx-auto px-4 py-8 max-w-md flex items-center justify-center">
         {connectionError ? (
           <Card className="w-full border-warning/50">
