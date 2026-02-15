@@ -131,7 +131,7 @@ async function sendTemplateViaZionTalk(
     formData.append('bodyParams[imovel]', params.imovel);
     formData.append('bodyParams[codigo]', params.codigo);
     formData.append('bodyParams[lembrete]', params.lembrete);
-    formData.append('buttonUrlDynamicParams[0]', params.token);
+    formData.append('buttonUrlDynamicParams[0]', `/confirmar/${params.token}`);
 
     console.log(`[send-otp] Template params: nome=${params.nome}, imovel=${params.imovel}, codigo=${params.codigo}, lembrete=${params.lembrete}`);
     console.log(`[send-otp] Button URL token: ${params.token}`);
