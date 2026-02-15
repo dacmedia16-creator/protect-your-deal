@@ -1,26 +1,30 @@
 
 
-# Corrigir URL do botao CTA no template Meta
+# Remover barra extra do parametro dinamico do botao Meta
 
 ## Problema
 
-A URL base do template Meta e `https://visitaseguras.com{{1}}`, onde `{{1}}` substitui tudo apos o dominio. Atualmente estamos passando apenas o UUID do token (ex: `fe984944-223b-...`), resultando em `https://visitaseguras.com/fe984944-223b-...` sem o path `/confirmar/`.
+A URL gerada pelo botao CTA esta com duplo `//`:
+`visitaseguras.com.br//confirmar/TOKEN`
+
+Isso acontece porque o template Meta tem a URL base `https://visitaseguras.com.br/{{1}}` (ja inclui uma `/` antes do parametro dinamico), e estamos passando `/confirmar/TOKEN` (com `/` no inicio), resultando em `//confirmar/`.
 
 ## Solucao
 
-Alterar o valor de `buttonUrlDynamicParams[0]` em todas as 3 edge functions para incluir o path `/confirmar/` antes do token:
+Remover a barra inicial do valor de `buttonUrlDynamicParams[0]` nas 3 edge functions:
 
-De: `params.token` (ex: `fe984944-...`)
-Para: `/confirmar/${params.token}` (ex: `/confirmar/fe984944-...`)
+De: `/confirmar/${params.token}`
+Para: `confirmar/${params.token}`
 
-Isso gera a URL correta: `https://visitaseguras.com/confirmar/fe984944-...`
+Resultado final: `https://visitaseguras.com.br/confirmar/TOKEN`
 
 ## Arquivos modificados
 
-| Arquivo | Linha | Alteracao |
-|---------|-------|-----------|
-| `supabase/functions/send-otp/index.ts` | ~134 | `buttonUrlDynamicParams[0]` -> `/confirmar/${params.token}` |
-| `supabase/functions/process-otp-queue/index.ts` | ~138 | Mesma alteracao |
-| `supabase/functions/otp-reminder/index.ts` | ~106 | Mesma alteracao |
+| Arquivo | Alteracao |
+|---------|-----------|
+| `supabase/functions/send-otp/index.ts` | `buttonUrlDynamicParams[0]` de `/confirmar/...` para `confirmar/...` |
+| `supabase/functions/process-otp-queue/index.ts` | Mesma alteracao |
+| `supabase/functions/otp-reminder/index.ts` | Mesma alteracao |
 
-Alteracao minima e cirurgica em 3 linhas, uma por arquivo.
+Alteracao de 1 caractere em cada arquivo.
+
