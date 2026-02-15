@@ -147,7 +147,16 @@ async function sendTemplateViaZionTalk(
 
     const responseText = await response.text();
     console.log(`[send-otp] Template ZionTalk status: ${response.status}`);
-    console.log(`[send-otp] Template ZionTalk resposta: ${responseText}`);
+    console.log(`[send-otp] Template ZionTalk resposta COMPLETA: ${responseText}`);
+
+    // Logging detalhado para diagnóstico meta2
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+    console.log(`[send-otp] Canal: ${channel} | Status: ${response.status} | Content-Type: ${response.headers.get('content-type')}`);
+    console.log(`[send-otp] Response Headers:`, JSON.stringify(responseHeaders));
+    console.log(`[send-otp] Response Body COMPLETO:`, responseText);
 
     if (!response.ok) {
       console.error('[send-otp] ZionTalk template error:', responseText);

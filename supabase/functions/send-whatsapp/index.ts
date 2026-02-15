@@ -204,7 +204,16 @@ serve(async (req) => {
 
         console.log(`Send template response status: ${response.status}`);
         const responseText = await response.text();
-        console.log(`Send template response: ${responseText.substring(0, 500)}`);
+        console.log(`Send template response COMPLETO: ${responseText}`);
+
+        // Logging detalhado para diagnóstico meta2
+        const respHeaders: Record<string, string> = {};
+        response.headers.forEach((value, key) => {
+          respHeaders[key] = value;
+        });
+        console.log(`[send-whatsapp] Canal: ${channel} | Status: ${response.status} | Content-Type: ${response.headers.get('content-type')}`);
+        console.log(`[send-whatsapp] Response Headers:`, JSON.stringify(respHeaders));
+        console.log(`[send-whatsapp] Response Body COMPLETO:`, responseText);
 
         const success = response.status === 201;
         
