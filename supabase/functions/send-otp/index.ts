@@ -26,9 +26,27 @@ function formatPhoneNumber(phone: string): string {
   return cleaned;
 }
 
+// Get configured WhatsApp channel from system settings
+async function getDefaultChannel(supabase: any): Promise<'default' | 'meta'> {
+  try {
+    const { data } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'whatsapp_channel_padrao')
+      .single();
+    const val = data?.valor;
+    if (val === 'meta' || val === '"meta"') return 'meta';
+    return 'default';
+  } catch (_e) {
+    return 'default';
+  }
+}
+
 // Send WhatsApp message via ZionTalk (using correct API format)
-async function sendViaZionTalk(phone: string, message: string): Promise<boolean> {
-  const apiKey = Deno.env.get('ZIONTALK_API_KEY');
+async function sendViaZionTalk(phone: string, message: string, channel: 'default' | 'meta' = 'default'): Promise<boolean> {
+  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  const apiKey = Deno.env.get(secretName);
+  console.log(`[send-otp] Canal WhatsApp configurado: ${channel}, usando secret: ${secretName}`);
 
   if (!apiKey) {
     console.log('[send-otp] ZionTalk API not configured, using simulation mode');
@@ -364,8 +382,12 @@ serve(async (req) => {
       console.log('Using default template, autopreenchimento:', autopreenchimento);
     }
 
+    // Get configured WhatsApp channel
+    const channel = await getDefaultChannel(supabase);
+    console.log(`[send-otp] Canal WhatsApp selecionado: ${channel}`);
+
     // Try to send via ZionTalk first (primary)
-    let sent = await sendViaZionTalk(telefone, message);
+    let sent = await sendViaZionTalk(telefone, message, channel);
     
     // Fallback to Evolution API
     if (!sent) {
@@ -383,7 +405,7 @@ serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       
       const codigoMessage = codigo; // Just the 6-digit code
-      const codeSent = await sendViaZionTalk(telefone, codigoMessage);
+      const codeSent = await sendViaZionTalk(telefone, codigoMessage, channel);
       if (!codeSent) {
         const codeSentEvo = await sendViaEvolutionAPI(telefone, codigoMessage);
         if (!codeSentEvo) {
@@ -414,7 +436,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in send-otp function:', error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(

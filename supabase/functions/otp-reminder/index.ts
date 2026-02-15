@@ -16,9 +16,27 @@ function formatPhoneNumber(phone: string): string {
   return cleaned;
 }
 
+// Get configured WhatsApp channel from system settings
+async function getDefaultChannel(supabase: any): Promise<'default' | 'meta'> {
+  try {
+    const { data } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'whatsapp_channel_padrao')
+      .single();
+    const val = data?.valor;
+    if (val === 'meta' || val === '"meta"') return 'meta';
+    return 'default';
+  } catch (_e) {
+    return 'default';
+  }
+}
+
 // Send WhatsApp message via ZionTalk
-async function sendViaZionTalk(phone: string, message: string): Promise<boolean> {
-  const apiKey = Deno.env.get('ZIONTALK_API_KEY');
+async function sendViaZionTalk(phone: string, message: string, channel: 'default' | 'meta' = 'default'): Promise<boolean> {
+  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  const apiKey = Deno.env.get(secretName);
+  console.log(`[otp-reminder] Canal WhatsApp configurado: ${channel}, usando secret: ${secretName}`);
 
   if (!apiKey) {
     console.log('ZionTalk API not configured');
@@ -233,8 +251,11 @@ serve(async (req) => {
       const tipoLabel = otp.tipo === 'proprietario' ? 'proprietário' : 'visitante';
       const message = `⏰ *Lembrete - VisitaProva*\n\nSeu código de confirmação como ${tipoLabel} expira em *${minutosRestantes} minutos*!\n\n📍 Imóvel: ${ficha.imovel_endereco}\n📋 Protocolo: ${ficha.protocolo}\n\n🔐 Código: *${otp.codigo}*\n\n👉 Confirme agora: ${verificationUrl}\n\n_Após expirar, será necessário solicitar um novo código._`;
 
+      // Get configured WhatsApp channel
+      const channel = await getDefaultChannel(supabase);
+
       // Try to send via available providers
-      let sent = await sendViaZionTalk(otp.telefone, message);
+      let sent = await sendViaZionTalk(otp.telefone, message, channel);
       if (!sent) sent = await sendViaEvolutionAPI(otp.telefone, message);
       if (!sent) sent = await sendViaZAPI(otp.telefone, message);
 
