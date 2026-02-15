@@ -1,66 +1,72 @@
 
-# Corrigir envio de OTP para usar o canal WhatsApp configurado
+
+# Adaptar envio OTP para usar template Meta aprovado `visita_prova`
 
 ## Problema
 
-As 3 edge functions que enviam mensagens WhatsApp (OTP, fila de processamento e lembretes) usam sempre a chave `ZIONTALK_API_KEY` (numero padrao), ignorando a configuracao `whatsapp_channel_padrao` salva no banco pelo Super Admin. Mesmo com "API Oficial Meta" selecionado nas configuracoes, os envios continuam saindo pelo numero antigo.
+Quando o canal Meta esta selecionado, as edge functions tentam enviar mensagem de texto livre via `send_message/`, mas a API Oficial do Meta so aceita templates pre-aprovados via `send_template_message/`. Por isso as mensagens falham com erro 500.
 
 ## Solucao
 
-Adicionar em cada uma das 3 edge functions a logica de consultar a tabela `configuracoes_sistema` para determinar qual API Key usar (`ZIONTALK_API_KEY` ou `ZIONTALK_META_API_KEY`), exatamente como ja foi feito no `send-whatsapp`.
+Quando o canal for `meta`, usar o endpoint `send_template_message/` da ZionTalk com o template `visita_prova` e seus parametros. Quando for `default`, manter o envio de texto livre como esta hoje.
 
-## Alteracoes
+## Template Meta aprovado
+
+Nome: `visita_prova`
+
+Variaveis do corpo (body):
+- `{{nome}}` - nome do proprietario/comprador
+- `{{imovel}}` - endereco do imovel
+- `{{codigo}}` - codigo OTP de 6 digitos
+- `{{lembrete}}` - texto de lembrete (ex: "Este codigo expira em 1 hora.")
+
+Botao CTA "Confirmar Visita":
+- URL dinamica com `{{1}}` = token de confirmacao (path da URL)
+
+## Alteracoes tecnicas
 
 ### 1. `supabase/functions/send-otp/index.ts`
 
-- Adicionar funcao `getDefaultChannel()` que consulta `configuracoes_sistema` com chave `whatsapp_channel_padrao`
-- Modificar `sendViaZionTalk()` para aceitar parametro `channel` e usar a API Key correta (`ZIONTALK_API_KEY` para default, `ZIONTALK_META_API_KEY` para meta)
-- No handler principal, chamar `getDefaultChannel()` e passar o canal para `sendViaZionTalk()`
+- Criar funcao `sendTemplateViaZionTalk(phone, params, channel)` que:
+  - Usa o endpoint `send_template_message/`
+  - Envia `template_identifier = visita_prova`
+  - Envia `language = pt_BR`
+  - Mapeia os bodyParams: `bodyParams[nome]`, `bodyParams[imovel]`, `bodyParams[codigo]`, `bodyParams[lembrete]`
+  - Envia `buttonUrlDynamicParams[0]` com o token de confirmacao
+- No fluxo principal, quando `channel === 'meta'`:
+  - Chamar `sendTemplateViaZionTalk` em vez de `sendViaZionTalk`
+  - Nao enviar a segunda mensagem separada com o codigo (o template ja inclui o codigo)
+- Quando `channel === 'default'`, manter o comportamento atual (texto livre + segunda mensagem com codigo)
 
 ### 2. `supabase/functions/process-otp-queue/index.ts`
 
-- Mesma alteracao: adicionar `getDefaultChannel()` e modificar `sendViaZionTalk()` para respeitar o canal configurado
-- O supabase client ja existe no handler, entao sera passado para a funcao
+- Mesma alteracao: adicionar `sendTemplateViaZionTalk` e usar quando canal for `meta`
+- Nao enviar segunda mensagem quando for `meta`
 
 ### 3. `supabase/functions/otp-reminder/index.ts`
 
-- Mesma alteracao: adicionar `getDefaultChannel()` e modificar `sendViaZionTalk()` para respeitar o canal configurado
+- Para lembretes, como o template `visita_prova` e generico o suficiente, usar o mesmo template com `lembrete` contendo o texto de urgencia (ex: "Expira em X minutos!")
+- Quando canal for `default`, manter texto livre como hoje
 
-## Detalhes tecnicos
-
-A funcao `getDefaultChannel` sera identica nas 3 functions:
-
-```text
-async function getDefaultChannel(supabase): Promise<'default' | 'meta'> {
-  try {
-    const { data } = await supabase
-      .from('configuracoes_sistema')
-      .select('valor')
-      .eq('chave', 'whatsapp_channel_padrao')
-      .single();
-    const val = data?.valor;
-    if (val === 'meta' || val === '"meta"') return 'meta';
-    return 'default';
-  } catch {
-    return 'default';
-  }
-}
-```
-
-A funcao `sendViaZionTalk` passara a receber o channel:
+## Formato do envio via template
 
 ```text
-async function sendViaZionTalk(phone, message, channel = 'default') {
-  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
-  const apiKey = Deno.env.get(secretName);
-  // ... resto igual
-}
+FormData:
+  mobile_phone: +5511999999999
+  template_identifier: visita_prova
+  language: pt_BR
+  bodyParams[nome]: Joao
+  bodyParams[imovel]: Rua ABC 123
+  bodyParams[codigo]: 123456
+  bodyParams[lembrete]: Este codigo expira em 1 hora.
+  buttonUrlDynamicParams[0]: <token-uuid>
 ```
 
 ## Arquivos modificados
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `supabase/functions/send-otp/index.ts` | Ler canal padrao do banco e usar API Key correspondente |
-| `supabase/functions/process-otp-queue/index.ts` | Ler canal padrao do banco e usar API Key correspondente |
-| `supabase/functions/otp-reminder/index.ts` | Ler canal padrao do banco e usar API Key correspondente |
+| `supabase/functions/send-otp/index.ts` | Adicionar envio via template Meta quando canal = meta |
+| `supabase/functions/process-otp-queue/index.ts` | Mesma alteracao |
+| `supabase/functions/otp-reminder/index.ts` | Mesma alteracao para lembretes |
+
