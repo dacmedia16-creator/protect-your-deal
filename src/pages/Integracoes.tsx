@@ -119,7 +119,7 @@ const Integracoes = () => {
         body: { 
           action: 'send-template',
           phone,
-          templateName: 'visita_prova',
+          templateName: 'visita_prova_2',
           templateParams: {
             nome: 'Teste',
             imovel: 'Rua Exemplo, 123 - Centro',
@@ -286,7 +286,7 @@ const Integracoes = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Envia o template <strong>visita_prova</strong> com dados de teste para o número informado.
+                  Envia o template <strong>visita_prova_2</strong> com dados de teste para o número informado.
                 </p>
               </div>
             )}
@@ -340,7 +340,7 @@ const Integracoes = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Envia o template <strong>visita_prova</strong> com dados de teste para o número informado.
+                  Envia o template <strong>visita_prova_2</strong> com dados de teste para o número informado.
                 </p>
               </div>
             )}

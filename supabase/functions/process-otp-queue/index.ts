@@ -117,7 +117,7 @@ async function sendTemplateViaZionTalk(
 ): Promise<boolean> {
   const secretName = channel === 'meta2' ? 'ZIONTALK_META2_API_KEY' : channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
   const apiKey = Deno.env.get(secretName);
-  console.log(`[process-otp-queue] Enviando template Meta visita_prova via ${secretName}`);
+  console.log(`[process-otp-queue] Enviando template Meta visita_prova_2 via ${secretName}`);
 
   if (!apiKey) {
     console.log('[process-otp-queue] ZionTalk API not configured for template send');
@@ -130,7 +130,7 @@ async function sendTemplateViaZionTalk(
 
     const formData = new FormData();
     formData.append('mobile_phone', formattedPhone);
-    formData.append('template_identifier', 'visita_prova');
+    formData.append('template_identifier', 'visita_prova_2');
     formData.append('language', 'pt_BR');
     formData.append('bodyParams[nome]', params.nome || 'Visitante');
     formData.append('bodyParams[imovel]', params.imovel);
@@ -368,8 +368,8 @@ async function processQueueItem(
     let sent = false;
 
     if (channel === 'meta' || channel === 'meta2') {
-      // Meta channel: use approved template visita_prova
-      console.log('[process-otp-queue] Usando template Meta visita_prova');
+      // Meta channel: use approved template visita_prova_2
+      console.log('[process-otp-queue] Usando template Meta visita_prova_2');
       sent = await sendTemplateViaZionTalk(telefone, {
         nome: nome || (item.tipo === 'proprietario' ? 'Proprietário' : 'Visitante'),
         imovel: ficha.imovel_endereco,

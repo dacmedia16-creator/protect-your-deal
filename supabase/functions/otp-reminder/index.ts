@@ -85,7 +85,7 @@ async function sendTemplateViaZionTalk(
 ): Promise<boolean> {
   const secretName = channel === 'meta2' ? 'ZIONTALK_META2_API_KEY' : channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
   const apiKey = Deno.env.get(secretName);
-  console.log(`[otp-reminder] Enviando template Meta visita_prova via ${secretName}`);
+  console.log(`[otp-reminder] Enviando template Meta visita_prova_2 via ${secretName}`);
 
   if (!apiKey) {
     console.log('[otp-reminder] ZionTalk API not configured for template send');
@@ -98,7 +98,7 @@ async function sendTemplateViaZionTalk(
 
     const formData = new FormData();
     formData.append('mobile_phone', formattedPhone);
-    formData.append('template_identifier', 'visita_prova');
+    formData.append('template_identifier', 'visita_prova_2');
     formData.append('language', 'pt_BR');
     formData.append('bodyParams[nome]', params.nome || 'Visitante');
     formData.append('bodyParams[imovel]', params.imovel);
@@ -313,9 +313,9 @@ serve(async (req) => {
       let sent = false;
 
       if (channel === 'meta' || channel === 'meta2') {
-        // Meta channel: use approved template visita_prova with urgency reminder
+        // Meta channel: use approved template visita_prova_2 with urgency reminder
         const tipoLabel = otp.tipo === 'proprietario' ? 'proprietário' : 'visitante';
-        console.log('[otp-reminder] Usando template Meta visita_prova para lembrete');
+        console.log('[otp-reminder] Usando template Meta visita_prova_2 para lembrete');
         sent = await sendTemplateViaZionTalk(otp.telefone, {
           nome: tipoLabel,
           imovel: ficha.imovel_endereco,
