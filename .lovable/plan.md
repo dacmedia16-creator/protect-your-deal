@@ -1,46 +1,31 @@
 
+# Trocar template de `visita_prova` para `visita_prova_2`
 
-# Adicionar logging detalhado para diagnosticar meta2
+## Resumo
 
-## Problema
+Substituir o nome do template do WhatsApp Meta de `visita_prova` para `visita_prova_2` em todos os pontos do sistema. Os parametros permanecem os mesmos (`nome`, `imovel`, `codigo`, `lembrete`), entao a unica alteracao necessaria e o nome do template.
 
-O envio via canal `meta2` retorna HTTP 201 (sucesso) mas a mensagem nao chega ao destinatario. Precisamos capturar headers de resposta e body completo para entender o que o ZionTalk esta retornando.
+## Arquivos a alterar
 
-## Alteracoes
+### 1. `supabase/functions/send-otp/index.ts`
+- Linha 116: log "visita_prova" -> "visita_prova_2"
+- Linha 129: `template_identifier` de `visita_prova` para `visita_prova_2`
+- Linhas 458-459: comentarios e logs referenciando o nome do template
 
-### 1. `supabase/functions/process-otp-queue/index.ts`
+### 2. `supabase/functions/process-otp-queue/index.ts`
+- Linha 120: log "visita_prova" -> "visita_prova_2"
+- Linha 133: `template_identifier` de `visita_prova` para `visita_prova_2`
+- Linhas 371-372: comentarios e logs referenciando o nome do template
 
-Na funcao `sendTemplateViaZionTalk`, apos o fetch, adicionar:
+### 3. `supabase/functions/otp-reminder/index.ts`
+- Linha 88: log "visita_prova" -> "visita_prova_2"
+- Linha 101: `template_identifier` de `visita_prova` para `visita_prova_2`
+- Linhas 316-318: comentarios e logs referenciando o nome do template
 
-- Log de **todos os headers de resposta** (iterando `response.headers`)
-- Log do **body completo** (sem truncar)
-- Log do **content-type** da resposta
-- Identificacao explicita quando o canal e `meta2` para facilitar filtragem nos logs
+### 4. `src/pages/Integracoes.tsx`
+- Linha 122: `templateName` de `visita_prova` para `visita_prova_2`
+- Linhas 289, 343: textos de interface referenciando o nome do template
 
-Trecho afetado: linhas 150-153 (apos o fetch na funcao sendTemplateViaZionTalk)
+## Impacto
 
-### 2. `supabase/functions/send-whatsapp/index.ts`
-
-Na action `send-template` (linhas 199-207), adicionar o mesmo logging detalhado de headers e body completo quando o canal for `meta2`.
-
-### 3. `supabase/functions/send-otp/index.ts`
-
-Mesma alteracao na funcao equivalente de envio de template, capturando headers e body completo para o canal `meta2`.
-
-## Detalhes tecnicos
-
-O logging adicional seguira este padrao:
-
-```text
-// Apos o fetch da API ZionTalk:
-const responseHeaders: Record<string, string> = {};
-response.headers.forEach((value, key) => {
-  responseHeaders[key] = value;
-});
-console.log(`[func] Canal: ${channel} | Status: ${response.status}`);
-console.log(`[func] Response Headers:`, JSON.stringify(responseHeaders));
-console.log(`[func] Response Body COMPLETO:`, responseText);
-```
-
-Isso permitira ver se o ZionTalk retorna algum campo de erro, message ID, status de entrega ou indicacao de numero invalido dentro do body da resposta 201.
-
+Alteracao simples de string em 4 arquivos. Nenhuma mudanca de logica, parametros ou banco de dados. As 3 edge functions serao redeployadas automaticamente.
