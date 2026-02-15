@@ -17,6 +17,7 @@ const MODAL_DISMISSED_KEY = 'pwa-install-modal-dismissed';
 const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function PWAInstallModal() {
+  return null;
   const { 
     isInstallable, 
     isInstalled, 
