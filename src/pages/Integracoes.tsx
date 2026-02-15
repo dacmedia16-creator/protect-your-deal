@@ -41,10 +41,16 @@ const Integracoes = () => {
   const [sendingMetaTest, setSendingMetaTest] = useState(false);
   const [metaTestPhone, setMetaTestPhone] = useState('');
 
-  const testConnection = async (channel: 'default' | 'meta') => {
-    const setTesting = channel === 'meta' ? setTestingMeta : setTestingZiontalk;
-    const setStatus = channel === 'meta' ? setMetaStatus : setZiontalkStatus;
-    const label = channel === 'meta' ? 'ZionTalk Meta' : 'ZionTalk';
+  // Meta2 channel state
+  const [meta2Status, setMeta2Status] = useState<ConnectionStatus>('unknown');
+  const [testingMeta2, setTestingMeta2] = useState(false);
+  const [sendingMeta2Test, setSendingMeta2Test] = useState(false);
+  const [meta2TestPhone, setMeta2TestPhone] = useState('');
+
+  const testConnection = async (channel: 'default' | 'meta' | 'meta2') => {
+    const setTesting = channel === 'meta2' ? setTestingMeta2 : channel === 'meta' ? setTestingMeta : setTestingZiontalk;
+    const setStatus = channel === 'meta2' ? setMeta2Status : channel === 'meta' ? setMetaStatus : setZiontalkStatus;
+    const label = channel === 'meta2' ? 'ZionTalk Meta 2' : channel === 'meta' ? 'ZionTalk Meta' : 'ZionTalk';
 
     setTesting(true);
     try {
@@ -97,40 +103,45 @@ const Integracoes = () => {
     }
   };
 
-  const sendMetaTestMessage = async () => {
-    if (!metaTestPhone) {
+  const sendMetaTestMessage = async (channel: 'meta' | 'meta2' = 'meta') => {
+    const phone = channel === 'meta2' ? meta2TestPhone : metaTestPhone;
+    const setSending = channel === 'meta2' ? setSendingMeta2Test : setSendingMetaTest;
+    const setPhone = channel === 'meta2' ? setMeta2TestPhone : setMetaTestPhone;
+    const label = channel === 'meta2' ? 'API Oficial Meta 2' : 'API Oficial Meta';
+
+    if (!phone) {
       toast({ title: "Telefone obrigatório", description: "Digite um número de telefone para enviar o template de teste.", variant: "destructive" });
       return;
     }
-    setSendingMetaTest(true);
+    setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-whatsapp', {
         body: { 
           action: 'send-template',
-          phone: metaTestPhone,
+          phone,
           templateName: 'visita_prova',
           templateParams: {
             nome: 'Teste',
             imovel: 'Rua Exemplo, 123 - Centro',
             codigo: '123456',
-            lembrete: 'Este é um envio de teste via API Oficial Meta.'
+            lembrete: `Este é um envio de teste via ${label}.`
           },
           buttonUrlDynamicParams: ['confirmar/teste-123'],
           language: 'pt_BR',
-          channel: 'meta'
+          channel
         }
       });
       if (error) throw error;
       if (data?.success) {
-        toast({ title: "Template enviado!", description: `Template de teste enviado para ${metaTestPhone} via API Oficial Meta.` });
-        setMetaTestPhone('');
+        toast({ title: "Template enviado!", description: `Template de teste enviado para ${phone} via ${label}.` });
+        setPhone('');
       } else {
         toast({ title: "Erro ao enviar", description: data?.error || "Não foi possível enviar o template.", variant: "destructive" });
       }
     } catch (error: any) {
       toast({ title: "Erro ao enviar template", description: error.message, variant: "destructive" });
     } finally {
-      setSendingMetaTest(false);
+      setSending(false);
     }
   };
 
@@ -270,8 +281,62 @@ const Integracoes = () => {
                     onChange={(e) => setMetaTestPhone(e.target.value)}
                     className="flex-1"
                   />
-                  <Button onClick={sendMetaTestMessage} disabled={sendingMetaTest || !metaTestPhone} size="icon">
+                  <Button onClick={() => sendMetaTestMessage('meta')} disabled={sendingMetaTest || !metaTestPhone} size="icon">
                     {sendingMetaTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Envia o template <strong>visita_prova</strong> com dados de teste para o número informado.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ZionTalk Meta 2 (API Oficial) Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Shield className="h-6 w-6 text-purple-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">ZionTalk Meta 2 (API Oficial)</CardTitle>
+                  <CardDescription>Terceiro número via API oficial do WhatsApp Business</CardDescription>
+                </div>
+              </div>
+              <StatusBadge status={meta2Status} />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Terceiro número usando a API oficial da Meta. Envia apenas templates aprovados pelo WhatsApp Business.
+            </p>
+
+            <Button 
+              onClick={() => testConnection('meta2')} 
+              disabled={testingMeta2}
+              variant="outline"
+              className="w-full"
+            >
+              {testingMeta2 ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Testar Conexão
+            </Button>
+
+            {meta2Status === 'connected' && (
+              <div className="space-y-3 pt-2 border-t">
+                <Label htmlFor="meta2TestPhone">Enviar template de teste</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="meta2TestPhone"
+                    placeholder="(11) 99999-9999"
+                    value={meta2TestPhone}
+                    onChange={(e) => setMeta2TestPhone(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button onClick={() => sendMetaTestMessage('meta2')} disabled={sendingMeta2Test || !meta2TestPhone} size="icon">
+                    {sendingMeta2Test ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">

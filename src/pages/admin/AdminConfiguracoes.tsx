@@ -350,6 +350,7 @@ export default function AdminConfiguracoes() {
                     <SelectContent>
                       <SelectItem value="default">Número Padrão</SelectItem>
                       <SelectItem value="meta">API Oficial Meta</SelectItem>
+                      <SelectItem value="meta2">API Oficial Meta 2</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
