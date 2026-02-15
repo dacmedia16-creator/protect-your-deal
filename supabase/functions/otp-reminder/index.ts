@@ -76,6 +76,61 @@ async function sendViaZionTalk(phone: string, message: string, channel: 'default
   }
 }
 
+// Send WhatsApp template message via ZionTalk (Meta API)
+async function sendTemplateViaZionTalk(
+  phone: string, 
+  params: { nome: string; imovel: string; codigo: string; lembrete: string; token: string },
+  channel: 'default' | 'meta' = 'meta'
+): Promise<boolean> {
+  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  const apiKey = Deno.env.get(secretName);
+  console.log(`[otp-reminder] Enviando template Meta visita_prova via ${secretName}`);
+
+  if (!apiKey) {
+    console.log('[otp-reminder] ZionTalk API not configured for template send');
+    return false;
+  }
+
+  try {
+    const formattedPhone = `+${formatPhoneNumber(phone)}`;
+    const authHeader = btoa(`${apiKey}:`);
+
+    const formData = new FormData();
+    formData.append('mobile_phone', formattedPhone);
+    formData.append('template_identifier', 'visita_prova');
+    formData.append('language', 'pt_BR');
+    formData.append('bodyParams[nome]', params.nome || 'Visitante');
+    formData.append('bodyParams[imovel]', params.imovel);
+    formData.append('bodyParams[codigo]', params.codigo);
+    formData.append('bodyParams[lembrete]', params.lembrete);
+    formData.append('buttonUrlDynamicParams[0]', params.token);
+
+    console.log(`[otp-reminder] Template params: nome=${params.nome}, imovel=${params.imovel}, codigo=${params.codigo}, lembrete=${params.lembrete}`);
+
+    const response = await fetch('https://app.ziontalk.com/api/send_template_message/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${authHeader}`,
+      },
+      body: formData,
+    });
+
+    const responseText = await response.text();
+    console.log(`[otp-reminder] Template ZionTalk status: ${response.status}`);
+    console.log(`[otp-reminder] Template ZionTalk resposta: ${responseText}`);
+
+    if (!response.ok) {
+      console.error('[otp-reminder] ZionTalk template error:', responseText);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('[otp-reminder] ZionTalk template error:', error);
+    return false;
+  }
+}
+
 // Send WhatsApp message via Evolution API (fallback)
 async function sendViaEvolutionAPI(phone: string, message: string): Promise<boolean> {
   const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL');
@@ -254,8 +309,24 @@ serve(async (req) => {
       // Get configured WhatsApp channel
       const channel = await getDefaultChannel(supabase);
 
-      // Try to send via available providers
-      let sent = await sendViaZionTalk(otp.telefone, message, channel);
+      let sent = false;
+
+      if (channel === 'meta') {
+        // Meta channel: use approved template visita_prova with urgency reminder
+        const tipoLabel = otp.tipo === 'proprietario' ? 'proprietário' : 'visitante';
+        console.log('[otp-reminder] Usando template Meta visita_prova para lembrete');
+        sent = await sendTemplateViaZionTalk(otp.telefone, {
+          nome: tipoLabel,
+          imovel: ficha.imovel_endereco,
+          codigo: otp.codigo,
+          lembrete: `⏰ Expira em ${minutosRestantes} minutos!`,
+          token: otp.token,
+        }, channel);
+      } else {
+        // Default channel: free-text message
+        sent = await sendViaZionTalk(otp.telefone, message, channel);
+      }
+
       if (!sent) sent = await sendViaEvolutionAPI(otp.telefone, message);
       if (!sent) sent = await sendViaZAPI(otp.telefone, message);
 
