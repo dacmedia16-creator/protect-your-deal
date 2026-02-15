@@ -31,9 +31,27 @@ function formatPhoneNumber(phone: string): string {
   return cleaned;
 }
 
+// Get configured WhatsApp channel from system settings
+async function getDefaultChannel(supabase: any): Promise<'default' | 'meta'> {
+  try {
+    const { data } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'whatsapp_channel_padrao')
+      .single();
+    const val = data?.valor;
+    if (val === 'meta' || val === '"meta"') return 'meta';
+    return 'default';
+  } catch (_e) {
+    return 'default';
+  }
+}
+
 // Send WhatsApp message via ZionTalk
-async function sendViaZionTalk(phone: string, message: string): Promise<boolean> {
-  const apiKey = Deno.env.get('ZIONTALK_API_KEY');
+async function sendViaZionTalk(phone: string, message: string, channel: 'default' | 'meta' = 'default'): Promise<boolean> {
+  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  const apiKey = Deno.env.get(secretName);
+  console.log(`[process-otp-queue] Canal WhatsApp configurado: ${channel}, usando secret: ${secretName}`);
 
   if (!apiKey) {
     console.log('[process-otp-queue] ZionTalk API not configured');
@@ -278,8 +296,12 @@ async function processQueueItem(
       message = `🏠 *Confirmação de Visita*\n\n${saudacao}\n\nVocê está sendo convidado a confirmar uma visita ao imóvel:\n\n📍 *${ficha.imovel_endereco}*\n🏷️ ${ficha.imovel_tipo}\n📅 ${dataFormatada}\n📋 Protocolo: ${ficha.protocolo}\n\nComo ${tipoLabel}, seu código de confirmação é:\n\n🔐 *${codigo}*\n\nOu clique no link para confirmar:\n${verificationUrl}${instrucaoExtra}\n\n⏰ Este código expira em 1 hora.\n\n_Não compartilhe este código com ninguém._`;
     }
 
+    // Get configured WhatsApp channel
+    const channel = await getDefaultChannel(supabase);
+    console.log(`[process-otp-queue] Canal WhatsApp selecionado: ${channel}`);
+
     // Try to send via providers
-    let sent = await sendViaZionTalk(telefone, message);
+    let sent = await sendViaZionTalk(telefone, message, channel);
     
     if (!sent) {
       sent = await sendViaEvolutionAPI(telefone, message);
@@ -295,7 +317,7 @@ async function processQueueItem(
       await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       
       const codigoMessage = codigo; // Just the 6-digit code
-      const codeSent = await sendViaZionTalk(telefone, codigoMessage);
+      const codeSent = await sendViaZionTalk(telefone, codigoMessage, channel);
       if (!codeSent) {
         const codeSentEvo = await sendViaEvolutionAPI(telefone, codigoMessage);
         if (!codeSentEvo) {
