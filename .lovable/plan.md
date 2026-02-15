@@ -1,18 +1,20 @@
 
-# Desabilitar todos os prompts de instalacao PWA
+
+# Remover header "VisitaProva" da pagina ConfirmarVisita
 
 ## Problema
 
-O modal "Instalar VisitaProva" continua aparecendo para os usuarios. O usuario quer desabilitar completamente todos os prompts de instalacao PWA.
+A pagina de confirmacao de visita (`/confirmar/:token`) exibe um header com icone e nome da marca. O usuario quer remover esse header completamente.
 
 ## Solucao
 
-Fazer os 3 componentes PWA retornarem `null` imediatamente, sem nenhuma logica:
+Remover o bloco `<header>` (linhas 379-386) do arquivo `src/pages/ConfirmarVisita.tsx`.
+
+## Arquivo modificado
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/components/PWAInstallModal.tsx` | Retornar `null` no inicio da funcao |
-| `src/components/PWAInstallBanner.tsx` | Retornar `null` no inicio da funcao |
-| `src/components/PWAInstallFAB.tsx` | Retornar `null` no inicio da funcao |
+| `src/pages/ConfirmarVisita.tsx` | Remover o bloco `<header>` com o icone Shield e o texto da marca (linhas 379-386) |
 
-Isso desabilita os 3 pontos onde o prompt aparece (modal global no App.tsx, banner no Dashboard e ListaFichas, e FAB flutuante) sem precisar remover imports ou referencias, minimizando mudancas.
+Alteracao simples de remocao de 8 linhas.
+
