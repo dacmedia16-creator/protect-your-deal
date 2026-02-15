@@ -1,38 +1,18 @@
 
-
-# Corrigir label de nome no template Meta por tipo
+# Desabilitar todos os prompts de instalacao PWA
 
 ## Problema
 
-Quando o nome do destinatario esta vazio, o template Meta sempre mostra "Visitante", mesmo para proprietarios. O correto e:
-- **proprietario** -> "Proprietario"
-- **comprador** -> "Visitante"
+O modal "Instalar VisitaProva" continua aparecendo para os usuarios. O usuario quer desabilitar completamente todos os prompts de instalacao PWA.
 
 ## Solucao
 
-Alterar o fallback do parametro `nome` nas chamadas ao template Meta em 2 edge functions. O `otp-reminder` ja faz isso corretamente.
+Fazer os 3 componentes PWA retornarem `null` imediatamente, sem nenhuma logica:
 
-## Arquivos modificados
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/components/PWAInstallModal.tsx` | Retornar `null` no inicio da funcao |
+| `src/components/PWAInstallBanner.tsx` | Retornar `null` no inicio da funcao |
+| `src/components/PWAInstallFAB.tsx` | Retornar `null` no inicio da funcao |
 
-### 1. `supabase/functions/send-otp/index.ts` (linha ~451)
-
-```
-// De:
-nome: nome || 'Visitante',
-
-// Para:
-nome: nome || (tipo === 'proprietario' ? 'Proprietário' : 'Visitante'),
-```
-
-### 2. `supabase/functions/process-otp-queue/index.ts` (linha ~364)
-
-```
-// De:
-nome: nome || 'Visitante',
-
-// Para:
-nome: nome || (item.tipo === 'proprietario' ? 'Proprietário' : 'Visitante'),
-```
-
-O `otp-reminder` ja usa `tipoLabel` corretamente e nao precisa de alteracao.
-
+Isso desabilita os 3 pontos onde o prompt aparece (modal global no App.tsx, banner no Dashboard e ListaFichas, e FAB flutuante) sem precisar remover imports ou referencias, minimizando mudancas.
