@@ -1,51 +1,66 @@
 
-# Adicionar botao de verificar atualizacao e dados dinamicos no card "Informacoes do Sistema"
+# Corrigir envio de OTP para usar o canal WhatsApp configurado
 
-## Objetivo
+## Problema
 
-Substituir os valores estaticos (versao "1.0.0", data "26/12/2024") por dados reais do sistema e adicionar um botao para buscar a versao mais recente do servidor.
+As 3 edge functions que enviam mensagens WhatsApp (OTP, fila de processamento e lembretes) usam sempre a chave `ZIONTALK_API_KEY` (numero padrao), ignorando a configuracao `whatsapp_channel_padrao` salva no banco pelo Super Admin. Mesmo com "API Oficial Meta" selecionado nas configuracoes, os envios continuam saindo pelo numero antigo.
 
-## Alteracoes em `src/pages/admin/AdminConfiguracoes.tsx`
+## Solucao
 
-### 1. Importar dependencias
-- Importar `Button` de `@/components/ui/button`
-- Importar `RefreshCw` de `lucide-react`
-- Importar `useState` (ja importado)
+Adicionar em cada uma das 3 edge functions a logica de consultar a tabela `configuracoes_sistema` para determinar qual API Key usar (`ZIONTALK_API_KEY` ou `ZIONTALK_META_API_KEY`), exatamente como ja foi feito no `send-whatsapp`.
 
-### 2. Adicionar estado e funcao de verificacao
-- Criar estado `serverVersion` e `lastPublished` para armazenar a versao do servidor
-- Criar estado `isCheckingVersion` para loading do botao
-- Criar funcao `checkLatestVersion` que chama `supabase.functions.invoke('app-version')` e atualiza os estados com `version` e `published_at`
+## Alteracoes
 
-### 3. Atualizar o card "Informacoes do Sistema"
-- **Versao**: mostrar `VITE_BUILD_ID` (versao local do build) em vez de "1.0.0"
-- **Ambiente**: manter "Producao"
-- **Ultima Atualizacao**: mostrar `published_at` retornado pelo servidor (formatado) ou a data atual do build
-- Adicionar uma linha abaixo com:
-  - **Versao no Servidor**: mostra a versao disponivel no servidor (apos consulta)
-  - **Botao "Verificar Atualizacao"** com icone RefreshCw que chama `checkLatestVersion`
-  - Se a versao do servidor for diferente da local, exibir um Badge "Nova versao disponivel" e um botao "Atualizar Agora" que chama `forceAppRefresh()`
+### 1. `supabase/functions/send-otp/index.ts`
 
-### 4. Importar utilitario existente
-- Importar `forceAppRefresh` de `@/lib/forceAppRefresh` para o botao de atualizar
-- Importar `format` de `date-fns` para formatar a data
+- Adicionar funcao `getDefaultChannel()` que consulta `configuracoes_sistema` com chave `whatsapp_channel_padrao`
+- Modificar `sendViaZionTalk()` para aceitar parametro `channel` e usar a API Key correta (`ZIONTALK_API_KEY` para default, `ZIONTALK_META_API_KEY` para meta)
+- No handler principal, chamar `getDefaultChannel()` e passar o canal para `sendViaZionTalk()`
 
-## Resumo visual
+### 2. `supabase/functions/process-otp-queue/index.ts`
 
-O card ficara assim:
+- Mesma alteracao: adicionar `getDefaultChannel()` e modificar `sendViaZionTalk()` para respeitar o canal configurado
+- O supabase client ja existe no handler, entao sera passado para a funcao
+
+### 3. `supabase/functions/otp-reminder/index.ts`
+
+- Mesma alteracao: adicionar `getDefaultChannel()` e modificar `sendViaZionTalk()` para respeitar o canal configurado
+
+## Detalhes tecnicos
+
+A funcao `getDefaultChannel` sera identica nas 3 functions:
 
 ```text
-Informacoes do Sistema
------------------------------------------
-Versao Local    | Ambiente   | Ultima Atualizacao
-2026-02-15 ...  | Producao   | 15/02/2026
+async function getDefaultChannel(supabase): Promise<'default' | 'meta'> {
+  try {
+    const { data } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'whatsapp_channel_padrao')
+      .single();
+    const val = data?.valor;
+    if (val === 'meta' || val === '"meta"') return 'meta';
+    return 'default';
+  } catch {
+    return 'default';
+  }
+}
+```
 
-Versao no Servidor: 2026-02-15 ...  [Verificar Atualizacao]
-                                    [Atualizar Agora] (se diferente)
+A funcao `sendViaZionTalk` passara a receber o channel:
+
+```text
+async function sendViaZionTalk(phone, message, channel = 'default') {
+  const secretName = channel === 'meta' ? 'ZIONTALK_META_API_KEY' : 'ZIONTALK_API_KEY';
+  const apiKey = Deno.env.get(secretName);
+  // ... resto igual
+}
 ```
 
 ## Arquivos modificados
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/pages/admin/AdminConfiguracoes.tsx` | Dados dinamicos no card + botao verificar/atualizar |
+| `supabase/functions/send-otp/index.ts` | Ler canal padrao do banco e usar API Key correspondente |
+| `supabase/functions/process-otp-queue/index.ts` | Ler canal padrao do banco e usar API Key correspondente |
+| `supabase/functions/otp-reminder/index.ts` | Ler canal padrao do banco e usar API Key correspondente |
