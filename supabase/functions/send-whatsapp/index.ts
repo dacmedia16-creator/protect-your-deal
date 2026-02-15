@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,13 +37,35 @@ function getChannelLabel(channel?: 'default' | 'meta'): string {
   return channel === 'meta' ? 'ZionTalk Meta (API Oficial)' : 'ZionTalk';
 }
 
+async function getDefaultChannel(): Promise<'default' | 'meta'> {
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    const { data } = await supabaseClient
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'whatsapp_channel_padrao')
+      .single();
+    const val = data?.valor;
+    if (val === 'meta') return 'meta';
+    return 'default';
+  } catch {
+    return 'default';
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { action, phone, message, templateName, templateParams, headerParams, language, channel, buttonUrlDynamicParams }: SendMessageRequest = await req.json();
+    const { action, phone, message, templateName, templateParams, headerParams, language, channel: requestedChannel, buttonUrlDynamicParams }: SendMessageRequest = await req.json();
+    
+    // Use requested channel, or fall back to DB config
+    const channel = requestedChannel ?? await getDefaultChannel();
     
     const apiKey = getApiKey(channel);
     const channelLabel = getChannelLabel(channel);

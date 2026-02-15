@@ -17,8 +17,10 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Users
+  Users,
+  Smartphone
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -69,9 +71,18 @@ export default function AdminConfiguracoes() {
     return isNaN(numValue) ? defaultValue : numValue;
   };
 
+  // Get specific configuration string value
+  const getConfigStringValue = (chave: string, defaultValue: string = ''): string => {
+    const config = configuracoes?.find(c => c.chave === chave);
+    if (!config) return defaultValue;
+    // valor is JSON, so it might be a quoted string like "default"
+    if (typeof config.valor === 'string') return config.valor;
+    return String(config.valor);
+  };
+
   // Mutation to update configuration
   const updateConfigMutation = useMutation({
-    mutationFn: async ({ chave, valor }: { chave: string; valor: boolean }) => {
+    mutationFn: async ({ chave, valor }: { chave: string; valor: boolean | string | number }) => {
       const { error } = await supabase
         .from('configuracoes_sistema')
         .update({ valor: valor })
@@ -286,6 +297,35 @@ export default function AdminConfiguracoes() {
                   </Badge>
                 </div>
               ))}
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label>Canal WhatsApp Padrão</Label>
+                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Número utilizado para envios automáticos do sistema (OTP, lembretes, etc.)
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-9 w-48" />
+                ) : (
+                  <Select
+                    value={getConfigStringValue('whatsapp_channel_padrao', 'default')}
+                    onValueChange={(value) => updateConfigMutation.mutate({ chave: 'whatsapp_channel_padrao', valor: value })}
+                    disabled={updateConfigMutation.isPending}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Número Padrão</SelectItem>
+                      <SelectItem value="meta">API Oficial Meta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </CardContent>
           </Card>
 
