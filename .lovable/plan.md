@@ -1,45 +1,44 @@
 
-# Corrigir erro na criacao de pesquisa (create-survey)
+
+# Corrigir erro CORS na edge function create-survey
 
 ## Problema
 
-A edge function `create-survey` usa o metodo `auth.getClaims(token)` que nao existe no SDK do Supabase JS v2. Isso causa um erro na autenticacao do usuario, impedindo a criacao da pesquisa. Todas as outras 24+ edge functions do projeto usam `auth.getUser()` corretamente.
+A edge function `create-survey` nao esta processando nenhuma requisicao. Os logs mostram que a funcao inicia (boot) mas nenhuma mensagem de log aparece (como "Criando survey para usuario:"), indicando que as requisicoes estao falhando no nivel do CORS antes de chegar ao codigo.
+
+O header `Access-Control-Allow-Headers` esta incompleto:
+```
+authorization, x-client-info, apikey, content-type
+```
+
+Faltam os headers que o cliente Supabase envia automaticamente:
+- `x-supabase-client-platform`
+- `x-supabase-client-platform-version`
+- `x-supabase-client-runtime`
+- `x-supabase-client-runtime-version`
 
 ## Correcao
 
 ### Arquivo: `supabase/functions/create-survey/index.ts`
 
-Substituir o bloco de autenticacao (linhas 31-42) de:
+Atualizar os CORS headers (linhas 3-6) de:
 
 ```typescript
-const token = authHeader.replace('Bearer ', '');
-const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
-
-if (claimsError || !claimsData?.claims) {
-  return new Response(
-    JSON.stringify({ error: 'Token invalido' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-const userId = claimsData.claims.sub;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 ```
 
-Para (seguindo o padrao das outras functions):
+Para:
 
 ```typescript
-const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
-
-if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: 'Token invalido' }),
-    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  );
-}
-
-const userId = user.id;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
 ```
 
 ## Impacto
 
-Alteracao em 1 arquivo, apenas no bloco de autenticacao. Nenhuma mudanca de logica de negocio. A edge function sera redeployada automaticamente.
+Alteracao de 1 linha em 1 arquivo. A edge function sera redeployada automaticamente. Apos isso, o corretor conseguira criar pesquisas normalmente.
