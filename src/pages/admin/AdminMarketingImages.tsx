@@ -62,6 +62,7 @@ export default function AdminMarketingImages() {
   const [funcionalidade, setFuncionalidade] = useState('geral');
   const [formato, setFormato] = useState<'quadrado' | 'vertical' | 'stories'>('quadrado');
   const [estilo, setEstilo] = useState<'claro' | 'escuro'>('escuro');
+  const [qualidade, setQualidade] = useState<'rapido' | 'premium'>('rapido');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 const [legenda, setLegenda] = useState<string>('');
@@ -97,6 +98,7 @@ const [legenda, setLegenda] = useState<string>('');
           funcionalidade,
           formato,
           estilo,
+          qualidade,
         },
       });
 
@@ -332,6 +334,34 @@ const [legenda, setLegenda] = useState<string>('');
                     </Label>
                   </div>
                 </RadioGroup>
+              </div>
+
+              {/* Qualidade */}
+              <div className="space-y-3">
+                <Label>Qualidade</Label>
+                <RadioGroup 
+                  value={qualidade} 
+                  onValueChange={(v) => setQualidade(v as 'rapido' | 'premium')}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rapido" id="rapido" />
+                    <Label htmlFor="rapido" className="cursor-pointer">
+                      ⚡ Rápido
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="premium" id="premium" />
+                    <Label htmlFor="premium" className="cursor-pointer">
+                      ✨ Premium (+ refinamento)
+                    </Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  {qualidade === 'premium' 
+                    ? 'Gera a imagem base e depois refina com mais fotorrealismo. Mais lento.' 
+                    : 'Geração rápida com retry automático em caso de falha.'}
+                </p>
               </div>
 
               {/* Botão Gerar */}
