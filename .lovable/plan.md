@@ -1,32 +1,45 @@
 
-# Corrigir URL duplicada no botao do template Meta
+# Corrigir erro na criacao de pesquisa (create-survey)
 
 ## Problema
 
-O botao "Confirmar Visita" do template `visita_prova_2` gera a URL `visitaseguras.com.br/confirmar/confirmar/token` (com "confirmar" duplicado). Isso acontece porque o template Meta ja tem a URL base configurada como `visitaseguras.com.br/confirmar/`, e o codigo envia `confirmar/${token}` como parametro dinamico do botao.
+A edge function `create-survey` usa o metodo `auth.getClaims(token)` que nao existe no SDK do Supabase JS v2. Isso causa um erro na autenticacao do usuario, impedindo a criacao da pesquisa. Todas as outras 24+ edge functions do projeto usam `auth.getUser()` corretamente.
 
 ## Correcao
 
-Alterar o valor de `buttonUrlDynamicParams[0]` de `confirmar/${params.token}` para apenas `${params.token}` em 3 edge functions:
+### Arquivo: `supabase/functions/create-survey/index.ts`
 
-### Arquivos
+Substituir o bloco de autenticacao (linhas 31-42) de:
 
-1. **`supabase/functions/send-otp/index.ts`** (linha 135)
-   - De: `buttonUrlDynamicParams[0]`, `confirmar/${params.token}`
-   - Para: `buttonUrlDynamicParams[0]`, `${params.token}`
+```typescript
+const token = authHeader.replace('Bearer ', '');
+const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
 
-2. **`supabase/functions/process-otp-queue/index.ts`** (linha 139)
-   - De: `buttonUrlDynamicParams[0]`, `confirmar/${params.token}`
-   - Para: `buttonUrlDynamicParams[0]`, `${params.token}`
+if (claimsError || !claimsData?.claims) {
+  return new Response(
+    JSON.stringify({ error: 'Token invalido' }),
+    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
 
-3. **`supabase/functions/otp-reminder/index.ts`** (linha 107)
-   - De: `buttonUrlDynamicParams[0]`, `confirmar/${params.token}`
-   - Para: `buttonUrlDynamicParams[0]`, `${params.token}`
+const userId = claimsData.claims.sub;
+```
 
-## Resultado esperado
+Para (seguindo o padrao das outras functions):
 
-A URL gerada passara a ser `visitaseguras.com.br/confirmar/{token}` (correta, sem duplicacao).
+```typescript
+const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
 
-## Detalhes tecnicos
+if (authError || !user) {
+  return new Response(
+    JSON.stringify({ error: 'Token invalido' }),
+    { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
 
-A alteracao e uma unica linha em cada arquivo. As 3 edge functions serao redeployadas apos a mudanca.
+const userId = user.id;
+```
+
+## Impacto
+
+Alteracao em 1 arquivo, apenas no bloco de autenticacao. Nenhuma mudanca de logica de negocio. A edge function sera redeployada automaticamente.
