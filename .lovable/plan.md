@@ -1,114 +1,89 @@
 
 
-# Melhorar qualidade das imagens de marketing geradas por IA
+# Atualizar CORS Headers de Todas as Edge Functions
 
-## Analise do estado atual
+## Resumo
 
-A edge function atual usa `google/gemini-3-pro-image-preview` com prompts muito longos (2000+ caracteres). Ela ja tem cenarios detalhados por template e funcionalidade, redimensionamento com ImageScript e overlay de logo.
+46 funcoes no total. 6 ja tem os headers corretos (`create-survey`, `send-whatsapp`, `send-otp`, `get-otp-info`, `verify-otp`, `generate-marketing-image`). As 40 restantes precisam ser atualizadas.
 
-## Problemas identificados
+## Alteracao
 
-1. **Prompts longos demais**: Modelos de imagem funcionam melhor com prompts mais concisos e bem estruturados. O prompt atual mistura instrucoes tecnicas (dimensoes, formato) com instrucoes criativas, diluindo o foco.
-2. **Sem exemplos de referencia visual**: Nao usa tecnica de "style anchoring" com descricoes de fotografos/estilos conhecidos.
-3. **Instrucoes negativas fracas**: O prompt diz o que NAO fazer de forma dispersa. Concentrar e reforcar ajuda muito.
-4. **Sem variacao de seed/temperatura**: Cada geracao pode ser muito similar.
-5. **Uma unica tentativa**: Se a imagem nao ficar boa, nao ha retry automatico.
-6. **Texto na UI nao e adicionado na imagem**: O titulo e subtitulo nao aparecem na imagem final, apenas no prompt como contexto. Poderia usar uma abordagem de 2 etapas: gerar imagem base + adicionar texto com overlay.
-
-## Plano de melhorias
-
-### 1. Reestruturar prompts (mais concisos e eficazes)
-
-Reduzir o prompt principal para ~800 caracteres focados, usando tecnica de "style anchoring":
+Em cada funcao, substituir a linha `Access-Control-Allow-Headers` de:
 
 ```
-Professional advertising photo, shot by Annie Leibovitz style.
-Brazilian real estate agent, 35yo, business casual, confident smile.
-Showing smartphone with verification code screen to client.
-Modern luxury property entrance, golden hour lighting.
-Ultra-realistic, 8K, shallow depth of field, warm tones.
-Color palette: navy #0F172A, blue #60A5FA, green #10B981.
-NO text, NO logos, NO watermarks. Clean top-left corner.
+authorization, x-client-info, apikey, content-type
 ```
 
-Em vez do prompt atual de 2000+ caracteres com paragrafos descritivos.
+Para:
 
-### 2. Adicionar overlay de texto na imagem
-
-Usar ImageScript para renderizar o titulo e subtitulo diretamente na imagem, criando um resultado mais profissional e pronto para postar. Atualmente so a logo e sobreposta.
-
-- Titulo em fonte grande, bold, na parte inferior da imagem
-- Subtitulo menor abaixo
-- Fundo semi-transparente atras do texto para legibilidade
-- Posicionamento varia por formato (quadrado, vertical, stories)
-
-### 3. Sistema de retry inteligente
-
-Se a primeira geracao nao retornar imagem, tentar novamente com prompt simplificado automaticamente (max 2 tentativas).
-
-### 4. Adicionar opcao de "refinamento"
-
-Nova flag `refine: true` que faz 2 etapas:
-1. Gera imagem base
-2. Envia a imagem de volta ao modelo com instrucao de refinamento ("Make this more photorealistic, improve lighting")
-
-### 5. Pre-sets de qualidade visual
-
-Adicionar parametro de qualidade que ajusta o prompt:
-- `rapido`: Prompt curto, 1 tentativa
-- `premium`: Prompt detalhado, com retry e refinamento
-
-### 6. Cache de prompts otimizados
-
-Manter um mapa de prompts "que funcionaram bem" por combinacao template+funcionalidade, refinados ao longo do tempo.
-
-## Arquivos modificados
-
-1. **`supabase/functions/generate-marketing-image/index.ts`** - Reestruturacao completa dos prompts, adicao de overlay de texto, sistema de retry, opcao de refinamento
-
-2. **`src/pages/admin/AdminMarketingImages.tsx`** - Adicionar toggle de qualidade (rapido/premium), preview do texto na imagem
-
-## Detalhes tecnicos
-
-### Novo formato do prompt (exemplo para template "feature" + funcionalidade "otp-whatsapp"):
-
-```text
-Professional advertising photography, Annie Leibovitz style editorial.
-Scene: Brazilian real estate agent (35yo, business casual, warm smile) 
-showing smartphone verification code screen to impressed client.
-Setting: Modern luxury apartment entrance, golden hour lighting.
-Phone screen: Clean PIN input with 6 digits, green checkmark.
-Style: 8K, shallow DOF, warm cinematic tones.
-Palette: navy #0F172A, electric blue #60A5FA, emerald #10B981.
-Mood: Trust, security, professionalism, innovation.
-AVOID: text, logos, watermarks, signature pads, stylus pens.
-Keep top-left 15% clean for logo overlay.
+```
+authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version
 ```
 
-### Overlay de texto com ImageScript:
+## Lista completa das 40 funcoes a atualizar
 
-Como ImageScript nao suporta fontes TrueType diretamente, a abordagem sera:
-- Usar a API de edicao do proprio Gemini para adicionar texto na imagem gerada
-- Enviar a imagem base + instrucao "Add this text overlay: [titulo] in large white bold text at the bottom, with [subtitulo] below in smaller text, on a semi-transparent dark gradient bar"
-- Isso gera um resultado mais natural e profissional do que texto programatico
+### Com aspas simples (29 funcoes):
+1. `aceitar-convite-externo/index.ts`
+2. `aceitar-convite-parceiro/index.ts`
+3. `admin-create-user/index.ts`
+4. `admin-delete-user/index.ts`
+5. `admin-promote-corretor/index.ts`
+6. `admin-reset-corretor-password/index.ts`
+7. `admin-update-corretor/index.ts`
+8. `admin-update-user/index.ts`
+9. `admin-vincular-usuario/index.ts`
+10. `app-version/index.ts`
+11. `asaas-cancel-subscription/index.ts`
+12. `asaas-create-customer/index.ts`
+13. `asaas-create-subscription/index.ts`
+14. `asaas-payment-link/index.ts`
+15. `asaas-webhook/index.ts`
+16. `asaas-webhook-test/index.ts`
+17. `chat-assistente/index.ts`
+18. `elevenlabs-tts/index.ts`
+19. `empresa-delete-corretor/index.ts`
+20. `enviar-convite-parceiro/index.ts`
+21. `generate-pdf/index.ts`
+22. `get-ficha-externa/index.ts`
+23. `get-imobiliaria-by-email/index.ts`
+24. `get-survey-by-token/index.ts`
+25. `otp-reminder/index.ts`
+26. `process-otp-queue/index.ts`
+27. `regenerate-backup/index.ts`
+28. `register-version/index.ts`
+29. `serve-survey-meta/index.ts`
+30. `submit-survey-response/index.ts`
+31. `survey-og/index.ts`
+32. `survey-og-page/index.ts`
+33. `text-to-speech/index.ts`
+34. `verify-comprovante/index.ts`
+35. `verify-pdf-integrity/index.ts`
 
-### Sistema de retry:
+### Com aspas duplas (11 funcoes):
+36. `admin-create-corretor/index.ts`
+37. `admin-criar-acesso-afiliado/index.ts`
+38. `admin-fix-inconsistencies/index.ts`
+39. `admin-get-corretores-emails/index.ts`
+40. `admin-list-users/index.ts`
+41. `admin-reset-password/index.ts`
+42. `master-login/index.ts`
+43. `registro-corretor-autonomo/index.ts`
+44. `registro-imobiliaria/index.ts`
+45. `seed-test-admin/index.ts`
+46. `send-email/index.ts`
 
-```typescript
-let imageData = null;
-let attempts = 0;
-const maxAttempts = 2;
+## Funcoes ja atualizadas (nao serao tocadas)
 
-while (!imageData && attempts < maxAttempts) {
-  attempts++;
-  const prompt = attempts === 1 ? fullPrompt : simplifiedPrompt;
-  // ... chamada ao AI Gateway
-}
-```
+- `create-survey` - ja atualizada
+- `send-whatsapp` - ja atualizada
+- `send-otp` - ja atualizada
+- `get-otp-info` - ja atualizada
+- `verify-otp` - ja atualizada
+- `generate-marketing-image` - ja atualizada
 
-## Resultado esperado
+## Impacto
 
-- Imagens mais fotorrealistas e profissionais
-- Texto do titulo/subtitulo visivel na imagem final (pronta para postar)
-- Menos falhas de geracao com o sistema de retry
-- Opcao de qualidade premium com refinamento em 2 etapas
+- 40 arquivos modificados, 1 linha cada
+- Todas as funcoes serao redeployadas
+- Nenhuma mudanca de logica, apenas CORS headers
+- Resolve problemas intermitentes de conexao em clientes Supabase modernos
