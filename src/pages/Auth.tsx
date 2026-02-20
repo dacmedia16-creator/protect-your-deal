@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { SEOHead } from '@/components/SEOHead';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -445,6 +446,10 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex">
+      <SEOHead 
+        title="Entrar - VisitaProva"
+        description="Acesse sua conta VisitaProva. Gerencie seus registros de visita imobiliária, fichas digitais e comprovantes PDF."
+      />
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 gradient-primary p-12 flex-col justify-between">
         <div>

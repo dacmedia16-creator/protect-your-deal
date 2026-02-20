@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { SEOHead } from '@/components/SEOHead';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -6,6 +7,10 @@ import { LogoIcon } from '@/components/LogoIcon';
 const TermosDeUso = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Termos de Uso - VisitaProva"
+        description="Termos de uso da plataforma VisitaProva. Conheça as condições de uso, responsabilidades e limitações do serviço."
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="container mx-auto px-4 py-4">

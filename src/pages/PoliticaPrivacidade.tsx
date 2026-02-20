@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { SEOHead } from '@/components/SEOHead';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +8,10 @@ import { LogoIcon } from '@/components/LogoIcon';
 const PoliticaPrivacidade = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Política de Privacidade - VisitaProva"
+        description="Política de responsabilidade jurídica do VisitaProva. Entenda os limites da atuação e natureza probatória dos documentos gerados."
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="container mx-auto px-4 py-4">

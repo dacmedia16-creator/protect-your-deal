@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SEOHead } from '@/components/SEOHead';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -152,6 +153,10 @@ export default function InstalarApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <SEOHead 
+        title="Baixar App - VisitaProva"
+        description="Instale o VisitaProva no seu celular. Acesse seus registros de visita imobiliária de qualquer lugar, com acesso rápido pela tela inicial."
+      />
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center px-4">
