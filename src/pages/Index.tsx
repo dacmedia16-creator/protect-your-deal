@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SEOHead } from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -184,6 +185,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="VisitaProva - Comprove Visitas Imobiliárias com WhatsApp OTP"
+        description="Registre visitas imobiliárias com confirmação via WhatsApp. Ficha de visita digital, comprovante PDF com QR Code e prova de intermediação para corretores."
+        keywords="ficha de visita digital, comprovante de visita imobiliária, prova de intermediação, corretor de imóveis, OTP WhatsApp"
+      />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

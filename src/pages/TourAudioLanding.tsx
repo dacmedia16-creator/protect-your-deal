@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SEOHead } from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -49,6 +50,10 @@ const TOUR_FEATURES = [
 export default function TourAudioLanding() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+      <SEOHead 
+        title="Tour em Áudio - VisitaProva"
+        description="Conheça o VisitaProva através de uma apresentação narrada e interativa. Aprenda sobre todas as funcionalidades com mockups em tempo real."
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

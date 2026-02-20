@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SEOHead } from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -179,6 +180,10 @@ const Funcionalidades = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Funcionalidades - VisitaProva"
+        description="Conheça todas as funcionalidades do VisitaProva: ficha de visita digital, confirmação OTP via WhatsApp, comprovante PDF com QR Code, CRM de clientes e mais."
+      />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

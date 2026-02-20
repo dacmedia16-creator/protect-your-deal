@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import AnimatedSection from '@/components/AnimatedSection';
 import videoThumbnail from '@/assets/video-thumbnail.jpg';
@@ -42,6 +43,10 @@ const ComoFunciona = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Como Funciona - VisitaProva"
+        description="Veja como é simples registrar visitas imobiliárias com o VisitaProva. 4 passos: crie o registro, envie OTP, aguarde confirmação e baixe o comprovante PDF."
+      />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
