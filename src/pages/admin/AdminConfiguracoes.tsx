@@ -20,15 +20,27 @@ import {
   Clock,
   Users,
   Smartphone,
-  RefreshCw
+  RefreshCw,
+  Loader2,
+  Wifi,
+  WifiOff,
+  Radio
 } from "lucide-react";
 import { format } from "date-fns";
 import { forceAppRefresh, getBuildVersion } from "@/lib/forceAppRefresh";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatedContent, AnimatedList, AnimatedItem } from "@/components/AnimatedContent";
+
+type ChannelKey = 'default' | 'meta' | 'meta2';
+type ChannelStatus = 'unknown' | 'connected' | 'error';
+
+const WHATSAPP_CHANNELS: { key: ChannelKey; name: string; description: string }[] = [
+  { key: 'default', name: 'ZionTalk Padrão', description: 'Canal de texto livre (API não-oficial)' },
+  { key: 'meta', name: 'API Oficial Meta', description: 'Canal oficial Meta Business – Template visita_prova_2' },
+  { key: 'meta2', name: 'API Oficial Meta 2', description: 'Segundo canal oficial Meta Business' },
+];
 
 type ConfiguracaoSistema = {
   id: string;
@@ -50,6 +62,12 @@ export default function AdminConfiguracoes() {
   const [serverVersion, setServerVersion] = useState<string | null>(null);
   const [lastPublished, setLastPublished] = useState<string | null>(null);
   const [isCheckingVersion, setIsCheckingVersion] = useState(false);
+  const [testingChannel, setTestingChannel] = useState<ChannelKey | null>(null);
+  const [channelStatuses, setChannelStatuses] = useState<Record<ChannelKey, ChannelStatus>>({
+    default: 'unknown',
+    meta: 'unknown',
+    meta2: 'unknown',
+  });
 
   const localVersion = getBuildVersion();
 
@@ -159,21 +177,6 @@ export default function AdminConfiguracoes() {
       valor: numValue as any
     });
   };
-
-  const integracoes = [
-    {
-      nome: "WhatsApp (ZionTalk)",
-      descricao: "Envio de mensagens via WhatsApp",
-      status: "conectado",
-      icon: MessageSquare,
-    },
-    {
-      nome: "ImoView",
-      descricao: "Integração com sistema ImoView",
-      status: "conectado",
-      icon: Database,
-    },
-  ];
 
   return (
     <SuperAdminLayout>
@@ -287,73 +290,140 @@ export default function AdminConfiguracoes() {
             </CardContent>
           </Card>
 
-          {/* Integrações */}
-          <Card>
+          {/* Canais WhatsApp */}
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Plug className="h-5 w-5" />
-                Integrações
+                <MessageSquare className="h-5 w-5" />
+                Canais WhatsApp
               </CardTitle>
               <CardDescription>
-                Status das integrações externas
+                Gerencie os canais de envio de WhatsApp e selecione o canal ativo
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {integracoes.map((integracao) => (
-                <div key={integracao.nome} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-muted rounded-lg">
-                      <integracao.icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{integracao.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {integracao.descricao}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge 
-                    variant={integracao.status === "conectado" ? "default" : "secondary"}
-                    className="flex items-center gap-1"
-                  >
-                    {integracao.status === "conectado" ? (
-                      <CheckCircle className="h-3 w-3" />
-                    ) : (
-                      <XCircle className="h-3 w-3" />
-                    )}
-                    {integracao.status === "conectado" ? "Conectado" : "Desconectado"}
-                  </Badge>
+            <CardContent>
+              {isLoadingConfig ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full" />)}
                 </div>
-              ))}
-              <Separator />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {WHATSAPP_CHANNELS.map((ch) => {
+                    const activeChannel = getConfigStringValue('whatsapp_channel_padrao', 'default');
+                    const isActive = activeChannel === ch.key;
+                    const status = channelStatuses[ch.key];
+                    const isTesting = testingChannel === ch.key;
+
+                    return (
+                      <div
+                        key={ch.key}
+                        className={`relative rounded-lg border-2 p-4 space-y-3 transition-colors ${
+                          isActive
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border'
+                        }`}
+                      >
+                        {/* Active indicator */}
+                        {isActive && (
+                          <Badge variant="default" className="absolute -top-2.5 left-3 flex items-center gap-1">
+                            <Radio className="h-3 w-3" />
+                            Ativo
+                          </Badge>
+                        )}
+
+                        <div className="pt-1">
+                          <p className="font-semibold">{ch.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{ch.description}</p>
+                        </div>
+
+                        {/* Status indicator */}
+                        <div className="flex items-center gap-1.5 text-xs">
+                          {status === 'connected' && (
+                            <>
+                              <Wifi className="h-3.5 w-3.5 text-success" />
+                              <span className="text-success">Conectado</span>
+                            </>
+                          )}
+                          {status === 'error' && (
+                            <>
+                              <WifiOff className="h-3.5 w-3.5 text-destructive" />
+                              <span className="text-destructive">Falha na conexão</span>
+                            </>
+                          )}
+                          {status === 'unknown' && (
+                            <>
+                              <Wifi className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">Não testado</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            disabled={isTesting}
+                            onClick={async () => {
+                              setTestingChannel(ch.key);
+                              try {
+                                const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+                                  body: { action: 'test-connection', channel: ch.key },
+                                });
+                                if (error) throw error;
+                                const connected = data?.connected === true;
+                                setChannelStatuses(prev => ({ ...prev, [ch.key]: connected ? 'connected' : 'error' }));
+                                toast[connected ? 'success' : 'error'](data?.message || (connected ? 'Conectado' : 'Falha'));
+                              } catch (err: any) {
+                                setChannelStatuses(prev => ({ ...prev, [ch.key]: 'error' }));
+                                toast.error('Erro ao testar conexão');
+                              } finally {
+                                setTestingChannel(null);
+                              }
+                            }}
+                          >
+                            {isTesting ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Wifi className="h-3.5 w-3.5" />
+                            )}
+                            Testar
+                          </Button>
+                          {!isActive && (
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              disabled={updateConfigMutation.isPending}
+                              onClick={() => updateConfigMutation.mutate({ chave: 'whatsapp_channel_padrao', valor: ch.key })}
+                            >
+                              Ativar
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <Separator className="my-4" />
+
+              {/* ImoView integration kept */}
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <Label>Canal WhatsApp Padrão</Label>
-                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Database className="h-4 w-4" />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Número utilizado para envios automáticos do sistema (OTP, lembretes, etc.)
-                  </p>
+                  <div>
+                    <p className="font-medium">ImoView</p>
+                    <p className="text-sm text-muted-foreground">Integração com sistema ImoView</p>
+                  </div>
                 </div>
-                {isLoadingConfig ? (
-                  <Skeleton className="h-9 w-48" />
-                ) : (
-                  <Select
-                    value={getConfigStringValue('whatsapp_channel_padrao', 'default')}
-                    onValueChange={(value) => updateConfigMutation.mutate({ chave: 'whatsapp_channel_padrao', valor: value })}
-                    disabled={updateConfigMutation.isPending}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Número Padrão</SelectItem>
-                      <SelectItem value="meta">API Oficial Meta</SelectItem>
-                      <SelectItem value="meta2">API Oficial Meta 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+                <Badge variant="default" className="flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Conectado
+                </Badge>
               </div>
             </CardContent>
           </Card>
