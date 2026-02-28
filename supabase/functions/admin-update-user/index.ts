@@ -143,6 +143,12 @@ Deno.serve(async (req) => {
 
       if (profileError) {
         console.error('Profile update error:', profileError);
+        if (profileError.code === '23505' && profileError.message.includes('telefone')) {
+          return new Response(
+            JSON.stringify({ error: 'Este telefone já está em uso por outro usuário.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         return new Response(
           JSON.stringify({ error: 'Erro ao atualizar perfil: ' + profileError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
