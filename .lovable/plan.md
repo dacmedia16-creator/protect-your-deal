@@ -1,16 +1,39 @@
 
 
-# Disparar testes WhatsApp nos 3 canais
+# Nova Página: Envio de WhatsApp para Usuários (Super Admin)
 
-## Passos
+## O que será criado
 
-1. **Desabilitar JWT** na função `send-whatsapp` (alterar `verify_jwt = false` no `config.toml`)
-2. **Disparar 3 testes** via `curl` na edge function:
-   - Canal `default`: mensagem de texto livre
-   - Canal `meta`: template `visita_prova_2`
-   - Canal `meta2`: template `visita_prova_2`
-   - Destino: `15981788214`
-3. **Reabilitar JWT** (voltar `verify_jwt = true` no `config.toml`)
+Uma página dedicada no painel Super Admin para enviar mensagens WhatsApp de texto livre para usuários do sistema, usando o canal padrão (default).
 
-Nota: O `config.toml` é gerenciado automaticamente pelo sistema, mas a alteração temporária + deploy + curl + restauração será feita em sequência. Os resultados de cada disparo serão reportados para você ver qual canal respondeu.
+## Implementação
+
+### 1. Criar página `src/pages/admin/AdminWhatsApp.tsx`
+
+- Lista todos os usuários com telefone cadastrado (query em `profiles` + `user_roles`)
+- Filtros: por role, por imobiliária, por nome/telefone
+- Seleção múltipla de destinatários (checkboxes) + "selecionar todos filtrados"
+- Campo de textarea para digitar a mensagem personalizada
+- Variáveis dinâmicas disponíveis: `{nome}` (substituído pelo nome do usuário)
+- Botão "Enviar" que dispara `supabase.functions.invoke('send-whatsapp', { action: 'send-text', phone, message })` para cada selecionado
+- Progresso visual do envio (X de Y enviados, sucessos/falhas)
+- Histórico não será persistido (envio direto)
+
+### 2. Adicionar rota no `src/App.tsx`
+
+- Rota `/admin/whatsapp` protegida com `allowedRoles={['super_admin']}`
+
+### 3. Adicionar link no menu do SuperAdminLayout
+
+- Item "WhatsApp" com ícone `MessageCircle` no grupo "Sistema"
+
+### 4. Corrigir bug existente no envio
+
+- O `handleSendWhatsApp` em `AdminUsuarios.tsx` usa `to` em vez de `phone` no body. Será corrigido para consistência.
+
+## Detalhes Técnicos
+
+- O envio usa o canal `default` (não especifica `channel`, então a edge function usa o padrão do banco)
+- Envio sequencial com delay de 500ms entre mensagens para evitar rate limiting
+- A edge function `send-whatsapp` já tem `verify_jwt = true`, então precisa do token de autenticação
 
