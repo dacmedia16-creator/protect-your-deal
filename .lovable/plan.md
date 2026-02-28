@@ -1,34 +1,24 @@
 
 
-## Causa da Falha
+## Problem
 
-Os logs da edge function mostram claramente o problema:
+The `admin-update-user` edge function returns a raw PostgreSQL constraint violation error (code 23505) when the admin tries to set a phone number that already exists on another profile. The error message is technical and unhelpful.
 
-```
-Action: send-text, Phone: 15998459830, Channel: meta2
-Sending text message to +5515998459830 via ZionTalk Meta 2 (API Oficial)
-Send message response status: 500
-Send message response: Failed to send the message
-```
+## Fix
 
-O código do `AdminWhatsApp.tsx` **não especifica o `channel`** no body da requisição (linha 176-181). Quando o canal não é informado, a edge function busca o canal padrão no banco (`configuracoes_sistema.whatsapp_channel_padrao`), que está configurado como **`meta2`** -- e esse canal está falhando com erro 500.
+**File**: `supabase/functions/admin-update-user/index.ts`
 
-A correção é simples: forçar `channel: 'default'` no body da requisição, como combinado ("usar o canal padrão").
+Add a check for duplicate phone constraint error (code `23505`) in the profile update section and return a user-friendly message like "Este telefone já está em uso por outro usuário."
 
-## Correção
-
-**Arquivo**: `src/pages/admin/AdminWhatsApp.tsx`
-
-Adicionar `channel: 'default'` no body do `supabase.functions.invoke`:
-
+Specifically, after the profile update call (around line 126-133), check:
 ```typescript
-body: {
-  action: 'send-text',
-  phone: user.telefone,
-  message: personalizedMessage,
-  channel: 'default',  // forçar canal default (ZionTalk texto livre)
-},
+if (profileError) {
+  if (profileError.code === '23505' && profileError.message.includes('telefone')) {
+    return Response with 400: "Este telefone já está em uso por outro usuário"
+  }
+  // existing generic error handling
+}
 ```
 
-Apenas essa linha resolve o problema.
+This is a single change in one file (edge function), no frontend changes needed since the frontend already displays the error message from the response.
 
