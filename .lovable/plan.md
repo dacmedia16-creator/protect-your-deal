@@ -1,39 +1,34 @@
 
 
-# Nova Página: Envio de WhatsApp para Usuários (Super Admin)
+## Causa da Falha
 
-## O que será criado
+Os logs da edge function mostram claramente o problema:
 
-Uma página dedicada no painel Super Admin para enviar mensagens WhatsApp de texto livre para usuários do sistema, usando o canal padrão (default).
+```
+Action: send-text, Phone: 15998459830, Channel: meta2
+Sending text message to +5515998459830 via ZionTalk Meta 2 (API Oficial)
+Send message response status: 500
+Send message response: Failed to send the message
+```
 
-## Implementação
+O código do `AdminWhatsApp.tsx` **não especifica o `channel`** no body da requisição (linha 176-181). Quando o canal não é informado, a edge function busca o canal padrão no banco (`configuracoes_sistema.whatsapp_channel_padrao`), que está configurado como **`meta2`** -- e esse canal está falhando com erro 500.
 
-### 1. Criar página `src/pages/admin/AdminWhatsApp.tsx`
+A correção é simples: forçar `channel: 'default'` no body da requisição, como combinado ("usar o canal padrão").
 
-- Lista todos os usuários com telefone cadastrado (query em `profiles` + `user_roles`)
-- Filtros: por role, por imobiliária, por nome/telefone
-- Seleção múltipla de destinatários (checkboxes) + "selecionar todos filtrados"
-- Campo de textarea para digitar a mensagem personalizada
-- Variáveis dinâmicas disponíveis: `{nome}` (substituído pelo nome do usuário)
-- Botão "Enviar" que dispara `supabase.functions.invoke('send-whatsapp', { action: 'send-text', phone, message })` para cada selecionado
-- Progresso visual do envio (X de Y enviados, sucessos/falhas)
-- Histórico não será persistido (envio direto)
+## Correção
 
-### 2. Adicionar rota no `src/App.tsx`
+**Arquivo**: `src/pages/admin/AdminWhatsApp.tsx`
 
-- Rota `/admin/whatsapp` protegida com `allowedRoles={['super_admin']}`
+Adicionar `channel: 'default'` no body do `supabase.functions.invoke`:
 
-### 3. Adicionar link no menu do SuperAdminLayout
+```typescript
+body: {
+  action: 'send-text',
+  phone: user.telefone,
+  message: personalizedMessage,
+  channel: 'default',  // forçar canal default (ZionTalk texto livre)
+},
+```
 
-- Item "WhatsApp" com ícone `MessageCircle` no grupo "Sistema"
-
-### 4. Corrigir bug existente no envio
-
-- O `handleSendWhatsApp` em `AdminUsuarios.tsx` usa `to` em vez de `phone` no body. Será corrigido para consistência.
-
-## Detalhes Técnicos
-
-- O envio usa o canal `default` (não especifica `channel`, então a edge function usa o padrão do banco)
-- Envio sequencial com delay de 500ms entre mensagens para evitar rate limiting
-- A edge function `send-whatsapp` já tem `verify_jwt = true`, então precisa do token de autenticação
+Apenas essa linha resolve o problema.
 
