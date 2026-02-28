@@ -93,6 +93,7 @@ import AdminAfiliados from "./pages/admin/AdminAfiliados";
 import AdminCupons from "./pages/admin/AdminCupons";
 import AdminComissoes from "./pages/admin/AdminComissoes";
 import AdminSessoes from "./pages/admin/AdminSessoes";
+import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
@@ -268,6 +269,11 @@ const App = () => (
                 <Route path="/admin/sessoes" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminSessoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/whatsapp" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminWhatsApp />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/email" element={

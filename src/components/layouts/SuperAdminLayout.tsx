@@ -32,6 +32,7 @@ import {
   ChevronDown,
   Package,
   Activity,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -107,6 +108,7 @@ const navGroups: NavGroup[] = [
     label: 'Sistema',
     defaultOpen: false,
     items: [
+      { href: '/admin/whatsapp', icon: MessageCircle, label: 'WhatsApp' },
       { href: '/admin/email', icon: Mail, label: 'Email Sistema' },
       { href: '/admin/sessoes', icon: Activity, label: 'Sessões' },
       { href: '/admin/marketing', icon: Image, label: 'Marketing' },
