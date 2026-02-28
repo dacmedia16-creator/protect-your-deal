@@ -494,7 +494,7 @@ export default function AdminUsuarios() {
       const response = await supabase.functions.invoke("send-whatsapp", {
         body: {
           action: "send-text",
-          to: createdUser.telefone,
+          phone: createdUser.telefone,
           message,
         },
         headers: {
