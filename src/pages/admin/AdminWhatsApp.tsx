@@ -178,6 +178,7 @@ export default function AdminWhatsApp() {
             action: 'send-text',
             phone: user.telefone,
             message: personalizedMessage,
+            channel: 'default',
           },
           headers: {
             Authorization: `Bearer ${token}`,
