@@ -554,9 +554,9 @@ serve(async (req) => {
         const pdfBytes = await generateBackupPDF(supabase, otp.ficha_id, false);
         console.log('[verify-otp] ✅ Backup gerado com sucesso após confirmação completa');
         
-        // Enviar emails com PDF anexado apenas se ficha está completa (não finalizado_parcial)
-        if (newStatus === 'completo' && pdfBytes) {
-          console.log('[verify-otp] Enviando emails com PDF para os corretores...');
+        // Enviar emails com PDF anexado quando ficha está completa ou finalizada parcialmente
+        if ((newStatus === 'completo' || newStatus === 'finalizado_parcial') && pdfBytes) {
+          console.log(`[verify-otp] Enviando emails com PDF para os corretores (status: ${newStatus})...`);
           await sendCompletionEmails(supabase, updatedFicha, pdfBytes);
         }
       } catch (err) {
