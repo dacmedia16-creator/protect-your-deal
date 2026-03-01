@@ -128,9 +128,22 @@ serve(async (req) => {
           );
         }
 
+        // Meta channels only support templates, force default for text messages
+        const textChannel = (channel === 'meta' || channel === 'meta2') ? 'default' : channel;
+        const textApiKey = getApiKey(textChannel);
+        const textChannelLabel = getChannelLabel(textChannel);
+        const textAuthHeader = btoa(`${textApiKey}:`);
+
+        if (!textApiKey) {
+          return new Response(
+            JSON.stringify({ success: false, error: `API Key do ${textChannelLabel} não configurada` }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const formattedPhone = formatPhoneNumber(phone);
         const url = `${ZIONTALK_API_URL}/send_message/`;
-        console.log(`Sending text message to ${formattedPhone} via ${channelLabel}`);
+        console.log(`Sending text message to ${formattedPhone} via ${textChannelLabel}`);
 
         const formData = new FormData();
         formData.append('msg', message);
@@ -138,7 +151,7 @@ serve(async (req) => {
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Authorization': `Basic ${authHeader}` },
+          headers: { 'Authorization': `Basic ${textAuthHeader}` },
           body: formData,
         });
 
