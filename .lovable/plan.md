@@ -1,25 +1,14 @@
 
 
-## Diagnóstico
-
-O botão "Ver Detalhes da Ficha" no email gera a URL `visitaprova.com.br/ficha/{id}`, mas a rota no app é `/fichas/:id` (com **s**). Por isso dá 404.
-
-O bug existe em **dois** Edge Functions:
-
-1. **`regenerate-backup/index.ts`** (linha 193): `link: \`https://visitaprova.com.br/ficha/${ficha_id}\``
-2. **`verify-otp/index.ts`**: mesmo padrão com `/ficha/` sem o **s**
-
 ## Correção
 
-Alterar o link em ambas as funções de `/ficha/` para `/fichas/` (com s):
+**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx` (linha ~160)
 
-```typescript
-// De:
-link: `https://visitaprova.com.br/ficha/${ficha_id}`
+Substituir o delay fixo de 500ms por um intervalo aleatório entre 15 e 35 segundos, e adicionar um indicador visual de contagem regressiva no progresso para o admin saber que o sistema está aguardando propositalmente.
 
-// Para:
-link: `https://visitaprova.com.br/fichas/${ficha_id}`
-```
+**Mudanças:**
 
-Isso alinha o link do email com a rota real do app (`/fichas/:id`).
+1. Adicionar estado para controlar o countdown entre envios
+2. Trocar `setTimeout(r, 500)` por intervalo aleatório de 15-35s com countdown visual
+3. Mostrar "Aguardando Xs..." na barra de progresso durante a pausa
 
