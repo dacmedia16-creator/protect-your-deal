@@ -391,6 +391,7 @@ Deno.serve(async (req) => {
         const mensagemBoasVindas = `Seja bem-vindo ${corretor.nome} ao Visita Prova – Sistema de Segurança para Visitas Imobiliárias.\n\nSeu acesso já está ativo e pronto para uso.\n\nA partir de agora, você pode registrar e validar suas visitas com mais organização, controle e proteção operacional.\n\nNosso objetivo é oferecer mais segurança ao corretor e mais profissionalismo ao processo de atendimento.\n\n📌 Importante:\nSalve esse contato na sua agenda agora.\nCaso precise de ajuda, tirar dúvidas ou receber orientação sobre o uso do sistema, este mesmo canal funciona como suporte oficial.\n\nBasta enviar sua mensagem que nossa equipe irá te auxiliar.\n\nConte conosco para elevar o padrão das suas visitas.`;
 
         console.log("Sending welcome WhatsApp to:", corretor.telefone);
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
         const whatsResponse = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
           method: 'POST',
           headers: {
