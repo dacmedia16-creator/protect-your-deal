@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { getRoleBadgeVariant, roleLabels } from '@/lib/statusColors';
-import { formatPhone } from "@/lib/phone";
+import { formatPhone, unformatPhone } from "@/lib/phone";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -386,7 +386,7 @@ export default function AdminUsuarios() {
         body: {
           user_id: userToEdit.user_id,
           nome: editForm.nome || undefined,
-          telefone: editForm.telefone || undefined,
+          telefone: editForm.telefone ? unformatPhone(editForm.telefone) : undefined,
           creci: editForm.creci || undefined,
           email: editForm.email !== userToEdit.email ? editForm.email : undefined,
           role: editForm.role !== userToEdit.role ? editForm.role : undefined,
@@ -432,7 +432,7 @@ export default function AdminUsuarios() {
           email: createForm.email,
           password: createForm.password,
           nome: createForm.nome,
-          telefone: createForm.telefone || undefined,
+          telefone: createForm.telefone ? unformatPhone(createForm.telefone) : undefined,
           creci: createForm.creci || undefined,
           role: createForm.role,
           imobiliaria_id: createForm.imobiliaria_id,
