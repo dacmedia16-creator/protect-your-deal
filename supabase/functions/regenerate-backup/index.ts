@@ -192,7 +192,7 @@ serve(async (req) => {
                     data_visita: fichaCompleta.data_visita
                       ? new Date(fichaCompleta.data_visita).toLocaleDateString('pt-BR')
                       : '',
-                    link: `https://visitaprova.com.br/ficha/${ficha_id}`,
+                    link: `https://visitaprova.com.br/fichas/${ficha_id}`,
                   },
                   attachments: [{
                     filename: `${fichaCompleta.protocolo}-comprovante.pdf`,

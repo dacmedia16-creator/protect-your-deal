@@ -136,7 +136,7 @@ async function sendCompletionEmails(
       protocolo: ficha.protocolo,
       endereco: ficha.imovel_endereco,
       data_visita: dataVisita,
-      link: `https://visitaprova.com.br/ficha/${ficha.id}`,
+      link: `https://visitaprova.com.br/fichas/${ficha.id}`,
     };
     
     // Enviar para corretor principal
