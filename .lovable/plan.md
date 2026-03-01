@@ -1,9 +1,26 @@
 
 
-## Plano: Mover botão do WhatsApp para o lado esquerdo
+## Plano: Corrigir envio de telefone formatado no Admin Usuários
 
-Mover o `WhatsAppFAB` de `bottom-6 right-6` para `bottom-6 left-6`, evitando conflito com o botão da Sofia que fica no canto inferior direito.
+### Problema
+O campo telefone no modal "Editar Usuário" usa `formatPhone()` para exibição, mas envia o valor formatado (ex: `(15) 98178-8214`) ao backend. O backend salva esse valor diretamente, causando:
+- Inconsistência com outros registros que usam apenas dígitos
+- Possível conflito de unicidade se o mesmo número existe em formato diferente
+- Erro 500 da Edge Function
 
-### Alteração
-**`src/components/WhatsAppFAB.tsx`**: Trocar `right-6` por `left-6` na className.
+### Correção
+
+**`src/pages/admin/AdminUsuarios.tsx`** — 2 alterações:
+
+1. **handleEditUser** (linha 389): Aplicar `unformatPhone()` antes de enviar:
+   ```ts
+   telefone: editForm.telefone ? unformatPhone(editForm.telefone) : undefined,
+   ```
+
+2. **handleCreateUser** (linha 435): Mesmo tratamento:
+   ```ts
+   telefone: createForm.telefone ? unformatPhone(createForm.telefone) : undefined,
+   ```
+
+3. **Import**: Adicionar `unformatPhone` ao import de `@/lib/phone`.
 
