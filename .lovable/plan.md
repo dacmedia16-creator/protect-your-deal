@@ -1,9 +1,10 @@
 
-## Plano: Corrigir bug no envio de WhatsApp de boas-vindas (corretor autônomo)
+
+## Plano: Corrigir erro 401 no envio de WhatsApp de boas-vindas
 
 ### Problema
-Os logs mostram o erro: `ReferenceError: supabaseUrl is not defined` na edge function `registro-corretor-autonomo`. A variável `supabaseUrl` é usada na linha 394 mas nunca foi declarada nessa function (diferente da `registro-imobiliaria` que declara corretamente).
+Os logs confirmam que a correção do `supabaseUrl` funcionou, mas agora o erro é `{"code":401,"message":"Invalid JWT"}`. A função `send-whatsapp` tem `verify_jwt = true` no `config.toml`, enquanto `send-email` tem `verify_jwt = false` e funciona corretamente.
 
 ### Correção
-**`supabase/functions/registro-corretor-autonomo/index.ts`** (linha ~390):
-Adicionar `const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";` dentro do bloco `if (corretor.telefone)`, antes do fetch, igual ao padrão usado em `registro-imobiliaria`.
+**`supabase/config.toml`**: Alterar `verify_jwt` de `true` para `false` na seção `[functions.send-whatsapp]`, igualando ao padrão de `send-email`. A segurança é mantida porque a função valida internamente as credenciais do ZionTalk.
+
