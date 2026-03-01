@@ -2,36 +2,24 @@
 
 ## Diagnóstico
 
-O email foi enviado pela função `regenerate-backup`, que usa **nomes de variáveis incorretos** no template:
+O botão "Ver Detalhes da Ficha" no email gera a URL `visitaprova.com.br/ficha/{id}`, mas a rota no app é `/fichas/:id` (com **s**). Por isso dá 404.
 
-| Template espera | regenerate-backup envia |
-|---|---|
-| `{nome}` | `corretor_nome` |
-| `{endereco}` | `imovel_endereco` |
-| `{data_visita}` | _(não envia)_ |
-| `{link}` | _(não envia)_ |
+O bug existe em **dois** Edge Functions:
 
-Por isso `{protocolo}` aparece corretamente (mesmo nome nos dois lados), mas os outros ficam sem substituir.
-
-A função `verify-otp` envia os nomes corretos — o bug está apenas em `regenerate-backup`.
+1. **`regenerate-backup/index.ts`** (linha 193): `link: \`https://visitaprova.com.br/ficha/${ficha_id}\``
+2. **`verify-otp/index.ts`**: mesmo padrão com `/ficha/` sem o **s**
 
 ## Correção
 
-**Arquivo:** `supabase/functions/regenerate-backup/index.ts` (linhas 188-194)
-
-Alterar as variáveis para usar os mesmos nomes que o template espera:
+Alterar o link em ambas as funções de `/ficha/` para `/fichas/` (com s):
 
 ```typescript
-variables: {
-  nome: recipient.nome || 'Corretor',
-  protocolo: fichaCompleta.protocolo,
-  endereco: fichaCompleta.imovel_endereco || '',
-  data_visita: fichaCompleta.data_visita
-    ? new Date(fichaCompleta.data_visita).toLocaleDateString('pt-BR')
-    : '',
-  link: `https://visitaprova.com.br/ficha/${ficha_id}`,
-},
+// De:
+link: `https://visitaprova.com.br/ficha/${ficha_id}`
+
+// Para:
+link: `https://visitaprova.com.br/fichas/${ficha_id}`
 ```
 
-Isso alinha os nomes das variáveis com o template `ficha_completa` e adiciona `data_visita` e `link` que estavam faltando.
+Isso alinha o link do email com a rota real do app (`/fichas/:id`).
 
