@@ -1,24 +1,37 @@
 
 
-## Problem
+## Problema
 
-The `admin-update-user` edge function returns a raw PostgreSQL constraint violation error (code 23505) when the admin tries to set a phone number that already exists on another profile. The error message is technical and unhelpful.
+O `AdminUsuarios.tsx` é o único local que chama `send-whatsapp` com `action: 'send-text'` **sem especificar** `channel: 'default'`. Isso faz com que a edge function consulte o banco e use `meta2`, que falha para mensagens de texto.
 
-## Fix
+- `AdminWhatsApp.tsx` - ja tem `channel: 'default'`
+- `Integracoes.tsx` - ja tem `channel: 'default'`
+- **`AdminUsuarios.tsx` - FALTA `channel: 'default'`**
 
-**File**: `supabase/functions/admin-update-user/index.ts`
+Opcionalmente, podemos também proteger na edge function `send-whatsapp` para que `action: 'send-text'` sempre force o canal `default`, independente do que vier do frontend.
 
-Add a check for duplicate phone constraint error (code `23505`) in the profile update section and return a user-friendly message like "Este telefone já está em uso por outro usuário."
+## Correções
 
-Specifically, after the profile update call (around line 126-133), check:
+### 1. `src/pages/admin/AdminUsuarios.tsx` (linha ~495-499)
+Adicionar `channel: 'default'` no body da chamada `send-whatsapp`:
 ```typescript
-if (profileError) {
-  if (profileError.code === '23505' && profileError.message.includes('telefone')) {
-    return Response with 400: "Este telefone já está em uso por outro usuário"
-  }
-  // existing generic error handling
+body: {
+  action: "send-text",
+  phone: createdUser.telefone,
+  message,
+  channel: 'default',
+},
+```
+
+### 2. `supabase/functions/send-whatsapp/index.ts` (proteção no servidor)
+No case `send-text`, forçar `channel = 'default'` se nenhum canal foi especificado, para que mensagens de texto nunca usem `meta2` (que só suporta templates):
+```typescript
+case 'send-text': {
+  // Meta channels only support templates, force default for text
+  const textChannel = (channel === 'meta' || channel === 'meta2') ? 'default' : channel;
+  // usar textChannel no resto do bloco
 }
 ```
 
-This is a single change in one file (edge function), no frontend changes needed since the frontend already displays the error message from the response.
+Isso garante que mesmo se algum lugar esquecer de passar `channel: 'default'`, a edge function nunca tente enviar texto livre pelo canal Meta.
 
