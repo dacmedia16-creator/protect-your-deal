@@ -681,7 +681,7 @@ export default function DetalhesFicha() {
       try {
         console.log('Gerando backup automático após finalização parcial...');
         const { error: backupError } = await supabase.functions.invoke('regenerate-backup', {
-          body: { ficha_id: ficha.id },
+          body: { ficha_id: ficha.id, send_email: true },
         });
         
         if (backupError) {
