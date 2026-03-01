@@ -1,19 +1,9 @@
 
+## Plano: Corrigir bug no envio de WhatsApp de boas-vindas (corretor autônomo)
 
-## Plano: Acrescentar frase na mensagem de boas-vindas
+### Problema
+Os logs mostram o erro: `ReferenceError: supabaseUrl is not defined` na edge function `registro-corretor-autonomo`. A variável `supabaseUrl` é usada na linha 394 mas nunca foi declarada nessa function (diferente da `registro-imobiliaria` que declara corretamente).
 
-### Alteração
-Adicionar a frase **"Importante: salve esse contato na sua agenda agora."** na mensagem de boas-vindas do WhatsApp, logo após o bloco "📌 Importante:".
-
-### Mensagem atualizada
-A seção "📌 Importante:" ficará assim:
-```
-📌 Importante:
-Salve esse contato na sua agenda agora.
-Caso precise de ajuda, tirar dúvidas ou receber orientação sobre o uso do sistema, este mesmo canal funciona como suporte oficial.
-```
-
-### Arquivos alterados
-1. **`supabase/functions/registro-corretor-autonomo/index.ts`** (linha 391) — atualizar a string `mensagemBoasVindas`
-2. **`supabase/functions/registro-imobiliaria/index.ts`** (linha 260) — atualizar a string `mensagemBoasVindas`
-
+### Correção
+**`supabase/functions/registro-corretor-autonomo/index.ts`** (linha ~390):
+Adicionar `const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";` dentro do bloco `if (corretor.telefone)`, antes do fetch, igual ao padrão usado em `registro-imobiliaria`.
