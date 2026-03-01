@@ -42,6 +42,7 @@ export default function AdminWhatsApp() {
   const [isSending, setIsSending] = useState(false);
   const [sendProgress, setSendProgress] = useState({ total: 0, sent: 0, success: 0, failed: 0 });
   const [sendResults, setSendResults] = useState<SendResult[]>([]);
+  const [countdown, setCountdown] = useState(0);
 
   // Fetch users with phone numbers
   const { data: users = [], isLoading } = useQuery({
@@ -203,9 +204,15 @@ export default function AdminWhatsApp() {
         }));
       }
 
-      // Delay between messages
+      // Random delay 15-35s between messages
       if (selectedUsers.indexOf(user) < selectedUsers.length - 1) {
-        await new Promise(r => setTimeout(r, 500));
+        const delayMs = Math.floor(Math.random() * (35000 - 15000 + 1)) + 15000;
+        const delaySec = Math.ceil(delayMs / 1000);
+        for (let s = delaySec; s > 0; s--) {
+          setCountdown(s);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        setCountdown(0);
       }
     }
 
@@ -268,7 +275,11 @@ export default function AdminWhatsApp() {
           <Card>
             <CardContent className="pt-6 space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span>{sendProgress.sent} de {sendProgress.total} enviado(s)</span>
+                <span>
+                  {countdown > 0
+                    ? `Aguardando ${countdown}s antes do próximo envio...`
+                    : `${sendProgress.sent} de ${sendProgress.total} enviado(s)`}
+                </span>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1 text-green-600">
                     <CheckCircle2 className="h-4 w-4" /> {sendProgress.success}
