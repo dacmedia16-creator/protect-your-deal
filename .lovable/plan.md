@@ -1,37 +1,36 @@
 
 
-## Problema
+## Diagnóstico
 
-O `AdminUsuarios.tsx` é o único local que chama `send-whatsapp` com `action: 'send-text'` **sem especificar** `channel: 'default'`. Isso faz com que a edge function consulte o banco e use `meta2`, que falha para mensagens de texto.
+A correção anterior no `verify-otp` está correta mas **nunca será acionada para fichas parciais**, porque:
 
-- `AdminWhatsApp.tsx` - ja tem `channel: 'default'`
-- `Integracoes.tsx` - ja tem `channel: 'default'`
-- **`AdminUsuarios.tsx` - FALTA `channel: 'default'`**
+1. O `verify-otp` define o status como `aguardando_comprador` ou `aguardando_proprietario` quando apenas uma parte confirma — nunca como `finalizado_parcial`
+2. O status `finalizado_parcial` é definido **manualmente pelo corretor** na função `handleFinalizarParcial` do frontend (`DetalhesFicha.tsx`)
+3. `handleFinalizarParcial` gera o backup PDF mas **não envia o email** com o PDF anexado
 
-Opcionalmente, podemos também proteger na edge function `send-whatsapp` para que `action: 'send-text'` sempre force o canal `default`, independente do que vier do frontend.
+## Correção
 
-## Correções
+### 1. `src/pages/DetalhesFicha.tsx` — `handleFinalizarParcial` (linhas 664-714)
 
-### 1. `src/pages/admin/AdminUsuarios.tsx` (linha ~495-499)
-Adicionar `channel: 'default'` no body da chamada `send-whatsapp`:
-```typescript
-body: {
-  action: "send-text",
-  phone: createdUser.telefone,
-  message,
-  channel: 'default',
-},
-```
+Após gerar o backup com sucesso via `regenerate-backup`, invocar a função `send-email` com `template_tipo: 'ficha_completa'` e o PDF anexado para o corretor (e parceiro, se houver). Alternativamente, criar uma chamada ao backend para enviar o email.
 
-### 2. `supabase/functions/send-whatsapp/index.ts` (proteção no servidor)
-No case `send-text`, forçar `channel = 'default'` se nenhum canal foi especificado, para que mensagens de texto nunca usem `meta2` (que só suporta templates):
-```typescript
-case 'send-text': {
-  // Meta channels only support templates, force default for text
-  const textChannel = (channel === 'meta' || channel === 'meta2') ? 'default' : channel;
-  // usar textChannel no resto do bloco
-}
-```
+Porém, o frontend não tem acesso ao PDF em bytes para anexar. A melhor solução é mover a lógica para o backend.
 
-Isso garante que mesmo se algum lugar esquecer de passar `channel: 'default'`, a edge function nunca tente enviar texto livre pelo canal Meta.
+### 2. `supabase/functions/regenerate-backup/index.ts` — Adicionar envio de email
+
+Após gerar e fazer upload do backup, chamar `sendCompletionEmails` (ou invocar `send-email` diretamente) para enviar o PDF por email ao corretor. Isso cobre tanto a finalização parcial quanto qualquer regeneração manual.
+
+**Abordagem alternativa (mais limpa):** Criar uma flag `send_email: true` no body de `regenerate-backup`, e quando ativada, enviar o email com o PDF gerado. O `handleFinalizarParcial` passaria `{ ficha_id, send_email: true }`.
+
+### Detalhes técnicos
+
+**Arquivo**: `supabase/functions/regenerate-backup/index.ts`
+- Aceitar parâmetro opcional `send_email` no body
+- Quando `send_email === true`, após upload do PDF ao storage:
+  - Buscar dados do corretor principal (email via `profiles`)
+  - Buscar dados do corretor parceiro (se houver)
+  - Invocar `send-email` com `action: 'send-template'`, `template_tipo: 'ficha_completa'`, e o PDF em base64 como attachment
+  
+**Arquivo**: `src/pages/DetalhesFicha.tsx`
+- Na chamada `regenerate-backup` dentro de `handleFinalizarParcial`, adicionar `send_email: true` no body
 
