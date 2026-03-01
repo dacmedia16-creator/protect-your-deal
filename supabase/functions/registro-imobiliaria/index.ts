@@ -253,6 +253,38 @@ Deno.serve(async (req) => {
 
     console.log("Registration completed successfully");
 
+    // Send welcome WhatsApp (non-blocking)
+    if (imobiliaria.telefone) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+        const mensagemBoasVindas = `Seja bem-vindo ${admin.nome} ao Visita Prova – Sistema de Segurança para Visitas Imobiliárias.\n\nSeu acesso já está ativo e pronto para uso.\n\nA partir de agora, você pode registrar e validar suas visitas com mais organização, controle e proteção operacional.\n\nNosso objetivo é oferecer mais segurança ao corretor e mais profissionalismo ao processo de atendimento.\n\n📌 Importante:\nCaso precise de ajuda, tirar dúvidas ou receber orientação sobre o uso do sistema, este mesmo canal funciona como suporte oficial.\n\nBasta enviar sua mensagem que nossa equipe irá te auxiliar.\n\nConte conosco para elevar o padrão das suas visitas.`;
+
+        console.log("Sending welcome WhatsApp to:", imobiliaria.telefone);
+        const whatsResponse = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            action: 'send-text',
+            phone: imobiliaria.telefone,
+            message: mensagemBoasVindas,
+            channel: 'default',
+          }),
+        });
+
+        if (whatsResponse.ok) {
+          console.log("Welcome WhatsApp sent successfully");
+        } else {
+          const errText = await whatsResponse.text();
+          console.error("Failed to send welcome WhatsApp:", errText);
+        }
+      } catch (whatsErr) {
+        console.error("Error sending welcome WhatsApp:", whatsErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
