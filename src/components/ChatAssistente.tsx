@@ -95,7 +95,7 @@ interface UserContext {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-assistente`;
 
 // Routes where Sofia should be hidden
-const HIDDEN_ROUTES = ['/auth', '/registro', '/registro-autonomo', '/convite/', '/confirmar/', '/verificar/', '/aceitar-termos', '/cadastro-concluido'];
+const HIDDEN_ROUTES = ['/auth', '/registro', '/registro-autonomo', '/convite/', '/confirmar/', '/verificar/', '/aceitar-termos', '/cadastro-concluido', '/admin'];
 
 // Home paths for proactive messaging
 const HOME_PATHS = ['/', '/inicial'];
