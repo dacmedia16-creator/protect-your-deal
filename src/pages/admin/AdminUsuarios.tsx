@@ -496,6 +496,7 @@ export default function AdminUsuarios() {
           action: "send-text",
           phone: createdUser.telefone,
           message,
+          channel: 'default',
         },
         headers: {
           Authorization: `Bearer ${sessionData.session?.access_token}`,
