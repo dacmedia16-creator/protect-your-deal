@@ -19,7 +19,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { ficha_id } = await req.json();
+    const { ficha_id, send_email } = await req.json();
 
     if (!ficha_id) {
       return new Response(
@@ -125,6 +125,98 @@ serve(async (req) => {
     }
 
     console.log(`[regenerate-backup] Backup regenerado com sucesso para ficha ${ficha.protocolo}`);
+
+    // 6. Enviar email com PDF se solicitado
+    if (send_email && pdfBytes) {
+      console.log(`[regenerate-backup] Enviando email com PDF anexado...`);
+      
+      try {
+        // Buscar dados completos da ficha para o email
+        const { data: fichaCompleta } = await supabase
+          .from('fichas_visita')
+          .select('*, user_id, corretor_parceiro_id, protocolo, imovel_endereco, proprietario_nome, comprador_nome')
+          .eq('id', ficha_id)
+          .single();
+
+        if (fichaCompleta) {
+          // Converter PDF para base64
+          const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+          
+          // Buscar email do corretor principal
+          const { data: corretorProfile } = await supabase
+            .from('profiles')
+            .select('email, nome')
+            .eq('user_id', fichaCompleta.user_id)
+            .single();
+
+          const recipients: Array<{ email: string; nome: string }> = [];
+          
+          if (corretorProfile?.email) {
+            recipients.push({ email: corretorProfile.email, nome: corretorProfile.nome });
+          }
+
+          // Buscar email do corretor parceiro se houver
+          if (fichaCompleta.corretor_parceiro_id) {
+            const { data: parceiroProfile } = await supabase
+              .from('profiles')
+              .select('email, nome')
+              .eq('user_id', fichaCompleta.corretor_parceiro_id)
+              .single();
+
+            if (parceiroProfile?.email) {
+              recipients.push({ email: parceiroProfile.email, nome: parceiroProfile.nome });
+            }
+          }
+
+          // Enviar email para cada destinatário
+          const sendEmailUrl = `${supabaseUrl}/functions/v1/send-email`;
+          
+          for (const recipient of recipients) {
+            try {
+              console.log(`[regenerate-backup] Enviando email para ${recipient.email}...`);
+              const emailResponse = await fetch(sendEmailUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${supabaseServiceKey}`,
+                },
+                body: JSON.stringify({
+                  action: 'send-template',
+                  template_tipo: 'ficha_completa',
+                  to: recipient.email,
+                  ficha_id: ficha_id,
+                  variables: {
+                    corretor_nome: recipient.nome || 'Corretor',
+                    protocolo: fichaCompleta.protocolo,
+                    imovel_endereco: fichaCompleta.imovel_endereco || '',
+                    proprietario_nome: fichaCompleta.proprietario_nome || 'Não informado',
+                    comprador_nome: fichaCompleta.comprador_nome || 'Não informado',
+                  },
+                  attachments: [{
+                    filename: `${fichaCompleta.protocolo}-comprovante.pdf`,
+                    content: pdfBase64,
+                    contentType: 'application/pdf',
+                  }],
+                }),
+              });
+
+              if (!emailResponse.ok) {
+                const errText = await emailResponse.text();
+                console.error(`[regenerate-backup] Erro ao enviar email para ${recipient.email}:`, errText);
+              } else {
+                await emailResponse.text();
+                console.log(`[regenerate-backup] Email enviado com sucesso para ${recipient.email}`);
+              }
+            } catch (emailErr) {
+              console.error(`[regenerate-backup] Erro ao enviar email para ${recipient.email}:`, emailErr);
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error('[regenerate-backup] Erro ao processar envio de emails:', emailError);
+        // Não falhar o backup por causa do email
+      }
+    }
 
     return new Response(
       JSON.stringify({ 
