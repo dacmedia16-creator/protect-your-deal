@@ -1,15 +1,9 @@
 
 
-## Plano: Botão flutuante de WhatsApp na página inicial
+## Plano: Mover botão do WhatsApp para o lado esquerdo
 
-### Implementação
+Mover o `WhatsAppFAB` de `bottom-6 right-6` para `bottom-6 left-6`, evitando conflito com o botão da Sofia que fica no canto inferior direito.
 
-1. **Criar `src/components/WhatsAppFAB.tsx`**:
-   - Botão circular fixo no canto inferior direito, cor verde (#25D366)
-   - Ícone SVG do WhatsApp
-   - Link abre `https://wa.me/5515998459830` em nova aba
-   - Animação pulse sutil
-
-2. **Adicionar na `src/pages/Index.tsx`**:
-   - Importar e renderizar `<WhatsAppFAB />` no final do componente
+### Alteração
+**`src/components/WhatsAppFAB.tsx`**: Trocar `right-6` por `left-6` na className.
 
