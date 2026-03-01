@@ -1,10 +1,15 @@
 
 
-## Plano: Corrigir erro 401 no envio de WhatsApp de boas-vindas
+## Plano: Botão flutuante de WhatsApp na página inicial
 
-### Problema
-Os logs confirmam que a correção do `supabaseUrl` funcionou, mas agora o erro é `{"code":401,"message":"Invalid JWT"}`. A função `send-whatsapp` tem `verify_jwt = true` no `config.toml`, enquanto `send-email` tem `verify_jwt = false` e funciona corretamente.
+### Implementação
 
-### Correção
-**`supabase/config.toml`**: Alterar `verify_jwt` de `true` para `false` na seção `[functions.send-whatsapp]`, igualando ao padrão de `send-email`. A segurança é mantida porque a função valida internamente as credenciais do ZionTalk.
+1. **Criar `src/components/WhatsAppFAB.tsx`**:
+   - Botão circular fixo no canto inferior direito, cor verde (#25D366)
+   - Ícone SVG do WhatsApp
+   - Link abre `https://wa.me/5515998459830` em nova aba
+   - Animação pulse sutil
+
+2. **Adicionar na `src/pages/Index.tsx`**:
+   - Importar e renderizar `<WhatsAppFAB />` no final do componente
 
