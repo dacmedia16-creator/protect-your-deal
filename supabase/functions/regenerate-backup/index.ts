@@ -186,11 +186,13 @@ serve(async (req) => {
                   to: recipient.email,
                   ficha_id: ficha_id,
                   variables: {
-                    corretor_nome: recipient.nome || 'Corretor',
+                    nome: recipient.nome || 'Corretor',
                     protocolo: fichaCompleta.protocolo,
-                    imovel_endereco: fichaCompleta.imovel_endereco || '',
-                    proprietario_nome: fichaCompleta.proprietario_nome || 'Não informado',
-                    comprador_nome: fichaCompleta.comprador_nome || 'Não informado',
+                    endereco: fichaCompleta.imovel_endereco || '',
+                    data_visita: fichaCompleta.data_visita
+                      ? new Date(fichaCompleta.data_visita).toLocaleDateString('pt-BR')
+                      : '',
+                    link: `https://visitaprova.com.br/ficha/${ficha_id}`,
                   },
                   attachments: [{
                     filename: `${fichaCompleta.protocolo}-comprovante.pdf`,
