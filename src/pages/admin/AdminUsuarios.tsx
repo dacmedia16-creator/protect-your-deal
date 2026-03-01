@@ -398,7 +398,17 @@ export default function AdminUsuarios() {
       });
 
       if (response.error || response.data?.error) {
-        throw new Error(response.data?.error || response.error?.message || "Erro ao atualizar usuário");
+        let errorMsg = response.data?.error || "Erro ao atualizar usuário";
+        if (!response.data?.error && response.error) {
+          try {
+            const ctx = (response.error as any)?.context;
+            if (ctx instanceof Response) {
+              const parsed = await ctx.json();
+              errorMsg = parsed.error || errorMsg;
+            }
+          } catch {}
+        }
+        throw new Error(errorMsg);
       }
 
       toast.success("Usuário atualizado com sucesso");
@@ -443,7 +453,17 @@ export default function AdminUsuarios() {
       });
 
       if (response.error || response.data?.error) {
-        throw new Error(response.data?.error || response.error?.message || "Erro ao criar usuário");
+        let errorMsg = response.data?.error || "Erro ao criar usuário";
+        if (!response.data?.error && response.error) {
+          try {
+            const ctx = (response.error as any)?.context;
+            if (ctx instanceof Response) {
+              const parsed = await ctx.json();
+              errorMsg = parsed.error || errorMsg;
+            }
+          } catch {}
+        }
+        throw new Error(errorMsg);
       }
 
       // Show success dialog
