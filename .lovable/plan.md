@@ -1,36 +1,63 @@
 
 
-## Diagnóstico
+## Plano: Enviar WhatsApp de Boas-Vindas no Cadastro
 
-A correção anterior no `verify-otp` está correta mas **nunca será acionada para fichas parciais**, porque:
+### Contexto
+Existem 3 pontos de cadastro que precisam enviar a mensagem:
+1. **`registro-corretor-autonomo/index.ts`** — tem o telefone do corretor disponível (`corretor.telefone`)
+2. **`registro-imobiliaria/index.ts`** — tem o telefone da imobiliária (`imobiliaria.telefone`), mas não do admin diretamente
+3. **`AceitarConvite.tsx`** (frontend) — cadastro via convite, não passa por edge function de registro
 
-1. O `verify-otp` define o status como `aguardando_comprador` ou `aguardando_proprietario` quando apenas uma parte confirma — nunca como `finalizado_parcial`
-2. O status `finalizado_parcial` é definido **manualmente pelo corretor** na função `handleFinalizarParcial` do frontend (`DetalhesFicha.tsx`)
-3. `handleFinalizarParcial` gera o backup PDF mas **não envia o email** com o PDF anexado
+### Alterações
 
-## Correção
+#### 1. `supabase/functions/registro-corretor-autonomo/index.ts`
+Após o bloco de envio de email de boas-vindas (linha ~386), adicionar envio de WhatsApp não-bloqueante:
+- Verificar se `corretor.telefone` existe
+- Invocar `send-whatsapp` com `action: 'send-text'`, `channel: 'default'`, e a mensagem formatada com `{nome}` substituído por `corretor.nome`
 
-### 1. `src/pages/DetalhesFicha.tsx` — `handleFinalizarParcial` (linhas 664-714)
+#### 2. `supabase/functions/registro-imobiliaria/index.ts`
+Após o log "Registration completed successfully" (linha ~254), antes do return:
+- Verificar se `imobiliaria.telefone` existe
+- Invocar `send-whatsapp` com `action: 'send-text'`, `channel: 'default'`, e a mensagem formatada com `{nome}` substituído por `admin.nome`
 
-Após gerar o backup com sucesso via `regenerate-backup`, invocar a função `send-email` com `template_tipo: 'ficha_completa'` e o PDF anexado para o corretor (e parceiro, se houver). Alternativamente, criar uma chamada ao backend para enviar o email.
+#### 3. Mensagem (hardcoded nas edge functions)
+```
+Seja bem-vindo {nome} ao Visita Prova – Sistema de Segurança para Visitas Imobiliárias.
 
-Porém, o frontend não tem acesso ao PDF em bytes para anexar. A melhor solução é mover a lógica para o backend.
+Seu acesso já está ativo e pronto para uso.
 
-### 2. `supabase/functions/regenerate-backup/index.ts` — Adicionar envio de email
+A partir de agora, você pode registrar e validar suas visitas com mais organização, controle e proteção operacional.
 
-Após gerar e fazer upload do backup, chamar `sendCompletionEmails` (ou invocar `send-email` diretamente) para enviar o PDF por email ao corretor. Isso cobre tanto a finalização parcial quanto qualquer regeneração manual.
+Nosso objetivo é oferecer mais segurança ao corretor e mais profissionalismo ao processo de atendimento.
 
-**Abordagem alternativa (mais limpa):** Criar uma flag `send_email: true` no body de `regenerate-backup`, e quando ativada, enviar o email com o PDF gerado. O `handleFinalizarParcial` passaria `{ ficha_id, send_email: true }`.
+📌 Importante:
+Caso precise de ajuda, tirar dúvidas ou receber orientação sobre o uso do sistema, este mesmo canal funciona como suporte oficial.
 
-### Detalhes técnicos
+Basta enviar sua mensagem que nossa equipe irá te auxiliar.
 
-**Arquivo**: `supabase/functions/regenerate-backup/index.ts`
-- Aceitar parâmetro opcional `send_email` no body
-- Quando `send_email === true`, após upload do PDF ao storage:
-  - Buscar dados do corretor principal (email via `profiles`)
-  - Buscar dados do corretor parceiro (se houver)
-  - Invocar `send-email` com `action: 'send-template'`, `template_tipo: 'ficha_completa'`, e o PDF em base64 como attachment
-  
-**Arquivo**: `src/pages/DetalhesFicha.tsx`
-- Na chamada `regenerate-backup` dentro de `handleFinalizarParcial`, adicionar `send_email: true` no body
+Conte conosco para elevar o padrão das suas visitas.
+```
+
+#### Padrão de chamada (ambas as functions)
+```typescript
+try {
+  const whatsResponse = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+    },
+    body: JSON.stringify({
+      action: 'send-text',
+      phone: telefone,
+      message: mensagemBoasVindas,
+      channel: 'default',
+    }),
+  });
+} catch (whatsErr) {
+  console.error("Error sending welcome WhatsApp:", whatsErr);
+}
+```
+
+Ambos são não-bloqueantes — falha no WhatsApp não impede o cadastro.
 
