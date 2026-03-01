@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogoIcon } from '@/components/LogoIcon';
+import { WhatsAppFAB } from '@/components/WhatsAppFAB';
 import {
   FileCheck, 
   MessageSquare, 
@@ -812,6 +813,7 @@ const Index = () => {
         </div>
       </footer>
 
+      <WhatsAppFAB />
     </div>
   );
 };
