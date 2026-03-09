@@ -1,48 +1,52 @@
 
 
-## Plano: Pause/Play e auto-pause ao sair da página
+## Problema
 
-### Problema
-Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
+Quando você navega para outra página do app, o React **desmonta** o componente `AdminWhatsApp`. Isso destrói todos os states, refs e o loop async — o envio morre.
 
-### Solução
+Isso é uma limitação fundamental: o loop vive dentro do componente. Se o componente morre, o loop morre junto.
 
-Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
+## Solução: Motor de envio global (fora do React)
 
-**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
+Extrair toda a lógica de envio para um **módulo singleton** que vive fora do React. O componente apenas se inscreve para exibir o progresso.
 
-**1. Novos estados e refs:**
-- `isPaused` (state) — controla o botão pause/play na UI
-- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
-- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
-- Importar `Pause`, `Play` do lucide-react
+### Arquivos
 
-**2. Refatorar `handleSend`:**
-- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
-- Criar função `processQueue()` que:
-  - Faz um `while (pendingQueueRef.current.length > 0)`
-  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
-  - Envia a mensagem, remove o user da fila, atualiza progresso
-  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
+**1. Criar `src/lib/whatsappSendEngine.ts`** — Motor global
 
-**3. Auto-pause ao sair da página:**
-- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
-- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
-- `beforeunload` event para avisar ao fechar aba
+- Classe ou objeto singleton com:
+  - `queue: UserWithRole[]`, `isPaused: boolean`, `isRunning: boolean`
+  - `progress: { total, sent, success, failed }`, `results: SendResult[]`, `countdown: number`
+  - Métodos: `start(users, message, token)`, `pause()`, `resume()`, `reset()`
+  - Sistema de listeners (callback pattern) para notificar a UI de mudanças
+  - O loop async roda no escopo do módulo, não depende de nenhum componente React
 
-**4. Botão Pause/Play na UI:**
-- Na seção de progresso, adicionar botão ao lado da barra:
-  - Se enviando e não pausado: botão Pause (ícone ⏸)
-  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
-- Botão "Retomar" claro e visível
-
-**5. Fluxo resumido:**
 ```text
-[Enviar] → processa fila → [Pause] → loop aguarda
-                                    → sai da aba → auto-pause
-                                    → volta → vê "Pausado" → [Play] → continua de onde parou
+whatsappSendEngine (módulo global)
+  ├── start() → inicia o loop async
+  ├── pause() / resume()
+  ├── subscribe(callback) → UI se inscreve para atualizações
+  └── estado persiste mesmo sem componente montado
+```
+
+**2. Refatorar `src/pages/admin/AdminWhatsApp.tsx`**
+
+- Remover toda lógica de envio (refs, loop, processQueue)
+- Importar o engine global
+- No `useEffect`, fazer `subscribe` ao engine para sincronizar state local com o estado do engine
+- Botões chamam `engine.start()`, `engine.pause()`, `engine.resume()`
+- Ao montar, se o engine estiver rodando, mostra o progresso atual automaticamente
+
+### Fluxo
+
+```text
+[Página WhatsApp] → clica Enviar → engine.start()
+[Navega para Dashboard] → componente desmonta, engine continua rodando
+[Volta para WhatsApp] → componente monta → subscribe → vê progresso atual
 ```
 
 ### Escopo
-Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
+- Criar `src/lib/whatsappSendEngine.ts`
+- Refatorar `src/pages/admin/AdminWhatsApp.tsx`
+- Nenhuma mudança em banco ou edge functions
 
