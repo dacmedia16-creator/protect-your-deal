@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { MessageCircle, Send, Search, Users, CheckCircle2, XCircle, Loader2, Pause, Play } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { whatsappEngine, type EngineState, type SendResult } from '@/lib/whatsappSendEngine';
 
 interface UserWithRole {
   user_id: string;
@@ -25,12 +26,6 @@ interface UserWithRole {
   imobiliaria_nome: string | null;
 }
 
-interface SendResult {
-  user_id: string;
-  success: boolean;
-  error?: string;
-}
-
 export default function AdminWhatsApp() {
   useDocumentTitle('WhatsApp - Admin');
 
@@ -39,35 +34,38 @@ export default function AdminWhatsApp() {
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [sendProgress, setSendProgress] = useState({ total: 0, sent: 0, success: 0, failed: 0 });
-  const [sendResults, setSendResults] = useState<SendResult[]>([]);
-  const [countdown, setCountdown] = useState(0);
 
-  const isPausedRef = useRef(false);
-  const pendingQueueRef = useRef<UserWithRole[]>([]);
-  const isProcessingRef = useRef(false);
+  // Engine state synced from global singleton
+  const [engineState, setEngineState] = useState<EngineState>(whatsappEngine.getState());
 
-  // Sync isPaused state to ref
   useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
+    // Sync immediately on mount (engine may already be running)
+    setEngineState(whatsappEngine.getState());
+    return whatsappEngine.subscribe(setEngineState);
+  }, []);
 
   // Warn before closing tab during send
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isSending) {
+      if (engineState.isRunning) {
         e.preventDefault();
         e.returnValue = '';
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isSending]);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [engineState.isRunning]);
+
+  // Show toast when engine finishes
+  const prevRunning = useState(engineState.isRunning)[0];
+  useEffect(() => {
+    if (!engineState.isRunning && engineState.results.length > 0 && engineState.progress.sent === engineState.progress.total) {
+      const s = engineState.progress.success;
+      const f = engineState.progress.failed;
+      if (f === 0) toast.success(`${s} mensagem(ns) enviada(s) com sucesso!`);
+      else toast.warning(`${s} enviada(s), ${f} falha(s)`);
+    }
+  }, [engineState.isRunning]);
 
   // Fetch users with phone numbers
   const { data: users = [], isLoading } = useQuery({
@@ -169,90 +167,6 @@ export default function AdminWhatsApp() {
     return labels[role] || role;
   };
 
-  const waitWhilePaused = async () => {
-    while (isPausedRef.current) {
-      await new Promise(r => setTimeout(r, 500));
-    }
-  };
-
-  const processQueue = useCallback(async (token: string, messageText: string) => {
-    if (isProcessingRef.current) return;
-    isProcessingRef.current = true;
-
-    const results: SendResult[] = [];
-
-    while (pendingQueueRef.current.length > 0) {
-      await waitWhilePaused();
-
-      const user = pendingQueueRef.current[0];
-      const personalizedMessage = messageText.replace(/\{nome\}/g, user.nome);
-
-      try {
-        const response = await supabase.functions.invoke('send-whatsapp', {
-          body: {
-            action: 'send-text',
-            phone: user.telefone,
-            message: personalizedMessage,
-            channel: 'default',
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const success = !response.error && response.data?.success;
-        const result = { user_id: user.user_id, success, error: response.data?.error || response.error?.message };
-        results.push(result);
-        setSendResults(prev => [...prev, result]);
-
-        setSendProgress(prev => ({
-          ...prev,
-          sent: prev.sent + 1,
-          success: prev.success + (success ? 1 : 0),
-          failed: prev.failed + (success ? 0 : 1),
-        }));
-      } catch (err: any) {
-        const result = { user_id: user.user_id, success: false, error: err.message };
-        results.push(result);
-        setSendResults(prev => [...prev, result]);
-
-        setSendProgress(prev => ({
-          ...prev,
-          sent: prev.sent + 1,
-          failed: prev.failed + 1,
-        }));
-      }
-
-      // Remove processed user from queue
-      pendingQueueRef.current = pendingQueueRef.current.slice(1);
-
-      // Random delay 15-35s between messages (if more remain)
-      if (pendingQueueRef.current.length > 0) {
-        const delayMs = Math.floor(Math.random() * (35000 - 15000 + 1)) + 15000;
-        const delaySec = Math.ceil(delayMs / 1000);
-        for (let s = delaySec; s > 0; s--) {
-          await waitWhilePaused();
-          setCountdown(s);
-          await new Promise(r => setTimeout(r, 1000));
-        }
-        setCountdown(0);
-      }
-    }
-
-    isProcessingRef.current = false;
-    setIsSending(false);
-    setIsPaused(false);
-
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
-
-    if (failCount === 0) {
-      toast.success(`${successCount} mensagem(ns) enviada(s) com sucesso!`);
-    } else {
-      toast.warning(`${successCount} enviada(s), ${failCount} falha(s)`);
-    }
-  }, []);
-
   const handleSend = async () => {
     if (!message.trim()) {
       toast.error('Digite uma mensagem');
@@ -273,22 +187,10 @@ export default function AdminWhatsApp() {
       return;
     }
 
-    pendingQueueRef.current = [...selectedUsers];
-    setIsSending(true);
-    setIsPaused(false);
-    isPausedRef.current = false;
-    setSendResults([]);
-    setSendProgress({ total: selectedUsers.length, sent: 0, success: 0, failed: 0 });
-
-    processQueue(token, message);
+    whatsappEngine.start(selectedUsers, message, token);
   };
 
-  const togglePause = () => {
-    const next = !isPaused;
-    setIsPaused(next);
-    isPausedRef.current = next;
-  };
-
+  const { isRunning, isPaused, progress: sendProgress, results: sendResults, countdown } = engineState;
   const allFilteredSelected = filteredUsers.length > 0 && selectedIds.size === filteredUsers.length;
 
   return (
@@ -313,7 +215,7 @@ export default function AdminWhatsApp() {
               value={message}
               onChange={e => setMessage(e.target.value)}
               rows={4}
-              disabled={isSending}
+              disabled={isRunning}
             />
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -321,8 +223,8 @@ export default function AdminWhatsApp() {
               </p>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{selectedIds.size} selecionado(s)</Badge>
-                <Button onClick={handleSend} disabled={isSending || selectedIds.size === 0 || !message.trim()}>
-                  {isSending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                <Button onClick={handleSend} disabled={isRunning || selectedIds.size === 0 || !message.trim()}>
+                  {isRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
                   Enviar
                 </Button>
               </div>
@@ -331,16 +233,16 @@ export default function AdminWhatsApp() {
         </Card>
 
         {/* Progress */}
-        {(isSending || sendResults.length > 0) && (
+        {(isRunning || sendResults.length > 0) && (
           <Card>
             <CardContent className="pt-6 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  {isSending && (
+                  {isRunning && (
                     <Button
                       variant={isPaused ? 'default' : 'outline'}
                       size="sm"
-                      onClick={togglePause}
+                      onClick={() => whatsappEngine.togglePause()}
                       className="h-8 w-8 p-0"
                     >
                       {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
@@ -348,7 +250,7 @@ export default function AdminWhatsApp() {
                   )}
                   <span>
                     {isPaused
-                      ? `⏸ Pausado — ${pendingQueueRef.current.length} restante(s)`
+                      ? `⏸ Pausado — ${whatsappEngine.pendingCount} restante(s)`
                       : countdown > 0
                         ? `Aguardando ${countdown}s antes do próximo envio...`
                         : `${sendProgress.sent} de ${sendProgress.total} enviado(s)`}
