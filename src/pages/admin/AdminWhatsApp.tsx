@@ -54,15 +54,8 @@ export default function AdminWhatsApp() {
     isPausedRef.current = isPaused;
   }, [isPaused]);
 
-  // Auto-pause on tab hidden + beforeunload warning
+  // Warn before closing tab during send
   useEffect(() => {
-    const handleVisibility = () => {
-      if (document.hidden && isSending && !isPausedRef.current) {
-        setIsPaused(true);
-        isPausedRef.current = true;
-      }
-    };
-
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isSending) {
         e.preventDefault();
@@ -70,10 +63,8 @@ export default function AdminWhatsApp() {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [isSending]);
