@@ -1,48 +1,41 @@
 
 
-## Plano: Pause/Play e auto-pause ao sair da página
+## Corrigir AuthSessionMissingError em todas as Edge Functions
 
 ### Problema
-Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
+
+11 edge functions usam o padrão `supabaseUser.auth.getUser()` (criando um segundo client com o Authorization header), que falha com `AuthSessionMissingError` em versões recentes do SDK. O `admin-delete-user` foi corrigido no código mas as outras não.
 
 ### Solução
 
-Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
+Aplicar a mesma correção em todas as 11 funções: extrair o token JWT do header e usar `supabaseAdmin.auth.getUser(token)` diretamente, removendo o `supabaseUser` client.
 
-**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
+### Funções afetadas
 
-**1. Novos estados e refs:**
-- `isPaused` (state) — controla o botão pause/play na UI
-- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
-- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
-- Importar `Pause`, `Play` do lucide-react
+1. `admin-list-users/index.ts`
+2. `admin-create-user/index.ts`
+3. `admin-update-user/index.ts`
+4. `admin-reset-password/index.ts`
+5. `admin-create-corretor/index.ts`
+6. `admin-get-corretores-emails/index.ts`
+7. `admin-vincular-usuario/index.ts`
+8. `admin-promote-corretor/index.ts`
+9. `admin-criar-acesso-afiliado/index.ts`
+10. `create-survey/index.ts`
+11. `send-email/index.ts`
 
-**2. Refatorar `handleSend`:**
-- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
-- Criar função `processQueue()` que:
-  - Faz um `while (pendingQueueRef.current.length > 0)`
-  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
-  - Envia a mensagem, remove o user da fila, atualiza progresso
-  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
+### Padrão da correção (em cada arquivo)
 
-**3. Auto-pause ao sair da página:**
-- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
-- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
-- `beforeunload` event para avisar ao fechar aba
+```typescript
+// REMOVER: criação do supabaseUser client
+// REMOVER: supabaseUser.auth.getUser()
 
-**4. Botão Pause/Play na UI:**
-- Na seção de progresso, adicionar botão ao lado da barra:
-  - Se enviando e não pausado: botão Pause (ícone ⏸)
-  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
-- Botão "Retomar" claro e visível
-
-**5. Fluxo resumido:**
-```text
-[Enviar] → processa fila → [Pause] → loop aguarda
-                                    → sai da aba → auto-pause
-                                    → volta → vê "Pausado" → [Play] → continua de onde parou
+// SUBSTITUIR POR:
+const token = authHeader.replace('Bearer ', '');
+const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
 ```
 
 ### Escopo
-Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
+- Editar 11 edge functions
+- Nenhuma mudança no frontend ou banco
 
