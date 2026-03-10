@@ -24,11 +24,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user: currentUser }, error: userError } = await supabaseUser.auth.getUser();
+    // Verify user using token directly
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !currentUser) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
