@@ -21,15 +21,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create Supabase client with user context
-    const supabaseUser = createClient(
+    // Create admin client
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Verify user
-    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    // Verify user using token directly
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !user) {
       return new Response(
@@ -50,11 +50,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create admin client for database operations
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // supabaseAdmin already created above
 
     // Fetch ficha FIRST to get imobiliaria_id and determine who added the buyer
     const { data: ficha, error: fichaError } = await supabaseAdmin

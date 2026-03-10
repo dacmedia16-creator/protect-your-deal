@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Verificar autenticação
     const authHeader = req.headers.get("Authorization");
@@ -24,11 +23,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user: currentUser }, error: userError } = await supabaseUser.auth.getUser();
+    // Verify user using token directly
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !currentUser) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
@@ -36,8 +34,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verificar se é super_admin
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // supabaseAdmin already created above
 
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")

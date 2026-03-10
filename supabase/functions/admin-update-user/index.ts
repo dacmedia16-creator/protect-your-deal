@@ -37,17 +37,9 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: { headers: { Authorization: authHeader } },
-        auth: { autoRefreshToken: false, persistSession: false }
-      }
-    );
-
-    // Verify user is authenticated
-    const { data: { user: currentUser }, error: userError } = await supabaseUser.auth.getUser();
+    // Verify user is authenticated using token directly
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !currentUser) {
       console.error('Auth error:', userError);
       return new Response(

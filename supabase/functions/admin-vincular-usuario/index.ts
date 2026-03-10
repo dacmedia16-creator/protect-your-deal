@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
     // Create client for user authentication
     const authHeader = req.headers.get('Authorization');
@@ -25,12 +24,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    // Get current user using token directly
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       console.error('User auth error:', userError);
       return new Response(
@@ -40,7 +37,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify super_admin role
-    const { data: roleData, error: roleError } = await supabaseUser
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
@@ -70,8 +67,7 @@ Deno.serve(async (req) => {
       `Vinculando usuário ${user_id} à imobiliária ${imobiliaria_id} | backfill_fichas=${backfillFichas}`
     );
 
-    // Create admin client for updates
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // supabaseAdmin already created above
 
     // Update user_roles table
     const { error: updateRoleError } = await supabaseAdmin

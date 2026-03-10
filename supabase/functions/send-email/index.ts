@@ -134,15 +134,8 @@ serve(async (req) => {
     // Get user ID from auth header if present (only for non-internal calls)
     let userId: string | null = null;
     if (authHeader && !isInternal) {
-      const supabaseUser = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-        { 
-          global: { headers: { Authorization: authHeader } },
-          auth: { persistSession: false } 
-        }
-      );
-      const { data: { user } } = await supabaseUser.auth.getUser();
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user } } = await supabaseAdmin.auth.getUser(token);
       userId = user?.id || null;
     }
 

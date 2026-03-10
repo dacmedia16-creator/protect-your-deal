@@ -36,18 +36,9 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Create client with user's token to verify their identity
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: { headers: { Authorization: authHeader } },
-        auth: { persistSession: false },
-      }
-    );
-
-    // Get the current user
-    const { data: { user: currentUser }, error: userError } = await supabaseUser.auth.getUser();
+    // Get the current user using token directly
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !currentUser) {
       console.error("Error getting user:", userError);
