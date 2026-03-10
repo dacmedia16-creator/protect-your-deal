@@ -50,11 +50,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create admin client for database operations
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // supabaseAdmin already created above
 
     // Fetch ficha FIRST to get imobiliaria_id and determine who added the buyer
     const { data: ficha, error: fichaError } = await supabaseAdmin
