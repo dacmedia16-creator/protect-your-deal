@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify super_admin role
-    const { data: roleData, error: roleError } = await supabaseUser
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
