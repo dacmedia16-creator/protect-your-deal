@@ -67,8 +67,7 @@ Deno.serve(async (req) => {
       `Vinculando usuário ${user_id} à imobiliária ${imobiliaria_id} | backfill_fichas=${backfillFichas}`
     );
 
-    // Create admin client for updates
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // supabaseAdmin already created above
 
     // Update user_roles table
     const { error: updateRoleError } = await supabaseAdmin

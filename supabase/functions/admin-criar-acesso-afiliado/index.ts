@@ -34,8 +34,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verificar se é super_admin
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // supabaseAdmin already created above
 
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
