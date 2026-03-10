@@ -37,21 +37,15 @@ Deno.serve(async (req) => {
     // Create Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-
-    // Client for user authentication
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { persistSession: false },
-      global: { headers: { Authorization: authHeader } }
-    });
 
     // Admin client for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false }
     });
 
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    // Get the authenticated user via token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) {
       console.log('admin-update-corretor: Auth error:', authError);
       return new Response(
