@@ -1,48 +1,51 @@
 
 
-## Plano: Pause/Play e auto-pause ao sair da página
+## Corrigir injeção cross-tenant na tabela surveys
 
 ### Problema
-Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
+A política ALL `"Corretor can manage their own surveys"` usa apenas `auth.uid() = corretor_id`, sem validar `imobiliaria_id`. Um corretor pode inserir/atualizar surveys com `imobiliaria_id` de outra organização, injetando dados PII no dashboard de terceiros.
 
-### Solução
+### Correção
+Substituir a política ALL por políticas granulares com WITH CHECK que valida `imobiliaria_id`:
 
-Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
+```sql
+DROP POLICY "Corretor can manage their own surveys" ON public.surveys;
 
-**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
+-- SELECT: corretor vê suas próprias surveys
+CREATE POLICY "Corretor pode ver suas surveys"
+ON public.surveys FOR SELECT TO authenticated
+USING (auth.uid() = corretor_id);
 
-**1. Novos estados e refs:**
-- `isPaused` (state) — controla o botão pause/play na UI
-- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
-- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
-- Importar `Pause`, `Play` do lucide-react
+-- INSERT: corretor só cria survey na sua imobiliária (ou NULL para autônomos)
+CREATE POLICY "Corretor pode criar surveys"
+ON public.surveys FOR INSERT TO authenticated
+WITH CHECK (
+  auth.uid() = corretor_id
+  AND (
+    (imobiliaria_id IS NULL AND get_user_imobiliaria(auth.uid()) IS NULL)
+    OR (imobiliaria_id = get_user_imobiliaria(auth.uid()))
+  )
+);
 
-**2. Refatorar `handleSend`:**
-- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
-- Criar função `processQueue()` que:
-  - Faz um `while (pendingQueueRef.current.length > 0)`
-  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
-  - Envia a mensagem, remove o user da fila, atualiza progresso
-  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
+-- UPDATE: corretor só atualiza suas surveys mantendo imobiliaria_id válida
+CREATE POLICY "Corretor pode atualizar suas surveys"
+ON public.surveys FOR UPDATE TO authenticated
+USING (auth.uid() = corretor_id)
+WITH CHECK (
+  auth.uid() = corretor_id
+  AND (
+    (imobiliaria_id IS NULL AND get_user_imobiliaria(auth.uid()) IS NULL)
+    OR (imobiliaria_id = get_user_imobiliaria(auth.uid()))
+  )
+);
 
-**3. Auto-pause ao sair da página:**
-- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
-- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
-- `beforeunload` event para avisar ao fechar aba
-
-**4. Botão Pause/Play na UI:**
-- Na seção de progresso, adicionar botão ao lado da barra:
-  - Se enviando e não pausado: botão Pause (ícone ⏸)
-  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
-- Botão "Retomar" claro e visível
-
-**5. Fluxo resumido:**
-```text
-[Enviar] → processa fila → [Pause] → loop aguarda
-                                    → sai da aba → auto-pause
-                                    → volta → vê "Pausado" → [Play] → continua de onde parou
+-- DELETE: corretor pode deletar suas próprias surveys
+CREATE POLICY "Corretor pode deletar suas surveys"
+ON public.surveys FOR DELETE TO authenticated
+USING (auth.uid() = corretor_id);
 ```
 
 ### Escopo
-Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
+- 1 migration SQL
+- 0 arquivos frontend alterados
 
