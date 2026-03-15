@@ -1,27 +1,48 @@
 
 
-## Correção: PDF falha com quebra de linha nas observações
+## Plano: Pause/Play e auto-pause ao sair da página
 
-### Causa raiz
-A ficha `VS2684E990` tem observações com quebra de linha (`\n`):
+### Problema
+Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
+
+### Solução
+
+Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
+
+**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
+
+**1. Novos estados e refs:**
+- `isPaused` (state) — controla o botão pause/play na UI
+- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
+- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
+- Importar `Pause`, `Play` do lucide-react
+
+**2. Refatorar `handleSend`:**
+- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
+- Criar função `processQueue()` que:
+  - Faz um `while (pendingQueueRef.current.length > 0)`
+  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
+  - Envia a mensagem, remove o user da fila, atualiza progresso
+  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
+
+**3. Auto-pause ao sair da página:**
+- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
+- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
+- `beforeunload` event para avisar ao fechar aba
+
+**4. Botão Pause/Play na UI:**
+- Na seção de progresso, adicionar botão ao lado da barra:
+  - Se enviando e não pausado: botão Pause (ícone ⏸)
+  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
+- Botão "Retomar" claro e visível
+
+**5. Fluxo resumido:**
+```text
+[Enviar] → processa fila → [Pause] → loop aguarda
+                                    → sai da aba → auto-pause
+                                    → volta → vê "Pausado" → [Play] → continua de onde parou
 ```
-Nesta Visita visitamos dois Imóveis da Mesma propriearia:
-Alphaville Nova Esplanada III ...
-```
 
-No `generate-pdf`, linha 621, o texto é dividido apenas por espaços (`split(' ')`). O `\n` fica dentro de uma "palavra" e quando `widthOfTextAtSize` tenta medir esse texto, o encoding WinAnsi do pdf-lib não consegue processar o caractere `\n` (0x000a), causando o crash.
-
-### Correção
-No `generate-pdf/index.ts`, antes do word-wrap, dividir o texto das observações por linhas (`\n`) primeiro, e depois processar cada linha com o word-wrap existente. Isso resolve o problema para qualquer campo que contenha quebras de linha.
-
-**Arquivo:** `supabase/functions/generate-pdf/index.ts` (linhas ~619-673)
-
-Mudança:
-1. Substituir `const words = ficha.observacoes.split(' ')` por um loop que primeiro separa por `\n`, e para cada parágrafo faz o word-wrap por espaços
-2. Sanitizar também os valores passados para `drawField` e `drawText` removendo `\n` com `.replace(/\n/g, ' ')` como proteção extra
-
-### Impacto
-- Corrige o erro de geração de PDF para fichas com observações multi-linha
-- Corrige também o backup automático que depende do generate-pdf
-- Nenhuma mudança no frontend
+### Escopo
+Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
 
