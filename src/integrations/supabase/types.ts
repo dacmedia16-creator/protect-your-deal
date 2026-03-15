@@ -1807,6 +1807,77 @@ export type Database = {
       }
     }
     Views: {
+      confirmacoes_otp_view: {
+        Row: {
+          aceite_cpf: string | null
+          aceite_em: string | null
+          aceite_ip: string | null
+          aceite_latitude: number | null
+          aceite_legal: boolean | null
+          aceite_localizacao_tipo: string | null
+          aceite_longitude: number | null
+          aceite_nome: string | null
+          aceite_user_agent: string | null
+          confirmado: boolean | null
+          created_at: string | null
+          expira_em: string | null
+          ficha_id: string | null
+          id: string | null
+          lembrete_enviado_em: string | null
+          telefone: string | null
+          tentativas: number | null
+          tipo: string | null
+        }
+        Insert: {
+          aceite_cpf?: string | null
+          aceite_em?: string | null
+          aceite_ip?: string | null
+          aceite_latitude?: number | null
+          aceite_legal?: boolean | null
+          aceite_localizacao_tipo?: string | null
+          aceite_longitude?: number | null
+          aceite_nome?: string | null
+          aceite_user_agent?: string | null
+          confirmado?: boolean | null
+          created_at?: string | null
+          expira_em?: string | null
+          ficha_id?: string | null
+          id?: string | null
+          lembrete_enviado_em?: string | null
+          telefone?: string | null
+          tentativas?: number | null
+          tipo?: string | null
+        }
+        Update: {
+          aceite_cpf?: string | null
+          aceite_em?: string | null
+          aceite_ip?: string | null
+          aceite_latitude?: number | null
+          aceite_legal?: boolean | null
+          aceite_localizacao_tipo?: string | null
+          aceite_longitude?: number | null
+          aceite_nome?: string | null
+          aceite_user_agent?: string | null
+          confirmado?: boolean | null
+          created_at?: string | null
+          expira_em?: string | null
+          ficha_id?: string | null
+          id?: string | null
+          lembrete_enviado_em?: string | null
+          telefone?: string | null
+          tentativas?: number | null
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "confirmacoes_otp_ficha_id_fkey"
+            columns: ["ficha_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_visita"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imobiliarias_publicas: {
         Row: {
           codigo: number | null
