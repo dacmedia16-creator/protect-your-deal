@@ -253,7 +253,7 @@ export default function DetalhesFicha() {
     queryFn: async () => {
       if (!id) return null;
       const { data, error } = await supabase
-        .from('confirmacoes_otp')
+        .from('confirmacoes_otp_view')
         .select('*')
         .eq('ficha_id', id)
         .eq('confirmado', true);
