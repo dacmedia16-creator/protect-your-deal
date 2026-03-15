@@ -617,28 +617,67 @@ serve(async (req) => {
       yPosition -= 15;
       
       // Word wrap for observations with page break check
+      // Split by newlines first to handle manual line breaks, then word-wrap each paragraph
       const obsMaxWidth = width - 100;
-      const words = ficha.observacoes.split(' ');
-      let line = '';
+      const paragraphs = ficha.observacoes.split('\n');
       
-      for (const word of words) {
-        const testLine = line + word + ' ';
-        const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
-        
-        if (testWidth > obsMaxWidth) {
-          // Check if we need a new page before drawing
-        if (yPosition < FOOTER_RESERVED + 20) {
+      for (const paragraph of paragraphs) {
+        // Empty paragraph = blank line
+        if (paragraph.trim() === '') {
+          yPosition -= 15;
+          if (yPosition < FOOTER_RESERVED + 20) {
             currentPage = pdfDoc.addPage([595, 842]);
             yPosition = height - 50;
+          }
+          continue;
+        }
+        
+        const words = paragraph.split(' ');
+        let line = '';
+        
+        for (const word of words) {
+          // Sanitize word to remove any remaining control characters
+          const cleanWord = word.replace(/[\x00-\x1F\x7F]/g, '');
+          if (!cleanWord) continue;
+          
+          const testLine = line + cleanWord + ' ';
+          const testWidth = helvetica.widthOfTextAtSize(testLine, 10);
+          
+          if (testWidth > obsMaxWidth) {
+            // Check if we need a new page before drawing
+            if (yPosition < FOOTER_RESERVED + 20) {
+              currentPage = pdfDoc.addPage([595, 842]);
+              yPosition = height - 50;
+              
+              currentPage.drawText('Observações (continuação):', {
+                x: 50,
+                y: yPosition,
+                size: 10,
+                font: helveticaBold,
+                color: textColor,
+              });
+              yPosition -= 15;
+            }
             
-            currentPage.drawText('Observações (continuação):', {
+            currentPage.drawText(line.trim(), {
               x: 50,
               y: yPosition,
               size: 10,
-              font: helveticaBold,
+              font: helvetica,
               color: textColor,
             });
             yPosition -= 15;
+            line = cleanWord + ' ';
+          } else {
+            line = testLine;
+          }
+        }
+        
+        // Draw remaining text of this paragraph
+        if (line.trim()) {
+          if (yPosition < FOOTER_RESERVED + 20) {
+            currentPage = pdfDoc.addPage([595, 842]);
+            yPosition = height - 50;
           }
           
           currentPage.drawText(line.trim(), {
@@ -649,27 +688,7 @@ serve(async (req) => {
             color: textColor,
           });
           yPosition -= 15;
-          line = word + ' ';
-        } else {
-          line = testLine;
         }
-      }
-      
-      // Draw remaining text
-      if (line.trim()) {
-        if (yPosition < FOOTER_RESERVED + 20) {
-          currentPage = pdfDoc.addPage([595, 842]);
-          yPosition = height - 50;
-        }
-        
-        currentPage.drawText(line.trim(), {
-          x: 50,
-          y: yPosition,
-          size: 10,
-          font: helvetica,
-          color: textColor,
-        });
-        yPosition -= 15;
       }
     }
 
