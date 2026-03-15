@@ -1,48 +1,55 @@
 
 
-## Plano: Pause/Play e auto-pause ao sair da página
+## Corrigir 2 vulnerabilidades críticas
 
-### Problema
-Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
+### 1. Remover UPDATE aberto em `assinaturas`
 
-### Solução
+**Problema:** A política "Corretor pode atualizar sua assinatura" (`user_id = auth.uid()`) permite que um corretor autônomo altere status, plano, datas da própria assinatura via client-side.
 
-Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
+**Correção:** Dropar essa política. Todas as atualizações de assinatura já passam por edge functions (`asaas-webhook`, `asaas-payment-link`, `asaas-create-subscription`) que usam `service_role`. O frontend (useUserRole, CorretorAssinatura) só faz SELECT.
 
-**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
-
-**1. Novos estados e refs:**
-- `isPaused` (state) — controla o botão pause/play na UI
-- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
-- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
-- Importar `Pause`, `Play` do lucide-react
-
-**2. Refatorar `handleSend`:**
-- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
-- Criar função `processQueue()` que:
-  - Faz um `while (pendingQueueRef.current.length > 0)`
-  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
-  - Envia a mensagem, remove o user da fila, atualiza progresso
-  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
-
-**3. Auto-pause ao sair da página:**
-- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
-- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
-- `beforeunload` event para avisar ao fechar aba
-
-**4. Botão Pause/Play na UI:**
-- Na seção de progresso, adicionar botão ao lado da barra:
-  - Se enviando e não pausado: botão Pause (ícone ⏸)
-  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
-- Botão "Retomar" claro e visível
-
-**5. Fluxo resumido:**
-```text
-[Enviar] → processa fila → [Pause] → loop aguarda
-                                    → sai da aba → auto-pause
-                                    → volta → vê "Pausado" → [Play] → continua de onde parou
+```sql
+DROP POLICY "Corretor pode atualizar sua assinatura" ON public.assinaturas;
 ```
 
-### Escopo
-Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
+### 2. Proteger códigos OTP em `confirmacoes_otp`
+
+**Problema:** A política SELECT permite que corretores vejam o campo `codigo` (OTP em texto plano) de suas fichas. Um corretor poderia confirmar visitas sem o consentimento real do proprietário/comprador.
+
+**Correção:** Como RLS não filtra colunas, vamos criar uma **view** `confirmacoes_otp_view` que exclui `codigo` e `token`, e atualizar o frontend para usá-la. Edge functions continuam acessando a tabela original via `service_role`.
+
+**Migration SQL:**
+```sql
+-- 1. Assinaturas: remover UPDATE aberto
+DROP POLICY "Corretor pode atualizar sua assinatura" ON public.assinaturas;
+
+-- 2. OTP: criar view segura sem codigo/token
+CREATE VIEW public.confirmacoes_otp_view AS
+SELECT 
+  id, ficha_id, tipo, telefone, confirmado, tentativas,
+  expira_em, created_at, aceite_legal, aceite_nome, aceite_cpf,
+  aceite_latitude, aceite_longitude, aceite_em, aceite_ip,
+  aceite_user_agent, aceite_localizacao_tipo, lembrete_enviado_em
+FROM public.confirmacoes_otp;
+
+-- 3. Revogar SELECT direto de corretores na tabela original
+DROP POLICY "Corretores podem ver confirmações de suas fichas" ON public.confirmacoes_otp;
+
+-- 4. Manter INSERT para corretores (não expõe dados)
+-- (já existe, não precisa alterar)
+
+-- 5. Conceder SELECT na view para authenticated
+GRANT SELECT ON public.confirmacoes_otp_view TO authenticated;
+```
+
+**Frontend (1 arquivo):** `src/pages/DetalhesFicha.tsx`
+- Linha 256: trocar `.from('confirmacoes_otp')` por `.from('confirmacoes_otp_view')`
+- A view retorna os mesmos campos usados no frontend (aceite_legal, aceite_nome, aceite_cpf, etc.) exceto `codigo` e `token` que não são utilizados na renderização.
+
+**Nota:** A view herda o acesso via `authenticated` role. Para filtrar por ficha do usuário, adicionaremos segurança na view com `security_invoker = true` (Postgres 15+) combinado com uma policy na view, ou usaremos uma RLS-enabled view. Como alternativa mais simples, adicionaremos a filtragem diretamente na view usando `auth.uid()`.
+
+**Escopo:**
+- 1 migration SQL (drop policy + create view + grant)
+- 1 arquivo frontend editado (DetalhesFicha.tsx — 1 linha)
+- Nenhuma mudança em edge functions (usam service_role)
 
