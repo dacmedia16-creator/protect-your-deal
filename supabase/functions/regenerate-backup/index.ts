@@ -66,6 +66,7 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
       },
       body: JSON.stringify({ 
         ficha_id,

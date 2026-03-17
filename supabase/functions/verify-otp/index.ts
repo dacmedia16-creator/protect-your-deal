@@ -37,6 +37,7 @@ async function generateBackupPDF(supabase: any, fichaId: string, isPartial: bool
       headers: {
         'Content-Type': 'application/json',
         'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
       },
       body: JSON.stringify({ 
         ficha_id: fichaId,
