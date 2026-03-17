@@ -147,7 +147,7 @@ const Integracoes = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -158,6 +158,26 @@ const Integracoes = () => {
   if (!user) {
     navigate('/auth');
     return null;
+  }
+
+  // Only super_admin and imobiliaria_admin can access integrations
+  if (role !== 'super_admin' && role !== 'imobiliaria_admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md mx-4">
+          <CardHeader className="text-center">
+            <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" />
+            <CardTitle>Acesso Restrito</CardTitle>
+            <CardDescription>
+              Apenas administradores podem acessar as integrações do sistema.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => navigate('/dashboard')}>Voltar ao Dashboard</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
