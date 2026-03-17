@@ -476,6 +476,22 @@ Pronto! O registro fica confirmado e você tem o comprovante jurídico! 🎉"
 - **Modo Escuro**: Disponível em todo o sistema
 - **Pagamentos**: Processados via Asaas (PIX, Boleto, Cartão)`;
 
+// Simple in-memory rate limiter (resets on cold start, ~60s)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 20; // max requests per window
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -483,6 +499,16 @@ serve(async (req) => {
   }
 
   try {
+    // Rate limiting by IP
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                     req.headers.get('cf-connecting-ip') || 'unknown';
+    if (isRateLimited(clientIp)) {
+      return new Response(
+        JSON.stringify({ error: 'Muitas requisições. Aguarde um momento e tente novamente.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { messages, userContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
