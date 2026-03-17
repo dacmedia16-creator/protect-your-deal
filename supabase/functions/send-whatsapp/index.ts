@@ -264,7 +264,7 @@ serve(async (req) => {
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Authorization': `Basic ${authHeader}` },
+          headers: { 'Authorization': `Basic ${ziontalkAuthHeader}` },
           body: formData,
         });
 
