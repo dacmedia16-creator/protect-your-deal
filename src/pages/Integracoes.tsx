@@ -29,6 +29,7 @@ const Integracoes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
 
   // Default channel state
   const [ziontalkStatus, setZiontalkStatus] = useState<ConnectionStatus>('unknown');
