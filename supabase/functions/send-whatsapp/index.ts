@@ -139,7 +139,7 @@ serve(async (req) => {
 
     console.log(`Action: ${action}, Phone: ${phone}, Channel: ${channel || 'default'}`);
 
-    const authHeader = btoa(`${apiKey}:`);
+    const ziontalkAuthHeader = btoa(`${apiKey}:`);
 
     switch (action) {
       case 'test-connection': {
