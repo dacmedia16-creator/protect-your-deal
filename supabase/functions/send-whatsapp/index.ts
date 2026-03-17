@@ -139,7 +139,7 @@ serve(async (req) => {
 
     console.log(`Action: ${action}, Phone: ${phone}, Channel: ${channel || 'default'}`);
 
-    const authHeader = btoa(`${apiKey}:`);
+    const ziontalkAuthHeader = btoa(`${apiKey}:`);
 
     switch (action) {
       case 'test-connection': {
@@ -152,7 +152,7 @@ serve(async (req) => {
 
         const response = await fetch(testUrl, {
           method: 'POST',
-          headers: { 'Authorization': `Basic ${authHeader}` },
+          headers: { 'Authorization': `Basic ${ziontalkAuthHeader}` },
           body: formData,
         });
 
@@ -264,7 +264,7 @@ serve(async (req) => {
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Authorization': `Basic ${authHeader}` },
+          headers: { 'Authorization': `Basic ${ziontalkAuthHeader}` },
           body: formData,
         });
 
