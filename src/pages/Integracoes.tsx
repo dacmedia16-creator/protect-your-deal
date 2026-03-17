@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText, Shield } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText, Shield, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 

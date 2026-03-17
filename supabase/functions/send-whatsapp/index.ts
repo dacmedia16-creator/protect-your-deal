@@ -65,6 +65,59 @@ serve(async (req) => {
   }
 
   try {
+    // === Auth gate: validate JWT and check role ===
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Token de autenticação ausente' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Check if this is a service_role call (internal edge functions)
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const isServiceRole = token === serviceRoleKey;
+
+    if (!isServiceRole) {
+      // Validate user JWT
+      const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+      if (userError || !userData?.user) {
+        console.error('Auth error:', userError?.message);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Token inválido ou expirado' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Check role: only super_admin or imobiliaria_admin allowed
+      const { data: roleData } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id)
+        .in('role', ['super_admin', 'imobiliaria_admin'])
+        .maybeSingle();
+
+      if (!roleData) {
+        console.warn(`Unauthorized send-whatsapp attempt by user ${userData.user.id}`);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Sem permissão para enviar mensagens WhatsApp' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Authorized: user ${userData.user.id} role ${roleData.role}`);
+    } else {
+      console.log('Authorized: service_role (internal call)');
+    }
+    // === End auth gate ===
+
     const { action, phone, message, templateName, templateParams, headerParams, language, channel: requestedChannel, buttonUrlDynamicParams }: SendMessageRequest = await req.json();
     
     // Use requested channel, or fall back to DB config
