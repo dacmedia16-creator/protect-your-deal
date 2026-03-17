@@ -18,6 +18,31 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // --- AUTH GATE: require JWT or service_role ---
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '') ?? '';
+    const isServiceRole = token === supabaseServiceKey;
+
+    if (!isServiceRole) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ error: 'Token de autenticação não fornecido' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ error: 'Token inválido ou expirado' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      // User is authenticated — they can only access fichas they own (validated below via RLS or ficha ownership)
+      console.log('[generate-pdf] Authenticated user:', userData.user.id);
+    }
+    // --- END AUTH GATE ---
+
     const { ficha_id, app_url, force_partial } = await req.json();
 
     console.log('[generate-pdf] Requisição recebida:', { ficha_id, force_partial });

@@ -118,11 +118,52 @@ serve(async (req) => {
   }
 
   try {
-    const body: SendEmailRequest = await req.json();
-    const { action, to, subject, html, text, template_tipo, variables, ficha_id, from_email } = body;
-
     const authHeader = req.headers.get("Authorization");
     const isInternal = isInternalCall(authHeader);
+
+    // --- AUTH GATE: block unauthenticated external calls ---
+    if (!isInternal) {
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return new Response(
+          JSON.stringify({ error: "Token de autenticação não fornecido" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userError } = await supabaseAuth.auth.getUser(token);
+
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ error: "Token inválido ou expirado" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: roleData } = await supabaseAuth
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .in("role", ["super_admin", "imobiliaria_admin"])
+        .maybeSingle();
+
+      if (!roleData) {
+        return new Response(
+          JSON.stringify({ error: "Sem permissão para enviar emails" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+    // --- END AUTH GATE ---
+
+    const body: SendEmailRequest = await req.json();
+    const { action, to, subject, html, text, template_tipo, variables, ficha_id, from_email } = body;
 
     // Initialize Supabase client for logging
     const supabaseAdmin = createClient(

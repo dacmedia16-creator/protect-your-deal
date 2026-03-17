@@ -1,79 +1,48 @@
 
 
-## Auditoria de Segurança: Edge Functions com `verify_jwt = false`
+## Plano: Pause/Play e auto-pause ao sair da página
 
-### Funções com `verify_jwt = false` (20 total)
+### Problema
+Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
 
-Classifico cada uma por nível de risco:
+### Solução
 
----
+Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
 
-### CRÍTICO — Podem ser exploradas para causar dano real
+**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
 
-| Função | Risco | Problema |
-|--------|-------|----------|
-| **`send-whatsapp`** | ✅ JÁ CORRIGIDO | Auth gate adicionado no código |
-| **`send-email`** | **CRÍTICO** | Sem verificação de auth. Qualquer pessoa pode enviar emails usando as credenciais SMTP do sistema (Zoho). Pode enviar spam, phishing, ou se passar pelo suporte |
-| **`seed-test-admin`** | **CRÍTICO** | Cria um admin com credenciais fixas (`admin@imobiliariateste.com.br` / `Teste123!`). Qualquer pessoa pode chamar e criar um usuário admin. Deveria ser removida em produção |
-| **`text-to-speech`** | **ALTO** | Sem auth. Consome créditos da API OpenAI ($$). Qualquer pessoa pode gerar áudio ilimitado |
-| **`elevenlabs-tts`** | **ALTO** | Sem auth. Consome créditos da ElevenLabs ($$). Mesmo problema |
-| **`chat-assistente`** | **ALTO** | Sem auth. Consome créditos da Lovable AI. Qualquer pessoa pode usar o chatbot ilimitadamente |
-| **`generate-pdf`** | **ALTO** | Sem auth. Aceita qualquer `ficha_id` e gera PDF com dados sensíveis (nomes, CPFs, telefones). Vazamento de dados pessoais |
+**1. Novos estados e refs:**
+- `isPaused` (state) — controla o botão pause/play na UI
+- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
+- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
+- Importar `Pause`, `Play` do lucide-react
 
----
+**2. Refatorar `handleSend`:**
+- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
+- Criar função `processQueue()` que:
+  - Faz um `while (pendingQueueRef.current.length > 0)`
+  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
+  - Envia a mensagem, remove o user da fila, atualiza progresso
+  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
 
-### MÉDIO — Têm validação parcial ou dados limitados
+**3. Auto-pause ao sair da página:**
+- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
+- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
+- `beforeunload` event para avisar ao fechar aba
 
-| Função | Risco | Situação |
-|--------|-------|----------|
-| **`asaas-webhook-test`** | OK | Tem auth + check super_admin no código |
-| **`master-login`** | MÉDIO | Valida `MASTER_PASSWORD`, mas é brute-forceable. Deveria ter rate limiting |
-| **`get-ficha-externa`** | MÉDIO | Expõe dados de fichas por token. Aceitável se tokens são longos/aleatórios |
-| **`otp-reminder`** | MÉDIO | Processa fila interna. Sem dados expostos diretamente |
-| **`process-otp-queue`** | MÉDIO | Processa fila interna. Similar ao anterior |
+**4. Botão Pause/Play na UI:**
+- Na seção de progresso, adicionar botão ao lado da barra:
+  - Se enviando e não pausado: botão Pause (ícone ⏸)
+  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
+- Botão "Retomar" claro e visível
 
----
+**5. Fluxo resumido:**
+```text
+[Enviar] → processa fila → [Pause] → loop aguarda
+                                    → sai da aba → auto-pause
+                                    → volta → vê "Pausado" → [Play] → continua de onde parou
+```
 
-### BAIXO/OK — Públicos por design
-
-| Função | Situação |
-|--------|----------|
-| **`verify-otp`** | Público por design (visitante confirma visita) |
-| **`get-otp-info`** | Público por design (página de confirmação) |
-| **`verify-comprovante`** | Público (verificação de documento) |
-| **`verify-pdf-integrity`** | Público (verificação) |
-| **`registro-imobiliaria`** | Público (registro de novo usuário) |
-| **`registro-corretor-autonomo`** | Público (registro) |
-| **`get-imobiliaria-by-email`** | Público (busca durante registro) |
-| **`aceitar-convite-externo`** | Público (aceitar convite via token) |
-| **`get-survey-by-token`** | Público (pesquisa por token) |
-| **`submit-survey-response`** | Público (responder pesquisa) |
-| **`create-survey`** | Público (criar pesquisa — pode precisar revisão) |
-| **`survey-og-page/serve-survey-meta/survey-og`** | Público (OG meta tags) |
-| **`app-version`** | Público (verificar versão) |
-| **`asaas-webhook`** | Webhook externo (deveria validar `ASAAS_WEBHOOK_TOKEN`) |
-
----
-
-### Plano de Correção (priorizado)
-
-**1. `seed-test-admin`** — REMOVER ou desativar. É uma função de desenvolvimento que não deveria existir em produção.
-
-**2. `send-email`** — Adicionar auth gate idêntico ao `send-whatsapp`: verificar JWT + role `super_admin` ou `imobiliaria_admin`. Manter bypass para `service_role` (chamadas internas).
-
-**3. `generate-pdf`** — Adicionar verificação: ou JWT válido de um usuário com acesso à ficha, ou chamada interna via `service_role`.
-
-**4. `text-to-speech` e `elevenlabs-tts`** — Adicionar auth gate: exigir JWT de qualquer usuário autenticado (protege contra abuso externo).
-
-**5. `chat-assistente`** — Adicionar rate limiting por IP ou exigir JWT básico.
-
-**6. `master-login`** — Adicionar rate limiting (máx 5 tentativas por IP/minuto).
-
-### Arquivos a alterar
-- `supabase/functions/send-email/index.ts` — auth gate
-- `supabase/functions/generate-pdf/index.ts` — auth gate
-- `supabase/functions/text-to-speech/index.ts` — auth gate
-- `supabase/functions/elevenlabs-tts/index.ts` — auth gate
-- `supabase/functions/chat-assistente/index.ts` — auth gate ou rate limit
-- `supabase/functions/seed-test-admin/index.ts` — remover ou bloquear
+### Escopo
+Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
 
