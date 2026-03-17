@@ -1,51 +1,48 @@
 
 
-## Problema Crítico: `generate-pdf` quebrado para chamadas internas
+## Plano: Pause/Play e auto-pause ao sair da página
 
-### O que encontrei
+### Problema
+Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
 
-As funções `send-email`, `text-to-speech`, `elevenlabs-tts` e `chat-assistente` estão **OK** — sem conflitos de variáveis e os auth gates estão corretos.
+### Solução
 
-Porém, a função **`generate-pdf`** tem um problema grave:
+Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
 
-**As funções `verify-otp` e `regenerate-backup` chamam `generate-pdf` usando apenas `apikey` (anon key), SEM passar `Authorization: Bearer <service_role_key>`.**
+**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
 
+**1. Novos estados e refs:**
+- `isPaused` (state) — controla o botão pause/play na UI
+- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
+- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
+- Importar `Pause`, `Play` do lucide-react
+
+**2. Refatorar `handleSend`:**
+- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
+- Criar função `processQueue()` que:
+  - Faz um `while (pendingQueueRef.current.length > 0)`
+  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
+  - Envia a mensagem, remove o user da fila, atualiza progresso
+  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
+
+**3. Auto-pause ao sair da página:**
+- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
+- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
+- `beforeunload` event para avisar ao fechar aba
+
+**4. Botão Pause/Play na UI:**
+- Na seção de progresso, adicionar botão ao lado da barra:
+  - Se enviando e não pausado: botão Pause (ícone ⏸)
+  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
+- Botão "Retomar" claro e visível
+
+**5. Fluxo resumido:**
 ```text
-// verify-otp (linha 37-40) — SEM Authorization header!
-headers: {
-  'Content-Type': 'application/json',
-  'apikey': supabaseAnonKey,
-}
-
-// regenerate-backup (linha 66-68) — SEM Authorization header!
-headers: {
-  'Content-Type': 'application/json',
-  'apikey': supabaseAnonKey,
-}
+[Enviar] → processa fila → [Pause] → loop aguarda
+                                    → sai da aba → auto-pause
+                                    → volta → vê "Pausado" → [Play] → continua de onde parou
 ```
 
-O auth gate do `generate-pdf` exige JWT ou service_role, então **essas chamadas internas estão retornando 401**. Isso significa que:
-- Quando um visitante confirma a visita (OTP) → **o PDF de backup NÃO está sendo gerado**
-- Quando um admin regenera o backup → **também falha**
-
-Em contraste, `send-email` está OK porque `verify-otp` e `regenerate-backup` já passam `Authorization: Bearer ${serviceKey}`.
-
-### Correção
-
-Adicionar o header `Authorization: Bearer <SERVICE_ROLE_KEY>` nas chamadas internas ao `generate-pdf` em:
-
-1. **`supabase/functions/verify-otp/index.ts`** (linha ~37): adicionar `'Authorization': \`Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}\``
-2. **`supabase/functions/regenerate-backup/index.ts`** (linha ~66): adicionar `'Authorization': \`Bearer ${supabaseServiceKey}\``
-
-### Resumo das funções protegidas
-
-| Função | Status | Observação |
-|--------|--------|------------|
-| `send-whatsapp` | ✅ Corrigido | Variável renomeada, funcionando |
-| `send-email` | ✅ OK | Chamadas internas já usam service_role |
-| `generate-pdf` | ⚠️ QUEBRADO | Chamadas internas sem Authorization |
-| `text-to-speech` | ✅ OK | Auth gate funcional |
-| `elevenlabs-tts` | ✅ OK | Auth gate funcional |
-| `chat-assistente` | ✅ OK | Rate limiter funcional |
-| `seed-test-admin` | ✅ Bloqueado | Retorna 403 |
+### Escopo
+Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
 
