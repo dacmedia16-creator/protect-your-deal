@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText, Shield } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle, XCircle, Loader2, MessageCircle, Send, FileText, Shield, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { DesktopNav } from "@/components/DesktopNav";
 import { MobileNav } from "@/components/MobileNav";
 
@@ -28,6 +29,7 @@ const Integracoes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
 
   // Default channel state
   const [ziontalkStatus, setZiontalkStatus] = useState<ConnectionStatus>('unknown');
@@ -145,7 +147,7 @@ const Integracoes = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -156,6 +158,26 @@ const Integracoes = () => {
   if (!user) {
     navigate('/auth');
     return null;
+  }
+
+  // Only super_admin and imobiliaria_admin can access integrations
+  if (role !== 'super_admin' && role !== 'imobiliaria_admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md mx-4">
+          <CardHeader className="text-center">
+            <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" />
+            <CardTitle>Acesso Restrito</CardTitle>
+            <CardDescription>
+              Apenas administradores podem acessar as integrações do sistema.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Button onClick={() => navigate('/dashboard')}>Voltar ao Dashboard</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
