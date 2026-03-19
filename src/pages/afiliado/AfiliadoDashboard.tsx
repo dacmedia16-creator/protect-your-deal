@@ -258,8 +258,8 @@ export default function AfiliadoDashboard() {
           )}
         </div>
 
-        {/* Meu Link de Indicação */}
-        {cupons && cupons.filter(c => c.ativo).length > 0 && (
+        {/* Meu Link de Indicação (direto) */}
+        {afiliado && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -268,17 +268,51 @@ export default function AfiliadoDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {cupons.filter(c => c.ativo).map((cupom) => {
+              {(() => {
+                const linkDireto = `${window.location.origin}/registro-tipo?aff=${afiliado.id}`;
+                return (
+                  <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                    <code className="flex-1 text-sm truncate">{linkDireto}</code>
+                    <CopyButton text={linkDireto} />
+                  </div>
+                );
+              })()}
+              <p className="text-xs text-muted-foreground">
+                Compartilhe este link para que novos clientes se cadastrem vinculados a você automaticamente.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Links Promocionais (cupons com desconto real) */}
+        {cupons && cupons.filter(c => c.ativo && c.valor_desconto > 0.01).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Ticket className="h-5 w-5" />
+                Links Promocionais
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {cupons.filter(c => c.ativo && c.valor_desconto > 0.01).map((cupom) => {
                 const link = `${window.location.origin}/registro-tipo?ref=${cupom.codigo}`;
                 return (
-                  <div key={cupom.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                    <code className="flex-1 text-sm truncate">{link}</code>
-                    <CopyButton text={link} />
+                  <div key={cupom.id} className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <span className="font-mono">{cupom.codigo}</span>
+                      <span className="text-muted-foreground">
+                        ({cupom.tipo_desconto === 'percentual' ? `${cupom.valor_desconto}% off` : `R$ ${cupom.valor_desconto.toFixed(2)} off`})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                      <code className="flex-1 text-sm truncate">{link}</code>
+                      <CopyButton text={link} />
+                    </div>
                   </div>
                 );
               })}
               <p className="text-xs text-muted-foreground">
-                Compartilhe este link para que novos clientes se cadastrem com seu cupom automaticamente.
+                Links com desconto para campanhas promocionais específicas.
               </p>
             </CardContent>
           </Card>

@@ -123,6 +123,25 @@ export default function RegistroImobiliaria() {
     }
   }, [refParam]);
 
+  // Auto-preencher cupom via ?aff= (link direto do afiliado)
+  useEffect(() => {
+    if (affParam && !refParam && !codigoCupom) {
+      (async () => {
+        try {
+          const { data, error } = await supabase.rpc('get_cupom_by_afiliado', {
+            afiliado_uuid: affParam
+          });
+          if (!error && data) {
+            setCodigoCupom(data);
+            setCupomAutoRef(true);
+          }
+        } catch (err) {
+          console.error('Error fetching affiliate coupon:', err);
+        }
+      })();
+    }
+  }, [affParam, refParam]);
+
   // Fetch planos
   useEffect(() => {
     async function fetchPlanos() {
