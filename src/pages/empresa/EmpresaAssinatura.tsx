@@ -105,7 +105,7 @@ export default function EmpresaAssinatura() {
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
-        body: { planoId, imobiliariaId },
+        body: { planoId, imobiliariaId, ciclo },
       });
 
       if (error) throw error;
