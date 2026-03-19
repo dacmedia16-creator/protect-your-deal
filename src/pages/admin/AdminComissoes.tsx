@@ -91,7 +91,7 @@ export default function AdminComissoes() {
   });
 
   const { data: comissoes, isLoading } = useQuery({
-    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus, filtroPeriodo],
+    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus, filtroTipo, filtroPeriodo],
     queryFn: async () => {
       let query = supabase
         .from("cupons_usos")
