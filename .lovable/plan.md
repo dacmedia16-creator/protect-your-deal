@@ -1,32 +1,63 @@
 
 
-## Corrigir Geração de Cupom Automático + Gerar Cupons Retroativos
+## Combinar Link Direto por Afiliado + Cupons Promocionais
 
-### Problema Identificado
-O código de criação de cupom está dentro de um `try/catch` silencioso. Quando a inserção falha, o afiliado é criado mas o cupom não, e o admin recebe "sucesso" sem saber que o cupom falhou.
+### Conceito
 
-A causa provável é que `configuracoes_sistema.valor` é do tipo `jsonb` — o valor pode vir como objeto JSON em vez de número simples, fazendo `Number(configData.valor)` retornar `NaN`.
+O afiliado terá **dois tipos de link**:
+1. **Link direto** (`?aff=AFILIADO_ID`) — link principal, simples, não depende de cupom existir. O sistema busca automaticamente o cupom de rastreamento do afiliado no backend.
+2. **Link com cupom promocional** (`?ref=CODIGO`) — para campanhas com desconto real (ex: `?ref=PROMO20`). Funciona como já funciona hoje.
+
+### Como funciona
+
+```text
+Afiliado compartilha link
+        │
+        ├── ?aff=UUID ──► Backend busca cupom de rastreamento do afiliado
+        │                  (0% desconto, só comissão)
+        │                  Se não encontrar → registra sem afiliado (fallback)
+        │
+        └── ?ref=CODIGO ──► Valida cupom normalmente (pode ter desconto real)
+```
 
 ### Mudanças
 
-#### 1. Corrigir `AdminAfiliados.tsx` — criação de cupom mais robusta
-- Tratar `configData.valor` como jsonb corretamente (pode ser `{valor: 10}` ou `10` direto)
-- Adicionar fallback seguro para `comissaoPadrao`
-- Mostrar toast de erro se o cupom falhar (em vez de silenciar)
-- Verificar o retorno do insert do cupom com `.select().single()` para capturar erros
+#### 1. Dashboard do afiliado — link principal por `?aff=`
+**Arquivo:** `src/pages/afiliado/AfiliadoDashboard.tsx`
+- O link principal passa a ser `{origin}/registro-tipo?aff={afiliado.id}`
+- Sempre visível (não depende de ter cupom ativo)
+- Se tiver cupons promocionais (com desconto > 0.01), mostrar links adicionais com `?ref=CODIGO`
 
-#### 2. Gerar cupons retroativos para Fernanda e Francisco
-- Usar a ferramenta de insert para criar os cupons de rastreamento para os afiliados sem cupom
-- Código: `FERNANDAASOUZA` e `FRANCISCOASOUZA`
-- `valor_desconto: 0`, `tipo_desconto: percentual`, `comissao_percentual: 10`
+#### 2. Páginas de registro — suportar `?aff=` além de `?ref=`
+**Arquivos:** `src/pages/auth/RegistroCorretorAutonomo.tsx`, `src/pages/auth/RegistroImobiliaria.tsx`
+- Ler `searchParams.get('aff')` (ID do afiliado)
+- Se `?aff=` presente: chamar RPC ou query para buscar o cupom de rastreamento do afiliado (primeiro cupom ativo com `valor_desconto <= 0.01`)
+- Se encontrar, auto-preencher `codigoCupom` com o código encontrado e ativar `cupomAutoRef`
+- Se não encontrar, ignorar silenciosamente (fallback sem afiliado)
+- `?ref=` continua funcionando normalmente para cupons promocionais
+
+#### 3. Propagar `?aff=` no seletor de tipo
+**Arquivo:** `src/pages/auth/RegistroTipo.tsx`
+- Ler `?aff=` e propagá-lo nas URLs de navegação para `/registro-autonomo` e `/registro`
+
+#### 4. Nova RPC para buscar cupom por afiliado_id
+**Migration SQL:**
+- Criar função `get_cupom_by_afiliado(afiliado_uuid UUID)` que retorna o código do cupom de rastreamento (primeiro cupom ativo do afiliado)
+- Security definer, acessível por anon/authenticated
 
 ### Arquivos afetados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/admin/AdminAfiliados.tsx` | Corrigir parsing de jsonb e tratamento de erro |
+| `src/pages/afiliado/AfiliadoDashboard.tsx` | Link principal `?aff=ID`, links promo separados |
+| `src/pages/auth/RegistroCorretorAutonomo.tsx` | Suporte a `?aff=` com lookup de cupom |
+| `src/pages/auth/RegistroImobiliaria.tsx` | Suporte a `?aff=` com lookup de cupom |
+| `src/pages/auth/RegistroTipo.tsx` | Propagar param `aff` |
+| Migration SQL | Nova RPC `get_cupom_by_afiliado` |
 
-### Dados a inserir
-- Cupom para Fernanda (afiliado_id: `61f45cf6-...`) com código `FERNANDAASOUZA`
-- Cupom para Francisco (afiliado_id: `a7a58aaa-...`) com código `FRANCISCOASOUZA`
+### O que NÃO muda
+- Edge functions de registro (recebem `codigo_cupom` como antes)
+- Webhook de pagamento (comissões intactas)
+- Tabelas existentes (só adiciona uma RPC)
+- Cupons promocionais continuam funcionando via `?ref=`
 
