@@ -265,9 +265,33 @@ export default function EmpresaAssinatura() {
 
         {/* Available plans */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">
-            {assinatura ? 'Alterar Plano' : 'Escolha um Plano'}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">
+              {assinatura ? 'Alterar Plano' : 'Escolha um Plano'}
+            </h2>
+            {/* Toggle Mensal/Anual */}
+            {planos.some(p => p.valor_anual && p.valor_anual > 0) && (
+              <div className="flex items-center gap-2 bg-muted rounded-full p-1">
+                <button
+                  onClick={() => setCiclo('mensal')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    ciclo === 'mensal' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Mensal
+                </button>
+                <button
+                  onClick={() => setCiclo('anual')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    ciclo === 'anual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Anual
+                  <Badge variant="outline" className="ml-1.5 text-[10px] py-0 border-primary/30 text-primary">Economize</Badge>
+                </button>
+              </div>
+            )}
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos.map((plano) => {
               const isCurrentPlan = currentPlano?.id === plano.id;
