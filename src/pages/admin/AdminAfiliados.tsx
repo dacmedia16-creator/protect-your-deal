@@ -151,6 +151,7 @@ export default function AdminAfiliados() {
           email: data.email,
           telefone: data.telefone || null,
           pix_chave: data.pix_chave || null,
+          indicado_por: data.indicado_por || null,
         })
         .eq("id", id);
       if (error) throw error;
