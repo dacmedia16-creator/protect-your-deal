@@ -128,6 +128,11 @@ export default function AdminComissoes() {
           (c) => c.cupons?.afiliados?.id === filtroAfiliado
         );
       }
+      if (filtroTipo !== "todos") {
+        filtered = filtered.filter(
+          (c) => (c as any).tipo_comissao === filtroTipo
+        );
+      }
 
       return filtered;
     },
