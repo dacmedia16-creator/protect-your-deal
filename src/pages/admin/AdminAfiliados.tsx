@@ -69,7 +69,7 @@ export default function AdminAfiliados() {
     enabled: !!selectedAfiliadoForNetwork,
   });
 
-
+  const { data: afiliados, isLoading } = useQuery({
     queryKey: ["admin-afiliados"],
     queryFn: async () => {
       const { data, error } = await supabase
