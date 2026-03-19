@@ -121,7 +121,7 @@ export default function AfiliadoDashboard() {
       
       const { data, error } = await supabase
         .from("afiliados")
-        .select("id, nome, email, ativo")
+        .select("id, nome, email, ativo, created_at")
         .eq("indicado_por", afiliado.id)
         .order("nome");
 
