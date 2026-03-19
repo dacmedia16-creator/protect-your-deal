@@ -116,6 +116,14 @@ export default function RegistroCorretorAutonomo() {
     fetchPlanos();
   }, [planoParam]);
 
+  // Auto-preencher cupom via ?ref=
+  useEffect(() => {
+    if (refParam && !codigoCupom) {
+      setCodigoCupom(refParam.toUpperCase());
+      setCupomAutoRef(true);
+    }
+  }, [refParam]);
+
   // Validar código da imobiliária
   useEffect(() => {
     async function validarCodigo() {
