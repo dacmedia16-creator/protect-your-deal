@@ -654,10 +654,13 @@ export default function AdminAfiliados() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleEdit(afiliado)}
-                                title="Editar"
+                                onClick={() => {
+                                  setSelectedAfiliadoForNetwork(afiliado);
+                                  setNetworkDialogOpen(true);
+                                }}
+                                title="Ver Rede"
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Network className="h-4 w-4 text-primary" />
                               </Button>
                               <Button
                                 variant="ghost"
