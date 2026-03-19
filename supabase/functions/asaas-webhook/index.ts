@@ -178,9 +178,10 @@ serve(async (req) => {
               console.log(`Applying pending plan ${(assinatura as any).plano_pendente_id} for subscription ${subscriptionId}`);
             }
             
-            // Atualizar próxima cobrança (30 dias)
+            // Atualizar próxima cobrança baseada no ciclo
             const nextPayment = new Date();
-            nextPayment.setDate(nextPayment.getDate() + 30);
+            const isAnualCiclo = (assinatura as any).ciclo === 'anual';
+            nextPayment.setDate(nextPayment.getDate() + (isAnualCiclo ? 365 : 30));
             updateData.proxima_cobranca = nextPayment.toISOString().split('T')[0];
             console.log(`Payment confirmed for subscription ${subscriptionId}, activating...`);
             shouldNotify = true;
