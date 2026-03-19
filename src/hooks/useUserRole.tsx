@@ -247,7 +247,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       assinatura, 
       ativo,
       loading: isLoading,
-      refetch: fetchUserRole
+      error: fetchError,
+      refetch: () => fetchUserRole(false),
     }}>
       {children}
     </UserRoleContext.Provider>

@@ -1,14 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserRole } from '@/hooks/useUserRole';
+import { getRedirectPathByRole } from '@/lib/roleRedirect';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, LogOut, Mail, Loader2 } from 'lucide-react';
+import { Shield, LogOut, Mail, Loader2, RefreshCw } from 'lucide-react';
 
 export default function SemPermissao() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { role, loading: roleLoading, error: roleError, refetch } = useUserRole();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // Auto-redirect if role is found after refetch
+  useEffect(() => {
+    if (!roleLoading && !roleError && role) {
+      navigate(getRedirectPathByRole(role), { replace: true });
+    }
+  }, [role, roleLoading, roleError, navigate]);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -30,24 +50,40 @@ export default function SemPermissao() {
           </div>
           <CardTitle className="font-display text-2xl">Conta Pendente</CardTitle>
           <CardDescription className="text-base">
-            Sua conta ainda não possui permissões de acesso. Isso pode acontecer se:
+            {roleError 
+              ? 'Houve um erro ao verificar suas permissões. Tente novamente.'
+              : 'Sua conta ainda não possui permissões de acesso. Isso pode acontecer se:'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <ul className="space-y-3 text-sm text-muted-foreground">
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              Você criou a conta recentemente e ainda não foi vinculado a uma imobiliária
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              O administrador da sua imobiliária ainda não aprovou seu acesso
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">•</span>
-              Houve um problema durante o registro
-            </li>
-          </ul>
+          {!roleError && (
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">•</span>
+                Você criou a conta recentemente e ainda não foi vinculado a uma imobiliária
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">•</span>
+                O administrador da sua imobiliária ainda não aprovou seu acesso
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary font-bold">•</span>
+                Houve um problema durante o registro
+              </li>
+            </ul>
+          )}
+
+          <Button 
+            variant="default" 
+            className="w-full" 
+            onClick={handleRetry}
+            disabled={isRetrying || roleLoading}
+          >
+            {isRetrying || roleLoading 
+              ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+              : <RefreshCw className="h-4 w-4 mr-2" />}
+            {isRetrying || roleLoading ? 'Verificando...' : 'Tentar novamente'}
+          </Button>
 
           <div className="space-y-3 pt-4 border-t">
             <p className="text-sm text-center text-muted-foreground">

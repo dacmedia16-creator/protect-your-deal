@@ -83,12 +83,21 @@ export default function Auth() {
           // Usuário tem role, redirecionar para o dashboard apropriado
           navigate(getRedirectPathByRole(role));
         }
+      } else if (roleError) {
+        // Erro ao buscar role - mostrar toast com retry em vez de redirecionar
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao verificar permissões',
+          description: 'Não foi possível carregar suas permissões. Tentando novamente...',
+        });
+        // Auto-retry after 2s
+        setTimeout(() => refetchRole(), 2000);
       } else {
-        // Usuário não tem role, redirecionar para página de pendente
+        // Usuário realmente não tem role, redirecionar para página de pendente
         navigate('/sem-permissao');
       }
     }
-  }, [user, loading, role, roleLoading, navigate, returnUrl]);
+  }, [user, loading, role, roleLoading, roleError, navigate, returnUrl]);
 
   // Buscar imobiliária quando o email mudar (com debounce)
   useEffect(() => {
