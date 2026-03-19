@@ -275,6 +275,8 @@ export default function AfiliadoComissoes() {
                       <TableHead className="text-right">Valor Original</TableHead>
                       <TableHead className="text-right">Desconto</TableHead>
                       <TableHead className="text-right">Comissão</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data Pagamento</TableHead>
                     </TableRow>
