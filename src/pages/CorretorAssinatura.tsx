@@ -105,7 +105,7 @@ export default function CorretorAssinatura() {
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
-        body: { planoId },
+        body: { planoId, ciclo },
       });
 
       if (error) throw error;
