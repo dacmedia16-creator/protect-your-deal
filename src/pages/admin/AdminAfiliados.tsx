@@ -516,6 +516,7 @@ export default function AdminAfiliados() {
                         <TableHead>Telefone</TableHead>
                         <TableHead className="text-center">Cupons</TableHead>
                         <TableHead className="text-center">Usos</TableHead>
+                        <TableHead>Indicado por</TableHead>
                         <TableHead className="text-right">Comissão Pendente</TableHead>
                         <TableHead className="text-center">Comissão</TableHead>
                         <TableHead>Status</TableHead>
