@@ -11,6 +11,7 @@ interface UserRoleContextType {
   assinatura: Assinatura | null;
   ativo: boolean | null;
   loading: boolean;
+  error: boolean;
   refetch: () => Promise<void>;
 }
 
