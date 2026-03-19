@@ -1,76 +1,53 @@
 
 
-## Sistema de Afiliados Multinível (2 níveis)
+## Diagnóstico: Por que o Super Admin viu "Conta Pendente"
 
-### Conceito
-Hoje cada afiliado é independente. A proposta é adicionar um **nível de referência**: um afiliado pode ter sido indicado por outro afiliado (seu "pai"). Quando um pagamento confirma:
+### O que aconteceu
 
-- **Comissão direta** (nível 1): o afiliado cujo cupom foi usado recebe X%
-- **Comissão indireta** (nível 2): se esse afiliado foi indicado por outro, o "pai" recebe Y%
+Pelos logs de autenticação, a sequência foi:
 
-Exemplo: Alexandre indica Maria. Maria fecha um cliente com seu cupom.
-→ Maria ganha X% (direto), Alexandre ganha Y% (indireto).
+1. A sessão anterior do usuário expirou (`session_not_found` nos logs às 17:32-17:36)
+2. O refresh token também era inválido (`refresh_token_not_found` às 17:39:47)
+3. O usuário fez login novamente com sucesso às 17:39:54
+4. **Após o login**, o `useUserRole` tentou buscar o role na tabela `user_roles`, mas provavelmente falhou silenciosamente (erro de rede, timeout, ou race condition)
+5. Como o role ficou `null`, o código em `Auth.tsx` (linha 88) redirecionou para `/sem-permissao`
 
-### Mudanças necessárias
+### A falha no código
 
-#### 1. Banco de dados
-
-**Tabela `afiliados`** — adicionar coluna:
-```sql
-ALTER TABLE afiliados ADD COLUMN indicado_por uuid REFERENCES afiliados(id);
+Em `Auth.tsx` linha 86-88:
+```typescript
+} else {
+  // role é null → redireciona para /sem-permissao
+  navigate('/sem-permissao');
+}
 ```
 
-**Tabela `configuracoes_sistema`** — inserir configurações globais:
-- `comissao_direta_percentual` (ex: 10)
-- `comissao_indireta_percentual` (ex: 5)
+O problema: **não distingue "erro ao buscar role" de "usuário realmente sem role"**. Se a query do `user_roles` falhar por qualquer motivo transitório (rede, timeout), o `role` fica `null` e o usuário é mandado para a página de erro.
 
-**Tabela `cupons_usos`** — adicionar coluna para distinguir tipo:
-```sql
-ALTER TABLE cupons_usos ADD COLUMN tipo_comissao text DEFAULT 'direta';
-ALTER TABLE cupons_usos ADD COLUMN afiliado_id uuid REFERENCES afiliados(id);
-```
+No `useUserRole`, o `catch` na linha ~195 apenas loga o erro e segue, deixando `role = null` e marcando `fetchedForUserId`, o que faz `isLoading = false` e dispara o redirect.
 
-Isso permite registrar 2 linhas por pagamento: uma "direta" para Maria, uma "indireta" para Alexandre.
+### Plano de Correção
 
-#### 2. Webhook de pagamento (asaas-webhook)
+#### 1. Adicionar estado `error` ao `useUserRole` + retry automático
+- Expor `error: boolean` no contexto
+- Se a query de `user_roles` falhar, tentar novamente 1x antes de desistir
+- Arquivo: `src/hooks/useUserRole.tsx`
 
-Ao gerar comissão recorrente, além da comissão direta já existente:
-- Verificar se o afiliado tem `indicado_por`
-- Se sim, criar uma segunda `cupons_usos` com `tipo_comissao = 'indireta'` e o percentual configurado
+#### 2. Corrigir redirect no `Auth.tsx`
+- Só redirecionar para `/sem-permissao` se não houve erro na busca do role
+- Se houve erro, mostrar toast com botão de retry em vez de redirecionar
+- Arquivo: `src/pages/Auth.tsx`
 
-#### 3. Admin — Gestão de afiliados
-
-Na página `AdminAfiliados`:
-- Adicionar campo "Indicado por" (select de afiliados existentes) no form de criar/editar
-- Mostrar coluna "Indicado por" na tabela
-
-Na página `AdminComissoes`:
-- Filtro por tipo (direta/indireta)
-- Badge visual distinguindo tipo
-
-#### 4. Painel do Afiliado
-
-No `AfiliadoDashboard` e `AfiliadoComissoes`:
-- Mostrar comissões diretas e indiretas separadamente
-- Card "Rede" mostrando quantos afiliados o usuário indicou
-- Listagem dos afiliados indicados e seus resultados
-
-#### 5. Admin Configurações
-
-Em `AdminConfiguracoes`:
-- Inputs para definir % comissão direta e % comissão indireta globalmente
+#### 3. Adicionar botão "Tentar novamente" na página `SemPermissao`
+- Chamar `refetch()` do `useUserRole`
+- Se role for encontrado, redirecionar automaticamente para o dashboard correto
+- Arquivo: `src/pages/SemPermissao.tsx`
 
 ### Arquivos afetados
 
 | Arquivo | Mudança |
 |---------|---------|
-| Migration SQL | `afiliados.indicado_por`, `cupons_usos.tipo_comissao`, `cupons_usos.afiliado_id`, configs |
-| `asaas-webhook/index.ts` | Gerar comissão indireta |
-| `registro-imobiliaria/index.ts` | Passar afiliado na comissão inicial |
-| `registro-corretor-autonomo/index.ts` | Idem |
-| `AdminAfiliados.tsx` | Campo "Indicado por" |
-| `AdminComissoes.tsx` | Filtro/badge tipo comissão |
-| `AfiliadoDashboard.tsx` | Cards rede + comissões indiretas |
-| `AfiliadoComissoes.tsx` | Separar diretas/indiretas |
-| `AdminConfiguracoes.tsx` | Inputs % direta/indireta |
+| `src/hooks/useUserRole.tsx` | Adicionar `error` ao contexto + retry 1x automático |
+| `src/pages/Auth.tsx` | Não redirecionar para `/sem-permissao` se houve erro |
+| `src/pages/SemPermissao.tsx` | Botão "Tentar novamente" com refetch + redirect |
 
