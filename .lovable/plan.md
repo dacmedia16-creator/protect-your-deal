@@ -1,18 +1,38 @@
 
 
-## Corrigir 404 na página de Registro Tipo
+## Ocultar desconto simbólico de cupons de rastreamento
 
 ### Problema
-A rota definida no `App.tsx` é `/registro/tipo`, mas os links gerados no dashboard do afiliado e na landing page usam `/registro-tipo` (com hífen). Resultado: 404.
+Quando o usuário acessa via link de afiliado (`?aff=`), o cupom de rastreamento com desconto simbólico de 0.01% é mostrado na tela. A mensagem "0.01% de desconto aplicado!" confunde o usuário e parece pouco profissional.
 
 ### Solução
-Adicionar uma rota alternativa no `App.tsx` para `/registro-tipo` apontando para o mesmo componente `RegistroTipo`. Isso garante compatibilidade com links já compartilhados.
+Quando o cupom aplicado tem `valor_desconto <= 0.01` (cupom de rastreamento puro), **não exibir** a linha de desconto. Manter apenas a mensagem "Cupom aplicado automaticamente via link de indicação".
 
-### Mudança
+### Mudanças
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/App.tsx` | Adicionar `<Route path="/registro-tipo" element={<RegistroTipo />} />` ao lado da rota existente `/registro/tipo` |
+| `src/pages/auth/RegistroCorretorAutonomo.tsx` | Condicionar exibição do desconto: só mostrar se `valor_desconto > 0.01` |
+| `src/pages/auth/RegistroImobiliaria.tsx` | Mesma alteração |
 
-Ambas as rotas continuarão funcionando.
+### Lógica
+
+```tsx
+// Antes (sempre mostra):
+{cupomInfo?.valido && (
+  <p>✓ {valor}% de desconto aplicado!</p>
+)}
+
+// Depois (oculta desconto simbólico):
+{cupomInfo?.valido && cupomInfo.valor_desconto > 0.01 && (
+  <p>✓ {valor}% de desconto aplicado!</p>
+)}
+```
+
+Quando for cupom de rastreamento (≤ 0.01%), o usuário verá apenas:
+- ✓ Cupom aplicado automaticamente via link de indicação
+
+Quando for cupom promocional real (ex: 10%), verá:
+- ✓ Cupom aplicado automaticamente via link de indicação
+- ✓ 10% de desconto aplicado!
 
