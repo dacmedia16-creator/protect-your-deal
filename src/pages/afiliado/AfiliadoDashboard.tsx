@@ -48,7 +48,7 @@ export default function AfiliadoDashboard() {
     enabled: !!afiliado,
   });
 
-  // Buscar usos dos cupons
+  // Buscar usos dos cupons (comissões diretas)
   const { data: usos, isLoading: loadingUsos } = useQuery({
     queryKey: ["afiliado-usos", cupons],
     queryFn: async () => {
@@ -70,6 +70,47 @@ export default function AfiliadoDashboard() {
       return data || [];
     },
     enabled: !!cupons && cupons.length > 0,
+  });
+
+  // Buscar comissões indiretas (via afiliado_id)
+  const { data: comissoesIndiretas, isLoading: loadingIndiretas } = useQuery({
+    queryKey: ["afiliado-indiretas", afiliado?.id],
+    queryFn: async () => {
+      if (!afiliado) return [];
+      
+      const { data, error } = await supabase
+        .from("cupons_usos")
+        .select(`
+          *,
+          cupom:cupons (codigo),
+          imobiliaria:imobiliarias (nome)
+        `)
+        .eq("afiliado_id", afiliado.id)
+        .eq("tipo_comissao", "indireta")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!afiliado,
+  });
+
+  // Buscar afiliados indicados
+  const { data: rede } = useQuery({
+    queryKey: ["afiliado-rede", afiliado?.id],
+    queryFn: async () => {
+      if (!afiliado) return [];
+      
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, ativo")
+        .eq("indicado_por", afiliado.id)
+        .order("nome");
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!afiliado,
   });
 
   const isLoading = loadingAfiliado || loadingCupons || loadingUsos;
