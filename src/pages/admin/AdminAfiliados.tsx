@@ -355,6 +355,25 @@ export default function AdminAfiliados() {
                     placeholder="CPF, Email, Telefone ou Chave aleatória"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="indicado_por">Indicado por</Label>
+                  <Select
+                    value={formData.indicado_por}
+                    onValueChange={(value) => setFormData({ ...formData, indicado_por: value === "none" ? "" : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhum (afiliado direto)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum (afiliado direto)</SelectItem>
+                      {afiliados
+                        ?.filter(a => a.id !== editingAfiliado?.id)
+                        .map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                     Cancelar
