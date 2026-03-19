@@ -65,6 +65,12 @@ serve(async (req) => {
     const nextDueDate = new Date();
     nextDueDate.setDate(nextDueDate.getDate() + 1); // Vence amanhã
 
+    // Determinar valor e ciclo
+    const isAnual = ciclo === 'anual';
+    const valor = isAnual && plano.valor_anual ? plano.valor_anual : plano.valor_mensal;
+    const asaasCycle = isAnual ? 'YEARLY' : 'MONTHLY';
+    const cicloLabel = isAnual ? 'anual' : 'mensal';
+
     // Criar assinatura no Asaas
     const subscriptionResponse = await fetch(`${ASAAS_API_URL}/subscriptions`, {
       method: 'POST',
@@ -75,10 +81,10 @@ serve(async (req) => {
       body: JSON.stringify({
         customer: customerId,
         billingType,
-        value: plano.valor_mensal,
+        value: valor,
         nextDueDate: nextDueDate.toISOString().split('T')[0],
-        cycle: 'MONTHLY',
-        description: `Assinatura ${plano.nome} - VisitaProva`,
+        cycle: asaasCycle,
+        description: `Assinatura ${plano.nome} (${cicloLabel}) - VisitaProva`,
         externalReference: imobiliariaId || user.id,
       }),
     });
