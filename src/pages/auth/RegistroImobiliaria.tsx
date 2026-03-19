@@ -34,6 +34,7 @@ export default function RegistroImobiliaria() {
   const [selectedPlano, setSelectedPlano] = useState<string>('');
   
   const planoParam = searchParams.get('plano');
+  const refParam = searchParams.get('ref');
   
   const [imobiliariaForm, setImobiliariaForm] = useState({
     nome: '',
