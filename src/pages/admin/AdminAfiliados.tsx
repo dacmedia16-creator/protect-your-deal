@@ -51,8 +51,25 @@ export default function AdminAfiliados() {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedAfiliadoForPassword, setSelectedAfiliadoForPassword] = useState<Afiliado | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [networkDialogOpen, setNetworkDialogOpen] = useState(false);
+  const [selectedAfiliadoForNetwork, setSelectedAfiliadoForNetwork] = useState<Afiliado | null>(null);
 
-  const { data: afiliados, isLoading } = useQuery({
+  const { data: redeAfiliados, isLoading: isLoadingRede } = useQuery({
+    queryKey: ["admin-afiliado-rede", selectedAfiliadoForNetwork?.id],
+    queryFn: async () => {
+      if (!selectedAfiliadoForNetwork) return [];
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, ativo, created_at")
+        .eq("indicado_por", selectedAfiliadoForNetwork.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedAfiliadoForNetwork,
+  });
+
+
     queryKey: ["admin-afiliados"],
     queryFn: async () => {
       const { data, error } = await supabase
