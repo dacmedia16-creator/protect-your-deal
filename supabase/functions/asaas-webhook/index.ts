@@ -149,7 +149,7 @@ serve(async (req) => {
       // Buscar assinatura pelo asaas_subscription_id - incluindo campos de afiliado e plano pendente
       const { data: assinatura, error: assinaturaError } = await supabase
         .from('assinaturas')
-        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id')
+        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
