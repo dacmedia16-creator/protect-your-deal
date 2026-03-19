@@ -232,6 +232,19 @@ export default function AfiliadoComissoes() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Tipo</label>
+                <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os tipos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="direta">Direta</SelectItem>
+                    <SelectItem value="indireta">Indireta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
