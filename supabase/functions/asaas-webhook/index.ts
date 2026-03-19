@@ -284,24 +284,88 @@ serve(async (req) => {
           }
 
           if (shouldGenerateCommissionForAffiliate) {
-            const valorComissao = value * (Number(assinatura.comissao_percentual) / 100);
-            console.log(`Generating recurring commission: ${valorComissao} for affiliate ${assinatura.afiliado_id}`);
+            // Buscar configurações de comissão multinível
+            let comissaoDiretaPerc = Number(assinatura.comissao_percentual);
+            let comissaoIndiretaPerc = 0;
 
+            try {
+              const { data: comissaoConfigs } = await supabase
+                .from('configuracoes_sistema')
+                .select('chave, valor')
+                .in('chave', ['comissao_direta_percentual', 'comissao_indireta_percentual']);
+
+              if (comissaoConfigs) {
+                const diretaConfig = comissaoConfigs.find(c => c.chave === 'comissao_direta_percentual');
+                const indiretaConfig = comissaoConfigs.find(c => c.chave === 'comissao_indireta_percentual');
+                if (diretaConfig) comissaoDiretaPerc = Number(diretaConfig.valor) || comissaoDiretaPerc;
+                if (indiretaConfig) comissaoIndiretaPerc = Number(indiretaConfig.valor) || 0;
+              }
+            } catch (configErr) {
+              console.error('Error fetching commission config:', configErr);
+            }
+
+            const valorComissaoDireta = value * (comissaoDiretaPerc / 100);
+            console.log(`Generating direct commission: ${valorComissaoDireta} for affiliate ${assinatura.afiliado_id}`);
+
+            // Buscar dados do afiliado (para verificar indicado_por)
+            const { data: afiliadoInfo } = await supabase
+              .from('afiliados')
+              .select('id, indicado_por')
+              .eq('id', assinatura.afiliado_id)
+              .single();
+
+            // Inserir comissão direta
             const { error: comissaoError } = await supabase.from('cupons_usos').insert({
               cupom_id: assinatura.cupom_id,
               assinatura_id: assinatura.id,
               imobiliaria_id: assinatura.imobiliaria_id,
               user_id: assinatura.user_id,
               valor_original: value,
-              valor_desconto: 0, // Desconto só no primeiro pagamento
-              valor_comissao: valorComissao,
+              valor_desconto: 0,
+              valor_comissao: valorComissaoDireta,
               comissao_paga: false,
+              tipo_comissao: 'direta',
+              afiliado_id: assinatura.afiliado_id,
             });
 
             if (comissaoError) {
-              console.error('Error creating recurring commission:', comissaoError);
+              console.error('Error creating direct commission:', comissaoError);
             } else {
-              console.log('Recurring commission created successfully');
+              console.log('Direct commission created successfully');
+            }
+
+            // Gerar comissão indireta se o afiliado foi indicado por outro
+            if (afiliadoInfo?.indicado_por && comissaoIndiretaPerc > 0) {
+              // Verificar se o afiliado pai tem comissão ativa
+              const { data: afiliadoPai } = await supabase
+                .from('afiliados')
+                .select('id, comissao_ativa')
+                .eq('id', afiliadoInfo.indicado_por)
+                .single();
+
+              if (afiliadoPai?.comissao_ativa !== false) {
+                const valorComissaoIndireta = value * (comissaoIndiretaPerc / 100);
+                console.log(`Generating indirect commission: ${valorComissaoIndireta} for parent affiliate ${afiliadoInfo.indicado_por}`);
+
+                const { error: indirectError } = await supabase.from('cupons_usos').insert({
+                  cupom_id: assinatura.cupom_id,
+                  assinatura_id: assinatura.id,
+                  imobiliaria_id: assinatura.imobiliaria_id,
+                  user_id: assinatura.user_id,
+                  valor_original: value,
+                  valor_desconto: 0,
+                  valor_comissao: valorComissaoIndireta,
+                  comissao_paga: false,
+                  tipo_comissao: 'indireta',
+                  afiliado_id: afiliadoInfo.indicado_por,
+                });
+
+                if (indirectError) {
+                  console.error('Error creating indirect commission:', indirectError);
+                } else {
+                  console.log('Indirect commission created successfully');
+                }
+              }
             }
           }
         }

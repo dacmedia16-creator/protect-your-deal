@@ -334,6 +334,8 @@ Deno.serve(async (req) => {
             valor_original: valorOriginal,
             valor_desconto: valorDesconto,
             valor_comissao: valorComissao,
+            tipo_comissao: 'direta',
+            afiliado_id: afiliadoId,
           });
 
           // Increment coupon usage count
