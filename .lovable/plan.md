@@ -1,52 +1,32 @@
 
 
-## Cupom Automático de Rastreamento para Afiliados
+## Corrigir Geração de Cupom Automático + Gerar Cupons Retroativos
 
-### O que será feito
+### Problema Identificado
+O código de criação de cupom está dentro de um `try/catch` silencioso. Quando a inserção falha, o afiliado é criado mas o cupom não, e o admin recebe "sucesso" sem saber que o cupom falhou.
 
-Quando um afiliado for criado (pelo admin), o sistema gerará automaticamente um cupom de rastreamento com 0% de desconto. Isso permite que o afiliado compartilhe um link de cadastro (`?ref=CODIGO`) sem que o cliente precise digitar nada, e toda a lógica existente de comissões via `cupons_usos` e `asaas-webhook` continua funcionando sem alterações.
+A causa provável é que `configuracoes_sistema.valor` é do tipo `jsonb` — o valor pode vir como objeto JSON em vez de número simples, fazendo `Number(configData.valor)` retornar `NaN`.
 
 ### Mudanças
 
-#### 1. Gerar cupom automático ao criar afiliado
-**Arquivo:** `src/pages/admin/AdminAfiliados.tsx`
-- Após o `insert` na tabela `afiliados`, inserir automaticamente um cupom na tabela `cupons` com:
-  - `codigo`: nome do afiliado em uppercase, sem espaços, sem acentos (ex: "FERNANDA", "JOAOSILVA")
-  - `tipo_desconto`: "percentual"
-  - `valor_desconto`: 0
-  - `comissao_percentual`: valor padrão da `configuracoes_sistema` (ou 10%)
-  - `ativo`: true
-- Se o código já existir, adicionar sufixo numérico (ex: "FERNANDA2")
+#### 1. Corrigir `AdminAfiliados.tsx` — criação de cupom mais robusta
+- Tratar `configData.valor` como jsonb corretamente (pode ser `{valor: 10}` ou `10` direto)
+- Adicionar fallback seguro para `comissaoPadrao`
+- Mostrar toast de erro se o cupom falhar (em vez de silenciar)
+- Verificar o retorno do insert do cupom com `.select().single()` para capturar erros
 
-#### 2. Seção "Meu Link de Indicação" no painel do afiliado
-**Arquivo:** `src/pages/afiliado/AfiliadoDashboard.tsx`
-- Adicionar card com o link de registro personalizado usando o código do primeiro cupom ativo
-- Formato: `{origin}/registro-tipo?ref=CODIGO`
-- Botão "Copiar link" com feedback visual
-- Se tiver múltiplos cupons, mostrar um link por cupom ativo
-
-#### 3. Ler `?ref=` nas páginas de registro e auto-preencher cupom
-**Arquivos:** `src/pages/auth/RegistroCorretorAutonomo.tsx`, `src/pages/auth/RegistroImobiliaria.tsx`
-- Ler `searchParams.get('ref')` na inicialização
-- Se presente, preencher automaticamente o campo de cupom e disparar validação via `validar_cupom`
-- Mostrar badge "Cupom aplicado automaticamente" e desabilitar edição do campo
-
-#### 4. Propagar `ref` param no seletor de tipo de registro
-**Arquivo:** `src/pages/auth/RegistroTipo.tsx`
-- Ler `?ref=` e incluir nas URLs de navegação para `/registro-autonomo` e `/registro`
+#### 2. Gerar cupons retroativos para Fernanda e Francisco
+- Usar a ferramenta de insert para criar os cupons de rastreamento para os afiliados sem cupom
+- Código: `FERNANDAASOUZA` e `FRANCISCOASOUZA`
+- `valor_desconto: 0`, `tipo_desconto: percentual`, `comissao_percentual: 10`
 
 ### Arquivos afetados
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/admin/AdminAfiliados.tsx` | Criar cupom automático ao criar afiliado |
-| `src/pages/afiliado/AfiliadoDashboard.tsx` | Seção "Meu Link" com botão copiar |
-| `src/pages/auth/RegistroCorretorAutonomo.tsx` | Ler `?ref=` e auto-preencher cupom |
-| `src/pages/auth/RegistroImobiliaria.tsx` | Ler `?ref=` e auto-preencher cupom |
-| `src/pages/auth/RegistroTipo.tsx` | Propagar `ref` param |
+| `src/pages/admin/AdminAfiliados.tsx` | Corrigir parsing de jsonb e tratamento de erro |
 
-### O que NÃO muda
-- Tabelas do banco (nenhuma migration necessária)
-- Edge functions de registro e webhook (lógica de comissões intacta)
-- Fluxo de pagamento e cálculo de comissões
+### Dados a inserir
+- Cupom para Fernanda (afiliado_id: `61f45cf6-...`) com código `FERNANDAASOUZA`
+- Cupom para Francisco (afiliado_id: `a7a58aaa-...`) com código `FRANCISCOASOUZA`
 
