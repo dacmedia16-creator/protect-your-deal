@@ -1953,6 +1953,7 @@ export type Database = {
       }
       cleanup_expired_otps: { Args: never; Returns: undefined }
       generate_protocolo: { Args: never; Returns: string }
+      get_afiliado_id: { Args: { _user_id: string }; Returns: string }
       get_cupom_by_afiliado: {
         Args: { afiliado_uuid: string }
         Returns: string
