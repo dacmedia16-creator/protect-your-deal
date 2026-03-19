@@ -66,6 +66,7 @@ const defaultForm: PlanoForm = {
   max_clientes: 500,
   max_imoveis: 200,
   valor_mensal: 0,
+  valor_anual: null,
   ativo: true,
   asaas_plan_id: '',
 };
