@@ -1,0 +1,4 @@
+
+ALTER TABLE public.planos ADD COLUMN IF NOT EXISTS valor_anual NUMERIC DEFAULT NULL;
+
+ALTER TABLE public.assinaturas ADD COLUMN IF NOT EXISTS ciclo TEXT DEFAULT 'mensal';
