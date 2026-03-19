@@ -113,6 +113,7 @@ export default function AdminPlanos() {
       max_clientes: plano.max_clientes,
       max_imoveis: plano.max_imoveis,
       valor_mensal: plano.valor_mensal,
+      valor_anual: plano.valor_anual,
       ativo: plano.ativo,
       asaas_plan_id: plano.asaas_plan_id || '',
     });
