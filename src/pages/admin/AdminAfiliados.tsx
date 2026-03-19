@@ -130,47 +130,58 @@ export default function AdminAfiliados() {
       if (error) throw error;
 
       // 2. Gerar cupom automático de rastreamento (0% desconto)
-      try {
-        // Normalizar nome para código: uppercase, sem acentos, sem espaços
-        const baseCode = data.nome
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-zA-Z0-9]/g, '')
-          .toUpperCase();
+      // Normalizar nome para código: uppercase, sem acentos, sem espaços
+      const baseCode = data.nome
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .toUpperCase();
 
-        // Buscar comissão padrão do sistema
-        const { data: configData } = await supabase
-          .from('configuracoes_sistema')
-          .select('valor')
-          .eq('chave', 'comissao_direta_percentual')
+      // Buscar comissão padrão do sistema
+      const { data: configData } = await supabase
+        .from('configuracoes_sistema')
+        .select('valor')
+        .eq('chave', 'comissao_direta_percentual')
+        .maybeSingle();
+      
+      // configData.valor é jsonb — pode ser número direto ou objeto
+      let comissaoPadrao = 10;
+      if (configData?.valor != null) {
+        const raw = configData.valor;
+        comissaoPadrao = typeof raw === 'number' ? raw : Number(raw) || 10;
+      }
+
+      // Verificar se código já existe e adicionar sufixo se necessário
+      let codigo = baseCode;
+      let suffix = 1;
+      while (true) {
+        const { data: existing } = await supabase
+          .from('cupons')
+          .select('id')
+          .eq('codigo', codigo)
           .maybeSingle();
-        const comissaoPadrao = configData?.valor ? Number(configData.valor) : 10;
+        if (!existing) break;
+        suffix++;
+        codigo = `${baseCode}${suffix}`;
+      }
 
-        // Verificar se código já existe e adicionar sufixo se necessário
-        let codigo = baseCode;
-        let suffix = 1;
-        while (true) {
-          const { data: existing } = await supabase
-            .from('cupons')
-            .select('id')
-            .eq('codigo', codigo)
-            .maybeSingle();
-          if (!existing) break;
-          suffix++;
-          codigo = `${baseCode}${suffix}`;
-        }
-
-        await supabase.from('cupons').insert({
-          afiliado_id: newAfiliado.id,
-          codigo,
-          tipo_desconto: 'percentual',
-          valor_desconto: 0,
-          comissao_percentual: comissaoPadrao,
-          ativo: true,
-        });
-      } catch (cupomError) {
+      const { error: cupomError } = await supabase.from('cupons').insert({
+        afiliado_id: newAfiliado.id,
+        codigo,
+        tipo_desconto: 'percentual',
+        valor_desconto: 0,
+        comissao_percentual: comissaoPadrao,
+        ativo: true,
+      });
+      
+      if (cupomError) {
         console.error('Erro ao criar cupom automático:', cupomError);
-        // Não falha a criação do afiliado por causa do cupom
+        toast({ 
+          title: "Afiliado criado, mas erro ao gerar cupom", 
+          description: cupomError.message,
+          variant: "destructive" 
+        });
+        return; // Sai antes do onSuccess mostrar mensagem de sucesso completa
       }
     },
     onSuccess: () => {
