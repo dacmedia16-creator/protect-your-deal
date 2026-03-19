@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock, Coins, CoinsIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
@@ -28,9 +29,11 @@ interface Afiliado {
   comissao_ativa: boolean;
   created_at: string;
   user_id: string | null;
+  indicado_por: string | null;
   total_cupons?: number;
   total_usos?: number;
   comissao_pendente?: number;
+  indicado_por_nome?: string;
 }
 
 export default function AdminAfiliados() {
@@ -43,6 +46,7 @@ export default function AdminAfiliados() {
     email: "",
     telefone: "",
     pix_chave: "",
+    indicado_por: "" as string,
   });
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedAfiliadoForPassword, setSelectedAfiliadoForPassword] = useState<Afiliado | null>(null);
@@ -101,6 +105,14 @@ export default function AdminAfiliados() {
         })
       );
 
+      // Enrich with indicado_por name
+      const afiliadoMap = new Map(afiliadosWithStats.map(a => [a.id, a.nome]));
+      for (const af of afiliadosWithStats) {
+        if (af.indicado_por) {
+          (af as any).indicado_por_nome = afiliadoMap.get(af.indicado_por) || null;
+        }
+      }
+
       return afiliadosWithStats as Afiliado[];
     },
   });
@@ -112,6 +124,7 @@ export default function AdminAfiliados() {
         email: data.email,
         telefone: data.telefone || null,
         pix_chave: data.pix_chave || null,
+        indicado_por: data.indicado_por || null,
       });
       if (error) throw error;
     },
@@ -139,6 +152,7 @@ export default function AdminAfiliados() {
           email: data.email,
           telefone: data.telefone || null,
           pix_chave: data.pix_chave || null,
+          indicado_por: data.indicado_por || null,
         })
         .eq("id", id);
       if (error) throw error;
@@ -254,7 +268,7 @@ export default function AdminAfiliados() {
   });
 
   const resetForm = () => {
-    setFormData({ nome: "", email: "", telefone: "", pix_chave: "" });
+    setFormData({ nome: "", email: "", telefone: "", pix_chave: "", indicado_por: "" });
     setEditingAfiliado(null);
   };
 
@@ -265,6 +279,7 @@ export default function AdminAfiliados() {
       email: afiliado.email,
       telefone: afiliado.telefone || "",
       pix_chave: afiliado.pix_chave || "",
+      indicado_por: afiliado.indicado_por || "",
     });
     setDialogOpen(true);
   };
@@ -340,6 +355,25 @@ export default function AdminAfiliados() {
                     onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
                     placeholder="CPF, Email, Telefone ou Chave aleatória"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="indicado_por">Indicado por</Label>
+                  <Select
+                    value={formData.indicado_por}
+                    onValueChange={(value) => setFormData({ ...formData, indicado_por: value === "none" ? "" : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Nenhum (afiliado direto)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum (afiliado direto)</SelectItem>
+                      {afiliados
+                        ?.filter(a => a.id !== editingAfiliado?.id)
+                        .map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.nome}</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -482,6 +516,7 @@ export default function AdminAfiliados() {
                         <TableHead>Telefone</TableHead>
                         <TableHead className="text-center">Cupons</TableHead>
                         <TableHead className="text-center">Usos</TableHead>
+                        <TableHead>Indicado por</TableHead>
                         <TableHead className="text-right">Comissão Pendente</TableHead>
                         <TableHead className="text-center">Comissão</TableHead>
                         <TableHead>Status</TableHead>
@@ -501,6 +536,16 @@ export default function AdminAfiliados() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">{afiliado.total_usos}</TableCell>
+                          <TableCell>
+                            {afiliado.indicado_por_nome ? (
+                              <Badge variant="outline" className="gap-1">
+                                <Users className="h-3 w-3" />
+                                {afiliado.indicado_por_nome}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {afiliado.comissao_pendente && afiliado.comissao_pendente > 0 ? (
                               <Badge variant="secondary" className="gap-1">

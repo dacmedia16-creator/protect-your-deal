@@ -5,7 +5,7 @@ import { AfiliadoLayout } from "@/components/layouts/AfiliadoLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock, Users, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -48,7 +48,7 @@ export default function AfiliadoDashboard() {
     enabled: !!afiliado,
   });
 
-  // Buscar usos dos cupons
+  // Buscar usos dos cupons (comissões diretas)
   const { data: usos, isLoading: loadingUsos } = useQuery({
     queryKey: ["afiliado-usos", cupons],
     queryFn: async () => {
@@ -72,13 +72,59 @@ export default function AfiliadoDashboard() {
     enabled: !!cupons && cupons.length > 0,
   });
 
-  const isLoading = loadingAfiliado || loadingCupons || loadingUsos;
+  // Buscar comissões indiretas (via afiliado_id)
+  const { data: comissoesIndiretas, isLoading: loadingIndiretas } = useQuery({
+    queryKey: ["afiliado-indiretas", afiliado?.id],
+    queryFn: async () => {
+      if (!afiliado) return [];
+      
+      const { data, error } = await supabase
+        .from("cupons_usos")
+        .select(`
+          *,
+          cupom:cupons (codigo),
+          imobiliaria:imobiliarias (nome)
+        `)
+        .eq("afiliado_id", afiliado.id)
+        .eq("tipo_comissao", "indireta")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!afiliado,
+  });
+
+  // Buscar afiliados indicados
+  const { data: rede } = useQuery({
+    queryKey: ["afiliado-rede", afiliado?.id],
+    queryFn: async () => {
+      if (!afiliado) return [];
+      
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, ativo")
+        .eq("indicado_por", afiliado.id)
+        .order("nome");
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!afiliado,
+  });
+
+  const isLoading = loadingAfiliado || loadingCupons || loadingUsos || loadingIndiretas;
 
   // Cálculos de estatísticas
   const totalCadastros = usos?.length || 0;
-  const comissaoPendente = usos?.filter((u) => !u.comissao_paga).reduce((sum, u) => sum + Number(u.valor_comissao), 0) || 0;
-  const comissaoPaga = usos?.filter((u) => u.comissao_paga).reduce((sum, u) => sum + Number(u.valor_comissao), 0) || 0;
-  const cuponsAtivos = cupons?.filter((c) => c.ativo).length || 0;
+  const comissaoDiretaPendente = usos?.filter((u: any) => !u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoIndiretaPendente = comissoesIndiretas?.filter((u: any) => !u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoPendente = comissaoDiretaPendente + comissaoIndiretaPendente;
+  const comissaoDiretaPaga = usos?.filter((u: any) => u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoIndiretaPaga = comissoesIndiretas?.filter((u: any) => u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoPaga = comissaoDiretaPaga + comissaoIndiretaPaga;
+  const cuponsAtivos = cupons?.filter((c: any) => c.ativo).length || 0;
+  const totalRede = rede?.length || 0;
 
   if (!afiliado && !isLoading) {
     return (
@@ -162,6 +208,36 @@ export default function AfiliadoDashboard() {
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Minha Rede</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalRede}</div>
+              <p className="text-xs text-muted-foreground">
+                Afiliados indicados por você
+              </p>
+            </CardContent>
+          </Card>
+
+          {comissaoIndiretaPendente + comissaoIndiretaPaga > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Comissão Indireta</CardTitle>
+                <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  R$ {(comissaoIndiretaPendente + comissaoIndiretaPaga).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total ganho via rede (2º nível)
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Lista de Cupons */}

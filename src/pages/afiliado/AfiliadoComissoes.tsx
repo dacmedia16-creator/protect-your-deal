@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, CheckCircle, Clock, Download, Filter } from "lucide-react";
+import { DollarSign, CheckCircle, Clock, Download, Filter, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -27,6 +27,7 @@ function generateMonthOptions() {
 export default function AfiliadoComissoes() {
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [tipoFilter, setTipoFilter] = useState<string>("todos");
   const [periodoFilter, setPeriodoFilter] = useState<string>("todos");
 
   const monthOptions = generateMonthOptions();
@@ -68,7 +69,7 @@ export default function AfiliadoComissoes() {
 
   // Buscar todas as comissões
   const { data: comissoes, isLoading } = useQuery({
-    queryKey: ["afiliado-comissoes", cupons, statusFilter, periodoFilter],
+    queryKey: ["afiliado-comissoes", cupons, statusFilter, tipoFilter, periodoFilter],
     queryFn: async () => {
       if (!cupons || cupons.length === 0) return [];
       
@@ -107,7 +108,14 @@ export default function AfiliadoComissoes() {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      let result = data || [];
+      
+      // Filter by tipo
+      if (tipoFilter !== "todos") {
+        result = result.filter((c: any) => (c.tipo_comissao || 'direta') === tipoFilter);
+      }
+      
+      return result;
     },
     enabled: !!cupons && cupons.length > 0,
   });
@@ -224,6 +232,19 @@ export default function AfiliadoComissoes() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Tipo</label>
+                <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os tipos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="direta">Direta</SelectItem>
+                    <SelectItem value="indireta">Indireta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -254,6 +275,8 @@ export default function AfiliadoComissoes() {
                       <TableHead className="text-right">Valor Original</TableHead>
                       <TableHead className="text-right">Desconto</TableHead>
                       <TableHead className="text-right">Comissão</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Data Pagamento</TableHead>
                     </TableRow>
@@ -285,6 +308,19 @@ export default function AfiliadoComissoes() {
                             <Badge variant="secondary">
                               <Clock className="h-3 w-3 mr-1" />
                               Pendente
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {(comissao as any).tipo_comissao === 'indireta' ? (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <ArrowDownRight className="h-3 w-3" />
+                              Indireta
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs gap-1 border-primary/30">
+                              <ArrowUpRight className="h-3 w-3" />
+                              Direta
                             </Badge>
                           )}
                         </TableCell>

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar } from "lucide-react";
+import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth, subMonths, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -70,6 +70,7 @@ export default function AdminComissoes() {
   const queryClient = useQueryClient();
   const [filtroAfiliado, setFiltroAfiliado] = useState<string>("todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedComissaoId, setSelectedComissaoId] = useState<string | null>(null);
@@ -90,7 +91,7 @@ export default function AdminComissoes() {
   });
 
   const { data: comissoes, isLoading } = useQuery({
-    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus, filtroPeriodo],
+    queryKey: ["admin-comissoes", filtroAfiliado, filtroStatus, filtroTipo, filtroPeriodo],
     queryFn: async () => {
       let query = supabase
         .from("cupons_usos")
@@ -125,6 +126,11 @@ export default function AdminComissoes() {
       if (filtroAfiliado !== "todos") {
         filtered = filtered.filter(
           (c) => c.cupons?.afiliados?.id === filtroAfiliado
+        );
+      }
+      if (filtroTipo !== "todos") {
+        filtered = filtered.filter(
+          (c) => (c as any).tipo_comissao === filtroTipo
         );
       }
 
@@ -296,6 +302,19 @@ export default function AdminComissoes() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-[200px]">
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de comissão" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
+                <SelectItem value="direta">Direta</SelectItem>
+                <SelectItem value="indireta">Indireta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Card>
@@ -372,6 +391,17 @@ export default function AdminComissoes() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium">{comissao.cupons?.afiliados?.nome || "-"}</span>
+                              {(comissao as any).tipo_comissao === 'indireta' ? (
+                                <Badge variant="outline" className="text-xs gap-1">
+                                  <ArrowDownRight className="h-3 w-3" />
+                                  Indireta
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs gap-1 border-primary/30">
+                                  <ArrowUpRight className="h-3 w-3" />
+                                  Direta
+                                </Badge>
+                              )}
                               {comissao.comissao_paga ? (
                                 <Badge variant="default" className="bg-green-600">
                                   <Check className="h-3 w-3 mr-1" />
@@ -441,6 +471,7 @@ export default function AdminComissoes() {
                         <TableHead className="text-right">Valor Original</TableHead>
                         <TableHead className="text-right">Desconto</TableHead>
                         <TableHead className="text-right">Comissão</TableHead>
+                        <TableHead>Tipo</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ação</TableHead>
                       </TableRow>
@@ -485,6 +516,19 @@ export default function AdminComissoes() {
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             R$ {Number(comissao.valor_comissao).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {(comissao as any).tipo_comissao === 'indireta' ? (
+                              <Badge variant="outline" className="text-xs gap-1">
+                                <ArrowDownRight className="h-3 w-3" />
+                                Indireta
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs gap-1 border-primary/30">
+                                <ArrowUpRight className="h-3 w-3" />
+                                Direta
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                             {comissao.comissao_paga ? (
