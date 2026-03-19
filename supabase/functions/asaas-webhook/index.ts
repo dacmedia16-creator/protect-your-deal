@@ -502,7 +502,8 @@ serve(async (req) => {
           case 'SUBSCRIPTION_RENEWED':
             updateData.status = 'ativa';
             const nextRenewal = new Date();
-            nextRenewal.setDate(nextRenewal.getDate() + 30);
+            const isAnualRenewal = (assinatura as any).ciclo === 'anual';
+            nextRenewal.setDate(nextRenewal.getDate() + (isAnualRenewal ? 365 : 30));
             updateData.proxima_cobranca = nextRenewal.toISOString().split('T')[0];
             console.log(`Subscription ${subscriptionId} renewed`);
             break;

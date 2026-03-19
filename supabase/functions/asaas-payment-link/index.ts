@@ -99,6 +99,7 @@ serve(async (req) => {
           user_id: imobiliariaId ? null : user.id,
           imobiliaria_id: imobiliariaId || null,
           status: 'pendente',
+          ciclo: ciclo,
           data_inicio: new Date().toISOString().split('T')[0],
         })
         .select('id')
@@ -110,7 +111,7 @@ serve(async (req) => {
       }
 
       assinaturaId = newAssinatura.id;
-      console.log('Created new subscription:', assinaturaId);
+      console.log('Created new subscription:', assinaturaId, 'ciclo:', ciclo);
     }
 
 
