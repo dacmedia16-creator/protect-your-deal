@@ -777,6 +777,65 @@ export default function AdminAfiliados() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog de Rede de Indicados */}
+        <Dialog open={networkDialogOpen} onOpenChange={(open) => {
+          setNetworkDialogOpen(open);
+          if (!open) setSelectedAfiliadoForNetwork(null);
+        }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" />
+                Rede de {selectedAfiliadoForNetwork?.nome}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {isLoadingRede ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : !redeAfiliados || redeAfiliados.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Network className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p>Nenhum indicado encontrado</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    {redeAfiliados.length} indicado{redeAfiliados.length !== 1 ? "s" : ""}
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Cadastro</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {redeAfiliados.map((indicado) => (
+                        <TableRow key={indicado.id}>
+                          <TableCell className="font-medium">{indicado.nome}</TableCell>
+                          <TableCell>{indicado.email}</TableCell>
+                          <TableCell>
+                            <Badge variant={indicado.ativo ? "default" : "secondary"}>
+                              {indicado.ativo ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(indicado.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </SuperAdminLayout>
   );
