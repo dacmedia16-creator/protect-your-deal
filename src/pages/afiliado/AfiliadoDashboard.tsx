@@ -237,7 +237,7 @@ export default function AfiliadoDashboard() {
                 </p>
               </CardContent>
             </Card>
-          )
+          )}
         </div>
 
         {/* Lista de Cupons */}
