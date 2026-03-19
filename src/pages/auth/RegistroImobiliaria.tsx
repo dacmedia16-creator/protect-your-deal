@@ -35,6 +35,7 @@ export default function RegistroImobiliaria() {
   
   const planoParam = searchParams.get('plano');
   const refParam = searchParams.get('ref');
+  const affParam = searchParams.get('aff');
   
   const [imobiliariaForm, setImobiliariaForm] = useState({
     nome: '',
