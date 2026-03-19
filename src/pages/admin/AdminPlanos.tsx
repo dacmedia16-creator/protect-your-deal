@@ -437,6 +437,16 @@ export default function AdminPlanos() {
                     )}
                   </div>
 
+                  {/* Preço anual */}
+                  {plano.valor_anual && plano.valor_mensal > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Anual: <span className="font-medium text-foreground">R$ {plano.valor_anual.toFixed(2).replace('.', ',')}/ano</span>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        -{Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                      </Badge>
+                    </div>
+                  )}
+
                   {/* Lista de recursos */}
                   <ul className="space-y-2 text-sm flex-1">
                     <li className="flex items-center gap-2">

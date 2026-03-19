@@ -306,8 +306,20 @@ export default function CorretorAssinatura() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="text-3xl font-bold">
-                        {formatCurrency(plano.valor_mensal)}
-                        <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                        {ciclo === 'anual' && plano.valor_anual ? (
+                          <>
+                            {formatCurrency(plano.valor_anual)}
+                            <span className="text-sm font-normal text-muted-foreground">/ano</span>
+                            <div className="text-sm font-normal text-emerald-600 mt-1">
+                              Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {formatCurrency(plano.valor_mensal)}
+                            <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                          </>
+                        )}
                       </div>
                       
                       <ul className="space-y-2 text-sm text-muted-foreground">

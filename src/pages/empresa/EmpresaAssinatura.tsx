@@ -328,12 +328,20 @@ export default function EmpresaAssinatura() {
                     </div>
                     <CardDescription>{plano.descricao}</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                    <CardContent className="space-y-4">
                     <div className={`text-3xl font-bold ${isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}`}>
                       {isFreePlan ? (
                         'Grátis'
                       ) : plano.valor_mensal === 0 ? (
                         'Sob consulta'
+                      ) : ciclo === 'anual' && plano.valor_anual ? (
+                        <>
+                          R$ {plano.valor_anual.toFixed(2).replace('.', ',')}
+                          <span className="text-sm font-normal text-muted-foreground">/ano</span>
+                          <div className="text-sm font-normal text-emerald-600 mt-1">
+                            Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                          </div>
+                        </>
                       ) : (
                         <>
                           R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
