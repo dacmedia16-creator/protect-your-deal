@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          indicado_por: string | null
           nome: string
           pix_chave: string | null
           telefone: string | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          indicado_por?: string | null
           nome: string
           pix_chave?: string | null
           telefone?: string | null
@@ -45,13 +47,22 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          indicado_por?: string | null
           nome?: string
           pix_chave?: string | null
           telefone?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "afiliados_indicado_por_fkey"
+            columns: ["indicado_por"]
+            isOneToOne: false
+            referencedRelation: "afiliados"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       app_versions: {
         Row: {
@@ -587,6 +598,7 @@ export type Database = {
       }
       cupons_usos: {
         Row: {
+          afiliado_id: string | null
           assinatura_id: string
           comissao_paga: boolean
           comissao_paga_em: string | null
@@ -595,12 +607,14 @@ export type Database = {
           id: string
           imobiliaria_id: string | null
           observacao_pagamento: string | null
+          tipo_comissao: string
           user_id: string | null
           valor_comissao: number
           valor_desconto: number
           valor_original: number
         }
         Insert: {
+          afiliado_id?: string | null
           assinatura_id: string
           comissao_paga?: boolean
           comissao_paga_em?: string | null
@@ -609,12 +623,14 @@ export type Database = {
           id?: string
           imobiliaria_id?: string | null
           observacao_pagamento?: string | null
+          tipo_comissao?: string
           user_id?: string | null
           valor_comissao?: number
           valor_desconto: number
           valor_original: number
         }
         Update: {
+          afiliado_id?: string | null
           assinatura_id?: string
           comissao_paga?: boolean
           comissao_paga_em?: string | null
@@ -623,12 +639,20 @@ export type Database = {
           id?: string
           imobiliaria_id?: string | null
           observacao_pagamento?: string | null
+          tipo_comissao?: string
           user_id?: string | null
           valor_comissao?: number
           valor_desconto?: number
           valor_original?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "cupons_usos_afiliado_id_fkey"
+            columns: ["afiliado_id"]
+            isOneToOne: false
+            referencedRelation: "afiliados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cupons_usos_assinatura_id_fkey"
             columns: ["assinatura_id"]
