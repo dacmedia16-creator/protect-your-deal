@@ -323,6 +323,23 @@ export default function AdminPlanos() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="valor_anual">Valor Anual (R$) — opcional</Label>
+                  <Input
+                    id="valor_anual"
+                    type="number"
+                    step="0.01"
+                    value={form.valor_anual ?? ''}
+                    onChange={(e) => setForm({ ...form, valor_anual: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder="Ex: 790.00 (deixe vazio para não oferecer anual)"
+                  />
+                  {form.valor_anual && form.valor_mensal > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Economia: {Math.round((1 - form.valor_anual / (form.valor_mensal * 12)) * 100)}% vs mensal
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="asaas_plan_id">ID do Plano no Asaas (opcional)</Label>
                   <Input
                     id="asaas_plan_id"
