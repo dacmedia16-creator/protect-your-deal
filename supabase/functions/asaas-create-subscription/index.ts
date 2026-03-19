@@ -118,6 +118,7 @@ serve(async (req) => {
           asaas_customer_id: customerId,
           asaas_subscription_id: subscriptionData.id,
           status: 'pendente',
+          ciclo: ciclo,
           data_inicio: new Date().toISOString().split('T')[0],
           proxima_cobranca: nextDueDate.toISOString().split('T')[0],
           updated_at: new Date().toISOString(),
