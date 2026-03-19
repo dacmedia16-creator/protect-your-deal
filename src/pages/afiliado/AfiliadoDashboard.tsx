@@ -1,13 +1,31 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AfiliadoLayout } from "@/components/layouts/AfiliadoLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock, Users, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock, Users, ArrowUpRight, ArrowDownRight, Link as LinkIcon, Copy, Check as CheckIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.success("Link copiado!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Button variant="outline" size="sm" onClick={handleCopy} className="shrink-0">
+      {copied ? <CheckIcon className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+    </Button>
+  );
+}
 
 export default function AfiliadoDashboard() {
   const { user } = useAuth();
@@ -239,6 +257,32 @@ export default function AfiliadoDashboard() {
             </Card>
           )}
         </div>
+
+        {/* Meu Link de Indicação */}
+        {cupons && cupons.filter(c => c.ativo).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="h-5 w-5" />
+                Meu Link de Indicação
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {cupons.filter(c => c.ativo).map((cupom) => {
+                const link = `${window.location.origin}/registro-tipo?ref=${cupom.codigo}`;
+                return (
+                  <div key={cupom.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                    <code className="flex-1 text-sm truncate">{link}</code>
+                    <CopyButton text={link} />
+                  </div>
+                );
+              })}
+              <p className="text-xs text-muted-foreground">
+                Compartilhe este link para que novos clientes se cadastrem com seu cupom automaticamente.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Lista de Cupons */}
         <Card>

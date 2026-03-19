@@ -34,6 +34,7 @@ export default function RegistroImobiliaria() {
   const [selectedPlano, setSelectedPlano] = useState<string>('');
   
   const planoParam = searchParams.get('plano');
+  const refParam = searchParams.get('ref');
   
   const [imobiliariaForm, setImobiliariaForm] = useState({
     nome: '',
@@ -55,6 +56,7 @@ export default function RegistroImobiliaria() {
 
   // Cupom de desconto
   const [codigoCupom, setCodigoCupom] = useState('');
+  const [cupomAutoRef, setCupomAutoRef] = useState(false);
   const [validatingCupom, setValidatingCupom] = useState(false);
   const [cupomInfo, setCupomInfo] = useState<{
     cupom_id: string;
@@ -111,6 +113,14 @@ export default function RegistroImobiliaria() {
     const debounce = setTimeout(validarCupom, 500);
     return () => clearTimeout(debounce);
   }, [codigoCupom]);
+
+  // Auto-preencher cupom via ?ref=
+  useEffect(() => {
+    if (refParam && !codigoCupom) {
+      setCodigoCupom(refParam.toUpperCase());
+      setCupomAutoRef(true);
+    }
+  }, [refParam]);
 
   // Fetch planos
   useEffect(() => {
@@ -530,12 +540,19 @@ export default function RegistroImobiliaria() {
                         value={codigoCupom}
                         onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
                         placeholder="Ex: DESCONTO10"
+                        disabled={cupomAutoRef && cupomInfo?.valido === true}
                         className={cupomInfo?.valido === false ? 'border-destructive' : cupomInfo?.valido ? 'border-green-500' : ''}
                       />
                       {validatingCupom && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </div>
+                    {cupomAutoRef && cupomInfo?.valido && (
+                      <p className="text-xs text-primary flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Cupom aplicado automaticamente via link de indicação
+                      </p>
+                    )}
                     {cupomInfo && !cupomInfo.valido && (
                       <p className="text-sm text-destructive flex items-center gap-1">
                         <X className="h-3 w-3" />
