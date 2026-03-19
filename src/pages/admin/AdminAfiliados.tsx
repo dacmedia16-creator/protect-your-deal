@@ -553,6 +553,17 @@ export default function AdminAfiliados() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() => {
+                                setSelectedAfiliadoForNetwork(afiliado);
+                                setNetworkDialogOpen(true);
+                              }}
+                            >
+                              <Network className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
                               onClick={() => handleEdit(afiliado)}
                             >
                               <Pencil className="h-4 w-4" />
