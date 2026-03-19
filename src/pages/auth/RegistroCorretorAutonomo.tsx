@@ -635,7 +635,7 @@ export default function RegistroCorretorAutonomo() {
                       {cupomInfo.mensagem}
                     </p>
                   )}
-                  {cupomInfo?.valido && (
+                  {cupomInfo?.valido && cupomInfo.valor_desconto > 0.01 && (
                     <p className="text-sm text-green-600 flex items-center gap-1">
                       <Check className="h-3 w-3" />
                       {cupomInfo.tipo_desconto === 'percentual' 
