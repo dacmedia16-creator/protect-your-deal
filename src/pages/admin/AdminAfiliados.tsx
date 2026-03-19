@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock, Coins, CoinsIcon } from "lucide-react";
+import { Plus, Pencil, UserX, UserCheck, Users, Ticket, DollarSign, KeyRound, Loader2, Lock, Coins, CoinsIcon, Network } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -51,6 +51,23 @@ export default function AdminAfiliados() {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedAfiliadoForPassword, setSelectedAfiliadoForPassword] = useState<Afiliado | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [networkDialogOpen, setNetworkDialogOpen] = useState(false);
+  const [selectedAfiliadoForNetwork, setSelectedAfiliadoForNetwork] = useState<Afiliado | null>(null);
+
+  const { data: redeAfiliados, isLoading: isLoadingRede } = useQuery({
+    queryKey: ["admin-afiliado-rede", selectedAfiliadoForNetwork?.id],
+    queryFn: async () => {
+      if (!selectedAfiliadoForNetwork) return [];
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, ativo, created_at")
+        .eq("indicado_por", selectedAfiliadoForNetwork.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedAfiliadoForNetwork,
+  });
 
   const { data: afiliados, isLoading } = useQuery({
     queryKey: ["admin-afiliados"],
@@ -536,6 +553,17 @@ export default function AdminAfiliados() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              onClick={() => {
+                                setSelectedAfiliadoForNetwork(afiliado);
+                                setNetworkDialogOpen(true);
+                              }}
+                            >
+                              <Network className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
                               onClick={() => handleEdit(afiliado)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -634,6 +662,17 @@ export default function AdminAfiliados() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedAfiliadoForNetwork(afiliado);
+                                  setNetworkDialogOpen(true);
+                                }}
+                                title="Ver Rede"
+                              >
+                                <Network className="h-4 w-4 text-primary" />
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -746,6 +785,65 @@ export default function AdminAfiliados() {
                   {resetPasswordMutation.isPending ? "Salvando..." : "Salvar Senha"}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Rede de Indicados */}
+        <Dialog open={networkDialogOpen} onOpenChange={(open) => {
+          setNetworkDialogOpen(open);
+          if (!open) setSelectedAfiliadoForNetwork(null);
+        }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" />
+                Rede de {selectedAfiliadoForNetwork?.nome}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {isLoadingRede ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : !redeAfiliados || redeAfiliados.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Network className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p>Nenhum indicado encontrado</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    {redeAfiliados.length} indicado{redeAfiliados.length !== 1 ? "s" : ""}
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Cadastro</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {redeAfiliados.map((indicado) => (
+                        <TableRow key={indicado.id}>
+                          <TableCell className="font-medium">{indicado.nome}</TableCell>
+                          <TableCell>{indicado.email}</TableCell>
+                          <TableCell>
+                            <Badge variant={indicado.ativo ? "default" : "secondary"}>
+                              {indicado.ativo ? "Ativo" : "Inativo"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(indicado.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
