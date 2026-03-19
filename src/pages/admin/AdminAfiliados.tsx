@@ -776,65 +776,147 @@ export default function AdminAfiliados() {
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Rede de Indicados */}
+        {/* Dialog de Rede de Indicados - Árvore */}
         <Dialog open={networkDialogOpen} onOpenChange={(open) => {
           setNetworkDialogOpen(open);
           if (!open) setSelectedAfiliadoForNetwork(null);
         }}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Network className="h-5 w-5" />
                 Rede de {selectedAfiliadoForNetwork?.nome}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              {isLoadingRede ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : !redeAfiliados || redeAfiliados.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Network className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p>Nenhum indicado encontrado</p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">
-                    {redeAfiliados.length} indicado{redeAfiliados.length !== 1 ? "s" : ""}
-                  </p>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Cadastro</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {redeAfiliados.map((indicado) => (
-                        <TableRow key={indicado.id}>
-                          <TableCell className="font-medium">{indicado.nome}</TableCell>
-                          <TableCell>{indicado.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={indicado.ativo ? "default" : "secondary"}>
-                              {indicado.ativo ? "Ativo" : "Inativo"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(indicado.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </>
+            <div className="space-y-2">
+              {selectedAfiliadoForNetwork && (
+                <NetworkTree parentId={selectedAfiliadoForNetwork.id} />
               )}
             </div>
           </DialogContent>
         </Dialog>
       </div>
     </SuperAdminLayout>
+  );
+}
+
+// Recursive tree component for affiliate network
+interface TreeNodeData {
+  id: string;
+  nome: string;
+  email: string;
+  ativo: boolean;
+  created_at: string;
+}
+
+function NetworkTree({ parentId }: { parentId: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["afiliado-tree", parentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, ativo, created_at")
+        .eq("indicado_por", parentId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <Network className="h-10 w-10 mx-auto mb-2 opacity-30" />
+        <p>Nenhum indicado encontrado</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <p className="text-sm text-muted-foreground mb-3">
+        {data.length} indicado{data.length !== 1 ? "s" : ""} direto{data.length !== 1 ? "s" : ""}
+      </p>
+      {data.map((node) => (
+        <NetworkTreeNode key={node.id} node={node} level={0} />
+      ))}
+    </div>
+  );
+}
+
+function NetworkTreeNode({ node, level }: { node: TreeNodeData; level: number }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const { data: children, isLoading } = useQuery({
+    queryKey: ["afiliado-tree", node.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("afiliados")
+        .select("id, nome, email, ativo, created_at")
+        .eq("indicado_por", node.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: expanded,
+  });
+
+  const hasChildren = children && children.length > 0;
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-2 py-2 px-2 rounded-md hover:bg-muted/50 transition-colors"
+        style={{ paddingLeft: `${level * 24 + 8}px` }}
+      >
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center justify-center h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {expanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Connector line */}
+        {level > 0 && (
+          <div className="w-3 border-t border-border shrink-0" />
+        )}
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-1 min-w-0">
+          <span className="font-medium text-sm truncate">{node.nome}</span>
+          <span className="text-xs text-muted-foreground truncate">{node.email}</span>
+          <Badge variant={node.ativo ? "default" : "secondary"} className="w-fit text-[10px]">
+            {node.ativo ? "Ativo" : "Inativo"}
+          </Badge>
+          <span className="text-xs text-muted-foreground shrink-0">
+            {format(new Date(node.created_at), "dd/MM/yyyy", { locale: ptBR })}
+          </span>
+        </div>
+
+        {expanded && isLoading && (
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />
+        )}
+        {hasChildren && (
+          <span className="text-[10px] text-muted-foreground shrink-0">
+            {children.length}
+          </span>
+        )}
+      </div>
+
+      {expanded && children && children.map((child) => (
+        <NetworkTreeNode key={child.id} node={child} level={level + 1} />
+      ))}
+    </div>
   );
 }
