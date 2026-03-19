@@ -113,13 +113,18 @@ export default function AfiliadoDashboard() {
     enabled: !!afiliado,
   });
 
-  const isLoading = loadingAfiliado || loadingCupons || loadingUsos;
+  const isLoading = loadingAfiliado || loadingCupons || loadingUsos || loadingIndiretas;
 
   // Cálculos de estatísticas
   const totalCadastros = usos?.length || 0;
-  const comissaoPendente = usos?.filter((u) => !u.comissao_paga).reduce((sum, u) => sum + Number(u.valor_comissao), 0) || 0;
-  const comissaoPaga = usos?.filter((u) => u.comissao_paga).reduce((sum, u) => sum + Number(u.valor_comissao), 0) || 0;
-  const cuponsAtivos = cupons?.filter((c) => c.ativo).length || 0;
+  const comissaoDiretaPendente = usos?.filter((u: any) => !u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoIndiretaPendente = comissoesIndiretas?.filter((u: any) => !u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoPendente = comissaoDiretaPendente + comissaoIndiretaPendente;
+  const comissaoDiretaPaga = usos?.filter((u: any) => u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoIndiretaPaga = comissoesIndiretas?.filter((u: any) => u.comissao_paga).reduce((sum: number, u: any) => sum + Number(u.valor_comissao), 0) || 0;
+  const comissaoPaga = comissaoDiretaPaga + comissaoIndiretaPaga;
+  const cuponsAtivos = cupons?.filter((c: any) => c.ativo).length || 0;
+  const totalRede = rede?.length || 0;
 
   if (!afiliado && !isLoading) {
     return (
