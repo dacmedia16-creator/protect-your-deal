@@ -1,38 +1,39 @@
 
 
-## Ocultar desconto simbólico de cupons de rastreamento
+## Corrigir visibilidade da rede de indicados do afiliado
 
 ### Problema
-Quando o usuário acessa via link de afiliado (`?aff=`), o cupom de rastreamento com desconto simbólico de 0.01% é mostrado na tela. A mensagem "0.01% de desconto aplicado!" confunde o usuário e parece pouco profissional.
+A política RLS da tabela `afiliados` só permite que o afiliado veja **seu próprio registro** (`user_id = auth.uid()`). Quando Fernanda tenta listar os afiliados que ela indicou (query com `.eq("indicado_por", afiliado.id)`), o RLS bloqueia porque os registros retornados pertencem a outros usuários.
 
 ### Solução
-Quando o cupom aplicado tem `valor_desconto <= 0.01` (cupom de rastreamento puro), **não exibir** a linha de desconto. Manter apenas a mensagem "Cupom aplicado automaticamente via link de indicação".
+Atualizar a política RLS de SELECT na tabela `afiliados` para também permitir que um afiliado veja registros de quem ele indicou (`indicado_por = id do afiliado logado`).
 
-### Mudanças
+### Mudança
+
+**Migration SQL** — alterar a policy existente:
+
+```sql
+DROP POLICY IF EXISTS "Afiliado pode ver seus dados" ON public.afiliados;
+
+CREATE POLICY "Afiliado pode ver seus dados" 
+ON public.afiliados 
+FOR SELECT 
+USING (
+  user_id = auth.uid() 
+  OR indicado_por IN (SELECT id FROM public.afiliados WHERE user_id = auth.uid())
+  OR EXISTS (
+    SELECT 1 FROM public.user_roles 
+    WHERE user_roles.user_id = auth.uid() 
+    AND user_roles.role = 'super_admin'
+  )
+);
+```
+
+Isso adiciona a condição: "ou o registro foi indicado por mim" — permitindo que Fernanda veja Francisco na sua rede, sem expor dados de afiliados não relacionados.
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/auth/RegistroCorretorAutonomo.tsx` | Condicionar exibição do desconto: só mostrar se `valor_desconto > 0.01` |
-| `src/pages/auth/RegistroImobiliaria.tsx` | Mesma alteração |
+| Nova migration SQL | Recriar policy `Afiliado pode ver seus dados` com condição `indicado_por` |
 
-### Lógica
-
-```tsx
-// Antes (sempre mostra):
-{cupomInfo?.valido && (
-  <p>✓ {valor}% de desconto aplicado!</p>
-)}
-
-// Depois (oculta desconto simbólico):
-{cupomInfo?.valido && cupomInfo.valor_desconto > 0.01 && (
-  <p>✓ {valor}% de desconto aplicado!</p>
-)}
-```
-
-Quando for cupom de rastreamento (≤ 0.01%), o usuário verá apenas:
-- ✓ Cupom aplicado automaticamente via link de indicação
-
-Quando for cupom promocional real (ex: 10%), verá:
-- ✓ Cupom aplicado automaticamente via link de indicação
-- ✓ 10% de desconto aplicado!
+Nenhum arquivo de código precisa ser alterado — a query já existe no dashboard.
 
