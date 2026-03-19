@@ -76,6 +76,7 @@ serve(async (req) => {
         .from('assinaturas')
         .update({
           plano_pendente_id: planoId, // Armazena o plano desejado
+          ciclo: ciclo, // Armazena o ciclo desejado
           updated_at: new Date().toISOString(),
           // NÃO ATUALIZAR: plano_id (mantém plano atual)
           // NÃO ATUALIZAR: status (mantém status atual)
@@ -88,7 +89,7 @@ serve(async (req) => {
       }
 
       assinaturaId = existingAssinatura.id;
-      console.log('Pending plan registered:', planoId, 'for subscription:', assinaturaId);
+      console.log('Pending plan registered:', planoId, 'ciclo:', ciclo, 'for subscription:', assinaturaId);
     } else {
       // Criar nova assinatura
       const { data: newAssinatura, error: insertError } = await supabase
