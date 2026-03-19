@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AfiliadoLayout } from "@/components/layouts/AfiliadoLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock, Users, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock, Users, ArrowUpRight, ArrowDownRight, Link as LinkIcon, Copy, Check as CheckIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
