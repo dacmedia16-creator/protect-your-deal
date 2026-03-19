@@ -132,6 +132,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/registro" element={<RegistroImobiliaria />} />
                 <Route path="/registro/tipo" element={<RegistroTipo />} />
+                <Route path="/registro-tipo" element={<RegistroTipo />} />
                 <Route path="/registro-autonomo" element={<RegistroCorretorAutonomo />} />
                 <Route path="/registro-vinculado" element={<RegistroVinculado />} />
                 <Route path="/convite/:token" element={<AceitarConvite />} />
