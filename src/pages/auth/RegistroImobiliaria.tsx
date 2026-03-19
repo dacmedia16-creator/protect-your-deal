@@ -407,7 +407,7 @@ export default function RegistroImobiliaria() {
                       }
                     }
                     
-                    const temDesconto = cupomInfo?.valido && precoOriginal > 0 && precoComDesconto !== precoOriginal;
+                    const temDesconto = cupomInfo?.valido && cupomInfo.valor_desconto > 0.01 && precoOriginal > 0 && precoComDesconto !== precoOriginal;
                     
                     return (
                       <label
