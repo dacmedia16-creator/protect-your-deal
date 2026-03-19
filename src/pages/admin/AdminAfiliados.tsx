@@ -28,9 +28,11 @@ interface Afiliado {
   comissao_ativa: boolean;
   created_at: string;
   user_id: string | null;
+  indicado_por: string | null;
   total_cupons?: number;
   total_usos?: number;
   comissao_pendente?: number;
+  indicado_por_nome?: string;
 }
 
 export default function AdminAfiliados() {
