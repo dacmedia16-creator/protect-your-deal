@@ -5,7 +5,7 @@ import { AfiliadoLayout } from "@/components/layouts/AfiliadoLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import { Ticket, DollarSign, TrendingUp, CheckCircle, Clock, Users, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
