@@ -42,7 +42,8 @@ serve(async (req) => {
       planoId, 
       customerId, 
       billingType = 'UNDEFINED', // BOLETO, CREDIT_CARD, PIX, UNDEFINED (cliente escolhe)
-      imobiliariaId 
+      imobiliariaId,
+      ciclo = 'mensal'
     } = await req.json();
 
     if (!planoId || !customerId) {
