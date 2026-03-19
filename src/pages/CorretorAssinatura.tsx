@@ -52,6 +52,7 @@ export default function CorretorAssinatura() {
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
 
   // Redirecionar se não for corretor autônomo
   useEffect(() => {
