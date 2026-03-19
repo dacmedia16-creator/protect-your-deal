@@ -127,7 +127,7 @@ const RegistroTipo = () => {
             {/* Pessoa Jurídica */}
             <Card 
               className="group cursor-pointer hover:border-primary hover:shadow-lg transition-all duration-300"
-              onClick={() => navigate(`/registro?plano=${plano}`)}
+              onClick={() => navigate(`/registro?plano=${plano}${ref ? `&ref=${ref}` : ''}`)}
             >
               <CardHeader className="text-center pb-2">
                 <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
