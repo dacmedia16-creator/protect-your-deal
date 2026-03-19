@@ -117,6 +117,12 @@ serve(async (req) => {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
 
+    // Determinar valor e ciclo
+    const isAnual = ciclo === 'anual';
+    const valor = isAnual && plano.valor_anual ? plano.valor_anual : plano.valor_mensal;
+    const subscriptionCycle = isAnual ? 'YEARLY' : 'MONTHLY';
+    const cicloLabel = isAnual ? 'anual' : 'mensal';
+
     // Criar link de pagamento no Asaas usando apenas o ID da assinatura (36 chars)
     const paymentLinkResponse = await fetch(`${ASAAS_API_URL}/paymentLinks`, {
       method: 'POST',
@@ -125,13 +131,13 @@ serve(async (req) => {
         'access_token': asaasApiKey,
       },
       body: JSON.stringify({
-        name: `Assinatura ${plano.nome}`,
-        description: `Plano ${plano.nome} - VisitaProva. Assinatura mensal com renovação automática.`,
+        name: `Assinatura ${plano.nome} (${cicloLabel})`,
+        description: `Plano ${plano.nome} - VisitaProva. Assinatura ${cicloLabel} com renovação automática.`,
         endDate: expirationDate.toISOString().split('T')[0],
-        value: plano.valor_mensal,
+        value: valor,
         billingType: 'UNDEFINED',
         chargeType: 'RECURRENT',
-        subscriptionCycle: 'MONTHLY',
+        subscriptionCycle,
         dueDateLimitDays: 3,
         notificationEnabled: true,
         externalReference: assinaturaId, // UUID de 36 caracteres
