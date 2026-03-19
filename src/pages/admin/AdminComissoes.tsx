@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar } from "lucide-react";
+import { Check, DollarSign, Clock, User, Ticket, Copy, FileText, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth, subMonths, getYear, getMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
