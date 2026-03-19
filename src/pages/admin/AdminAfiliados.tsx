@@ -169,7 +169,7 @@ export default function AdminAfiliados() {
         afiliado_id: newAfiliado.id,
         codigo,
         tipo_desconto: 'percentual',
-        valor_desconto: 0,
+        valor_desconto: 0.01,
         comissao_percentual: comissaoPadrao,
         ativo: true,
       });
