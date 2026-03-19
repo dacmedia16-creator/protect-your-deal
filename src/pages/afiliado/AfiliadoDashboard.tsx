@@ -258,6 +258,48 @@ export default function AfiliadoDashboard() {
           )}
         </div>
 
+        {/* Minha Rede - Lista de Indicados */}
+        {rede && rede.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Minha Rede ({rede.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rede.map((indicado: any) => (
+                    <TableRow key={indicado.id}>
+                      <TableCell className="font-medium">{indicado.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">{indicado.email}</TableCell>
+                      <TableCell>
+                        <Badge variant={indicado.ativo ? "default" : "secondary"}>
+                          {indicado.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {indicado.created_at
+                          ? format(new Date(indicado.created_at), "dd/MM/yyyy", { locale: ptBR })
+                          : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Meu Link de Indicação (direto) */}
         {afiliado && (
           <Card>
