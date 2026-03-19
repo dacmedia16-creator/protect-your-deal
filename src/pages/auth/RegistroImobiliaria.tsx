@@ -56,6 +56,7 @@ export default function RegistroImobiliaria() {
 
   // Cupom de desconto
   const [codigoCupom, setCodigoCupom] = useState('');
+  const [cupomAutoRef, setCupomAutoRef] = useState(false);
   const [validatingCupom, setValidatingCupom] = useState(false);
   const [cupomInfo, setCupomInfo] = useState<{
     cupom_id: string;
