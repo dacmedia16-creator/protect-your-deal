@@ -665,6 +665,13 @@ export default function AdminAfiliados() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => handleEdit(afiliado)}
+                                title="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => toggleStatusMutation.mutate({
                                   id: afiliado.id,
                                   ativo: !afiliado.ativo,
