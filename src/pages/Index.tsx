@@ -56,6 +56,7 @@ const Index = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loadingPlanos, setLoadingPlanos] = useState(true);
+  const [pricingCiclo, setPricingCiclo] = useState<'mensal' | 'anual'>('mensal');
 
   useEffect(() => {
     const fetchPlanos = async () => {
