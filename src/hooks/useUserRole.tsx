@@ -11,6 +11,7 @@ interface UserRoleContextType {
   assinatura: Assinatura | null;
   ativo: boolean | null;
   loading: boolean;
+  error: boolean;
   refetch: () => Promise<void>;
 }
 
@@ -55,10 +56,11 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [ativo, setAtivo] = useState<boolean | null>(null);
   const [internalLoading, setInternalLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   // Track which user ID we have fetched for - null means never fetched
   const [fetchedForUserId, setFetchedForUserId] = useState<string | null>(null);
 
-  const fetchUserRole = async () => {
+  const fetchUserRole = async (isRetry = false) => {
     if (!user) {
       setRole(null);
       setImobiliariaId(null);
@@ -66,12 +68,14 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       setAssinatura(null);
       setAtivo(null);
       setInternalLoading(false);
+      setFetchError(false);
       setFetchedForUserId(null);
       return;
     }
 
     const currentUserId = user.id;
     setInternalLoading(true);
+    setFetchError(false);
 
     try {
       // Fetch user role
@@ -83,6 +87,13 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
 
       if (roleError) {
         console.error('Error fetching user role:', roleError);
+        // Retry once automatically
+        if (!isRetry) {
+          console.log('Retrying role fetch in 1s...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return fetchUserRole(true);
+        }
+        setFetchError(true);
         setInternalLoading(false);
         setFetchedForUserId(currentUserId);
         return;
@@ -198,6 +209,12 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
+      if (!isRetry) {
+        console.log('Retrying role fetch after catch in 1s...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchUserRole(true);
+      }
+      setFetchError(true);
     } finally {
       setInternalLoading(false);
       setFetchedForUserId(currentUserId);
@@ -230,7 +247,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       assinatura, 
       ativo,
       loading: isLoading,
-      refetch: fetchUserRole
+      error: fetchError,
+      refetch: () => fetchUserRole(false),
     }}>
       {children}
     </UserRoleContext.Provider>
