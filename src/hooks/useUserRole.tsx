@@ -209,6 +209,12 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
+      if (!isRetry) {
+        console.log('Retrying role fetch after catch in 1s...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return fetchUserRole(true);
+      }
+      setFetchError(true);
     } finally {
       setInternalLoading(false);
       setFetchedForUserId(currentUserId);
