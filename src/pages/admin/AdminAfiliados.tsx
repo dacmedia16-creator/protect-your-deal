@@ -536,6 +536,16 @@ export default function AdminAfiliados() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-center">{afiliado.total_usos}</TableCell>
+                          <TableCell>
+                            {afiliado.indicado_por_nome ? (
+                              <Badge variant="outline" className="gap-1">
+                                <Users className="h-3 w-3" />
+                                {afiliado.indicado_por_nome}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {afiliado.comissao_pendente && afiliado.comissao_pendente > 0 ? (
                               <Badge variant="secondary" className="gap-1">
