@@ -471,6 +471,7 @@ export default function AdminComissoes() {
                         <TableHead className="text-right">Valor Original</TableHead>
                         <TableHead className="text-right">Desconto</TableHead>
                         <TableHead className="text-right">Comissão</TableHead>
+                        <TableHead>Tipo</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ação</TableHead>
                       </TableRow>
