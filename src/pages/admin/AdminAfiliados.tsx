@@ -54,20 +54,7 @@ export default function AdminAfiliados() {
   const [networkDialogOpen, setNetworkDialogOpen] = useState(false);
   const [selectedAfiliadoForNetwork, setSelectedAfiliadoForNetwork] = useState<Afiliado | null>(null);
 
-  const { data: redeAfiliados, isLoading: isLoadingRede } = useQuery({
-    queryKey: ["admin-afiliado-rede", selectedAfiliadoForNetwork?.id],
-    queryFn: async () => {
-      if (!selectedAfiliadoForNetwork) return [];
-      const { data, error } = await supabase
-        .from("afiliados")
-        .select("id, nome, email, ativo, created_at")
-        .eq("indicado_por", selectedAfiliadoForNetwork.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!selectedAfiliadoForNetwork,
-  });
+  // Tree nodes fetch their own children lazily
 
   const { data: afiliados, isLoading } = useQuery({
     queryKey: ["admin-afiliados"],
