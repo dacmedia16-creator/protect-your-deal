@@ -302,6 +302,19 @@ export default function AdminComissoes() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="w-[200px]">
+            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de comissão" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
+                <SelectItem value="direta">Direta</SelectItem>
+                <SelectItem value="indireta">Indireta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Card>
