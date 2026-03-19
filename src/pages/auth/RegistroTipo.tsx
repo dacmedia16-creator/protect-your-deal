@@ -11,6 +11,7 @@ const RegistroTipo = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const plano = searchParams.get('plano') || 'gratuito';
+  const ref = searchParams.get('ref') || '';
 
   useEffect(() => {
     if (!loading && user) {
