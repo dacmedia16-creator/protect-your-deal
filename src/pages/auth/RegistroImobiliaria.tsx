@@ -540,12 +540,19 @@ export default function RegistroImobiliaria() {
                         value={codigoCupom}
                         onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
                         placeholder="Ex: DESCONTO10"
+                        disabled={cupomAutoRef && cupomInfo?.valido === true}
                         className={cupomInfo?.valido === false ? 'border-destructive' : cupomInfo?.valido ? 'border-green-500' : ''}
                       />
                       {validatingCupom && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </div>
+                    {cupomAutoRef && cupomInfo?.valido && (
+                      <p className="text-xs text-primary flex items-center gap-1">
+                        <Check className="h-3 w-3" />
+                        Cupom aplicado automaticamente via link de indicação
+                      </p>
+                    )}
                     {cupomInfo && !cupomInfo.valido && (
                       <p className="text-sm text-destructive flex items-center gap-1">
                         <X className="h-3 w-3" />

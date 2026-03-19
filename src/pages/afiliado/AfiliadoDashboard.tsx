@@ -245,6 +245,32 @@ export default function AfiliadoDashboard() {
           )}
         </div>
 
+        {/* Meu Link de Indicação */}
+        {cupons && cupons.filter(c => c.ativo).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="h-5 w-5" />
+                Meu Link de Indicação
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {cupons.filter(c => c.ativo).map((cupom) => {
+                const link = `${window.location.origin}/registro-tipo?ref=${cupom.codigo}`;
+                return (
+                  <div key={cupom.id} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                    <code className="flex-1 text-sm truncate">{link}</code>
+                    <CopyButton text={link} />
+                  </div>
+                );
+              })}
+              <p className="text-xs text-muted-foreground">
+                Compartilhe este link para que novos clientes se cadastrem com seu cupom automaticamente.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Lista de Cupons */}
         <Card>
           <CardHeader>
