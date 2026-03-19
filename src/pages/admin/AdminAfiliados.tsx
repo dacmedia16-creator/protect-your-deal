@@ -267,7 +267,7 @@ export default function AdminAfiliados() {
   });
 
   const resetForm = () => {
-    setFormData({ nome: "", email: "", telefone: "", pix_chave: "" });
+    setFormData({ nome: "", email: "", telefone: "", pix_chave: "", indicado_por: "" });
     setEditingAfiliado(null);
   };
 
