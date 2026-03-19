@@ -1,48 +1,65 @@
 
 
-## Plano: Pause/Play e auto-pause ao sair da página
+## Plano Anual — Melhor abordagem para o sistema atual
 
-### Problema
-Atualmente o loop de envio é um `for` síncrono — não tem como pausar. Ao sair da página, o componente desmonta e o envio para sem possibilidade de retomar.
+### Situação atual
 
-### Solução
+A tabela `planos` tem uma coluna `valor_mensal` e nenhuma coluna de periodicidade. Todas as referências no código (edge functions, páginas de assinatura, admin) assumem cobrança mensal. O Asaas suporta `subscriptionCycle: 'YEARLY'` nativamente.
 
-Refatorar o loop de envio para usar um **ref de controle (`isPausedRef`)** que o loop consulta a cada iteração, e armazenar a **fila de pendentes** em um ref para retomar de onde parou.
+### Abordagem recomendada: Adicionar colunas de periodicidade à tabela `planos`
 
-**Arquivo:** `src/pages/admin/AdminWhatsApp.tsx`
+Em vez de duplicar cada plano (um mensal, um anual), a melhor forma é adicionar duas colunas na tabela `planos`:
 
-**1. Novos estados e refs:**
-- `isPaused` (state) — controla o botão pause/play na UI
-- `isPausedRef` (useRef) — consultado dentro do loop async (state não funciona dentro de closures)
-- `pendingQueueRef` (useRef) — lista de users que ainda faltam enviar
-- Importar `Pause`, `Play` do lucide-react
-
-**2. Refatorar `handleSend`:**
-- Ao iniciar, salvar a lista de destinatários no `pendingQueueRef`
-- Criar função `processQueue()` que:
-  - Faz um `while (pendingQueueRef.current.length > 0)`
-  - Antes de cada envio, checa `isPausedRef.current` — se true, aguarda em loop de 500ms até despausar
-  - Envia a mensagem, remove o user da fila, atualiza progresso
-  - Aplica o delay aleatório 15-35s com countdown (também checando pause durante o countdown)
-
-**3. Auto-pause ao sair da página:**
-- `useEffect` com `document.addEventListener('visibilitychange')` — quando `hidden`, seta `isPaused = true`
-- Quando volta (`visible`), **não** retoma automaticamente — mostra estado pausado com botão Play para o admin decidir
-- `beforeunload` event para avisar ao fechar aba
-
-**4. Botão Pause/Play na UI:**
-- Na seção de progresso, adicionar botão ao lado da barra:
-  - Se enviando e não pausado: botão Pause (ícone ⏸)
-  - Se pausado: botão Play (ícone ▶) + texto "Pausado"
-- Botão "Retomar" claro e visível
-
-**5. Fluxo resumido:**
 ```text
-[Enviar] → processa fila → [Pause] → loop aguarda
-                                    → sai da aba → auto-pause
-                                    → volta → vê "Pausado" → [Play] → continua de onde parou
+periodicidade  TEXT  DEFAULT 'mensal'   -- 'mensal' ou 'anual'
+valor_anual    NUMERIC DEFAULT NULL     -- preço anual (ex: 10x em vez de 12x)
 ```
 
-### Escopo
-Apenas `src/pages/admin/AdminWhatsApp.tsx` — nenhuma mudança em banco ou edge functions.
+Assim cada plano pode ter **ambos os preços** e o usuário escolhe na hora de assinar. Não duplica dados de limites.
+
+### Alterações necessárias
+
+**1. Migração do banco de dados**
+- Adicionar `valor_anual NUMERIC DEFAULT NULL` e `periodicidade TEXT DEFAULT 'mensal'` à tabela `planos`
+- A coluna `periodicidade` será usada apenas como filtro/display; o ciclo real fica na assinatura
+
+**2. Tabela `assinaturas`** — adicionar coluna
+- `ciclo TEXT DEFAULT 'mensal'` — para saber se a assinatura ativa é mensal ou anual
+
+**3. Admin de Planos (`AdminPlanos.tsx`)**
+- Adicionar campo `valor_anual` no formulário de criação/edição de planos
+
+**4. Páginas de Assinatura (`EmpresaAssinatura.tsx` e `CorretorAssinatura.tsx`)**
+- Adicionar toggle "Mensal / Anual" no topo da seção de planos
+- Mostrar preço mensal ou anual conforme seleção, com badge de desconto (ex: "Economize 17%")
+- Passar o ciclo escolhido para a edge function
+
+**5. Edge Function `asaas-payment-link`**
+- Receber parâmetro `ciclo` ('mensal' ou 'anual')
+- Usar `valor_anual` quando ciclo for anual
+- Enviar `subscriptionCycle: 'YEARLY'` ao Asaas
+
+**6. Edge Function `asaas-create-subscription`**
+- Mesmo ajuste: usar `cycle: 'YEARLY'` e `valor_anual` quando aplicável
+
+**7. Edge Function `asaas-webhook`**
+- Salvar o `ciclo` na assinatura ao confirmar pagamento
+
+**8. Páginas de registro (`RegistroImobiliaria.tsx`, `RegistroCorretorAutonomo.tsx`)**
+- Adicionar toggle mensal/anual na seleção de plano (se `valor_anual` existir)
+
+**9. Landing page (`Index.tsx`) — seção de preços**
+- Adicionar toggle mensal/anual nos cards de preço
+
+### Arquivos a alterar
+- Migração SQL (nova)
+- `supabase/functions/asaas-payment-link/index.ts`
+- `supabase/functions/asaas-create-subscription/index.ts`
+- `supabase/functions/asaas-webhook/index.ts`
+- `src/pages/admin/AdminPlanos.tsx`
+- `src/pages/empresa/EmpresaAssinatura.tsx`
+- `src/pages/CorretorAssinatura.tsx`
+- `src/pages/auth/RegistroImobiliaria.tsx`
+- `src/pages/auth/RegistroCorretorAutonomo.tsx`
+- `src/pages/Index.tsx`
 
