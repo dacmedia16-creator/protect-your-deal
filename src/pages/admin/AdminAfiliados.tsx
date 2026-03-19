@@ -278,6 +278,7 @@ export default function AdminAfiliados() {
       email: afiliado.email,
       telefone: afiliado.telefone || "",
       pix_chave: afiliado.pix_chave || "",
+      indicado_por: afiliado.indicado_por || "",
     });
     setDialogOpen(true);
   };
