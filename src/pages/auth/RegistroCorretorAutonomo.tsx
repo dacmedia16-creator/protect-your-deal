@@ -36,6 +36,7 @@ export default function RegistroCorretorAutonomo() {
   const [selectedPlano, setSelectedPlano] = useState<string>('');
   
   const planoParam = searchParams.get('plano');
+  const refParam = searchParams.get('ref');
   
   const [corretorForm, setCorretorForm] = useState({
     nome: '',
