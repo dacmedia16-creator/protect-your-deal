@@ -69,7 +69,7 @@ export default function AfiliadoComissoes() {
 
   // Buscar todas as comissões
   const { data: comissoes, isLoading } = useQuery({
-    queryKey: ["afiliado-comissoes", cupons, statusFilter, periodoFilter],
+    queryKey: ["afiliado-comissoes", cupons, statusFilter, tipoFilter, periodoFilter],
     queryFn: async () => {
       if (!cupons || cupons.length === 0) return [];
       
