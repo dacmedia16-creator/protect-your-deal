@@ -27,6 +27,7 @@ function generateMonthOptions() {
 export default function AfiliadoComissoes() {
   const { user } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [tipoFilter, setTipoFilter] = useState<string>("todos");
   const [periodoFilter, setPeriodoFilter] = useState<string>("todos");
 
   const monthOptions = generateMonthOptions();
