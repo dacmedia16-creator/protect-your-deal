@@ -35,6 +35,7 @@ export default function RegistroImobiliaria() {
   
   const planoParam = searchParams.get('plano');
   const refParam = searchParams.get('ref');
+  const affParam = searchParams.get('aff');
   
   const [imobiliariaForm, setImobiliariaForm] = useState({
     nome: '',
@@ -121,6 +122,25 @@ export default function RegistroImobiliaria() {
       setCupomAutoRef(true);
     }
   }, [refParam]);
+
+  // Auto-preencher cupom via ?aff= (link direto do afiliado)
+  useEffect(() => {
+    if (affParam && !refParam && !codigoCupom) {
+      (async () => {
+        try {
+          const { data, error } = await supabase.rpc('get_cupom_by_afiliado', {
+            afiliado_uuid: affParam
+          });
+          if (!error && data) {
+            setCodigoCupom(data);
+            setCupomAutoRef(true);
+          }
+        } catch (err) {
+          console.error('Error fetching affiliate coupon:', err);
+        }
+      })();
+    }
+  }, [affParam, refParam]);
 
   // Fetch planos
   useEffect(() => {
