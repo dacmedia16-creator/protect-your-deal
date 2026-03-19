@@ -39,6 +39,7 @@ interface Plano {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
   ativo: boolean;
   asaas_plan_id: string | null;
   tipo_cadastro: string | null;
@@ -52,6 +53,7 @@ interface PlanoForm {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
   ativo: boolean;
   asaas_plan_id: string;
 }
@@ -64,6 +66,7 @@ const defaultForm: PlanoForm = {
   max_clientes: 500,
   max_imoveis: 200,
   valor_mensal: 0,
+  valor_anual: null,
   ativo: true,
   asaas_plan_id: '',
 };
@@ -110,6 +113,7 @@ export default function AdminPlanos() {
       max_clientes: plano.max_clientes,
       max_imoveis: plano.max_imoveis,
       valor_mensal: plano.valor_mensal,
+      valor_anual: plano.valor_anual,
       ativo: plano.ativo,
       asaas_plan_id: plano.asaas_plan_id || '',
     });
@@ -319,6 +323,23 @@ export default function AdminPlanos() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="valor_anual">Valor Anual (R$) — opcional</Label>
+                  <Input
+                    id="valor_anual"
+                    type="number"
+                    step="0.01"
+                    value={form.valor_anual ?? ''}
+                    onChange={(e) => setForm({ ...form, valor_anual: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder="Ex: 790.00 (deixe vazio para não oferecer anual)"
+                  />
+                  {form.valor_anual && form.valor_mensal > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Economia: {Math.round((1 - form.valor_anual / (form.valor_mensal * 12)) * 100)}% vs mensal
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="asaas_plan_id">ID do Plano no Asaas (opcional)</Label>
                   <Input
                     id="asaas_plan_id"
@@ -415,6 +436,16 @@ export default function AdminPlanos() {
                       </>
                     )}
                   </div>
+
+                  {/* Preço anual */}
+                  {plano.valor_anual && plano.valor_mensal > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Anual: <span className="font-medium text-foreground">R$ {plano.valor_anual.toFixed(2).replace('.', ',')}/ano</span>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        -{Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                      </Badge>
+                    </div>
+                  )}
 
                   {/* Lista de recursos */}
                   <ul className="space-y-2 text-sm flex-1">

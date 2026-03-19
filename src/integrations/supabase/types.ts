@@ -85,6 +85,7 @@ export type Database = {
           afiliado_id: string | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
+          ciclo: string | null
           comissao_percentual: number | null
           created_at: string
           cupom_id: string | null
@@ -105,6 +106,7 @@ export type Database = {
           afiliado_id?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          ciclo?: string | null
           comissao_percentual?: number | null
           created_at?: string
           cupom_id?: string | null
@@ -125,6 +127,7 @@ export type Database = {
           afiliado_id?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          ciclo?: string | null
           comissao_percentual?: number | null
           created_at?: string
           cupom_id?: string | null
@@ -1309,6 +1312,7 @@ export type Database = {
           nome: string
           tipo_cadastro: string | null
           updated_at: string
+          valor_anual: number | null
           valor_mensal: number
         }
         Insert: {
@@ -1324,6 +1328,7 @@ export type Database = {
           nome: string
           tipo_cadastro?: string | null
           updated_at?: string
+          valor_anual?: number | null
           valor_mensal?: number
         }
         Update: {
@@ -1339,6 +1344,7 @@ export type Database = {
           nome?: string
           tipo_cadastro?: string | null
           updated_at?: string
+          valor_anual?: number | null
           valor_mensal?: number
         }
         Relationships: []

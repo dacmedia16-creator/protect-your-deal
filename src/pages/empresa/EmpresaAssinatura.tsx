@@ -36,6 +36,7 @@ interface Plano {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
 }
 
 interface UsageStats {
@@ -50,6 +51,7 @@ export default function EmpresaAssinatura() {
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
 
   useEffect(() => {
     async function fetchData() {
@@ -103,7 +105,7 @@ export default function EmpresaAssinatura() {
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
-        body: { planoId, imobiliariaId },
+        body: { planoId, imobiliariaId, ciclo },
       });
 
       if (error) throw error;
@@ -263,9 +265,33 @@ export default function EmpresaAssinatura() {
 
         {/* Available plans */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">
-            {assinatura ? 'Alterar Plano' : 'Escolha um Plano'}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">
+              {assinatura ? 'Alterar Plano' : 'Escolha um Plano'}
+            </h2>
+            {/* Toggle Mensal/Anual */}
+            {planos.some(p => p.valor_anual && p.valor_anual > 0) && (
+              <div className="flex items-center gap-2 bg-muted rounded-full p-1">
+                <button
+                  onClick={() => setCiclo('mensal')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    ciclo === 'mensal' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Mensal
+                </button>
+                <button
+                  onClick={() => setCiclo('anual')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    ciclo === 'anual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Anual
+                  <Badge variant="outline" className="ml-1.5 text-[10px] py-0 border-primary/30 text-primary">Economize</Badge>
+                </button>
+              </div>
+            )}
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos.map((plano) => {
               const isCurrentPlan = currentPlano?.id === plano.id;
@@ -302,12 +328,20 @@ export default function EmpresaAssinatura() {
                     </div>
                     <CardDescription>{plano.descricao}</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                    <CardContent className="space-y-4">
                     <div className={`text-3xl font-bold ${isFreePlan ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}`}>
                       {isFreePlan ? (
                         'Grátis'
                       ) : plano.valor_mensal === 0 ? (
                         'Sob consulta'
+                      ) : ciclo === 'anual' && plano.valor_anual ? (
+                        <>
+                          R$ {plano.valor_anual.toFixed(2).replace('.', ',')}
+                          <span className="text-sm font-normal text-muted-foreground">/ano</span>
+                          <div className="text-sm font-normal text-emerald-600 mt-1">
+                            Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                          </div>
+                        </>
                       ) : (
                         <>
                           R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}

@@ -149,7 +149,7 @@ serve(async (req) => {
       // Buscar assinatura pelo asaas_subscription_id - incluindo campos de afiliado e plano pendente
       const { data: assinatura, error: assinaturaError } = await supabase
         .from('assinaturas')
-        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id')
+        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
@@ -178,9 +178,10 @@ serve(async (req) => {
               console.log(`Applying pending plan ${(assinatura as any).plano_pendente_id} for subscription ${subscriptionId}`);
             }
             
-            // Atualizar próxima cobrança (30 dias)
+            // Atualizar próxima cobrança baseada no ciclo
             const nextPayment = new Date();
-            nextPayment.setDate(nextPayment.getDate() + 30);
+            const isAnualCiclo = (assinatura as any).ciclo === 'anual';
+            nextPayment.setDate(nextPayment.getDate() + (isAnualCiclo ? 365 : 30));
             updateData.proxima_cobranca = nextPayment.toISOString().split('T')[0];
             console.log(`Payment confirmed for subscription ${subscriptionId}, activating...`);
             shouldNotify = true;
@@ -501,7 +502,8 @@ serve(async (req) => {
           case 'SUBSCRIPTION_RENEWED':
             updateData.status = 'ativa';
             const nextRenewal = new Date();
-            nextRenewal.setDate(nextRenewal.getDate() + 30);
+            const isAnualRenewal = (assinatura as any).ciclo === 'anual';
+            nextRenewal.setDate(nextRenewal.getDate() + (isAnualRenewal ? 365 : 30));
             updateData.proxima_cobranca = nextRenewal.toISOString().split('T')[0];
             console.log(`Subscription ${subscriptionId} renewed`);
             break;

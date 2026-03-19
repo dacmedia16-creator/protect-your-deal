@@ -36,6 +36,7 @@ interface Plano {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
 }
 
 interface UsageStats {
@@ -51,6 +52,7 @@ export default function CorretorAssinatura() {
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
 
   // Redirecionar se não for corretor autônomo
   useEffect(() => {
@@ -103,7 +105,7 @@ export default function CorretorAssinatura() {
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
-        body: { planoId },
+        body: { planoId, ciclo },
       });
 
       if (error) throw error;
@@ -258,7 +260,29 @@ export default function CorretorAssinatura() {
           </Card>
 
           {/* Planos disponíveis */}
-          <h2 className="text-lg font-semibold mb-4">Planos Disponíveis</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Planos Disponíveis</h2>
+            {planos.filter(p => p.max_corretores === 1).some(p => p.valor_anual && p.valor_anual > 0) && (
+              <div className="flex items-center gap-2 bg-muted rounded-full p-1">
+                <button
+                  onClick={() => setCiclo('mensal')}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    ciclo === 'mensal' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Mensal
+                </button>
+                <button
+                  onClick={() => setCiclo('anual')}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    ciclo === 'anual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Anual
+                </button>
+              </div>
+            )}
+          </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos
               .filter(plano => plano.max_corretores === 1) // Mostrar apenas planos individuais
@@ -282,8 +306,20 @@ export default function CorretorAssinatura() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="text-3xl font-bold">
-                        {formatCurrency(plano.valor_mensal)}
-                        <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                        {ciclo === 'anual' && plano.valor_anual ? (
+                          <>
+                            {formatCurrency(plano.valor_anual)}
+                            <span className="text-sm font-normal text-muted-foreground">/ano</span>
+                            <div className="text-sm font-normal text-emerald-600 mt-1">
+                              Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {formatCurrency(plano.valor_mensal)}
+                            <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                          </>
+                        )}
                       </div>
                       
                       <ul className="space-y-2 text-sm text-muted-foreground">

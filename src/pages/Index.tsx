@@ -46,6 +46,7 @@ interface Plano {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
   tipo_cadastro: string | null;
 }
 
@@ -55,6 +56,7 @@ const Index = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [loadingPlanos, setLoadingPlanos] = useState(true);
+  const [pricingCiclo, setPricingCiclo] = useState<'mensal' | 'anual'>('mensal');
 
   useEffect(() => {
     const fetchPlanos = async () => {
@@ -507,9 +509,31 @@ const Index = () => {
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
               Planos e Preços
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-6">
               Escolha o plano ideal para você ou sua imobiliária.
             </p>
+            {/* Toggle Mensal/Anual */}
+            {planos.some(p => p.valor_anual && p.valor_anual > 0) && (
+              <div className="inline-flex items-center gap-1 bg-muted rounded-full p-1">
+                <button
+                  onClick={() => setPricingCiclo('mensal')}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                    pricingCiclo === 'mensal' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Mensal
+                </button>
+                <button
+                  onClick={() => setPricingCiclo('anual')}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                    pricingCiclo === 'anual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Anual
+                  <Badge variant="outline" className="ml-1.5 text-[10px] py-0 border-primary/30 text-primary">Economize</Badge>
+                </button>
+              </div>
+            )}
           </div>
 
           {loadingPlanos ? (
@@ -555,6 +579,14 @@ const Index = () => {
                             'Grátis'
                           ) : plano.valor_mensal === -1 ? (
                             <span className="text-lg">Sob consulta</span>
+                          ) : pricingCiclo === 'anual' && plano.valor_anual ? (
+                            <>
+                              R$ {plano.valor_anual.toFixed(2).replace('.', ',')}
+                              <span className="text-sm font-normal text-muted-foreground">/ano</span>
+                              <div className="text-sm font-normal text-emerald-600 mt-1">
+                                Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
+                              </div>
+                            </>
                           ) : (
                             <>
                               R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}

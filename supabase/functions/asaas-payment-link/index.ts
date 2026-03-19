@@ -38,7 +38,7 @@ serve(async (req) => {
       throw new Error('Usuário não autenticado');
     }
 
-    const { planoId, imobiliariaId } = await req.json();
+    const { planoId, imobiliariaId, ciclo = 'mensal' } = await req.json();
 
     if (!planoId) {
       throw new Error('planoId é obrigatório');
@@ -76,6 +76,7 @@ serve(async (req) => {
         .from('assinaturas')
         .update({
           plano_pendente_id: planoId, // Armazena o plano desejado
+          ciclo: ciclo, // Armazena o ciclo desejado
           updated_at: new Date().toISOString(),
           // NÃO ATUALIZAR: plano_id (mantém plano atual)
           // NÃO ATUALIZAR: status (mantém status atual)
@@ -88,7 +89,7 @@ serve(async (req) => {
       }
 
       assinaturaId = existingAssinatura.id;
-      console.log('Pending plan registered:', planoId, 'for subscription:', assinaturaId);
+      console.log('Pending plan registered:', planoId, 'ciclo:', ciclo, 'for subscription:', assinaturaId);
     } else {
       // Criar nova assinatura
       const { data: newAssinatura, error: insertError } = await supabase
@@ -98,6 +99,7 @@ serve(async (req) => {
           user_id: imobiliariaId ? null : user.id,
           imobiliaria_id: imobiliariaId || null,
           status: 'pendente',
+          ciclo: ciclo,
           data_inicio: new Date().toISOString().split('T')[0],
         })
         .select('id')
@@ -109,13 +111,19 @@ serve(async (req) => {
       }
 
       assinaturaId = newAssinatura.id;
-      console.log('Created new subscription:', assinaturaId);
+      console.log('Created new subscription:', assinaturaId, 'ciclo:', ciclo);
     }
 
 
     // Calcular data de expiração (7 dias)
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 7);
+
+    // Determinar valor e ciclo
+    const isAnual = ciclo === 'anual';
+    const valor = isAnual && plano.valor_anual ? plano.valor_anual : plano.valor_mensal;
+    const subscriptionCycle = isAnual ? 'YEARLY' : 'MONTHLY';
+    const cicloLabel = isAnual ? 'anual' : 'mensal';
 
     // Criar link de pagamento no Asaas usando apenas o ID da assinatura (36 chars)
     const paymentLinkResponse = await fetch(`${ASAAS_API_URL}/paymentLinks`, {
@@ -125,13 +133,13 @@ serve(async (req) => {
         'access_token': asaasApiKey,
       },
       body: JSON.stringify({
-        name: `Assinatura ${plano.nome}`,
-        description: `Plano ${plano.nome} - VisitaProva. Assinatura mensal com renovação automática.`,
+        name: `Assinatura ${plano.nome} (${cicloLabel})`,
+        description: `Plano ${plano.nome} - VisitaProva. Assinatura ${cicloLabel} com renovação automática.`,
         endDate: expirationDate.toISOString().split('T')[0],
-        value: plano.valor_mensal,
+        value: valor,
         billingType: 'UNDEFINED',
         chargeType: 'RECURRENT',
-        subscriptionCycle: 'MONTHLY',
+        subscriptionCycle,
         dueDateLimitDays: 3,
         notificationEnabled: true,
         externalReference: assinaturaId, // UUID de 36 caracteres
