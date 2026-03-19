@@ -312,6 +312,19 @@ export default function AfiliadoComissoes() {
                           )}
                         </TableCell>
                         <TableCell>
+                          {(comissao as any).tipo_comissao === 'indireta' ? (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <ArrowDownRight className="h-3 w-3" />
+                              Indireta
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs gap-1 border-primary/30">
+                              <ArrowUpRight className="h-3 w-3" />
+                              Direta
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {comissao.comissao_paga_em 
                             ? format(new Date(comissao.comissao_paga_em), "dd/MM/yyyy", { locale: ptBR })
                             : "-"
