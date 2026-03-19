@@ -108,7 +108,14 @@ export default function AfiliadoComissoes() {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      let result = data || [];
+      
+      // Filter by tipo
+      if (tipoFilter !== "todos") {
+        result = result.filter((c: any) => (c.tipo_comissao || 'direta') === tipoFilter);
+      }
+      
+      return result;
     },
     enabled: !!cupons && cupons.length > 0,
   });
