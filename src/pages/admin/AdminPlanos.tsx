@@ -39,6 +39,7 @@ interface Plano {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
   ativo: boolean;
   asaas_plan_id: string | null;
   tipo_cadastro: string | null;
