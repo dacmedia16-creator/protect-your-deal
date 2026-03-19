@@ -1,34 +1,36 @@
 
 
-## Visualizar Rede de Afiliados no Admin
+## Árvore de Rede de Afiliados (Visualização Hierárquica)
 
 ### Contexto
-A página Admin Afiliados já mostra "Indicado por" em cada linha, mas não permite expandir e ver **quem cada afiliado indicou** (a rede dele). O objetivo é adicionar um botão/ação por afiliado que abre um dialog mostrando a rede de indicados daquele afiliado.
+Atualmente o dialog "Ver Rede" mostra apenas os indicados diretos (1 nível) em formato de tabela. O pedido é transformar isso em uma **árvore hierárquica** que mostre múltiplos níveis de indicação.
 
 ### Solução
-Adicionar um botão "Ver Rede" nas ações de cada afiliado na tabela. Ao clicar, abre um Dialog mostrando os afiliados indicados por aquele afiliado (usando `indicado_por = afiliado.id`), com nome, email, status e data de cadastro.
+Transformar o dialog de rede em uma visualização em árvore recursiva, onde cada afiliado pode ser expandido para ver seus próprios indicados, formando uma estrutura visual tipo árvore.
 
 ### Mudanças
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/admin/AdminAfiliados.tsx` | Adicionar botão "Ver Rede" nas ações + Dialog com lista de indicados |
+| `src/pages/admin/AdminAfiliados.tsx` | Substituir tabela plana no dialog de rede por componente de árvore recursivo com expand/collapse |
+
+### Como vai funcionar
+
+1. Ao abrir "Ver Rede", busca os indicados diretos (nível 1) como já faz
+2. Cada indicado tem um botão de expandir (chevron) que, ao clicar, busca os indicados daquele afiliado (nível 2+)
+3. Indentação visual com linhas conectoras para representar a hierarquia
+4. Cada nó mostra: nome, email, status (badge), data de cadastro
+5. Carregamento lazy — só busca sub-indicados quando o nó é expandido
 
 ### Detalhes técnicos
 
-Como o super admin já tem acesso total à tabela `afiliados` via RLS (`is_super_admin`), não precisa de migration. A query será:
+Componente interno `NetworkTreeNode` recursivo que:
+- Recebe um afiliado como prop
+- Tem estado `expanded` local
+- Ao expandir, faz query `supabase.from("afiliados").select(...).eq("indicado_por", afiliado.id)`
+- Renderiza filhos com padding-left crescente
+- Usa ícones `ChevronRight`/`ChevronDown` para indicar estado
+- Mostra contador de indicados ao lado do nome quando disponível
 
-```tsx
-supabase.from("afiliados")
-  .select("id, nome, email, ativo, created_at")
-  .eq("indicado_por", selectedAfiliado.id)
-```
-
-O dialog mostrará:
-- Nome do afiliado selecionado como título
-- Contagem de indicados
-- Tabela com nome, email, status (ativo/inativo) e data de cadastro
-- Estado vazio quando não há indicados
-
-O botão usará o ícone `Network` ou `GitBranch` ao lado das outras ações existentes.
+Sem necessidade de migration — usa a mesma query existente recursivamente.
 
