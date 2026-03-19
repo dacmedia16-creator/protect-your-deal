@@ -42,7 +42,7 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get('returnUrl');
   const { user, signUp, signIn, loading } = useAuth();
-  const { role, loading: roleLoading } = useUserRole();
+  const { role, loading: roleLoading, error: roleError, refetch: refetchRole } = useUserRole();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
