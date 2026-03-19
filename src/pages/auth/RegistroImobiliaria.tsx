@@ -114,6 +114,14 @@ export default function RegistroImobiliaria() {
     return () => clearTimeout(debounce);
   }, [codigoCupom]);
 
+  // Auto-preencher cupom via ?ref=
+  useEffect(() => {
+    if (refParam && !codigoCupom) {
+      setCodigoCupom(refParam.toUpperCase());
+      setCupomAutoRef(true);
+    }
+  }, [refParam]);
+
   // Fetch planos
   useEffect(() => {
     async function fetchPlanos() {
