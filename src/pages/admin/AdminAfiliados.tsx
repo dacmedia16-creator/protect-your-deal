@@ -104,6 +104,14 @@ export default function AdminAfiliados() {
         })
       );
 
+      // Enrich with indicado_por name
+      const afiliadoMap = new Map(afiliadosWithStats.map(a => [a.id, a.nome]));
+      for (const af of afiliadosWithStats) {
+        if (af.indicado_por) {
+          (af as any).indicado_por_nome = afiliadoMap.get(af.indicado_por) || null;
+        }
+      }
+
       return afiliadosWithStats as Afiliado[];
     },
   });
