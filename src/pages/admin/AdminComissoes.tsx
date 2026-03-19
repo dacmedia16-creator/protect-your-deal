@@ -70,6 +70,7 @@ export default function AdminComissoes() {
   const queryClient = useQueryClient();
   const [filtroAfiliado, setFiltroAfiliado] = useState<string>("todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedComissaoId, setSelectedComissaoId] = useState<string | null>(null);
