@@ -46,6 +46,7 @@ interface Plano {
   max_clientes: number;
   max_imoveis: number;
   valor_mensal: number;
+  valor_anual: number | null;
   tipo_cadastro: string | null;
 }
 
