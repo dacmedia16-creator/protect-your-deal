@@ -414,7 +414,65 @@ export default function AdminConfiguracoes() {
                   </div>
                 </>
               )}
-            </CardContent>
+
+              <Separator />
+              
+              <div className="space-y-0.5 mb-2">
+                <Label className="font-medium">Comissões Multinível</Label>
+                <p className="text-sm text-muted-foreground">
+                  Defina os percentuais de comissão direta e indireta para afiliados
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>% Comissão Direta</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Afiliado que fechou o cliente diretamente
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-9 w-20" />
+                ) : (
+                  <Input
+                    type="number"
+                    className="w-20 text-center"
+                    value={getConfigNumberValue('comissao_direta_percentual', 10)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                      updateConfigMutation.mutate({ chave: 'comissao_direta_percentual', valor: val as any });
+                    }}
+                    min="0"
+                    max="100"
+                    disabled={updateConfigMutation.isPending}
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>% Comissão Indireta (2º nível)</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Afiliado que indicou quem fechou o cliente
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-9 w-20" />
+                ) : (
+                  <Input
+                    type="number"
+                    className="w-20 text-center"
+                    value={getConfigNumberValue('comissao_indireta_percentual', 5)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                      updateConfigMutation.mutate({ chave: 'comissao_indireta_percentual', valor: val as any });
+                    }}
+                    min="0"
+                    max="100"
+                    disabled={updateConfigMutation.isPending}
+                  />
+                )}
+              </div>
           </Card>
 
           {/* Segurança */}
