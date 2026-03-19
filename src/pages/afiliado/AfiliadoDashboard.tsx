@@ -208,6 +208,36 @@ export default function AfiliadoDashboard() {
               </p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Minha Rede</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalRede}</div>
+              <p className="text-xs text-muted-foreground">
+                Afiliados indicados por você
+              </p>
+            </CardContent>
+          </Card>
+
+          {comissaoIndiretaPendente + comissaoIndiretaPaga > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Comissão Indireta</CardTitle>
+                <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  R$ {(comissaoIndiretaPendente + comissaoIndiretaPaga).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Total ganho via rede (2º nível)
+                </p>
+              </CardContent>
+            </Card>
+          )
         </div>
 
         {/* Lista de Cupons */}
