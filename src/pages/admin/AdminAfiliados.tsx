@@ -45,6 +45,7 @@ export default function AdminAfiliados() {
     email: "",
     telefone: "",
     pix_chave: "",
+    indicado_por: "" as string,
   });
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedAfiliadoForPassword, setSelectedAfiliadoForPassword] = useState<Afiliado | null>(null);
