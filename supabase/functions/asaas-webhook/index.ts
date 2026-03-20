@@ -211,8 +211,10 @@ serve(async (req) => {
                   .maybeSingle();
 
                 if (indByUser) {
-                  const valorComissao = value * (Number(indByUser.comissao_percentual) / 100);
-                  console.log(`Generating referral commission: ${valorComissao} for user ${indByUser.indicador_user_id}`);
+                  const valorComissao = indByUser.tipo_comissao_indicacao === 'primeira_mensalidade'
+                    ? value
+                    : value * (Number(indByUser.comissao_percentual) / 100);
+                  console.log(`Generating referral commission (${indByUser.tipo_comissao_indicacao}): ${valorComissao} for user ${indByUser.indicador_user_id}`);
                   
                   await supabase
                     .from('indicacoes_corretor')
