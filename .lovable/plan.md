@@ -1,21 +1,23 @@
 
 
-## Reduzir destaque e espaço do card "Registros como Parceiro"
+## Sincronizar exibição de comissão com configuração atual
 
-### Mudança
+### Problema
+
+Quando o código de indicação é gerado, os valores de comissão (`tipo_comissao_indicacao`, `comissao_percentual`) são gravados no registro `indicacoes_corretor`. Se o admin muda a configuração depois, a página "Minhas Indicações" continua mostrando os valores antigos porque lê do registro já salvo.
+
+### Solução
+
+Duas mudanças complementares:
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/Dashboard.tsx` (linhas 410-432) | Transformar em uma linha compacta e neutra, sem fundo colorido, borda sutil, ícone e texto menores |
+| `src/pages/MinhasIndicacoes.tsx` | Buscar configuração atual de `configuracoes_sistema` e usar esses valores para exibir a comissão do placeholder ativo, em vez dos valores salvos no registro |
+| `supabase/functions/gerar-codigo-indicacao/index.ts` | Ao detectar que já existe um código ativo, atualizar `tipo_comissao_indicacao` e `comissao_percentual` com os valores atuais da config antes de retornar |
 
-### De → Para
+### Detalhes
 
-- **Card**: `border-primary/20 bg-primary/5 mb-6` → `border-border mb-4`
-- **Padding**: `p-4 gap-4` → `px-3 py-2 gap-3`
-- **Ícone container**: `h-12 w-12 rounded-xl bg-primary/20` → removido, ícone inline
-- **Ícone**: `h-6 w-6 text-primary` → `h-4 w-4 text-muted-foreground`
-- **Texto título**: `font-semibold text-primary` → `text-sm font-medium text-foreground`
-- **Subtítulo**: mantém `text-sm text-muted-foreground` mas em `text-xs`
+**MinhasIndicacoes.tsx**: Novo `useQuery` buscando `configuracoes_sistema` com chaves `indicacao_tipo_comissao` e `indicacao_comissao_corretor`. O Alert usará esses valores em vez de `placeholderAtivo.tipo_comissao_indicacao`.
 
-Resultado: linha discreta similar a um link com badge, ocupando ~50% menos altura vertical.
+**Edge Function**: No bloco `if (existing)`, antes de retornar, fazer um `update` no registro existente com os valores atuais da config (já carregados logo abaixo). Assim o registro fica sempre sincronizado.
 
