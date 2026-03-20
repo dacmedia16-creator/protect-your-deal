@@ -443,6 +443,11 @@ const App = () => (
                     <MinhaEquipe />
                   </ProtectedRoute>
                 } />
+                <Route path="/minhas-indicacoes" element={
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin']} requireSubscription>
+                    <MinhasIndicacoes />
+                  </ProtectedRoute>
+                } />
 
                 {/* Afiliado routes */}
                 <Route path="/afiliado" element={

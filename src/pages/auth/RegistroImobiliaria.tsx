@@ -228,6 +228,7 @@ export default function RegistroImobiliaria() {
           },
           plano_id: selectedPlano,
           codigo_cupom: cupomInfo?.valido ? codigoCupom : null,
+          codigo_indicacao: indParam || null,
         },
       });
 

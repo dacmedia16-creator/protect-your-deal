@@ -457,6 +457,27 @@ export default function Dashboard() {
         {/* Plan Usage Card - Compact version for Dashboard - hide for linked brokers */}
         {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
 
+        {/* Card de Indicações */}
+        <Card 
+          className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6"
+          onClick={() => navigate('/minhas-indicacoes')}
+        >
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
+              <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-teal-700 dark:text-teal-300">
+                Indique e Ganhe
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Indique corretores e imobiliárias e ganhe comissão
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+          </CardContent>
+        </Card>
+
         {/* Quick Actions - vertical on mobile, grid on desktop */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Card 

@@ -312,6 +312,7 @@ export default function RegistroCorretorAutonomo() {
           plano_id: selectedPlano,
           codigo_imobiliaria: vincularImobiliaria && codigoImobiliaria ? parseInt(codigoImobiliaria, 10) : null,
           codigo_cupom: cupomInfo?.valido ? codigoCupom : null,
+          codigo_indicacao: indParam || null,
         },
       });
 
