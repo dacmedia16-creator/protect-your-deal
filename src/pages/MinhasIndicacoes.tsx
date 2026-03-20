@@ -37,6 +37,20 @@ export default function MinhasIndicacoes() {
     enabled: !!user?.id,
   });
 
+  // Fetch current commission config
+  const { data: configComissao } = useQuery({
+    queryKey: ['config-comissao-indicacao'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('configuracoes_sistema')
+        .select('chave, valor')
+        .in('chave', ['indicacao_tipo_comissao', 'indicacao_comissao_corretor']);
+      const tipo = String(data?.find(c => c.chave === 'indicacao_tipo_comissao')?.valor || 'percentual').replace(/"/g, '');
+      const valor = tipo === 'primeira_mensalidade' ? 100 : Number(data?.find(c => c.chave === 'indicacao_comissao_corretor')?.valor || 10);
+      return { tipo, valor };
+    },
+  });
+
   // Get or generate referral code
   async function handleGenerateCode() {
     setGeneratingCode(true);

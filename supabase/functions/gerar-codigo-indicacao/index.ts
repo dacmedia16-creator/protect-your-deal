@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     // Check if user already has a referral code
     const { data: existing } = await supabaseAdmin
       .from("indicacoes_corretor")
-      .select("codigo")
+      .select("id, codigo")
       .eq("indicador_user_id", user.id)
       .eq("status", "pendente")
       .is("indicado_user_id", null)
@@ -48,6 +48,20 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existing) {
+      // Sync with current config before returning
+      const { data: configs } = await supabaseAdmin
+        .from("configuracoes_sistema")
+        .select("chave, valor")
+        .in("chave", ["indicacao_comissao_corretor", "indicacao_tipo_comissao"]);
+
+      const tipoAtual = String(configs?.find(c => c.chave === "indicacao_tipo_comissao")?.valor || "percentual").replace(/"/g, "");
+      const comissaoAtual = tipoAtual === "primeira_mensalidade" ? 100 : Number(configs?.find(c => c.chave === "indicacao_comissao_corretor")?.valor || 10);
+
+      await supabaseAdmin
+        .from("indicacoes_corretor")
+        .update({ tipo_comissao_indicacao: tipoAtual, comissao_percentual: comissaoAtual })
+        .eq("id", existing.id);
+
       return new Response(
         JSON.stringify({ codigo: existing.codigo }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
