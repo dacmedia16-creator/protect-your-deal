@@ -160,6 +160,16 @@ export default function DetalhesFicha() {
   });
   const [savingEditData, setSavingEditData] = useState(false);
 
+  // State for editing imóvel data
+  const [editandoImovel, setEditandoImovel] = useState(false);
+  const [editImovelData, setEditImovelData] = useState({ endereco: '', tipo: '' });
+  const [savingImovelData, setSavingImovelData] = useState(false);
+
+  // State for editing observações
+  const [editandoObservacoes, setEditandoObservacoes] = useState(false);
+  const [editObservacoesData, setEditObservacoesData] = useState('');
+  const [savingObservacoesData, setSavingObservacoesData] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
