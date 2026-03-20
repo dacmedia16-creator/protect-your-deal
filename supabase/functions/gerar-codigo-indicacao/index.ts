@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
             indicador_user_id: user.id,
             codigo: retryCode,
             comissao_percentual: comissaoCorretor,
+            tipo_comissao_indicacao: tipoComissao,
             status: "pendente",
           });
         return new Response(

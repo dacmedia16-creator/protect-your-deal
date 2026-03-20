@@ -238,8 +238,10 @@ serve(async (req) => {
                   .maybeSingle();
 
                 if (indByImob) {
-                  const valorComissao = value * (Number(indByImob.comissao_percentual) / 100);
-                  console.log(`Generating referral commission for imobiliaria: ${valorComissao}`);
+                  const valorComissao = indByImob.tipo_comissao_indicacao === 'primeira_mensalidade'
+                    ? value
+                    : value * (Number(indByImob.comissao_percentual) / 100);
+                  console.log(`Generating referral commission for imobiliaria (${indByImob.tipo_comissao_indicacao}): ${valorComissao}`);
                   
                   await supabase
                     .from('indicacoes_corretor')
