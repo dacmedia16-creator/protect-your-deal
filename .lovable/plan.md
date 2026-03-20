@@ -1,31 +1,17 @@
 
 
-## Mostrar informação de comissão na tela "Minhas Indicações"
-
-### O que será feito
-
-Adicionar um bloco informativo na seção "Links de Indicação" que mostra ao corretor **o que ele ganha** com cada indicação, baseado nos dados já salvos no registro placeholder (`tipo_comissao_indicacao` e `comissao_percentual`).
-
-### Dados disponíveis
-
-O registro placeholder (código ativo) já contém:
-- `tipo_comissao_indicacao`: `"percentual"` ou `"primeira_mensalidade"`
-- `comissao_percentual`: valor numérico (ex: 10 para 10%, ou 100 para primeira mensalidade)
-
-Não é necessário buscar dados adicionais — basta ler do registro ativo já carregado.
+## Animação de destaque no card "Indique e Ganhe" por 30s após login
 
 ### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/MinhasIndicacoes.tsx` | Extrair `tipo_comissao_indicacao` e `comissao_percentual` do placeholder ativo e exibir um `Alert` ou card informativo abaixo do código, explicando a recompensa |
+| `src/pages/Dashboard.tsx` | Adicionar estado `showPulse` que fica `true` por 30s ao montar o componente, e aplicar uma classe de animação pulsante ao card "Indique e Ganhe" enquanto ativo |
+| `src/index.css` | Adicionar keyframe `attention-pulse` que alterna o brilho/sombra do card com cores teal para chamar atenção |
 
-### UI proposta
+### Implementação
 
-Dentro do card "Links de Indicação", logo abaixo de "Seu código: IND-XXX", adicionar:
-
-- Se `primeira_mensalidade`: "Você ganha o valor da 1ª mensalidade do plano escolhido pelo indicado"
-- Se `percentual`: "Você ganha X% sobre o primeiro pagamento do indicado"
-
-Usar um componente `Alert` com ícone `DollarSign` e visual suave (info/success) para destacar sem poluir.
+- `useState(true)` + `useEffect` com `setTimeout(30000)` para desligar o pulso
+- Keyframe CSS: pulso suave alternando `box-shadow` e `border-color` em tons teal (2s loop)
+- Classe condicional no card: `showPulse ? 'animate-attention-pulse' : ''`
 
