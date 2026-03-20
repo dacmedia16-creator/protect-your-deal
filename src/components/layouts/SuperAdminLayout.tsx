@@ -23,6 +23,7 @@ import {
   Mail,
   UserCircle,
   TrendingUp,
+  ArrowUpRight,
   Archive,
   Image,
   UserCheck,
@@ -93,6 +94,7 @@ const navGroups: NavGroup[] = [
       { href: '/admin/planos', icon: Package, label: 'Planos' },
       { href: '/admin/assinaturas', icon: CreditCard, label: 'Assinaturas' },
       { href: '/admin/financeiro', icon: TrendingUp, label: 'Relatórios' },
+      { href: '/admin/indicacoes', icon: ArrowUpRight, label: 'Indicações' },
     ],
   },
   {
