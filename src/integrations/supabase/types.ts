@@ -1188,6 +1188,7 @@ export type Database = {
           indicador_user_id: string
           observacao_pagamento: string | null
           status: string
+          tipo_comissao_indicacao: string
           tipo_indicado: string
           updated_at: string
           valor_comissao: number | null
@@ -1204,6 +1205,7 @@ export type Database = {
           indicador_user_id: string
           observacao_pagamento?: string | null
           status?: string
+          tipo_comissao_indicacao?: string
           tipo_indicado?: string
           updated_at?: string
           valor_comissao?: number | null
@@ -1220,6 +1222,7 @@ export type Database = {
           indicador_user_id?: string
           observacao_pagamento?: string | null
           status?: string
+          tipo_comissao_indicacao?: string
           tipo_indicado?: string
           updated_at?: string
           valor_comissao?: number | null
