@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     );
 
     const body: RegistroRequest = await req.json();
-    const { imobiliaria, admin, plano_id, codigo_cupom } = body;
+    const { imobiliaria, admin, plano_id, codigo_cupom, codigo_indicacao } = body;
 
     console.log("Starting registration for:", admin.email);
     console.log("Cupom code:", codigo_cupom || "none");
