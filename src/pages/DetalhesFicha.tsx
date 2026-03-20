@@ -2297,13 +2297,26 @@ export default function DetalhesFicha() {
           {/* Data e Observações */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-secondary-foreground" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Detalhes da Visita</CardTitle>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Detalhes da Visita</CardTitle>
-                </div>
+                {podeEditarFicha && !editandoObservacoes && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditObservacoes}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -2313,11 +2326,43 @@ export default function DetalhesFicha() {
                   {format(new Date(ficha.data_visita), "EEEE, d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
                 </p>
               </div>
-              {ficha.observacoes && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Observações</p>
-                  <p className="font-medium">{ficha.observacoes}</p>
+              {editandoObservacoes ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-observacoes">Observações</Label>
+                    <Textarea
+                      id="edit-observacoes"
+                      value={editObservacoesData}
+                      onChange={(e) => setEditObservacoesData(e.target.value)}
+                      placeholder="Observações sobre a visita..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveObservacoesData} disabled={savingObservacoesData} className="gap-1">
+                      {savingObservacoesData ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditandoObservacoes(false)} className="gap-1">
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {ficha.observacoes ? (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Observações</p>
+                      <p className="font-medium">{ficha.observacoes}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Observações</p>
+                      <p className="text-sm text-muted-foreground italic">Nenhuma observação</p>
+                    </div>
+                  )}
+                </>
               )}
           </CardContent>
           </Card>
