@@ -157,4 +157,4 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.gerar-codigo-indicacao]
-verify_jwt = true
+verify_jwt = false
