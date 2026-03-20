@@ -541,6 +541,7 @@ export default function AdminConfiguracoes() {
                 )}
               </div>
             </CardContent>
+          </Card>
 
           {/* Segurança */}
           <Card>
