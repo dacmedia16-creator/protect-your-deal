@@ -70,6 +70,7 @@ import Convites from "./pages/Convites";
 import FichasParceiro from "./pages/FichasParceiro";
 import Pesquisas from "./pages/Pesquisas";
 import MinhaEquipe from "./pages/equipe/MinhaEquipe";
+import MinhasIndicacoes from "./pages/MinhasIndicacoes";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
