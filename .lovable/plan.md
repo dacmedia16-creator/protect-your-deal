@@ -1,23 +1,22 @@
 
 
-## Sincronizar exibição de comissão com configuração atual
+## Corrigir leitura de configuração de comissão para corretores
 
 ### Problema
 
-Quando o código de indicação é gerado, os valores de comissão (`tipo_comissao_indicacao`, `comissao_percentual`) são gravados no registro `indicacoes_corretor`. Se o admin muda a configuração depois, a página "Minhas Indicações" continua mostrando os valores antigos porque lê do registro já salvo.
+A tabela `configuracoes_sistema` tem RLS restrito a `super_admin`. Quando um corretor acessa "Minhas Indicações", a query `configuracoes_sistema` retorna vazio e o código usa os defaults (`percentual`, `10%`), ignorando a configuração real.
 
 ### Solução
 
-Duas mudanças complementares:
+Buscar a configuração de comissão via a edge function `gerar-codigo-indicacao` que já usa `service_role` e já retorna/sincroniza os valores atuais. Em vez de fazer query direta na tabela, chamar a edge function (que já existe e já trata esse cenário).
 
-| Arquivo | O que fazer |
-|---------|------------|
-| `src/pages/MinhasIndicacoes.tsx` | Buscar configuração atual de `configuracoes_sistema` e usar esses valores para exibir a comissão do placeholder ativo, em vez dos valores salvos no registro |
-| `supabase/functions/gerar-codigo-indicacao/index.ts` | Ao detectar que já existe um código ativo, atualizar `tipo_comissao_indicacao` e `comissao_percentual` com os valores atuais da config antes de retornar |
+Alternativa mais simples: criar uma policy RLS para permitir leitura das chaves de indicação por usuários autenticados.
 
-### Detalhes
+**Abordagem escolhida**: Adicionar uma RLS policy `SELECT` em `configuracoes_sistema` para `authenticated` que permita ler apenas as chaves de indicação. Isso é mais limpo e não exige chamada extra à edge function.
 
-**MinhasIndicacoes.tsx**: Novo `useQuery` buscando `configuracoes_sistema` com chaves `indicacao_tipo_comissao` e `indicacao_comissao_corretor`. O Alert usará esses valores em vez de `placeholderAtivo.tipo_comissao_indicacao`.
+| O quê | Como |
+|-------|------|
+| Migration SQL | `CREATE POLICY "Authenticated pode ler config indicacao" ON configuracoes_sistema FOR SELECT TO authenticated USING (chave IN ('indicacao_tipo_comissao', 'indicacao_comissao_corretor'))` |
 
-**Edge Function**: No bloco `if (existing)`, antes de retornar, fazer um `update` no registro existente com os valores atuais da config (já carregados logo abaixo). Assim o registro fica sempre sincronizado.
+Nenhuma mudança no frontend — o código já faz a query correta, só precisa de permissão para ler.
 
