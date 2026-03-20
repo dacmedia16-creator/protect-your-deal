@@ -1,32 +1,31 @@
 
 
-## Relatório de Comissões de Indicação — Admin
+## Mostrar informação de comissão na tela "Minhas Indicações"
 
-### Contexto
-O sistema de afiliados já tem `AdminComissoes` para comissões de cupons. As indicações de corretores usam a tabela `indicacoes_corretor` com campos: `valor_comissao`, `comissao_paga`, `comissao_paga_em`, `tipo_comissao_indicacao`, `status`, `indicador_user_id`, `indicado_user_id`, `tipo_indicado`, `codigo`, `observacao_pagamento`.
+### O que será feito
 
-### O que será criado
+Adicionar um bloco informativo na seção "Links de Indicação" que mostra ao corretor **o que ele ganha** com cada indicação, baseado nos dados já salvos no registro placeholder (`tipo_comissao_indicacao` e `comissao_percentual`).
 
-Uma nova página `AdminIndicacoes` no painel admin, seguindo o mesmo padrão visual de `AdminComissoes`, com:
+### Dados disponíveis
 
-- **Cards resumo**: Total pendente, total pago, quantidade de indicações
-- **Filtros**: Tipo de comissão (percentual/primeira_mensalidade), período (mês), status de pagamento (pendente/pago/todos)
-- **Tabela**: Código, indicador (nome via profiles), indicado, tipo, valor comissão, status pagamento, data
-- **Ação**: Marcar como pago (com observação), igual ao fluxo de `AdminComissoes`
+O registro placeholder (código ativo) já contém:
+- `tipo_comissao_indicacao`: `"percentual"` ou `"primeira_mensalidade"`
+- `comissao_percentual`: valor numérico (ex: 10 para 10%, ou 100 para primeira mensalidade)
 
-### Mudanças
+Não é necessário buscar dados adicionais — basta ler do registro ativo já carregado.
+
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/admin/AdminIndicacoes.tsx` | **Criar** — página completa com query em `indicacoes_corretor` joined com `profiles`, filtros, cards, tabela e ação de pagamento |
-| `src/App.tsx` | Adicionar import e rota `/admin/indicacoes` protegida para `super_admin` |
-| `src/components/layouts/SuperAdminLayout.tsx` | Adicionar nav item "Indicações" no grupo Financeiro com ícone `ArrowUpRight` |
+| `src/pages/MinhasIndicacoes.tsx` | Extrair `tipo_comissao_indicacao` e `comissao_percentual` do placeholder ativo e exibir um `Alert` ou card informativo abaixo do código, explicando a recompensa |
 
-### RLS
-A tabela `indicacoes_corretor` precisa de uma policy SELECT para super_admin. Verificarei se já existe; caso contrário, criarei via migration.
+### UI proposta
 
-### Dados exibidos
-- Nome do indicador: join com `profiles` via `indicador_user_id`
-- Nome do indicado: join com `profiles` via `indicado_user_id`
-- Filtrar apenas registros com `status != 'pendente'` (ou seja, indicações que já foram convertidas/cadastradas)
+Dentro do card "Links de Indicação", logo abaixo de "Seu código: IND-XXX", adicionar:
+
+- Se `primeira_mensalidade`: "Você ganha o valor da 1ª mensalidade do plano escolhido pelo indicado"
+- Se `percentual`: "Você ganha X% sobre o primeiro pagamento do indicado"
+
+Usar um componente `Alert` com ícone `DollarSign` e visual suave (info/success) para destacar sem poluir.
 
