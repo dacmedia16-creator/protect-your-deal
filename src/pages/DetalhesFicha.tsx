@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -159,6 +160,16 @@ export default function DetalhesFicha() {
     telefone: '',
   });
   const [savingEditData, setSavingEditData] = useState(false);
+
+  // State for editing imóvel data
+  const [editandoImovel, setEditandoImovel] = useState(false);
+  const [editImovelData, setEditImovelData] = useState({ endereco: '', tipo: '' });
+  const [savingImovelData, setSavingImovelData] = useState(false);
+
+  // State for editing observações
+  const [editandoObservacoes, setEditandoObservacoes] = useState(false);
+  const [editObservacoesData, setEditObservacoesData] = useState('');
+  const [savingObservacoesData, setSavingObservacoesData] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -851,6 +862,64 @@ export default function DetalhesFicha() {
       });
     } finally {
       setSavingCompletarData(false);
+    }
+  };
+
+  const podeEditarFicha = ficha && !ficha.proprietario_confirmado_em && !ficha.comprador_confirmado_em && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial';
+
+  const tiposImovel = ['Apartamento', 'Casa', 'Sobrado', 'Terreno', 'Comercial', 'Sala Comercial', 'Galpão', 'Chácara', 'Fazenda', 'Outro'];
+
+  const handleStartEditImovel = () => {
+    if (!ficha) return;
+    setEditImovelData({ endereco: ficha.imovel_endereco, tipo: ficha.imovel_tipo });
+    setEditandoImovel(true);
+  };
+
+  const handleSaveImovelData = async () => {
+    if (!ficha || !editImovelData.endereco || !editImovelData.tipo) {
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Endereço e tipo são obrigatórios.' });
+      return;
+    }
+    setSavingImovelData(true);
+    try {
+      const { error } = await supabase.from('fichas_visita').update({
+        imovel_endereco: editImovelData.endereco,
+        imovel_tipo: editImovelData.tipo,
+      }).eq('id', ficha.id);
+      if (error) throw error;
+      await refetch();
+      setEditandoImovel(false);
+      toast({ title: 'Dados do imóvel atualizados!' });
+    } catch (err) {
+      console.error('Erro ao salvar dados do imóvel:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao salvar os dados do imóvel.' });
+    } finally {
+      setSavingImovelData(false);
+    }
+  };
+
+  const handleStartEditObservacoes = () => {
+    if (!ficha) return;
+    setEditObservacoesData(ficha.observacoes || '');
+    setEditandoObservacoes(true);
+  };
+
+  const handleSaveObservacoesData = async () => {
+    if (!ficha) return;
+    setSavingObservacoesData(true);
+    try {
+      const { error } = await supabase.from('fichas_visita').update({
+        observacoes: editObservacoesData || null,
+      }).eq('id', ficha.id);
+      if (error) throw error;
+      await refetch();
+      setEditandoObservacoes(false);
+      toast({ title: 'Observações atualizadas!' });
+    } catch (err) {
+      console.error('Erro ao salvar observações:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao salvar as observações.' });
+    } finally {
+      setSavingObservacoesData(false);
     }
   };
 
@@ -1909,24 +1978,76 @@ export default function DetalhesFicha() {
           {/* Dados do Imóvel */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary-foreground" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
-                </div>
+                {podeEditarFicha && !editandoImovel && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditImovel}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Endereço</p>
-                <p className="font-medium">{ficha.imovel_endereco}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tipo</p>
-                <p className="font-medium">{ficha.imovel_tipo}</p>
-              </div>
+              {editandoImovel ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-endereco">Endereço *</Label>
+                    <Input
+                      id="edit-endereco"
+                      value={editImovelData.endereco}
+                      onChange={(e) => setEditImovelData(prev => ({ ...prev, endereco: e.target.value }))}
+                      placeholder="Endereço do imóvel"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-tipo">Tipo *</Label>
+                    <select
+                      id="edit-tipo"
+                      value={editImovelData.tipo}
+                      onChange={(e) => setEditImovelData(prev => ({ ...prev, tipo: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {tiposImovel.map((tipo) => (
+                        <option key={tipo} value={tipo}>{tipo}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveImovelData} disabled={savingImovelData} className="gap-1">
+                      {savingImovelData ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditandoImovel(false)} className="gap-1">
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Endereço</p>
+                    <p className="font-medium">{ficha.imovel_endereco}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tipo</p>
+                    <p className="font-medium">{ficha.imovel_tipo}</p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -2176,13 +2297,26 @@ export default function DetalhesFicha() {
           {/* Data e Observações */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-secondary-foreground" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Detalhes da Visita</CardTitle>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Detalhes da Visita</CardTitle>
-                </div>
+                {podeEditarFicha && !editandoObservacoes && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditObservacoes}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -2192,11 +2326,43 @@ export default function DetalhesFicha() {
                   {format(new Date(ficha.data_visita), "EEEE, d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
                 </p>
               </div>
-              {ficha.observacoes && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Observações</p>
-                  <p className="font-medium">{ficha.observacoes}</p>
+              {editandoObservacoes ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-observacoes">Observações</Label>
+                    <Textarea
+                      id="edit-observacoes"
+                      value={editObservacoesData}
+                      onChange={(e) => setEditObservacoesData(e.target.value)}
+                      placeholder="Observações sobre a visita..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveObservacoesData} disabled={savingObservacoesData} className="gap-1">
+                      {savingObservacoesData ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditandoObservacoes(false)} className="gap-1">
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {ficha.observacoes ? (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Observações</p>
+                      <p className="font-medium">{ficha.observacoes}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Observações</p>
+                      <p className="text-sm text-muted-foreground italic">Nenhuma observação</p>
+                    </div>
+                  )}
+                </>
               )}
           </CardContent>
           </Card>
