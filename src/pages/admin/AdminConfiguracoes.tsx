@@ -14,6 +14,7 @@ import {
   Shield, 
   Plug, 
   MessageSquare,
+  Gift,
   Database,
   CheckCircle,
   XCircle,
