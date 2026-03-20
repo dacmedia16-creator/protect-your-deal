@@ -52,14 +52,17 @@ Deno.serve(async (req) => {
     let codigo_imobiliaria: number | null | undefined;
     let codigo_cupom: string | null | undefined;
 
+    let codigo_indicacao: string | null | undefined;
+
     if (rawBody.corretor) {
-      // New format: { corretor: {...}, plano_id, codigo_imobiliaria, codigo_cupom }
+      // New format: { corretor: {...}, plano_id, codigo_imobiliaria, codigo_cupom, codigo_indicacao }
       corretor = rawBody.corretor;
       plano_id = rawBody.plano_id;
       codigo_imobiliaria = rawBody.codigo_imobiliaria;
       codigo_cupom = rawBody.codigo_cupom;
+      codigo_indicacao = rawBody.codigo_indicacao;
     } else if (rawBody.email) {
-      // Old flat format: { nome, email, senha, codigo_imobiliaria, codigo_cupom }
+      // Old flat format
       corretor = {
         nome: rawBody.nome,
         email: rawBody.email,
@@ -70,6 +73,7 @@ Deno.serve(async (req) => {
       plano_id = rawBody.plano_id;
       codigo_imobiliaria = rawBody.codigo_imobiliaria;
       codigo_cupom = rawBody.codigo_cupom;
+      codigo_indicacao = rawBody.codigo_indicacao;
     } else {
       console.error("Invalid request format. Body received:", rawBody);
       return new Response(
