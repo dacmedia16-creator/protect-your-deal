@@ -23,6 +23,7 @@ import {
   Mail,
   UserCircle,
   TrendingUp,
+  ArrowUpRight,
   Archive,
   Image,
   UserCheck,
