@@ -352,6 +352,51 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Register referral if codigo_indicacao provided
+    if (codigo_indicacao) {
+      try {
+        console.log("Processing referral code:", codigo_indicacao);
+        // Find the referral entry by code
+        const { data: indicacao } = await supabaseAdmin
+          .from("indicacoes_corretor")
+          .select("id, indicador_user_id, comissao_percentual")
+          .eq("codigo", codigo_indicacao)
+          .eq("status", "pendente")
+          .is("indicado_user_id", null)
+          .maybeSingle();
+
+        if (indicacao) {
+          // Update the existing placeholder or create a new entry
+          await supabaseAdmin
+            .from("indicacoes_corretor")
+            .update({
+              indicado_user_id: userId,
+              tipo_indicado: "corretor",
+              status: "cadastrado",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", indicacao.id);
+
+          // Create a new placeholder for future referrals from the same user
+          const newCode = `IND-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          await supabaseAdmin
+            .from("indicacoes_corretor")
+            .insert({
+              indicador_user_id: indicacao.indicador_user_id,
+              codigo: newCode,
+              comissao_percentual: indicacao.comissao_percentual,
+              status: "pendente",
+            });
+
+          console.log("Referral registered successfully");
+        } else {
+          console.log("Referral code not found or already used:", codigo_indicacao);
+        }
+      } catch (refErr) {
+        console.error("Error processing referral:", refErr);
+      }
+    }
+
     console.log("Broker registration completed successfully", imobiliariaId ? "(linked to imobiliaria)" : "(autonomous)");
 
     // Send welcome email (non-blocking)

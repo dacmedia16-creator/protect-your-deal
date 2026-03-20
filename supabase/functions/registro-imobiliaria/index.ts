@@ -254,6 +254,48 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Register referral if codigo_indicacao provided
+    if (codigo_indicacao) {
+      try {
+        console.log("Processing referral code:", codigo_indicacao);
+        const { data: indicacao } = await supabaseAdmin
+          .from("indicacoes_corretor")
+          .select("id, indicador_user_id, comissao_percentual")
+          .eq("codigo", codigo_indicacao)
+          .eq("status", "pendente")
+          .is("indicado_user_id", null)
+          .maybeSingle();
+
+        if (indicacao) {
+          await supabaseAdmin
+            .from("indicacoes_corretor")
+            .update({
+              indicado_imobiliaria_id: imobData.id,
+              indicado_user_id: userId,
+              tipo_indicado: "imobiliaria",
+              status: "cadastrado",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", indicacao.id);
+
+          // Create new placeholder for future referrals
+          const newCode = `IND-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          await supabaseAdmin
+            .from("indicacoes_corretor")
+            .insert({
+              indicador_user_id: indicacao.indicador_user_id,
+              codigo: newCode,
+              comissao_percentual: indicacao.comissao_percentual,
+              status: "pendente",
+            });
+
+          console.log("Referral registered successfully for imobiliaria");
+        }
+      } catch (refErr) {
+        console.error("Error processing referral:", refErr);
+      }
+    }
+
     console.log("Registration completed successfully");
 
     // Send welcome WhatsApp (non-blocking)
