@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Copy, Share2, Users, DollarSign, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -53,8 +54,9 @@ export default function MinhasIndicacoes() {
     }
   }
 
-  // Get the active referral code (pendente with no indicado)
-  const codigoAtivo = indicacoes?.find(i => i.status === 'pendente' && !i.indicado_user_id && !i.indicado_imobiliaria_id)?.codigo;
+  // Get the active referral placeholder
+  const placeholderAtivo = indicacoes?.find(i => i.status === 'pendente' && !i.indicado_user_id && !i.indicado_imobiliaria_id);
+  const codigoAtivo = placeholderAtivo?.codigo;
 
   const baseUrl = window.location.origin;
   const linkCorretor = codigoAtivo ? `${baseUrl}/registro-autonomo?ind=${codigoAtivo}` : '';
@@ -152,6 +154,14 @@ export default function MinhasIndicacoes() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Seu código: <span className="text-primary font-bold">{codigoAtivo}</span></p>
                 </div>
+                <Alert className="bg-primary/5 border-primary/20">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                  <AlertDescription className="text-sm">
+                    {placeholderAtivo?.tipo_comissao_indicacao === 'primeira_mensalidade'
+                      ? 'Você ganha o valor da 1ª mensalidade do plano escolhido pelo indicado.'
+                      : `Você ganha ${placeholderAtivo?.comissao_percentual || 10}% sobre o primeiro pagamento do indicado.`}
+                  </AlertDescription>
+                </Alert>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Para Corretores:</label>
                   <div className="flex gap-2">
