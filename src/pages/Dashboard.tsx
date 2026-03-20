@@ -50,6 +50,12 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
   const [showDebug, setShowDebug] = useState(false);
+  const [showIndicaPulse, setShowIndicaPulse] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowIndicaPulse(false), 30000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Verificar se pesquisa pós-visita está habilitada
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
