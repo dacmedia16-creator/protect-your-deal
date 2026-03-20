@@ -171,9 +171,9 @@ export default function MinhasIndicacoes() {
                 <Alert className="bg-primary/5 border-primary/20">
                   <DollarSign className="h-4 w-4 text-primary" />
                   <AlertDescription className="text-sm">
-                    {placeholderAtivo?.tipo_comissao_indicacao === 'primeira_mensalidade'
+                    {configComissao?.tipo === 'primeira_mensalidade'
                       ? 'Você ganha o valor da 1ª mensalidade do plano escolhido pelo indicado.'
-                      : `Você ganha ${placeholderAtivo?.comissao_percentual || 10}% sobre o primeiro pagamento do indicado.`}
+                      : `Você ganha ${configComissao?.valor || 10}% sobre o primeiro pagamento do indicado.`}
                   </AlertDescription>
                 </Alert>
                 <div className="space-y-2">
