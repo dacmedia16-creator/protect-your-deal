@@ -864,6 +864,64 @@ export default function DetalhesFicha() {
     }
   };
 
+  const podeEditarFicha = ficha && !ficha.proprietario_confirmado_em && !ficha.comprador_confirmado_em && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial';
+
+  const tiposImovel = ['Apartamento', 'Casa', 'Sobrado', 'Terreno', 'Comercial', 'Sala Comercial', 'Galpão', 'Chácara', 'Fazenda', 'Outro'];
+
+  const handleStartEditImovel = () => {
+    if (!ficha) return;
+    setEditImovelData({ endereco: ficha.imovel_endereco, tipo: ficha.imovel_tipo });
+    setEditandoImovel(true);
+  };
+
+  const handleSaveImovelData = async () => {
+    if (!ficha || !editImovelData.endereco || !editImovelData.tipo) {
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Endereço e tipo são obrigatórios.' });
+      return;
+    }
+    setSavingImovelData(true);
+    try {
+      const { error } = await supabase.from('fichas_visita').update({
+        imovel_endereco: editImovelData.endereco,
+        imovel_tipo: editImovelData.tipo,
+      }).eq('id', ficha.id);
+      if (error) throw error;
+      await refetch();
+      setEditandoImovel(false);
+      toast({ title: 'Dados do imóvel atualizados!' });
+    } catch (err) {
+      console.error('Erro ao salvar dados do imóvel:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao salvar os dados do imóvel.' });
+    } finally {
+      setSavingImovelData(false);
+    }
+  };
+
+  const handleStartEditObservacoes = () => {
+    if (!ficha) return;
+    setEditObservacoesData(ficha.observacoes || '');
+    setEditandoObservacoes(true);
+  };
+
+  const handleSaveObservacoesData = async () => {
+    if (!ficha) return;
+    setSavingObservacoesData(true);
+    try {
+      const { error } = await supabase.from('fichas_visita').update({
+        observacoes: editObservacoesData || null,
+      }).eq('id', ficha.id);
+      if (error) throw error;
+      await refetch();
+      setEditandoObservacoes(false);
+      toast({ title: 'Observações atualizadas!' });
+    } catch (err) {
+      console.error('Erro ao salvar observações:', err);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Erro ao salvar as observações.' });
+    } finally {
+      setSavingObservacoesData(false);
+    }
+  };
+
   const handleStartEdit = (tipo: 'proprietario' | 'comprador') => {
     if (!ficha) return;
     
