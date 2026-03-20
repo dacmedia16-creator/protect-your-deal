@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
         console.log("Processing referral code:", codigo_indicacao);
         const { data: indicacao } = await supabaseAdmin
           .from("indicacoes_corretor")
-          .select("id, indicador_user_id, comissao_percentual")
+          .select("id, indicador_user_id, comissao_percentual, tipo_comissao_indicacao")
           .eq("codigo", codigo_indicacao)
           .eq("status", "pendente")
           .is("indicado_user_id", null)
@@ -286,6 +286,7 @@ Deno.serve(async (req) => {
               indicador_user_id: indicacao.indicador_user_id,
               codigo: newCode,
               comissao_percentual: indicacao.comissao_percentual,
+              tipo_comissao_indicacao: indicacao.tipo_comissao_indicacao || 'percentual',
               status: "pendente",
             });
 
