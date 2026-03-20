@@ -23,6 +23,7 @@ interface RegistroRequest {
   };
   plano_id: string;
   codigo_cupom?: string | null;
+  codigo_indicacao?: string | null;
 }
 
 Deno.serve(async (req) => {
