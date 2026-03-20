@@ -286,6 +286,7 @@ Deno.serve(async (req) => {
               indicador_user_id: indicacao.indicador_user_id,
               codigo: newCode,
               comissao_percentual: indicacao.comissao_percentual,
+              tipo_comissao_indicacao: indicacao.tipo_comissao_indicacao || 'percentual',
               status: "pendente",
             });
 
