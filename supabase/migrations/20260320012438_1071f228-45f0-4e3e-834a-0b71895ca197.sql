@@ -1,0 +1,1 @@
+ALTER TABLE public.indicacoes_corretor ADD COLUMN tipo_comissao_indicacao text NOT NULL DEFAULT 'percentual';

@@ -491,55 +491,98 @@ export default function AdminConfiguracoes() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>% Comissão por Indicar Corretor</Label>
+                  <Label>Tipo de Comissão</Label>
                   <p className="text-sm text-muted-foreground">
-                    Percentual sobre o primeiro pagamento do corretor indicado
+                    Como o indicador será recompensado
                   </p>
                 </div>
                 {isLoadingConfig ? (
-                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-9 w-56" />
                 ) : (
-                  <Input
-                    type="number"
-                    className="w-20 text-center"
-                    value={getConfigNumberValue('indicacao_comissao_corretor', 10)}
-                    onChange={(e) => {
-                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
-                      updateConfigMutation.mutate({ chave: 'indicacao_comissao_corretor', valor: val as any });
-                    }}
-                    min="0"
-                    max="100"
+                  <Select
+                    value={getConfigStringValue('indicacao_tipo_comissao', 'percentual')}
+                    onValueChange={(value) => updateConfigMutation.mutate({ chave: 'indicacao_tipo_comissao', valor: value })}
                     disabled={updateConfigMutation.isPending}
-                  />
+                  >
+                    <SelectTrigger className="w-56">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentual">Percentual (%)</SelectItem>
+                      <SelectItem value="primeira_mensalidade">Primeira mensalidade (100%)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
 
-              <Separator />
+              {getConfigStringValue('indicacao_tipo_comissao', 'percentual') === 'percentual' && (
+                <>
+                  <Separator />
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>% Comissão por Indicar Imobiliária</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Percentual sobre o primeiro pagamento da imobiliária indicada
-                  </p>
-                </div>
-                {isLoadingConfig ? (
-                  <Skeleton className="h-9 w-20" />
-                ) : (
-                  <Input
-                    type="number"
-                    className="w-20 text-center"
-                    value={getConfigNumberValue('indicacao_comissao_imobiliaria', 10)}
-                    onChange={(e) => {
-                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
-                      updateConfigMutation.mutate({ chave: 'indicacao_comissao_imobiliaria', valor: val as any });
-                    }}
-                    min="0"
-                    max="100"
-                    disabled={updateConfigMutation.isPending}
-                  />
-                )}
-              </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>% Comissão por Indicar Corretor</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Percentual sobre o primeiro pagamento do corretor indicado
+                      </p>
+                    </div>
+                    {isLoadingConfig ? (
+                      <Skeleton className="h-9 w-20" />
+                    ) : (
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={getConfigNumberValue('indicacao_comissao_corretor', 10)}
+                        onChange={(e) => {
+                          const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                          updateConfigMutation.mutate({ chave: 'indicacao_comissao_corretor', valor: val as any });
+                        }}
+                        min="0"
+                        max="100"
+                        disabled={updateConfigMutation.isPending}
+                      />
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>% Comissão por Indicar Imobiliária</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Percentual sobre o primeiro pagamento da imobiliária indicada
+                      </p>
+                    </div>
+                    {isLoadingConfig ? (
+                      <Skeleton className="h-9 w-20" />
+                    ) : (
+                      <Input
+                        type="number"
+                        className="w-20 text-center"
+                        value={getConfigNumberValue('indicacao_comissao_imobiliaria', 10)}
+                        onChange={(e) => {
+                          const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                          updateConfigMutation.mutate({ chave: 'indicacao_comissao_imobiliaria', valor: val as any });
+                        }}
+                        min="0"
+                        max="100"
+                        disabled={updateConfigMutation.isPending}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+
+              {getConfigStringValue('indicacao_tipo_comissao', 'percentual') === 'primeira_mensalidade' && (
+                <>
+                  <Separator />
+                  <div className="rounded-md bg-muted/50 p-3">
+                    <p className="text-sm text-muted-foreground">
+                      O indicador receberá <span className="font-semibold text-foreground">100%</span> do valor da primeira mensalidade paga pelo indicado como comissão.
+                    </p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

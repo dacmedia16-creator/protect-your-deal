@@ -211,8 +211,10 @@ serve(async (req) => {
                   .maybeSingle();
 
                 if (indByUser) {
-                  const valorComissao = value * (Number(indByUser.comissao_percentual) / 100);
-                  console.log(`Generating referral commission: ${valorComissao} for user ${indByUser.indicador_user_id}`);
+                  const valorComissao = indByUser.tipo_comissao_indicacao === 'primeira_mensalidade'
+                    ? value
+                    : value * (Number(indByUser.comissao_percentual) / 100);
+                  console.log(`Generating referral commission (${indByUser.tipo_comissao_indicacao}): ${valorComissao} for user ${indByUser.indicador_user_id}`);
                   
                   await supabase
                     .from('indicacoes_corretor')
@@ -236,8 +238,10 @@ serve(async (req) => {
                   .maybeSingle();
 
                 if (indByImob) {
-                  const valorComissao = value * (Number(indByImob.comissao_percentual) / 100);
-                  console.log(`Generating referral commission for imobiliaria: ${valorComissao}`);
+                  const valorComissao = indByImob.tipo_comissao_indicacao === 'primeira_mensalidade'
+                    ? value
+                    : value * (Number(indByImob.comissao_percentual) / 100);
+                  console.log(`Generating referral commission for imobiliaria (${indByImob.tipo_comissao_indicacao}): ${valorComissao}`);
                   
                   await supabase
                     .from('indicacoes_corretor')

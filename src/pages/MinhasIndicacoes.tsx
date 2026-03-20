@@ -213,7 +213,9 @@ export default function MinhasIndicacoes() {
                         <TableCell>
                           {Number(ind.valor_comissao) > 0
                             ? Number(ind.valor_comissao).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                            : `${ind.comissao_percentual}%`}
+                            : ind.tipo_comissao_indicacao === 'primeira_mensalidade'
+                              ? '1ª mensalidade'
+                              : `${ind.comissao_percentual}%`}
                         </TableCell>
                         <TableCell>{statusBadge(ind.status, ind.comissao_paga)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
