@@ -465,7 +465,7 @@ export default function Dashboard() {
 
         {/* Card de Indicações */}
         <Card 
-          className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6"
+          className={`animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
           onClick={() => navigate('/minhas-indicacoes')}
         >
           <CardContent className="p-4 flex items-center gap-4">
