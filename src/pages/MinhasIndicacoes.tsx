@@ -54,8 +54,9 @@ export default function MinhasIndicacoes() {
     }
   }
 
-  // Get the active referral code (pendente with no indicado)
-  const codigoAtivo = indicacoes?.find(i => i.status === 'pendente' && !i.indicado_user_id && !i.indicado_imobiliaria_id)?.codigo;
+  // Get the active referral placeholder
+  const placeholderAtivo = indicacoes?.find(i => i.status === 'pendente' && !i.indicado_user_id && !i.indicado_imobiliaria_id);
+  const codigoAtivo = placeholderAtivo?.codigo;
 
   const baseUrl = window.location.origin;
   const linkCorretor = codigoAtivo ? `${baseUrl}/registro-autonomo?ind=${codigoAtivo}` : '';
