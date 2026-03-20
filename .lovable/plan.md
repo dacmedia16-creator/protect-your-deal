@@ -1,13 +1,15 @@
 
 
-## Sistema de Indicação de Corretores (Referral) — IMPLEMENTADO
+## Fix: Edge Function `gerar-codigo-indicacao` falhando
 
-### O que foi feito
+### Problema
+A Edge Function `gerar-codigo-indicacao` está com `verify_jwt = true` no `config.toml`, o que causa falha com o sistema de signing-keys do projeto. A função já valida o JWT manualmente no código.
 
-1. **Tabela `indicacoes_corretor`** com RLS (corretor vê as suas, super_admin vê todas)
-2. **Edge function `gerar-codigo-indicacao`** — gera código único IND-XXXXXX
-3. **`registro-corretor-autonomo`** e **`registro-imobiliaria`** — aceitam `codigo_indicacao` e vinculam na tabela
-4. **`asaas-webhook`** — no primeiro pagamento confirmado, calcula comissão e atualiza status para `comissao_gerada`
-5. **Página `/minhas-indicacoes`** — links copiáveis, stats de comissões, histórico
-6. **Card "Indique e Ganhe"** no Dashboard do corretor
-7. **Configs padrão** em `configuracoes_sistema`: 10% para corretores e imobiliárias
+### Solução
+
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/config.toml` | Alterar `verify_jwt = true` para `verify_jwt = false` na seção `[functions.gerar-codigo-indicacao]` |
+
+Isso é consistente com o padrão usado nas outras edge functions do projeto que validam JWT no código.
+
