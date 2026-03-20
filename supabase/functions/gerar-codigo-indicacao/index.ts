@@ -54,13 +54,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get default commission percentages from config
+    // Get default commission config
     const { data: configs } = await supabaseAdmin
       .from("configuracoes_sistema")
       .select("chave, valor")
-      .in("chave", ["indicacao_comissao_corretor", "indicacao_comissao_imobiliaria"]);
+      .in("chave", ["indicacao_comissao_corretor", "indicacao_comissao_imobiliaria", "indicacao_tipo_comissao"]);
 
-    const comissaoCorretor = Number(configs?.find(c => c.chave === "indicacao_comissao_corretor")?.valor || 10);
+    const tipoComissao = String(configs?.find(c => c.chave === "indicacao_tipo_comissao")?.valor || "percentual").replace(/"/g, "");
+    const comissaoCorretor = tipoComissao === "primeira_mensalidade" ? 100 : Number(configs?.find(c => c.chave === "indicacao_comissao_corretor")?.valor || 10);
 
     // Generate unique code: IND-XXXXXX
     const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
         indicador_user_id: user.id,
         codigo,
         comissao_percentual: comissaoCorretor,
+        tipo_comissao_indicacao: tipoComissao,
         status: "pendente",
       });
 
