@@ -1978,24 +1978,76 @@ export default function DetalhesFicha() {
           {/* Dados do Imóvel */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary-foreground" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
-                </div>
+                {podeEditarFicha && !editandoImovel && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditImovel}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Endereço</p>
-                <p className="font-medium">{ficha.imovel_endereco}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tipo</p>
-                <p className="font-medium">{ficha.imovel_tipo}</p>
-              </div>
+              {editandoImovel ? (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-endereco">Endereço *</Label>
+                    <Input
+                      id="edit-endereco"
+                      value={editImovelData.endereco}
+                      onChange={(e) => setEditImovelData(prev => ({ ...prev, endereco: e.target.value }))}
+                      placeholder="Endereço do imóvel"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-tipo">Tipo *</Label>
+                    <select
+                      id="edit-tipo"
+                      value={editImovelData.tipo}
+                      onChange={(e) => setEditImovelData(prev => ({ ...prev, tipo: e.target.value }))}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      {tiposImovel.map((tipo) => (
+                        <option key={tipo} value={tipo}>{tipo}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveImovelData} disabled={savingImovelData} className="gap-1">
+                      {savingImovelData ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditandoImovel(false)} className="gap-1">
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Endereço</p>
+                    <p className="font-medium">{ficha.imovel_endereco}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tipo</p>
+                    <p className="font-medium">{ficha.imovel_tipo}</p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
