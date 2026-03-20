@@ -213,4 +213,20 @@
   .animate-sofia-pulse {
     animation: sofia-pulse 2s ease-in-out infinite;
   }
+
+  /* Attention pulse for "Indique e Ganhe" card */
+  @keyframes attention-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(172 66% 50% / 0.4);
+      border-color: hsl(172 66% 50% / 0.2);
+    }
+    50% {
+      box-shadow: 0 0 12px 4px hsl(172 66% 50% / 0.25);
+      border-color: hsl(172 66% 50% / 0.5);
+    }
+  }
+
+  .animate-attention-pulse {
+    animation: attention-pulse 2s ease-in-out infinite;
+  }
 }
