@@ -14,6 +14,7 @@ import {
   Shield, 
   Plug, 
   MessageSquare,
+  Gift,
   Database,
   CheckCircle,
   XCircle,
@@ -466,6 +467,72 @@ export default function AdminConfiguracoes() {
                     onChange={(e) => {
                       const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
                       updateConfigMutation.mutate({ chave: 'comissao_indireta_percentual', valor: val as any });
+                    }}
+                    min="0"
+                    max="100"
+                    disabled={updateConfigMutation.isPending}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Indicações */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5" />
+                Indicações
+              </CardTitle>
+              <CardDescription>
+                Configurações de comissão do programa Indique e Ganhe
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>% Comissão por Indicar Corretor</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Percentual sobre o primeiro pagamento do corretor indicado
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-9 w-20" />
+                ) : (
+                  <Input
+                    type="number"
+                    className="w-20 text-center"
+                    value={getConfigNumberValue('indicacao_comissao_corretor', 10)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                      updateConfigMutation.mutate({ chave: 'indicacao_comissao_corretor', valor: val as any });
+                    }}
+                    min="0"
+                    max="100"
+                    disabled={updateConfigMutation.isPending}
+                  />
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>% Comissão por Indicar Imobiliária</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Percentual sobre o primeiro pagamento da imobiliária indicada
+                  </p>
+                </div>
+                {isLoadingConfig ? (
+                  <Skeleton className="h-9 w-20" />
+                ) : (
+                  <Input
+                    type="number"
+                    className="w-20 text-center"
+                    value={getConfigNumberValue('indicacao_comissao_imobiliaria', 10)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                      updateConfigMutation.mutate({ chave: 'indicacao_comissao_imobiliaria', valor: val as any });
                     }}
                     min="0"
                     max="100"
