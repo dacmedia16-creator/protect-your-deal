@@ -37,6 +37,20 @@ export default function MinhasIndicacoes() {
     enabled: !!user?.id,
   });
 
+  // Fetch current commission config
+  const { data: configComissao } = useQuery({
+    queryKey: ['config-comissao-indicacao'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('configuracoes_sistema')
+        .select('chave, valor')
+        .in('chave', ['indicacao_tipo_comissao', 'indicacao_comissao_corretor']);
+      const tipo = String(data?.find(c => c.chave === 'indicacao_tipo_comissao')?.valor || 'percentual').replace(/"/g, '');
+      const valor = tipo === 'primeira_mensalidade' ? 100 : Number(data?.find(c => c.chave === 'indicacao_comissao_corretor')?.valor || 10);
+      return { tipo, valor };
+    },
+  });
+
   // Get or generate referral code
   async function handleGenerateCode() {
     setGeneratingCode(true);
@@ -157,9 +171,9 @@ export default function MinhasIndicacoes() {
                 <Alert className="bg-primary/5 border-primary/20">
                   <DollarSign className="h-4 w-4 text-primary" />
                   <AlertDescription className="text-sm">
-                    {placeholderAtivo?.tipo_comissao_indicacao === 'primeira_mensalidade'
+                    {configComissao?.tipo === 'primeira_mensalidade'
                       ? 'Você ganha o valor da 1ª mensalidade do plano escolhido pelo indicado.'
-                      : `Você ganha ${placeholderAtivo?.comissao_percentual || 10}% sobre o primeiro pagamento do indicado.`}
+                      : `Você ganha ${configComissao?.valor || 10}% sobre o primeiro pagamento do indicado.`}
                   </AlertDescription>
                 </Alert>
                 <div className="space-y-2">
