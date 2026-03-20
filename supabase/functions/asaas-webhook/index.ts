@@ -211,9 +211,18 @@ serve(async (req) => {
                   .maybeSingle();
 
                 if (indByUser) {
-                  const valorComissao = indByUser.tipo_comissao_indicacao === 'primeira_mensalidade'
-                    ? value
-                    : value * (Number(indByUser.comissao_percentual) / 100);
+                  let valorComissao: number;
+                  if (indByUser.tipo_comissao_indicacao === 'primeira_mensalidade') {
+                    // Use valor_mensal from the plan, not the payment value (could be annual)
+                    const { data: plano } = await supabase
+                      .from('planos')
+                      .select('valor_mensal')
+                      .eq('id', assinatura.plano_id)
+                      .maybeSingle();
+                    valorComissao = plano?.valor_mensal ?? value;
+                  } else {
+                    valorComissao = value * (Number(indByUser.comissao_percentual) / 100);
+                  }
                   console.log(`Generating referral commission (${indByUser.tipo_comissao_indicacao}): ${valorComissao} for user ${indByUser.indicador_user_id}`);
                   
                   await supabase
@@ -238,9 +247,17 @@ serve(async (req) => {
                   .maybeSingle();
 
                 if (indByImob) {
-                  const valorComissao = indByImob.tipo_comissao_indicacao === 'primeira_mensalidade'
-                    ? value
-                    : value * (Number(indByImob.comissao_percentual) / 100);
+                  let valorComissao: number;
+                  if (indByImob.tipo_comissao_indicacao === 'primeira_mensalidade') {
+                    const { data: plano } = await supabase
+                      .from('planos')
+                      .select('valor_mensal')
+                      .eq('id', assinatura.plano_id)
+                      .maybeSingle();
+                    valorComissao = plano?.valor_mensal ?? value;
+                  } else {
+                    valorComissao = value * (Number(indByImob.comissao_percentual) / 100);
+                  }
                   console.log(`Generating referral commission for imobiliaria (${indByImob.tipo_comissao_indicacao}): ${valorComissao}`);
                   
                   await supabase
