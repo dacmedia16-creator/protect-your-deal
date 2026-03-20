@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Users,
   ChevronRight,
+  Share2,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
