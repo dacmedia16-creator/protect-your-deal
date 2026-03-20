@@ -1,23 +1,13 @@
 
 
-## Melhorar Visualização da Rede de Afiliados no Dashboard do Afiliado
+## Sistema de Indicação de Corretores (Referral) — IMPLEMENTADO
 
-### Contexto
-Atualmente o card "Minha Rede" no dashboard do afiliado mostra apenas o número total de indicados. Não há como o afiliado ver **quem** são seus indicados (nome, email, status). A screenshot confirma: só aparece "1 - Afiliados indicados por você".
+### O que foi feito
 
-### Solução
-Adicionar uma seção "Minha Rede" com uma tabela/lista dos afiliados indicados, mostrando nome, email, status (ativo/inativo) e data de cadastro. Será posicionada após os cards de estatísticas e antes dos links.
-
-### Mudanças
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/afiliado/AfiliadoDashboard.tsx` | Adicionar seção "Minha Rede" com tabela listando os afiliados indicados (nome, email, status, data) + buscar `created_at` na query existente |
-
-### Detalhes técnicos
-
-1. Atualizar a query `afiliado-rede` para incluir `created_at` no select
-2. Adicionar um Card "Minha Rede" com tabela após os cards de estatísticas (só aparece se `totalRede > 0`)
-3. Cada linha mostra: nome, email, Badge ativo/inativo, data formatada com `date-fns`
-4. Estado vazio com mensagem quando não há indicados
-
+1. **Tabela `indicacoes_corretor`** com RLS (corretor vê as suas, super_admin vê todas)
+2. **Edge function `gerar-codigo-indicacao`** — gera código único IND-XXXXXX
+3. **`registro-corretor-autonomo`** e **`registro-imobiliaria`** — aceitam `codigo_indicacao` e vinculam na tabela
+4. **`asaas-webhook`** — no primeiro pagamento confirmado, calcula comissão e atualiza status para `comissao_gerada`
+5. **Página `/minhas-indicacoes`** — links copiáveis, stats de comissões, histórico
+6. **Card "Indique e Ganhe"** no Dashboard do corretor
+7. **Configs padrão** em `configuracoes_sistema`: 10% para corretores e imobiliárias
