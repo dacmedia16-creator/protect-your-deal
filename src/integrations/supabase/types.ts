@@ -1175,6 +1175,57 @@ export type Database = {
           },
         ]
       }
+      indicacoes_corretor: {
+        Row: {
+          codigo: string
+          comissao_paga: boolean
+          comissao_paga_em: string | null
+          comissao_percentual: number
+          created_at: string
+          id: string
+          indicado_imobiliaria_id: string | null
+          indicado_user_id: string | null
+          indicador_user_id: string
+          observacao_pagamento: string | null
+          status: string
+          tipo_indicado: string
+          updated_at: string
+          valor_comissao: number | null
+        }
+        Insert: {
+          codigo: string
+          comissao_paga?: boolean
+          comissao_paga_em?: string | null
+          comissao_percentual?: number
+          created_at?: string
+          id?: string
+          indicado_imobiliaria_id?: string | null
+          indicado_user_id?: string | null
+          indicador_user_id: string
+          observacao_pagamento?: string | null
+          status?: string
+          tipo_indicado?: string
+          updated_at?: string
+          valor_comissao?: number | null
+        }
+        Update: {
+          codigo?: string
+          comissao_paga?: boolean
+          comissao_paga_em?: string | null
+          comissao_percentual?: number
+          created_at?: string
+          id?: string
+          indicado_imobiliaria_id?: string | null
+          indicado_user_id?: string | null
+          indicador_user_id?: string
+          observacao_pagamento?: string | null
+          status?: string
+          tipo_indicado?: string
+          updated_at?: string
+          valor_comissao?: number | null
+        }
+        Relationships: []
+      }
       modulos: {
         Row: {
           ativo: boolean

@@ -188,6 +188,73 @@ serve(async (req) => {
             notificationType = 'confirmed';
             // Gerar comissão recorrente para o afiliado
             shouldGenerateCommission = true;
+
+            // === REFERRAL COMMISSION (one-time) ===
+            // Check if this subscription has a referral (indicação) pending commission
+            try {
+              // Find referral by indicado_user_id or indicado_imobiliaria_id
+              const indicadoUserId = assinatura.user_id;
+              const indicadoImobId = assinatura.imobiliaria_id;
+              
+              let indicacaoQuery = supabase
+                .from('indicacoes_corretor')
+                .select('*')
+                .eq('status', 'cadastrado');
+
+              // Try user_id first, then imobiliaria_id
+              if (indicadoUserId) {
+                const { data: indByUser } = await supabase
+                  .from('indicacoes_corretor')
+                  .select('*')
+                  .eq('indicado_user_id', indicadoUserId)
+                  .eq('status', 'cadastrado')
+                  .maybeSingle();
+
+                if (indByUser) {
+                  const valorComissao = value * (Number(indByUser.comissao_percentual) / 100);
+                  console.log(`Generating referral commission: ${valorComissao} for user ${indByUser.indicador_user_id}`);
+                  
+                  await supabase
+                    .from('indicacoes_corretor')
+                    .update({
+                      status: 'comissao_gerada',
+                      valor_comissao: valorComissao,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', indByUser.id);
+                  
+                  console.log('Referral commission generated successfully');
+                }
+              }
+
+              if (indicadoImobId) {
+                const { data: indByImob } = await supabase
+                  .from('indicacoes_corretor')
+                  .select('*')
+                  .eq('indicado_imobiliaria_id', indicadoImobId)
+                  .eq('status', 'cadastrado')
+                  .maybeSingle();
+
+                if (indByImob) {
+                  const valorComissao = value * (Number(indByImob.comissao_percentual) / 100);
+                  console.log(`Generating referral commission for imobiliaria: ${valorComissao}`);
+                  
+                  await supabase
+                    .from('indicacoes_corretor')
+                    .update({
+                      status: 'comissao_gerada',
+                      valor_comissao: valorComissao,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', indByImob.id);
+                  
+                  console.log('Referral commission for imobiliaria generated successfully');
+                }
+              }
+            } catch (refErr) {
+              console.error('Error processing referral commission:', refErr);
+            }
+            // === END REFERRAL COMMISSION ===
             break;
 
           case 'PAYMENT_OVERDUE':

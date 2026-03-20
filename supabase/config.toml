@@ -155,3 +155,6 @@ verify_jwt = false
 
 [functions.empresa-delete-corretor]
 verify_jwt = true
+
+[functions.gerar-codigo-indicacao]
+verify_jwt = true

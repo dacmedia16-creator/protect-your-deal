@@ -17,6 +17,7 @@ interface RegistroCorretorRequest {
   plano_id: string;
   codigo_imobiliaria?: number | null;
   codigo_cupom?: string | null;
+  codigo_indicacao?: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -51,14 +52,17 @@ Deno.serve(async (req) => {
     let codigo_imobiliaria: number | null | undefined;
     let codigo_cupom: string | null | undefined;
 
+    let codigo_indicacao: string | null | undefined;
+
     if (rawBody.corretor) {
-      // New format: { corretor: {...}, plano_id, codigo_imobiliaria, codigo_cupom }
+      // New format: { corretor: {...}, plano_id, codigo_imobiliaria, codigo_cupom, codigo_indicacao }
       corretor = rawBody.corretor;
       plano_id = rawBody.plano_id;
       codigo_imobiliaria = rawBody.codigo_imobiliaria;
       codigo_cupom = rawBody.codigo_cupom;
+      codigo_indicacao = rawBody.codigo_indicacao;
     } else if (rawBody.email) {
-      // Old flat format: { nome, email, senha, codigo_imobiliaria, codigo_cupom }
+      // Old flat format
       corretor = {
         nome: rawBody.nome,
         email: rawBody.email,
@@ -69,6 +73,7 @@ Deno.serve(async (req) => {
       plano_id = rawBody.plano_id;
       codigo_imobiliaria = rawBody.codigo_imobiliaria;
       codigo_cupom = rawBody.codigo_cupom;
+      codigo_indicacao = rawBody.codigo_indicacao;
     } else {
       console.error("Invalid request format. Body received:", rawBody);
       return new Response(
@@ -344,6 +349,51 @@ Deno.serve(async (req) => {
         } else {
           console.log("Subscription created");
         }
+      }
+    }
+
+    // Register referral if codigo_indicacao provided
+    if (codigo_indicacao) {
+      try {
+        console.log("Processing referral code:", codigo_indicacao);
+        // Find the referral entry by code
+        const { data: indicacao } = await supabaseAdmin
+          .from("indicacoes_corretor")
+          .select("id, indicador_user_id, comissao_percentual")
+          .eq("codigo", codigo_indicacao)
+          .eq("status", "pendente")
+          .is("indicado_user_id", null)
+          .maybeSingle();
+
+        if (indicacao) {
+          // Update the existing placeholder or create a new entry
+          await supabaseAdmin
+            .from("indicacoes_corretor")
+            .update({
+              indicado_user_id: userId,
+              tipo_indicado: "corretor",
+              status: "cadastrado",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", indicacao.id);
+
+          // Create a new placeholder for future referrals from the same user
+          const newCode = `IND-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          await supabaseAdmin
+            .from("indicacoes_corretor")
+            .insert({
+              indicador_user_id: indicacao.indicador_user_id,
+              codigo: newCode,
+              comissao_percentual: indicacao.comissao_percentual,
+              status: "pendente",
+            });
+
+          console.log("Referral registered successfully");
+        } else {
+          console.log("Referral code not found or already used:", codigo_indicacao);
+        }
+      } catch (refErr) {
+        console.error("Error processing referral:", refErr);
       }
     }
 

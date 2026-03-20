@@ -38,6 +38,7 @@ export default function RegistroCorretorAutonomo() {
   const planoParam = searchParams.get('plano');
   const refParam = searchParams.get('ref');
   const affParam = searchParams.get('aff');
+  const indParam = searchParams.get('ind');
   
   const [corretorForm, setCorretorForm] = useState({
     nome: '',
@@ -311,6 +312,7 @@ export default function RegistroCorretorAutonomo() {
           plano_id: selectedPlano,
           codigo_imobiliaria: vincularImobiliaria && codigoImobiliaria ? parseInt(codigoImobiliaria, 10) : null,
           codigo_cupom: cupomInfo?.valido ? codigoCupom : null,
+          codigo_indicacao: indParam || null,
         },
       });
 
