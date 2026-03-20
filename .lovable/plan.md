@@ -1,22 +1,22 @@
 
 
-## Corrigir leitura de configuração de comissão para corretores
+## Adicionar edição de Dados do Imóvel e Observações na DetalhesFicha
 
-### Problema
+### Mudanças
 
-A tabela `configuracoes_sistema` tem RLS restrito a `super_admin`. Quando um corretor acessa "Minhas Indicações", a query `configuracoes_sistema` retorna vazio e o código usa os defaults (`percentual`, `10%`), ignorando a configuração real.
+| Arquivo | O que fazer |
+|---------|------------|
+| `src/pages/DetalhesFicha.tsx` | Adicionar estados, handlers e UI de edição inline para o card "Dados do Imóvel" (endereço + tipo) e o card "Detalhes da Visita" (observações). Botão "Editar" visível apenas quando nenhuma parte confirmou (`!proprietario_confirmado_em && !comprador_confirmado_em`). |
 
-### Solução
+### Detalhes
 
-Buscar a configuração de comissão via a edge function `gerar-codigo-indicacao` que já usa `service_role` e já retorna/sincroniza os valores atuais. Em vez de fazer query direta na tabela, chamar a edge function (que já existe e já trata esse cenário).
+1. **Novos estados**: `editandoImovel`, `editImovelData` (endereco, tipo), `editandoDetalhes`, `editDetalhesData` (observacoes)
 
-Alternativa mais simples: criar uma policy RLS para permitir leitura das chaves de indicação por usuários autenticados.
+2. **Condição de edição**: `const podeEditar = !ficha.proprietario_confirmado_em && !ficha.comprador_confirmado_em && ficha.status !== 'completo' && ficha.status !== 'finalizado_parcial'`
 
-**Abordagem escolhida**: Adicionar uma RLS policy `SELECT` em `configuracoes_sistema` para `authenticated` que permita ler apenas as chaves de indicação. Isso é mais limpo e não exige chamada extra à edge function.
+3. **Card "Dados do Imóvel"** (linhas ~1909-1931): Adicionar botão Editar no header (condicional a `podeEditar`). Ao clicar, mostrar inputs para endereço e select para tipo (usando `tiposImovel`). Salvar via `supabase.from('fichas_visita').update(...)`.
 
-| O quê | Como |
-|-------|------|
-| Migration SQL | `CREATE POLICY "Authenticated pode ler config indicacao" ON configuracoes_sistema FOR SELECT TO authenticated USING (chave IN ('indicacao_tipo_comissao', 'indicacao_comissao_corretor'))` |
+4. **Card "Detalhes da Visita"** (linhas ~2176-2202): Adicionar botão Editar no header. Ao clicar, mostrar textarea para observações. Salvar da mesma forma.
 
-Nenhuma mudança no frontend — o código já faz a query correta, só precisa de permissão para ler.
+5. **Padrão visual**: Mesmo padrão de edição inline já usado nos cards Proprietário/Comprador (botões Cancelar/Salvar, ícones Pencil/X/Save).
 
