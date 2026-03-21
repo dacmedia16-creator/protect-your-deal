@@ -1908,7 +1908,6 @@ export type Database = {
           ficha_id: string | null
           id: string | null
           lembrete_enviado_em: string | null
-          telefone: string | null
           tentativas: number | null
           tipo: string | null
         }
@@ -1928,7 +1927,6 @@ export type Database = {
           ficha_id?: string | null
           id?: string | null
           lembrete_enviado_em?: string | null
-          telefone?: string | null
           tentativas?: number | null
           tipo?: string | null
         }
@@ -1948,7 +1946,6 @@ export type Database = {
           ficha_id?: string | null
           id?: string | null
           lembrete_enviado_em?: string | null
-          telefone?: string | null
           tentativas?: number | null
           tipo?: string | null
         }
