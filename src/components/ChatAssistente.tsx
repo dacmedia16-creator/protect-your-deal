@@ -851,6 +851,22 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
                       ))}
                     </div>
                   )}
+                  
+                  {/* Inline Videos */}
+                  {message.videos && message.videos.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {message.videos.map((videoSrc, vidIdx) => (
+                        <video
+                          key={vidIdx}
+                          src={videoSrc}
+                          controls
+                          preload="metadata"
+                          className="rounded-lg max-w-full w-full"
+                          style={{ maxHeight: '220px' }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
