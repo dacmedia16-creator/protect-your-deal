@@ -124,13 +124,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="assinatura-parceiro" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-assinatura-parceiro.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-assinatura-parceiro.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">🤝 Assinatura com Corretor Parceiro</h2>
               </div>
