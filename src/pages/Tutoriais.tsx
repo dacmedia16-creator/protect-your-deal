@@ -132,13 +132,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="pesquisa-cliente" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-pesquisa-cliente.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-pesquisa-cliente.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📊 Pesquisa Pós-Visita para o Cliente</h2>
               </div>
