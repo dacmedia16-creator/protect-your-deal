@@ -3,7 +3,32 @@ import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogoIcon } from '@/components/LogoIcon';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { ArrowLeft, PlayCircle } from 'lucide-react';
+
+const LazyVideo = ({ src, poster }: { src: string; poster?: string }) => {
+  const { ref, isVisible } = useScrollAnimation({ rootMargin: '200px', triggerOnce: true });
+
+  return (
+    <div ref={ref} className="aspect-video w-full">
+      {isVisible ? (
+        <video
+          src={src}
+          poster={poster}
+          controls
+          playsInline
+          preload="metadata"
+          className="w-full h-full rounded-t-xl"
+        />
+      ) : (
+        <Skeleton className="w-full h-full rounded-t-xl flex items-center justify-center">
+          <PlayCircle className="h-12 w-12 text-muted-foreground/40" />
+        </Skeleton>
+      )}
+    </div>
+  );
+};
 
 const Tutoriais = () => {
   return (
@@ -59,13 +84,7 @@ const Tutoriais = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <Card id="cadastro" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-cadastro.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-cadastro.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📋 Como se Cadastrar</h2>
               </div>
@@ -73,13 +92,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="android" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-instalar-android.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-instalar-android.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📱 Instalando o App no Android</h2>
               </div>
@@ -87,14 +100,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="ios" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-instalar-ios.mp4"
-                poster="/videos/poster-tutorial-ios.png"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-instalar-ios.mp4" poster="/videos/poster-tutorial-ios.png" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📱 Instalando o App no iOS (iPhone)</h2>
               </div>
@@ -102,13 +108,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="visao-geral" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-visao-geral.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-visao-geral.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">🎯 Visão Geral do APP</h2>
               </div>
@@ -116,13 +116,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="primeira-ficha" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-primeira-ficha.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-primeira-ficha.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📝 Criando a Primeira Ficha de Visita</h2>
               </div>
@@ -130,13 +124,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="assinatura-parceiro" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-assinatura-parceiro.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-assinatura-parceiro.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">🤝 Assinatura com Corretor Parceiro</h2>
               </div>
@@ -144,13 +132,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="pesquisa-cliente" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-pesquisa-cliente.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-pesquisa-cliente.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📊 Pesquisa Pós-Visita para o Cliente</h2>
               </div>
