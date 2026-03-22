@@ -15,6 +15,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   images?: string[];
+  videos?: string[];
 }
 
 // Help images mapping - Sofia can reference these by key
@@ -64,22 +65,32 @@ const fixTextSpacing = (text: string): string => {
     .replace(/  +/g, ' ');
 };
 
-// Process message content to extract image markers
-// TEMPORARIAMENTE DESATIVADO: Imagens desativadas até que screenshots corretos sejam adicionados
-const processMessageWithImages = (content: string): { text: string; images: string[] } => {
+// Process message content to extract image and video markers
+// TEMPORARIAMENTE DESATIVADO (imagens): Imagens desativadas até que screenshots corretos sejam adicionados
+const processMessageWithImages = (content: string): { text: string; images: string[]; videos: string[] } => {
   // Remove image markers from text but don't add images (temporarily disabled)
   const imagePattern = /\[\s*IMAGEM\s*:\s*([^\]]+?)\s*\]/gi;
   
   let text = content.replace(imagePattern, () => {
-    // Images temporarily disabled - just remove the markers
+    return '';
+  });
+  
+  // Extract video markers
+  const videoPattern = /\[\s*VIDEO\s*:\s*([^\]]+?)\s*\]/gi;
+  const videos: string[] = [];
+  
+  text = text.replace(videoPattern, (_match, path: string) => {
+    const trimmedPath = path.trim();
+    if (trimmedPath.startsWith('/videos/') && trimmedPath.endsWith('.mp4')) {
+      videos.push(trimmedPath);
+    }
     return '';
   });
   
   // Apply spacing fix to the text
   text = fixTextSpacing(text);
   
-  // Return empty images array - functionality temporarily disabled
-  return { text: text.trim(), images: [] };
+  return { text: text.trim(), images: [], videos };
 };
 
 interface UserContext {
@@ -411,7 +422,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       
       // Apply spacing fix and update message
       const fixedContent = fixTextSpacing(displayedContentRef.current);
-      const { text: processedText, images } = processMessageWithImages(fixedContent);
+      const { text: processedText, images, videos } = processMessageWithImages(fixedContent);
       
       setMessages(prev => {
         const updated = [...prev];
@@ -420,7 +431,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           updated[updated.length - 1] = {
             ...lastMsg,
             content: processedText,
-            images: images.length > 0 ? images : undefined
+            images: images.length > 0 ? images : undefined,
+            videos: videos.length > 0 ? videos : undefined
           };
         }
         return updated;
@@ -835,6 +847,22 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
                             // Hide image if it doesn't exist
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Inline Videos */}
+                  {message.videos && message.videos.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {message.videos.map((videoSrc, vidIdx) => (
+                        <video
+                          key={vidIdx}
+                          src={videoSrc}
+                          controls
+                          preload="metadata"
+                          className="rounded-lg max-w-full w-full"
+                          style={{ maxHeight: '220px' }}
                         />
                       ))}
                     </div>
