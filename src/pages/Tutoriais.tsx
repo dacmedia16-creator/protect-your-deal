@@ -46,6 +46,20 @@ const Tutoriais = () => {
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <video
+                src="/videos/tutorial-visao-geral.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">🎯 Visão Geral do APP</h2>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <video
                 src="/videos/tutorial-instalar-android.mp4"
                 controls
                 playsInline
