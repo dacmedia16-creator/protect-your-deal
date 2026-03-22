@@ -344,8 +344,8 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           action: 'send-template',
           template_tipo: 'boas_vindas',
-          email: admin.email,
-          vars: {
+          to: admin.email,
+          variables: {
             nome: admin.nome,
             email: admin.email,
             link: 'https://visitaprova.com.br/auth',
