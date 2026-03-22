@@ -1,11 +1,11 @@
 
 
-## Adicionar capa personalizada ao vídeo iOS na página Tutoriais
+## Adicionar vídeo "Visão Geral do APP" na página Tutoriais
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| Copiar imagem | `user-uploads://image-277.png` → `public/videos/poster-tutorial-ios.png` |
-| `src/pages/Tutoriais.tsx` | Adicionar `poster="/videos/poster-tutorial-ios.png"` ao `<video>` do tutorial iOS (linha ~68) |
+| Copiar vídeo | `user-uploads://Visão_geral.mp4` → `public/videos/tutorial-visao-geral.mp4` |
+| `src/pages/Tutoriais.tsx` | Adicionar novo card de vídeo com título "🎯 Visão Geral do APP" antes do placeholder |
 
