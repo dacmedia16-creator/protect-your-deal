@@ -1,20 +1,15 @@
 
 
-## Adicionar link dos tutoriais na mensagem de boas-vindas do WhatsApp
+## Testar envio de WhatsApp de boas-vindas
 
-Inserir o link `https://visitaprova.com.br/tutoriais` nas mensagens de boas-vindas enviadas via WhatsApp no cadastro, orientando o novo usuário a acessar o passo a passo de como usar o app.
+Criar novamente a Edge Function temporária `test-welcome-whatsapp` para enviar a mensagem de boas-vindas atualizada (com o link dos tutoriais) para o número `15981788214`, e removê-la após o teste.
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `supabase/functions/registro-corretor-autonomo/index.ts` (linha ~444) | Adicionar ao final da `mensagemBoasVindas`: parágrafo com link para os tutoriais |
-| `supabase/functions/registro-imobiliaria/index.ts` (linha ~306) | Mesma alteração na `mensagemBoasVindas` |
+| `supabase/functions/test-welcome-whatsapp/index.ts` | Criar function temporária que envia a mensagem de boas-vindas completa (incluindo link dos tutoriais) para `15981788214` via canal `default` |
+| `supabase/config.toml` | Adicionar temporariamente `[functions.test-welcome-whatsapp]` com `verify_jwt = false` |
 
-### Texto a adicionar (ao final da mensagem, antes do fechamento)
-
-> 📲 Para aprender a usar o app passo a passo, acesse nossos tutoriais:
-> https://visitaprova.com.br/tutoriais
-
-Ambas as functions serão redeployadas automaticamente.
+Após confirmar o envio, ambos os arquivos serão revertidos (function deletada e config.toml restaurado).
 
