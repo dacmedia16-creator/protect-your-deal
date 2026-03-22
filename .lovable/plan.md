@@ -1,11 +1,12 @@
 
 
-## Adicionar vídeo "Visão Geral do APP" na página Tutoriais
+## Substituir vídeo "Visão Geral do APP" pela versão menor
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| Copiar vídeo | `user-uploads://Visão_geral.mp4` → `public/videos/tutorial-visao-geral.mp4` |
-| `src/pages/Tutoriais.tsx` | Adicionar novo card de vídeo com título "🎯 Visão Geral do APP" antes do placeholder |
+| Substituir vídeo | `user-uploads://Visão_geral_Menor.mp4` → `public/videos/tutorial-visao-geral.mp4` (sobrescreve o atual) |
+
+Nenhuma alteração de código necessária — o `<video>` já aponta para `/videos/tutorial-visao-geral.mp4`.
 
