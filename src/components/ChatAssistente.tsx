@@ -65,22 +65,32 @@ const fixTextSpacing = (text: string): string => {
     .replace(/  +/g, ' ');
 };
 
-// Process message content to extract image markers
-// TEMPORARIAMENTE DESATIVADO: Imagens desativadas até que screenshots corretos sejam adicionados
-const processMessageWithImages = (content: string): { text: string; images: string[] } => {
+// Process message content to extract image and video markers
+// TEMPORARIAMENTE DESATIVADO (imagens): Imagens desativadas até que screenshots corretos sejam adicionados
+const processMessageWithImages = (content: string): { text: string; images: string[]; videos: string[] } => {
   // Remove image markers from text but don't add images (temporarily disabled)
   const imagePattern = /\[\s*IMAGEM\s*:\s*([^\]]+?)\s*\]/gi;
   
   let text = content.replace(imagePattern, () => {
-    // Images temporarily disabled - just remove the markers
+    return '';
+  });
+  
+  // Extract video markers
+  const videoPattern = /\[\s*VIDEO\s*:\s*([^\]]+?)\s*\]/gi;
+  const videos: string[] = [];
+  
+  text = text.replace(videoPattern, (_match, path: string) => {
+    const trimmedPath = path.trim();
+    if (trimmedPath.startsWith('/videos/') && trimmedPath.endsWith('.mp4')) {
+      videos.push(trimmedPath);
+    }
     return '';
   });
   
   // Apply spacing fix to the text
   text = fixTextSpacing(text);
   
-  // Return empty images array - functionality temporarily disabled
-  return { text: text.trim(), images: [] };
+  return { text: text.trim(), images: [], videos };
 };
 
 interface UserContext {
