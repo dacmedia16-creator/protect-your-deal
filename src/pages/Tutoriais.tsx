@@ -61,6 +61,7 @@ const Tutoriais = () => {
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-instalar-ios.mp4"
+                poster="/videos/poster-tutorial-ios.png"
                 controls
                 playsInline
                 preload="metadata"
