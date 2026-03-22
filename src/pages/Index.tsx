@@ -284,6 +284,13 @@ const Index = () => {
                       Como Funciona
                     </Link>
                     <Link 
+                      to="/tutoriais" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Tutoriais
+                    </Link>
+                    <Link 
                       to="/instalar" 
                       onClick={() => setMobileMenuOpen(false)}
                       className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2"
