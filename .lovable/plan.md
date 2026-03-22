@@ -1,14 +1,13 @@
 
 
-## Adicionar card do vídeo "Visão Geral do APP" na página Tutoriais
+## Adicionar vídeo "Criando a Primeira Ficha de Visita" na página Tutoriais
 
-O vídeo `tutorial-visao-geral.mp4` já existe em `public/videos/`, mas o card correspondente não foi incluído no código de `Tutoriais.tsx`.
-
-### Mudança
+### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/Tutoriais.tsx` | Adicionar card de vídeo "🎯 Visão Geral do APP" como primeiro item do grid (antes do Android), apontando para `/videos/tutorial-visao-geral.mp4` |
+| Copiar vídeo | `user-uploads://Primeira_Ficha_menor.mp4` → `public/videos/tutorial-primeira-ficha.mp4` |
+| `src/pages/Tutoriais.tsx` | Adicionar card de vídeo "📝 Criando a Primeira Ficha de Visita" após o card do iOS e antes do placeholder "Em breve" |
 
-O grid ficará com 4 itens: Visão Geral, Android, iOS, Placeholder.
+O grid ficará com 5 itens: Visão Geral, Android, iOS, Primeira Ficha, Placeholder.
 
