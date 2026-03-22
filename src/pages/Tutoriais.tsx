@@ -7,7 +7,7 @@ import { ArrowLeft, PlayCircle } from 'lucide-react';
 
 const Tutoriais = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background scroll-smooth">
       <SEOHead 
         title="Tutoriais — VisitaProva"
         description="Aprenda a usar a plataforma VisitaProva com nossos vídeos tutoriais passo a passo."
@@ -32,7 +32,7 @@ const Tutoriais = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-heading font-bold mb-4">
             Como Usar
           </h1>
@@ -41,9 +41,22 @@ const Tutoriais = () => {
           </p>
         </div>
 
+        {/* Índice clicável */}
+        <nav className="max-w-md mx-auto mb-12 bg-muted/50 rounded-xl p-5">
+          <p className="text-sm font-semibold text-foreground mb-3 text-center">📋 Índice</p>
+          <ol className="space-y-2 list-decimal list-inside">
+            <li><a href="#android" className="text-sm text-primary hover:underline">Instalando o App no Android</a></li>
+            <li><a href="#ios" className="text-sm text-primary hover:underline">Instalando o App no iOS (iPhone)</a></li>
+            <li><a href="#visao-geral" className="text-sm text-primary hover:underline">Visão Geral do APP</a></li>
+            <li><a href="#primeira-ficha" className="text-sm text-primary hover:underline">Criando a Primeira Ficha de Visita</a></li>
+            <li><a href="#assinatura-parceiro" className="text-sm text-primary hover:underline">Assinatura com Corretor Parceiro</a></li>
+            <li><a href="#pesquisa-cliente" className="text-sm text-primary hover:underline">Pesquisa Pós-Visita para o Cliente</a></li>
+          </ol>
+        </nav>
+
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <Card className="overflow-hidden">
+          <Card id="android" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-instalar-android.mp4"
@@ -57,7 +70,7 @@ const Tutoriais = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card id="ios" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-instalar-ios.mp4"
@@ -72,7 +85,7 @@ const Tutoriais = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card id="visao-geral" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-visao-geral.mp4"
@@ -86,7 +99,7 @@ const Tutoriais = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card id="primeira-ficha" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-primeira-ficha.mp4"
@@ -100,7 +113,7 @@ const Tutoriais = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card id="assinatura-parceiro" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-assinatura-parceiro.mp4"
@@ -114,7 +127,7 @@ const Tutoriais = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card id="pesquisa-cliente" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
                 src="/videos/tutorial-pesquisa-cliente.mp4"
