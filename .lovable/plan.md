@@ -1,13 +1,19 @@
 
 
-## Adicionar vídeo "Assinatura com Corretor Parceiro" na página Tutoriais
+## Reordenar vídeos na página Tutoriais
 
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| Copiar vídeo | `user-uploads://Assinatura_uma_ponta-_Parceiro_Menor.mp4` → `public/videos/tutorial-assinatura-parceiro.mp4` |
-| `src/pages/Tutoriais.tsx` | Adicionar card de vídeo "🤝 Assinatura com Corretor Parceiro" após o card "Pesquisa Pós-Visita" e antes do placeholder "Em breve" |
+| `src/pages/Tutoriais.tsx` | Reordenar os 6 cards de vídeo no grid (linhas 46-130) na seguinte ordem: |
 
-O grid ficará com 7 itens: Visão Geral, Android, iOS, Primeira Ficha, Pesquisa Cliente, Assinatura Parceiro, Placeholder.
+1. 📱 Instalando o App no Android (`tutorial-instalar-android.mp4`)
+2. 📱 Instalando o App no iOS (`tutorial-instalar-ios.mp4` com poster)
+3. 🎯 Visão Geral do APP (`tutorial-visao-geral.mp4`)
+4. 📝 Criando a Primeira Ficha de Visita (`tutorial-primeira-ficha.mp4`)
+5. 🤝 Assinatura com Corretor Parceiro (`tutorial-assinatura-parceiro.mp4`)
+6. 📊 Pesquisa Pós-Visita para o Cliente (`tutorial-pesquisa-cliente.mp4`)
+
+Seguido pelo placeholder "Em breve".
 
