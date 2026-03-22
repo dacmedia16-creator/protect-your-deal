@@ -57,6 +57,20 @@ const Tutoriais = () => {
 
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <Card id="cadastro" className="overflow-hidden scroll-mt-24">
+            <CardContent className="p-0">
+              <video
+                src="/videos/tutorial-cadastro.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">📋 Como se Cadastrar</h2>
+              </div>
+            </CardContent>
+          </Card>
           <Card id="android" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
