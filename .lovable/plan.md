@@ -1,17 +1,18 @@
 
 
-## Adicionar vídeo "Como se Cadastrar" na página de Tutoriais
+## Adicionar lazy loading nos vídeos da página de Tutoriais
+
+Usar Intersection Observer para renderizar os `<video>` apenas quando o card fica visível na tela, evitando que o navegador carregue metadata de todos os vídeos simultaneamente.
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `public/videos/` | Copiar o vídeo enviado como `tutorial-cadastro.mp4` |
-| `src/pages/Tutoriais.tsx` | Adicionar item "Como se Cadastrar" como **primeiro** no índice e no grid de vídeos |
+| `src/pages/Tutoriais.tsx` | Criar componente interno `LazyVideo` que usa `useScrollAnimation` (já existente) para renderizar o `<video>` somente quando visível; substituir todos os `<video>` por `<LazyVideo>` |
 
-### Detalhes
+### Detalhes técnicos
 
-- Novo item no índice (posição 1): `Como se Cadastrar`
-- Os demais itens descem uma posição na numeração
-- Card com `id="cadastro"`, vídeo apontando para `/videos/tutorial-cadastro.mp4`, título `📋 Como se Cadastrar`
+- Reutilizar o hook `useScrollAnimation` com `rootMargin: '200px'` (pré-carrega um pouco antes de ficar visível)
+- Enquanto não visível, exibir um placeholder com `Skeleton` e ícone de play
+- Quando visível, renderizar o `<video>` com `preload="metadata"`
 
