@@ -45,6 +45,7 @@ const Tutoriais = () => {
         <nav className="max-w-md mx-auto mb-12 bg-muted/50 rounded-xl p-5">
           <p className="text-sm font-semibold text-foreground mb-3 text-center">📋 Índice</p>
           <ol className="space-y-2 list-decimal list-inside">
+            <li><a href="#cadastro" className="text-sm text-primary hover:underline">Como se Cadastrar</a></li>
             <li><a href="#android" className="text-sm text-primary hover:underline">Instalando o App no Android</a></li>
             <li><a href="#ios" className="text-sm text-primary hover:underline">Instalando o App no iOS (iPhone)</a></li>
             <li><a href="#visao-geral" className="text-sm text-primary hover:underline">Visão Geral do APP</a></li>
