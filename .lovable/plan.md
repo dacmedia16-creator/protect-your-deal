@@ -1,23 +1,18 @@
 
 
-## Criar página pública "Como Usar" com vídeos tutoriais
+## Adicionar vídeo "Instalando o APP no Android" na página Tutoriais
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/Tutoriais.tsx` | Nova página seguindo o padrão visual de `ComoFunciona.tsx` — header sticky com logo + voltar, título, grid de cards de vídeo (placeholder "Em breve"), footer |
-| `src/App.tsx` | Adicionar rota pública `/tutoriais` com import da página |
-| `src/pages/Index.tsx` | Adicionar link "Tutoriais" no menu do header e footer da landing |
+| Copiar vídeo | `user-uploads://Instalando_Visita_Prova_em_pe2-2.mp4` → `public/videos/tutorial-instalar-android.mp4` |
+| `src/pages/Tutoriais.tsx` | Substituir o card placeholder por um card com `<video>` do tutorial Android, título "Instalando o App no Android" e manter um segundo card placeholder para futuros vídeos |
 
-### Estrutura da página
+### Detalhes
 
-- SEOHead com título "Tutoriais — VisitaProva"
-- Header sticky com LogoIcon + botão "Voltar" (link para `/`)
-- Título "Como Usar" + subtítulo "Aprenda a usar a plataforma com nossos vídeos tutoriais"
-- Grid responsivo (1 col mobile, 2 cols desktop) pronto para receber cards de vídeo
-- Placeholder inicial: card com ícone e texto "Em breve novos tutoriais serão adicionados aqui"
-- Footer com ano atual
-
-Após implementação, você envia os vídeos e eu adiciono cada um como card com título, `<video>` e descrição.
+No grid de vídeos, adicionar como primeiro card:
+- Título: "📱 Instalando o App no Android"
+- `<video src="/videos/tutorial-instalar-android.mp4" controls playsInline preload="metadata" className="w-full rounded-xl" />`
+- Manter o card placeholder ao lado para futuros tutoriais
 
