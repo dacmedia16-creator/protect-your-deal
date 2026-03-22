@@ -360,6 +360,9 @@ const Index = () => {
               <Button size="lg" variant="outline" className="text-base" asChild>
                 <Link to="/como-funciona">Ver Como Funciona</Link>
               </Button>
+              <Button size="lg" variant="ghost" className="text-base" asChild>
+                <Link to="/tutoriais">📺 Como Usar (Vídeos)</Link>
+              </Button>
             </div>
           </div>
         </div>
