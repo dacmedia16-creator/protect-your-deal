@@ -1,69 +1,40 @@
 
 
-## Atualizar a Sofia com tutoriais em vídeo e recursos atualizados
+## Instruir Sofia a recomendar vídeos específicos por assunto
 
-### Objetivo
+### Problema
 
-Adicionar ao system prompt da Sofia o conhecimento sobre a página de tutoriais em vídeo, a página "Como Funciona" com vídeo demo, Tour de Áudio, Demo Animado, e a página AppLanding. Também adicionar contexto e quick replies para as rotas dessas páginas.
+O system prompt atual diz "indique os vídeos" genericamente, mas não instrui a Sofia a mapear perguntas a vídeos específicos com links diretos (âncoras na página de tutoriais).
 
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `supabase/functions/chat-assistente/index.ts` | Adicionar seção no SYSTEM_PROMPT sobre tutoriais em vídeo e páginas informativas |
-| `src/components/ChatAssistente.tsx` | Adicionar entradas no `PAGE_CONTEXT_MAP` para `/tutoriais`, `/como-funciona`, `/funcionalidades`, `/tour-audio`, `/demo` |
+| `supabase/functions/chat-assistente/index.ts` | Reescrever a seção de tutoriais no SYSTEM_PROMPT com mapeamento assunto→vídeo e instrução explícita para incluir links diretos |
 
-### Detalhes do System Prompt (nova seção)
+### Detalhes
 
-Adicionar após "Informações Técnicas" uma seção:
+Substituir a seção atual por:
 
 ```
 # 📺 Tutoriais em Vídeo
 
-O VisitaProva tem uma página completa de tutoriais em vídeo em /tutoriais.
-Sempre que alguém tiver dúvida sobre como usar o sistema, indique os vídeos!
+REGRA IMPORTANTE: Sempre que o usuário perguntar sobre um assunto que tem vídeo tutorial, inclua o link direto para o vídeo na resposta!
 
-Vídeos disponíveis:
-1. Como se Cadastrar - Passo a passo do cadastro na plataforma
-2. Instalando o App no Android - Como instalar o PWA no Android
-3. Instalando o App no iOS (iPhone) - Como instalar no Safari
-4. Visão Geral do APP - Tour por todas as funcionalidades
-5. Criando a Primeira Ficha de Visita - Como criar seu primeiro registro
-6. Assinatura com Corretor Parceiro - Como funciona a parceria
-7. Pesquisa Pós-Visita para o Cliente - Como funciona a pesquisa de satisfação
+Mapeamento de assuntos → vídeos:
+- Cadastro, criar conta, registro → "Como se Cadastrar" → /tutoriais#cadastro
+- Instalar app Android, PWA Android → "Instalando no Android" → /tutoriais#android
+- Instalar app iPhone, iOS, Safari → "Instalando no iOS" → /tutoriais#ios
+- Tour, funcionalidades do app, o que o app faz → "Visão Geral do APP" → /tutoriais#visao-geral
+- Criar ficha, primeira ficha, registrar visita → "Criando a Primeira Ficha" → /tutoriais#primeira-ficha
+- Parceiro, corretor parceiro, assinatura parceiro → "Assinatura com Parceiro" → /tutoriais#assinatura-parceiro
+- Pesquisa, pesquisa pós-visita, satisfação → "Pesquisa Pós-Visita" → /tutoriais#pesquisa-cliente
 
-# 📄 Páginas Informativas
+Formato sugerido na resposta:
+"📺 Temos um vídeo tutorial sobre isso! Acesse: /tutoriais#ancora"
 
-- /como-funciona - Página com vídeo demo e os 4 passos do sistema
-- /funcionalidades - Lista completa de funcionalidades com mockups
-- /tutoriais - Hub de vídeos tutoriais
-- /tour-audio - Tour narrado com áudio gerado por IA
-- /demo - Demonstração animada interativa do sistema
-- /app - Página de instalação rápida do app
+Página completa de todos os vídeos: /tutoriais
 ```
 
-### Detalhes do PAGE_CONTEXT_MAP (novas entradas)
-
-```typescript
-'/tutoriais': {
-  context: 'Página de tutoriais em vídeo',
-  quickReplies: ['Qual vídeo assistir primeiro?', 'Como criar minha primeira ficha?', 'Como instalar o app?']
-},
-'/como-funciona': {
-  context: 'Página explicativa com vídeo demo e 4 passos',
-  quickReplies: ['Quero criar minha conta', 'Como funciona o OTP?', 'Ver funcionalidades']
-},
-'/funcionalidades': {
-  context: 'Página de funcionalidades do VisitaProva',
-  quickReplies: ['Qual plano escolher?', 'Criar conta grátis', 'Como funciona a parceria?']
-},
-'/tour-audio': {
-  context: 'Tour narrado com áudio sobre o VisitaProva',
-  quickReplies: ['Quero testar o sistema', 'Ver tutoriais em vídeo', 'Criar conta grátis']
-},
-'/demo': {
-  context: 'Demonstração animada do sistema',
-  quickReplies: ['Quero criar minha conta', 'Ver tutoriais em vídeo', 'Falar com suporte']
-}
-```
+Isso faz a Sofia automaticamente incluir o link com âncora do vídeo relevante quando o assunto corresponder a um tutorial.
 
