@@ -100,6 +100,20 @@ const Tutoriais = () => {
               </div>
             </CardContent>
           </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <video
+                src="/videos/tutorial-pesquisa-cliente.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">📊 Pesquisa Pós-Visita para o Cliente</h2>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="border-dashed border-2 border-muted-foreground/20">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center gap-4">
               <PlayCircle className="h-12 w-12 text-muted-foreground/40" />
