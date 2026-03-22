@@ -229,6 +229,23 @@ export default function InstalarApp() {
           </CardContent>
         </Card>
 
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              🎬 Veja como instalar — Versão iOS (iPhone)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <video
+              src="/videos/instalando-app-ios.mp4"
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full rounded-xl"
+            />
+          </CardContent>
+        </Card>
+
         {/* Automatic Installation Button */}
         {isInstallable && (
           <Card className="mb-8 border-primary bg-primary/5">
