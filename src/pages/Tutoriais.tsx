@@ -3,7 +3,32 @@ import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogoIcon } from '@/components/LogoIcon';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { ArrowLeft, PlayCircle } from 'lucide-react';
+
+const LazyVideo = ({ src, poster }: { src: string; poster?: string }) => {
+  const { ref, isVisible } = useScrollAnimation({ rootMargin: '200px', triggerOnce: true });
+
+  return (
+    <div ref={ref} className="aspect-video w-full">
+      {isVisible ? (
+        <video
+          src={src}
+          poster={poster}
+          controls
+          playsInline
+          preload="metadata"
+          className="w-full h-full rounded-t-xl"
+        />
+      ) : (
+        <Skeleton className="w-full h-full rounded-t-xl flex items-center justify-center">
+          <PlayCircle className="h-12 w-12 text-muted-foreground/40" />
+        </Skeleton>
+      )}
+    </div>
+  );
+};
 
 const Tutoriais = () => {
   return (
