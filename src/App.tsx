@@ -26,6 +26,7 @@ import ContaDesativada from "./pages/ContaDesativada";
 import InstalarApp from "./pages/InstalarApp";
 import Funcionalidades from "./pages/Funcionalidades";
 import ComoFunciona from "./pages/ComoFunciona";
+import Tutoriais from "./pages/Tutoriais";
 // Tour pages
 import TourAudio from "./pages/TourAudio";
 import TourAudioLanding from "./pages/TourAudioLanding";
