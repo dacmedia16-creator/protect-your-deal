@@ -100,14 +100,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="ios" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-instalar-ios.mp4"
-                poster="/videos/poster-tutorial-ios.png"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-instalar-ios.mp4" poster="/videos/poster-tutorial-ios.png" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📱 Instalando o App no iOS (iPhone)</h2>
               </div>
