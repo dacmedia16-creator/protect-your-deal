@@ -216,6 +216,12 @@ const Index = () => {
               Como Funciona
             </Link>
             <Link 
+              to="/tutoriais" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Tutoriais
+            </Link>
+            <Link 
               to="/instalar" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
