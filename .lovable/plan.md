@@ -1,17 +1,26 @@
 
 
-## Adicionar vídeo tutorial iOS na página Instalar App
+## Usar imagem como capa do vídeo iOS
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| Copiar vídeo | `user-uploads://Instalando_Visita_Prova_IOS.mp4` → `public/videos/instalando-app-ios.mp4` |
-| `src/pages/InstalarApp.tsx` | Adicionar segundo card de vídeo para iOS logo após o card Android (linha 230) |
+| Copiar imagem | `user-uploads://image-276.png` → `public/videos/poster-ios.png` |
+| `src/pages/InstalarApp.tsx` | Adicionar `poster="/videos/poster-ios.png"` ao `<video>` do iOS (linha 239) |
 
 ### Detalhes
 
-Inserir após o card Android um novo card idêntico com:
-- Título: `🎬 Veja como instalar — Versão iOS (iPhone)`
-- `<video src="/videos/instalando-app-ios.mp4" controls playsInline preload="metadata" className="w-full rounded-xl" />`
+Adicionar o atributo `poster` ao elemento `<video>` do tutorial iOS para exibir a imagem enviada como thumbnail antes do play:
+
+```tsx
+<video
+  src="/videos/instalando-app-ios.mp4"
+  poster="/videos/poster-ios.png"
+  controls
+  playsInline
+  preload="metadata"
+  className="w-full rounded-xl"
+/>
+```
 
