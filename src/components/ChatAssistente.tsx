@@ -165,6 +165,26 @@ const PAGE_CONTEXT_MAP: Record<string, { context: string; quickReplies: string[]
   '/empresa/pesquisas': {
     context: 'Pesquisas pós-visita da imobiliária',
     quickReplies: ['Ver estatísticas', 'Exportar relatório', 'Filtrar por corretor']
+  },
+  '/tutoriais': {
+    context: 'Página de tutoriais em vídeo',
+    quickReplies: ['Qual vídeo assistir primeiro?', 'Como criar minha primeira ficha?', 'Como instalar o app?']
+  },
+  '/como-funciona': {
+    context: 'Página explicativa com vídeo demo e 4 passos',
+    quickReplies: ['Quero criar minha conta', 'Como funciona o OTP?', 'Ver funcionalidades']
+  },
+  '/funcionalidades': {
+    context: 'Página de funcionalidades do VisitaProva',
+    quickReplies: ['Qual plano escolher?', 'Criar conta grátis', 'Como funciona a parceria?']
+  },
+  '/tour-audio': {
+    context: 'Tour narrado com áudio sobre o VisitaProva',
+    quickReplies: ['Quero testar o sistema', 'Ver tutoriais em vídeo', 'Criar conta grátis']
+  },
+  '/demo': {
+    context: 'Demonstração animada do sistema',
+    quickReplies: ['Quero criar minha conta', 'Ver tutoriais em vídeo', 'Falar com suporte']
   }
 };
 

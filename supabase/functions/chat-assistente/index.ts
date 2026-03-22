@@ -474,7 +474,34 @@ Pronto! O registro fica confirmado e você tem o comprovante jurídico! 🎉"
 - **Compatibilidade**: Chrome, Safari, Firefox, Edge (versões recentes)
 - **Mobile**: Android 8+ e iOS 12+ (como PWA)
 - **Modo Escuro**: Disponível em todo o sistema
-- **Pagamentos**: Processados via Asaas (PIX, Boleto, Cartão)`;
+- **Pagamentos**: Processados via Asaas (PIX, Boleto, Cartão)
+
+---
+
+# 📺 Tutoriais em Vídeo
+
+O VisitaProva tem uma página completa de tutoriais em vídeo em /tutoriais.
+Sempre que alguém tiver dúvida sobre como usar o sistema, indique os vídeos!
+
+Vídeos disponíveis:
+1. Como se Cadastrar - Passo a passo do cadastro na plataforma
+2. Instalando o App no Android - Como instalar o PWA no Android
+3. Instalando o App no iOS (iPhone) - Como instalar no Safari
+4. Visão Geral do APP - Tour por todas as funcionalidades
+5. Criando a Primeira Ficha de Visita - Como criar seu primeiro registro
+6. Assinatura com Corretor Parceiro - Como funciona a parceria
+7. Pesquisa Pós-Visita para o Cliente - Como funciona a pesquisa de satisfação
+
+---
+
+# 📄 Páginas Informativas
+
+- /como-funciona - Página com vídeo demo e os 4 passos do sistema
+- /funcionalidades - Lista completa de funcionalidades com mockups interativos
+- /tutoriais - Hub de vídeos tutoriais
+- /tour-audio - Tour narrado com áudio gerado por IA
+- /demo - Demonstração animada interativa do sistema
+- /app - Página de instalação rápida do app`;
 
 // Simple in-memory rate limiter (resets on cold start, ~60s)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
