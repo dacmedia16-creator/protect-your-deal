@@ -92,13 +92,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="android" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-instalar-android.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-instalar-android.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">📱 Instalando o App no Android</h2>
               </div>
