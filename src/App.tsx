@@ -26,6 +26,7 @@ import ContaDesativada from "./pages/ContaDesativada";
 import InstalarApp from "./pages/InstalarApp";
 import Funcionalidades from "./pages/Funcionalidades";
 import ComoFunciona from "./pages/ComoFunciona";
+import Tutoriais from "./pages/Tutoriais";
 // Tour pages
 import TourAudio from "./pages/TourAudio";
 import TourAudioLanding from "./pages/TourAudioLanding";
@@ -148,6 +149,7 @@ const App = () => (
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/como-funciona" element={<ComoFunciona />} />
+                <Route path="/tutoriais" element={<Tutoriais />} />
                 <Route path="/app" element={<AppLanding />} />
 {/* Tour routes */}
                 <Route path="/tour" element={<TourAudioLanding />} />
