@@ -108,13 +108,7 @@ const Tutoriais = () => {
           </Card>
           <Card id="visao-geral" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-visao-geral.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
+              <LazyVideo src="/videos/tutorial-visao-geral.mp4" />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">🎯 Visão Geral do APP</h2>
               </div>
