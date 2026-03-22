@@ -215,7 +215,7 @@ export default function InstalarApp() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              🎬 Veja como instalar
+              🎬 Veja como instalar — Versão Android
             </CardTitle>
           </CardHeader>
           <CardContent>
