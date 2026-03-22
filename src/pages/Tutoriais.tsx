@@ -45,6 +45,7 @@ const Tutoriais = () => {
         <nav className="max-w-md mx-auto mb-12 bg-muted/50 rounded-xl p-5">
           <p className="text-sm font-semibold text-foreground mb-3 text-center">📋 Índice</p>
           <ol className="space-y-2 list-decimal list-inside">
+            <li><a href="#cadastro" className="text-sm text-primary hover:underline">Como se Cadastrar</a></li>
             <li><a href="#android" className="text-sm text-primary hover:underline">Instalando o App no Android</a></li>
             <li><a href="#ios" className="text-sm text-primary hover:underline">Instalando o App no iOS (iPhone)</a></li>
             <li><a href="#visao-geral" className="text-sm text-primary hover:underline">Visão Geral do APP</a></li>
@@ -56,6 +57,20 @@ const Tutoriais = () => {
 
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <Card id="cadastro" className="overflow-hidden scroll-mt-24">
+            <CardContent className="p-0">
+              <video
+                src="/videos/tutorial-cadastro.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">📋 Como se Cadastrar</h2>
+              </div>
+            </CardContent>
+          </Card>
           <Card id="android" className="overflow-hidden scroll-mt-24">
             <CardContent className="p-0">
               <video
