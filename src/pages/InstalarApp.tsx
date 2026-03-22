@@ -238,6 +238,7 @@ export default function InstalarApp() {
           <CardContent>
             <video
               src="/videos/instalando-app-ios.mp4"
+              poster="/videos/poster-ios.png"
               controls
               playsInline
               preload="metadata"
