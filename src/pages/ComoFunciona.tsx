@@ -96,16 +96,7 @@ const ComoFunciona = () => {
 
         {/* Video Demo */}
         <AnimatedSection delay={150} className="max-w-xl mx-auto mb-16">
-          <video
-            className="w-full rounded-xl shadow-lg border border-border"
-            controls
-            preload="metadata"
-            muted
-            poster={videoThumbnail}
-          >
-            <source src="/videos/demo.mp4" type="video/mp4" />
-            Seu navegador não suporta vídeo.
-          </video>
+          <LazyVideo src="/videos/demo.mp4" poster={videoThumbnail} muted />
         </AnimatedSection>
 
         {/* Steps */}
