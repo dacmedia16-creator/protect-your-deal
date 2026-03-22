@@ -1,26 +1,23 @@
 
 
-## Usar imagem como capa do vídeo iOS
+## Criar página pública "Como Usar" com vídeos tutoriais
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| Copiar imagem | `user-uploads://image-276.png` → `public/videos/poster-ios.png` |
-| `src/pages/InstalarApp.tsx` | Adicionar `poster="/videos/poster-ios.png"` ao `<video>` do iOS (linha 239) |
+| `src/pages/Tutoriais.tsx` | Nova página seguindo o padrão visual de `ComoFunciona.tsx` — header sticky com logo + voltar, título, grid de cards de vídeo (placeholder "Em breve"), footer |
+| `src/App.tsx` | Adicionar rota pública `/tutoriais` com import da página |
+| `src/pages/Index.tsx` | Adicionar link "Tutoriais" no menu do header e footer da landing |
 
-### Detalhes
+### Estrutura da página
 
-Adicionar o atributo `poster` ao elemento `<video>` do tutorial iOS para exibir a imagem enviada como thumbnail antes do play:
+- SEOHead com título "Tutoriais — VisitaProva"
+- Header sticky com LogoIcon + botão "Voltar" (link para `/`)
+- Título "Como Usar" + subtítulo "Aprenda a usar a plataforma com nossos vídeos tutoriais"
+- Grid responsivo (1 col mobile, 2 cols desktop) pronto para receber cards de vídeo
+- Placeholder inicial: card com ícone e texto "Em breve novos tutoriais serão adicionados aqui"
+- Footer com ano atual
 
-```tsx
-<video
-  src="/videos/instalando-app-ios.mp4"
-  poster="/videos/poster-ios.png"
-  controls
-  playsInline
-  preload="metadata"
-  className="w-full rounded-xl"
-/>
-```
+Após implementação, você envia os vídeos e eu adiciono cada um como card com título, `<video>` e descrição.
 
