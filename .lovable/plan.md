@@ -1,13 +1,20 @@
 
 
-## Criar Edge Function temporária para teste de WhatsApp
+## Adicionar link dos tutoriais na mensagem de boas-vindas do WhatsApp
+
+Inserir o link `https://visitaprova.com.br/tutoriais` nas mensagens de boas-vindas enviadas via WhatsApp no cadastro, orientando o novo usuário a acessar o passo a passo de como usar o app.
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `supabase/functions/test-welcome-whatsapp/index.ts` | Criar function sem autenticação que envia a mensagem de boas-vindas para `15981788214` via `send-whatsapp` usando `SERVICE_ROLE_KEY` |
-| `supabase/config.toml` | Adicionar `[functions.test-welcome-whatsapp]` com `verify_jwt = false` |
+| `supabase/functions/registro-corretor-autonomo/index.ts` (linha ~444) | Adicionar ao final da `mensagemBoasVindas`: parágrafo com link para os tutoriais |
+| `supabase/functions/registro-imobiliaria/index.ts` (linha ~306) | Mesma alteração na `mensagemBoasVindas` |
 
-A function será um endpoint simples que, ao ser chamado (POST ou GET), envia a mesma mensagem de boas-vindas usada no cadastro do corretor autônomo para o número fixo `15981788214`, usando o canal `default` (ZionTalk texto). Após o teste, a function pode ser removida.
+### Texto a adicionar (ao final da mensagem, antes do fechamento)
+
+> 📲 Para aprender a usar o app passo a passo, acesse nossos tutoriais:
+> https://visitaprova.com.br/tutoriais
+
+Ambas as functions serão redeployadas automaticamente.
 
