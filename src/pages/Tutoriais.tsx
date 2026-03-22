@@ -41,22 +41,8 @@ const Tutoriais = () => {
           </p>
         </div>
 
-        {/* Video Grid - placeholder */}
+        {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <video
-                src="/videos/tutorial-visao-geral.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
-              <div className="p-4">
-                <h2 className="font-heading font-semibold text-lg">🎯 Visão Geral do APP</h2>
-              </div>
-            </CardContent>
-          </Card>
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <video
@@ -89,6 +75,20 @@ const Tutoriais = () => {
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <video
+                src="/videos/tutorial-visao-geral.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">🎯 Visão Geral do APP</h2>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <video
                 src="/videos/tutorial-primeira-ficha.mp4"
                 controls
                 playsInline
@@ -103,20 +103,6 @@ const Tutoriais = () => {
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <video
-                src="/videos/tutorial-pesquisa-cliente.mp4"
-                controls
-                playsInline
-                preload="metadata"
-                className="w-full rounded-t-xl"
-              />
-              <div className="p-4">
-                <h2 className="font-heading font-semibold text-lg">📊 Pesquisa Pós-Visita para o Cliente</h2>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              <video
                 src="/videos/tutorial-assinatura-parceiro.mp4"
                 controls
                 playsInline
@@ -125,6 +111,20 @@ const Tutoriais = () => {
               />
               <div className="p-4">
                 <h2 className="font-heading font-semibold text-lg">🤝 Assinatura com Corretor Parceiro</h2>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <video
+                src="/videos/tutorial-pesquisa-cliente.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">📊 Pesquisa Pós-Visita para o Cliente</h2>
               </div>
             </CardContent>
           </Card>
