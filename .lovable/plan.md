@@ -1,40 +1,42 @@
 
 
-## Instruir Sofia a recomendar vídeos específicos por assunto
+## Embutir vídeos diretamente no chat da Sofia
 
-### Problema
+### Ideia
 
-O system prompt atual diz "indique os vídeos" genericamente, mas não instrui a Sofia a mapear perguntas a vídeos específicos com links diretos (âncoras na página de tutoriais).
+Em vez de Sofia enviar apenas um link de texto, ela pode incluir uma tag especial na resposta (ex: `[video:/videos/tutorial-cadastro.mp4]`) que o frontend intercepta e renderiza como um `<video>` player inline dentro do balão de chat.
 
-### Mudança
+### Como funciona
+
+1. **System Prompt** — Instruir Sofia a usar a sintaxe `[video:/videos/tutorial-cadastro.mp4]` quando quiser enviar um vídeo, junto com o texto explicativo.
+
+2. **Renderização no chat** — No componente `ChatAssistente.tsx`, antes de passar o conteúdo para `ReactMarkdown`, detectar padrões `[video:...]`, extrair os caminhos dos vídeos, e renderizar um `<video>` player compacto abaixo do texto.
+
+### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `supabase/functions/chat-assistente/index.ts` | Reescrever a seção de tutoriais no SYSTEM_PROMPT com mapeamento assunto→vídeo e instrução explícita para incluir links diretos |
+| `supabase/functions/chat-assistente/index.ts` | Atualizar o mapeamento de vídeos no SYSTEM_PROMPT para usar a sintaxe `[video:/videos/arquivo.mp4]` em vez de links de âncora |
+| `src/components/ChatAssistente.tsx` | Adicionar função que extrai `[video:...]` do conteúdo, remove do texto, e renderiza `<video>` inline no balão da mensagem |
 
-### Detalhes
-
-Substituir a seção atual por:
+### Mapeamento atualizado no System Prompt
 
 ```
-# 📺 Tutoriais em Vídeo
-
-REGRA IMPORTANTE: Sempre que o usuário perguntar sobre um assunto que tem vídeo tutorial, inclua o link direto para o vídeo na resposta!
-
 Mapeamento de assuntos → vídeos:
-- Cadastro, criar conta, registro → "Como se Cadastrar" → /tutoriais#cadastro
-- Instalar app Android, PWA Android → "Instalando no Android" → /tutoriais#android
-- Instalar app iPhone, iOS, Safari → "Instalando no iOS" → /tutoriais#ios
-- Tour, funcionalidades do app, o que o app faz → "Visão Geral do APP" → /tutoriais#visao-geral
-- Criar ficha, primeira ficha, registrar visita → "Criando a Primeira Ficha" → /tutoriais#primeira-ficha
-- Parceiro, corretor parceiro, assinatura parceiro → "Assinatura com Parceiro" → /tutoriais#assinatura-parceiro
-- Pesquisa, pesquisa pós-visita, satisfação → "Pesquisa Pós-Visita" → /tutoriais#pesquisa-cliente
-
-Formato sugerido na resposta:
-"📺 Temos um vídeo tutorial sobre isso! Acesse: /tutoriais#ancora"
-
-Página completa de todos os vídeos: /tutoriais
+- Cadastro → [video:/videos/tutorial-cadastro.mp4]
+- Android → [video:/videos/tutorial-android.mp4]
+- iOS → [video:/videos/tutorial-ios.mp4]
+- Visão geral → [video:/videos/tutorial-visao-geral.mp4]
+- Criar ficha → [video:/videos/tutorial-primeira-ficha.mp4]
+- Parceiro → [video:/videos/tutorial-assinatura-parceiro.mp4]
+- Pesquisa → [video:/videos/tutorial-pesquisa-cliente.mp4]
 ```
 
-Isso faz a Sofia automaticamente incluir o link com âncora do vídeo relevante quando o assunto corresponder a um tutorial.
+### Renderização no chat
+
+O vídeo aparece como um player compacto (arredondado, com controles) dentro do balão da Sofia, logo abaixo do texto explicativo. Tamanho máximo limitado à largura do balão (~85% do chat).
+
+### Observação
+
+Os vídeos são servidos de `/public/videos/` que já estão no projeto. O player usa `preload="metadata"` para não carregar o vídeo inteiro até o usuário dar play.
 
