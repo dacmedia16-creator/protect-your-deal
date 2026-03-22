@@ -846,6 +846,9 @@ const Index = () => {
               <Link to="/politica-privacidade" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Política de Privacidade
               </Link>
+              <Link to="/tutoriais" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Tutoriais
+              </Link>
             </div>
           </div>
           

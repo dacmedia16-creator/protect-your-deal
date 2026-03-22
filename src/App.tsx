@@ -149,6 +149,7 @@ const App = () => (
                 <Route path="/instalar" element={<InstalarApp />} />
                 <Route path="/funcionalidades" element={<Funcionalidades />} />
                 <Route path="/como-funciona" element={<ComoFunciona />} />
+                <Route path="/tutoriais" element={<Tutoriais />} />
                 <Route path="/app" element={<AppLanding />} />
 {/* Tour routes */}
                 <Route path="/tour" element={<TourAudioLanding />} />
