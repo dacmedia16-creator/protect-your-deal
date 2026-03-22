@@ -43,6 +43,20 @@ const Tutoriais = () => {
 
         {/* Video Grid - placeholder */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <video
+                src="/videos/tutorial-instalar-android.mp4"
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full rounded-t-xl"
+              />
+              <div className="p-4">
+                <h2 className="font-heading font-semibold text-lg">📱 Instalando o App no Android</h2>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="border-dashed border-2 border-muted-foreground/20">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center gap-4">
               <PlayCircle className="h-12 w-12 text-muted-foreground/40" />
