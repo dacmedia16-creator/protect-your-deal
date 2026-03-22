@@ -211,6 +211,24 @@ export default function InstalarApp() {
           </div>
         </div>
 
+        {/* Video Tutorial */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              🎬 Veja como instalar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <video
+              src="/videos/instalando-app.mp4"
+              controls
+              playsInline
+              preload="metadata"
+              className="w-full rounded-xl"
+            />
+          </CardContent>
+        </Card>
+
         {/* Automatic Installation Button */}
         {isInstallable && (
           <Card className="mb-8 border-primary bg-primary/5">
