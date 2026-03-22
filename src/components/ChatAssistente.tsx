@@ -15,6 +15,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   images?: string[];
+  videos?: string[];
 }
 
 // Help images mapping - Sofia can reference these by key
