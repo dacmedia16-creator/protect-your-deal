@@ -1,18 +1,16 @@
 
 
-## Adicionar lazy loading nos vídeos da página de Tutoriais
+## Adicionar lazy loading no vídeo da página Como Funciona
 
-Usar Intersection Observer para renderizar os `<video>` apenas quando o card fica visível na tela, evitando que o navegador carregue metadata de todos os vídeos simultaneamente.
-
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/Tutoriais.tsx` | Criar componente interno `LazyVideo` que usa `useScrollAnimation` (já existente) para renderizar o `<video>` somente quando visível; substituir todos os `<video>` por `<LazyVideo>` |
+| `src/pages/ComoFunciona.tsx` | Importar `useScrollAnimation` e `Skeleton`/`PlayCircle`, criar componente `LazyVideo` local (mesmo padrão de Tutoriais), substituir o `<video>` atual pelo `<LazyVideo>` |
 
-### Detalhes técnicos
+### Detalhes
 
-- Reutilizar o hook `useScrollAnimation` com `rootMargin: '200px'` (pré-carrega um pouco antes de ficar visível)
-- Enquanto não visível, exibir um placeholder com `Skeleton` e ícone de play
-- Quando visível, renderizar o `<video>` com `preload="metadata"`
+- Reutilizar o mesmo padrão já implementado em Tutoriais: Intersection Observer com `rootMargin: '200px'`, `triggerOnce: true`
+- Placeholder: `Skeleton` com ícone `PlayCircle` centralizado
+- Manter `poster={videoThumbnail}`, `controls`, `muted`, `preload="metadata"`
 
