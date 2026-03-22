@@ -331,6 +331,38 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Send welcome email (non-blocking)
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      console.log("Sending welcome email to:", admin.email);
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          action: 'send-template',
+          template_tipo: 'boas_vindas',
+          email: admin.email,
+          vars: {
+            nome: admin.nome,
+            email: admin.email,
+            link: 'https://visitaprova.com.br/auth',
+          },
+        }),
+      });
+
+      if (emailResponse.ok) {
+        console.log("Welcome email sent successfully");
+      } else {
+        const errText = await emailResponse.text();
+        console.error("Failed to send welcome email:", errText);
+      }
+    } catch (emailErr) {
+      console.error("Error sending welcome email:", emailErr);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
