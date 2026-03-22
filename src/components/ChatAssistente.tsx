@@ -422,7 +422,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       
       // Apply spacing fix and update message
       const fixedContent = fixTextSpacing(displayedContentRef.current);
-      const { text: processedText, images } = processMessageWithImages(fixedContent);
+      const { text: processedText, images, videos } = processMessageWithImages(fixedContent);
       
       setMessages(prev => {
         const updated = [...prev];
@@ -431,7 +431,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           updated[updated.length - 1] = {
             ...lastMsg,
             content: processedText,
-            images: images.length > 0 ? images : undefined
+            images: images.length > 0 ? images : undefined,
+            videos: videos.length > 0 ? videos : undefined
           };
         }
         return updated;
