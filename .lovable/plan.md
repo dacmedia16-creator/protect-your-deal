@@ -1,15 +1,14 @@
 
 
-## Testar envio de WhatsApp de boas-vindas
+## Adicionar email de boas-vindas no registro de imobiliária
 
-Criar novamente a Edge Function temporária `test-welcome-whatsapp` para enviar a mensagem de boas-vindas atualizada (com o link dos tutoriais) para o número `15981788214`, e removê-la após o teste.
-
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `supabase/functions/test-welcome-whatsapp/index.ts` | Criar function temporária que envia a mensagem de boas-vindas completa (incluindo link dos tutoriais) para `15981788214` via canal `default` |
-| `supabase/config.toml` | Adicionar temporariamente `[functions.test-welcome-whatsapp]` com `verify_jwt = false` |
+| `supabase/functions/registro-imobiliaria/index.ts` | Adicionar bloco de envio do email `boas_vindas` (não-bloqueante) logo após o bloco de WhatsApp (após linha 331), usando o mesmo padrão do corretor autônomo: `fetch` para `send-email` com `action: 'send-template'`, `template_tipo: 'boas_vindas'`, e variáveis `nome`, `email`, `link` |
 
-Após confirmar o envio, ambos os arquivos serão revertidos (function deletada e config.toml restaurado).
+### Código a inserir
+
+Bloco idêntico ao usado em `registro-corretor-autonomo`: chamada `fetch` para `/functions/v1/send-email` com `SERVICE_ROLE_KEY`, enviando o template `boas_vindas` para `admin.email` com `nome: admin.nome`, `email: admin.email` e `link: 'https://visitaprova.com.br/auth'`. Envio não-bloqueante (try/catch com log de erro).
 
