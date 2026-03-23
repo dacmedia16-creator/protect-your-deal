@@ -148,13 +148,13 @@ const Afiliados = () => {
                 <TrendingUp className="w-5 h-5 text-[#60A5FA]" />
                 <p className="font-semibold text-[#60A5FA]">Cenário Conservador</p>
               </div>
-              <p className="text-sm text-white/60 mb-4">100 corretores autônomos</p>
+              <p className="text-sm text-white/60 mb-4">100 imobiliárias pequenas</p>
               <div className="space-y-2 text-sm text-white/70 mb-6">
-                <p>100 × Profissional (R$79,90)</p>
+                <p>100 × Pequena (R$297,90)</p>
                 <p>Comissão 10%</p>
               </div>
-              <p className="text-3xl font-extrabold text-green-400">R$799<span className="text-xl">,00</span><span className="text-base text-white/50 font-normal">/mês</span></p>
-              <p className="text-sm text-white/40 mt-1">= R$9.588,00/ano</p>
+              <p className="text-3xl font-extrabold text-green-400">R$2.979<span className="text-xl">,00</span><span className="text-base text-white/50 font-normal">/mês</span></p>
+              <p className="text-sm text-white/40 mt-1">= R$35.748,00/ano</p>
             </div>
 
             {/* Misto */}
@@ -166,14 +166,14 @@ const Afiliados = () => {
                 <Crown className="w-5 h-5 text-green-400" />
                 <p className="font-semibold text-green-400">Cenário Misto</p>
               </div>
-              <p className="text-sm text-white/60 mb-4">60 corretores + 30 pequenas + 10 médias</p>
+              <p className="text-sm text-white/60 mb-4">60 pequenas + 30 médias + 10 grandes</p>
               <div className="space-y-1.5 text-sm text-white/70 mb-6">
-                <p>60 × R$79,90 = R$479,40</p>
-                <p>30 × R$297,90 = R$893,70</p>
-                <p>10 × R$497,90 = R$497,90</p>
+                <p>60 × R$297,90 = R$1.787,40</p>
+                <p>30 × R$497,90 = R$1.493,70</p>
+                <p>10 × R$697,90 = R$697,90</p>
               </div>
-              <p className="text-3xl font-extrabold text-green-400">R$1.871<span className="text-xl">,00</span><span className="text-base text-white/50 font-normal">/mês</span></p>
-              <p className="text-sm text-white/40 mt-1">= R$22.452,00/ano</p>
+              <p className="text-3xl font-extrabold text-green-400">R$3.979<span className="text-xl">,00</span><span className="text-base text-white/50 font-normal">/mês</span></p>
+              <p className="text-sm text-white/40 mt-1">= R$47.748,00/ano</p>
             </div>
 
             {/* Rede 2º Nível */}
@@ -184,10 +184,10 @@ const Afiliados = () => {
               </div>
               <p className="text-sm text-white/60 mb-4">10 afiliados × 20 vendas cada</p>
               <div className="space-y-2 text-sm text-white/70 mb-6">
-                <p>200 × R$79,90 × 5%</p>
+                <p>200 × R$297,90 × 5%</p>
                 <p>Comissão indireta</p>
               </div>
-              <p className="text-3xl font-extrabold text-purple-400">+R$799<span className="text-xl">,00</span><span className="text-base text-white/50 font-normal">/mês</span></p>
+              <p className="text-3xl font-extrabold text-purple-400">+R$2.979<span className="text-xl">,00</span><span className="text-base text-white/50 font-normal">/mês</span></p>
               <p className="text-sm text-white/40 mt-1">extra, além do direto</p>
             </div>
           </div>
@@ -196,7 +196,7 @@ const Afiliados = () => {
           <div className="max-w-md mx-auto mt-8 bg-gradient-to-r from-green-500/10 to-purple-500/10 border border-white/10 rounded-2xl p-6 text-center">
             <p className="text-white/60 text-sm mb-1">Total Combinado Potencial</p>
             <p className="text-4xl md:text-5xl font-extrabold text-green-400">
-              R$2.670<span className="text-2xl">,00</span><span className="text-lg text-white/50 font-normal">/mês</span>
+              R$6.958<span className="text-2xl">,00</span><span className="text-lg text-white/50 font-normal">/mês</span>
             </p>
           </div>
         </section>
