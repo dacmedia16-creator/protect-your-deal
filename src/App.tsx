@@ -30,6 +30,7 @@ import Tutoriais from "./pages/Tutoriais";
 // Tour pages
 import TourAudio from "./pages/TourAudio";
 import TourAudioLanding from "./pages/TourAudioLanding";
+import Afiliados from "./pages/Afiliados";
 // import DemoAnimado from "./pages/DemoAnimado";
 
 // Auth pages
