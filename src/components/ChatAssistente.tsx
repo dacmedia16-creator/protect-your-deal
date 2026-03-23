@@ -80,9 +80,10 @@ const processMessageWithImages = (content: string): { text: string; images: stri
   const videos: string[] = [];
   
   text = text.replace(videoPattern, (_match, path: string) => {
-    const trimmedPath = path.trim();
-    if (trimmedPath.startsWith('/videos/') && trimmedPath.endsWith('.mp4')) {
-      videos.push(trimmedPath);
+    // Normalize: remove internal spaces (fixTextSpacing can turn .mp4 into . mp4)
+    const normalizedPath = path.trim().replace(/\s+/g, '');
+    if (normalizedPath.startsWith('/videos/') && normalizedPath.endsWith('.mp4')) {
+      videos.push(normalizedPath);
     }
     return '';
   });
@@ -433,9 +434,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       
       displayedContentRef.current = displayed + nextChunk;
       
-      // Apply spacing fix and update message
-      const fixedContent = fixTextSpacing(displayedContentRef.current);
-      const { text: processedText, images, videos } = processMessageWithImages(fixedContent);
+      // Extract videos from RAW content first (before fixTextSpacing can break .mp4)
+      const { text: processedText, images, videos } = processMessageWithImages(displayedContentRef.current);
       
       setMessages(prev => {
         const updated = [...prev];
