@@ -1,42 +1,34 @@
 
 
-## Embutir vídeos diretamente no chat da Sofia
+## Corrigir vídeos inline no chat da Sofia
 
-### Ideia
+### Problema identificado
 
-Em vez de Sofia enviar apenas um link de texto, ela pode incluir uma tag especial na resposta (ex: `[video:/videos/tutorial-cadastro.mp4]`) que o frontend intercepta e renderiza como um `<video>` player inline dentro do balão de chat.
+O system prompt da edge function `chat-assistente` já contém as instruções com `[VIDEO:/videos/...]`, e o frontend já tem o código para extrair e renderizar os vídeos. Porém os vídeos não aparecem. Possíveis causas:
 
-### Como funciona
-
-1. **System Prompt** — Instruir Sofia a usar a sintaxe `[video:/videos/tutorial-cadastro.mp4]` quando quiser enviar um vídeo, junto com o texto explicativo.
-
-2. **Renderização no chat** — No componente `ChatAssistente.tsx`, antes de passar o conteúdo para `ReactMarkdown`, detectar padrões `[video:...]`, extrair os caminhos dos vídeos, e renderizar um `<video>` player compacto abaixo do texto.
+1. **Edge function não foi re-deployada** - o código atualizado pode não estar em produção
+2. **O modelo de IA não segue a sintaxe exatamente** - pode escrever o vídeo como texto em vez de usar `[VIDEO:...]`
 
 ### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `supabase/functions/chat-assistente/index.ts` | Atualizar o mapeamento de vídeos no SYSTEM_PROMPT para usar a sintaxe `[video:/videos/arquivo.mp4]` em vez de links de âncora |
-| `src/components/ChatAssistente.tsx` | Adicionar função que extrai `[video:...]` do conteúdo, remove do texto, e renderiza `<video>` inline no balão da mensagem |
+| Edge function `chat-assistente` | Re-deployar para garantir que o system prompt atualizado está em produção |
+| `supabase/functions/chat-assistente/index.ts` | Reforçar a instrução no system prompt, tornando-a mais enfática e repetida (o modelo precisa de ênfase para seguir formatação especial) |
+| `src/components/ChatAssistente.tsx` | Tornar o regex de extração mais tolerante (aceitar variações como `[video:...]`, `[Video:...]`, com ou sem espaços) e adicionar fallback para detectar URLs de vídeo em texto puro (ex: `/videos/tutorial-*.mp4`) |
 
-### Mapeamento atualizado no System Prompt
+### Detalhes técnicos
 
+**System prompt** - Adicionar no topo das regras de formato (seção mais visível):
 ```
-Mapeamento de assuntos → vídeos:
-- Cadastro → [video:/videos/tutorial-cadastro.mp4]
-- Android → [video:/videos/tutorial-android.mp4]
-- iOS → [video:/videos/tutorial-ios.mp4]
-- Visão geral → [video:/videos/tutorial-visao-geral.mp4]
-- Criar ficha → [video:/videos/tutorial-primeira-ficha.mp4]
-- Parceiro → [video:/videos/tutorial-assinatura-parceiro.mp4]
-- Pesquisa → [video:/videos/tutorial-pesquisa-cliente.mp4]
+REGRA CRÍTICA: Quando o assunto corresponder a um tutorial em vídeo, você DEVE incluir a tag [VIDEO:/videos/arquivo.mp4] na sua resposta. Isso faz o vídeo aparecer diretamente no chat!
 ```
 
-### Renderização no chat
+**Frontend fallback** - Além do regex `[VIDEO:...]`, detectar URLs soltas como `/videos/tutorial-*.mp4` no texto e renderizá-las como player:
+```typescript
+// Fallback: detect bare video paths in text
+const bareVideoPattern = /(\/videos\/[\w-]+\.mp4)/gi;
+```
 
-O vídeo aparece como um player compacto (arredondado, com controles) dentro do balão da Sofia, logo abaixo do texto explicativo. Tamanho máximo limitado à largura do balão (~85% do chat).
-
-### Observação
-
-Os vídeos são servidos de `/public/videos/` que já estão no projeto. O player usa `preload="metadata"` para não carregar o vídeo inteiro até o usuário dar play.
+**Re-deploy** da edge function para garantir que está em produção.
 
