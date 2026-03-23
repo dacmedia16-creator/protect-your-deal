@@ -489,8 +489,8 @@ REGRA IMPORTANTE: Sempre que o usuário perguntar sobre um assunto que tem víde
 
 Mapeamento de assuntos → vídeos (use a tag [VIDEO:] para embutir o vídeo na resposta):
 - Cadastro, criar conta, registro → "Como se Cadastrar" → [VIDEO:/videos/tutorial-cadastro.mp4]
-- Instalar app Android, PWA Android → "Instalando no Android" → [VIDEO:/videos/tutorial-android.mp4]
-- Instalar app iPhone, iOS, Safari → "Instalando no iOS" → [VIDEO:/videos/tutorial-ios.mp4]
+- Instalar app Android, PWA Android → "Instalando no Android" → [VIDEO:/videos/tutorial-instalar-android.mp4]
+- Instalar app iPhone, iOS, Safari → "Instalando no iOS" → [VIDEO:/videos/tutorial-instalar-ios.mp4]
 - Tour, funcionalidades do app, o que o app faz → "Visão Geral do APP" → [VIDEO:/videos/tutorial-visao-geral.mp4]
 - Criar ficha, primeira ficha, registrar visita → "Criando a Primeira Ficha" → [VIDEO:/videos/tutorial-primeira-ficha.mp4]
 - Parceiro, corretor parceiro, assinatura parceiro → "Assinatura com Parceiro" → [VIDEO:/videos/tutorial-assinatura-parceiro.mp4]

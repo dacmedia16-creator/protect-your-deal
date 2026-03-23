@@ -433,9 +433,8 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
       
       displayedContentRef.current = displayed + nextChunk;
       
-      // Apply spacing fix and update message
-      const fixedContent = fixTextSpacing(displayedContentRef.current);
-      const { text: processedText, images, videos } = processMessageWithImages(fixedContent);
+      // Extract videos from RAW content first (before fixTextSpacing can break .mp4)
+      const { text: processedText, images, videos } = processMessageWithImages(displayedContentRef.current);
       
       setMessages(prev => {
         const updated = [...prev];
