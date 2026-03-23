@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { SEOHead } from "@/components/SEOHead";
 import AnimatedSection from "@/components/AnimatedSection";
 import { LogoIcon } from "@/components/LogoIcon";
@@ -18,6 +19,10 @@ import {
 } from "lucide-react";
 
 const Afiliados = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const whatsappUrl =
     "https://wa.me/5515981788214?text=Quero%20ser%20afiliado%20VisitaProva";
 
