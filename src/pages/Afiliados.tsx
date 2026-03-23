@@ -148,7 +148,7 @@ const Afiliados = () => {
                 <TrendingUp className="w-5 h-5 text-[#60A5FA]" />
                 <p className="font-semibold text-[#60A5FA]">Cenário Conservador</p>
               </div>
-              <p className="text-sm text-white/60 mb-4">100 imobiliárias pequenas</p>
+              <p className="text-sm text-white/60 mb-4">100 imobiliárias pequenas <span className="text-[#60A5FA]">(apenas 0,2% do mercado)</span></p>
               <div className="space-y-2 text-sm text-white/70 mb-6">
                 <p>100 × Pequena (R$297,90)</p>
                 <p>Comissão 10%</p>
