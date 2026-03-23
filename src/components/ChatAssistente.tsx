@@ -75,8 +75,8 @@ const processMessageWithImages = (content: string): { text: string; images: stri
     return '';
   });
   
-  // Extract video markers
-  const videoPattern = /\[\s*VIDEO\s*:\s*([^\]]+?)\s*\]/gi;
+  // Extract video markers [VIDEO:/videos/arquivo.mp4] (case-insensitive, tolerant spacing)
+  const videoPattern = /\[\s*(?:VIDEO|VÍDEO|video|vídeo)\s*:\s*([^\]]+?)\s*\]/gi;
   const videos: string[] = [];
   
   text = text.replace(videoPattern, (_match, path: string) => {
@@ -86,6 +86,19 @@ const processMessageWithImages = (content: string): { text: string; images: stri
     }
     return '';
   });
+  
+  // Fallback: detect bare video paths in text (e.g. /videos/tutorial-cadastro.mp4)
+  const bareVideoPattern = /(\/videos\/[\w-]+\.mp4)/gi;
+  let bareMatch;
+  while ((bareMatch = bareVideoPattern.exec(text)) !== null) {
+    if (!videos.includes(bareMatch[1])) {
+      videos.push(bareMatch[1]);
+    }
+  }
+  // Remove bare video paths from displayed text
+  if (videos.length > 0) {
+    text = text.replace(bareVideoPattern, '');
+  }
   
   // Apply spacing fix to the text
   text = fixTextSpacing(text);
