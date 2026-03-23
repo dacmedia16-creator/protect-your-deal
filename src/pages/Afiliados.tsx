@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { SEOHead } from "@/components/SEOHead";
 import AnimatedSection from "@/components/AnimatedSection";
 import { LogoIcon } from "@/components/LogoIcon";
