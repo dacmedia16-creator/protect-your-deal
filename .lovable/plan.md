@@ -1,34 +1,44 @@
 
+## Correção do “Cadê o vídeo?” na Sofia
 
-## Corrigir vídeos inline no chat da Sofia
+### Diagnóstico (já confirmado)
+- A resposta da Sofia **está vindo com a tag** `[VIDEO:/videos/tutorial-cadastro.mp4]` (confirmado no stream da função de chat).
+- O problema está no frontend (`ChatAssistente`): o texto passa por `fixTextSpacing` **antes** da extração de vídeo, e isso quebra `.mp4` para `. mp4`, fazendo a validação falhar.
+- Resultado: a tag é removida do texto, mas o vídeo não é adicionado no `message.videos`.
 
-### Problema identificado
+### Mudanças propostas
 
-O system prompt da edge function `chat-assistente` já contém as instruções com `[VIDEO:/videos/...]`, e o frontend já tem o código para extrair e renderizar os vídeos. Porém os vídeos não aparecem. Possíveis causas:
+| Arquivo | Ajuste |
+|---|---|
+| `src/components/ChatAssistente.tsx` | Corrigir ordem do processamento: extrair vídeo do conteúdo bruto primeiro, aplicar `fixTextSpacing` só no texto final exibido |
+| `src/components/ChatAssistente.tsx` | Endurecer parser para aceitar pequenas variações de caminho e normalizar aliases comuns |
+| `supabase/functions/chat-assistente/index.ts` | Corrigir paths de Android/iOS no mapeamento para arquivos reais em `/public/videos` |
 
-1. **Edge function não foi re-deployada** - o código atualizado pode não estar em produção
-2. **O modelo de IA não segue a sintaxe exatamente** - pode escrever o vídeo como texto em vez de usar `[VIDEO:...]`
+### Implementação (passo a passo)
+1. **Ajustar pipeline no typing effect**
+   - Em vez de:
+     - `fixTextSpacing(raw)` → `processMessageWithImages(...)`
+   - Fazer:
+     - `processMessageWithImages(raw)` (e dentro dele manter fix apenas no texto já limpo).
+2. **Fortalecer extração de vídeo**
+   - Normalizar caminho extraído (`trim`, remover espaços inválidos antes de extensão, garantir prefixo `/videos/` quando possível).
+   - Manter fallback para caminho “solto” no texto.
+3. **Corrigir mapeamento da Sofia para nomes reais**
+   - Trocar:
+     - `/videos/tutorial-android.mp4` → `/videos/tutorial-instalar-android.mp4`
+     - `/videos/tutorial-ios.mp4` → `/videos/tutorial-instalar-ios.mp4`
+   - Manter os demais paths já corretos.
+4. **Teste manual focado**
+   - Perguntar:
+     - “como fazer o cadastro?”
+     - “como instalar no android?”
+     - “como instalar no iphone?”
+   - Verificar:
+     - player inline aparece no balão,
+     - tag `[VIDEO:...]` não aparece em texto,
+     - vídeo carrega e dá play normalmente.
 
-### Mudanças
-
-| Arquivo | O que fazer |
-|---------|------------|
-| Edge function `chat-assistente` | Re-deployar para garantir que o system prompt atualizado está em produção |
-| `supabase/functions/chat-assistente/index.ts` | Reforçar a instrução no system prompt, tornando-a mais enfática e repetida (o modelo precisa de ênfase para seguir formatação especial) |
-| `src/components/ChatAssistente.tsx` | Tornar o regex de extração mais tolerante (aceitar variações como `[video:...]`, `[Video:...]`, com ou sem espaços) e adicionar fallback para detectar URLs de vídeo em texto puro (ex: `/videos/tutorial-*.mp4`) |
-
-### Detalhes técnicos
-
-**System prompt** - Adicionar no topo das regras de formato (seção mais visível):
-```
-REGRA CRÍTICA: Quando o assunto corresponder a um tutorial em vídeo, você DEVE incluir a tag [VIDEO:/videos/arquivo.mp4] na sua resposta. Isso faz o vídeo aparecer diretamente no chat!
-```
-
-**Frontend fallback** - Além do regex `[VIDEO:...]`, detectar URLs soltas como `/videos/tutorial-*.mp4` no texto e renderizá-las como player:
-```typescript
-// Fallback: detect bare video paths in text
-const bareVideoPattern = /(\/videos\/[\w-]+\.mp4)/gi;
-```
-
-**Re-deploy** da edge function para garantir que está em produção.
-
+### Resultado esperado
+- A Sofia volta a mostrar vídeo inline consistentemente.
+- Sem depender só do prompt: parsing mais resiliente no frontend.
+- Android/iOS deixam de quebrar por nome de arquivo incorreto.
