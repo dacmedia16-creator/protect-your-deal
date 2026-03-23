@@ -19,7 +19,7 @@ import {
 
 const Afiliados = () => {
   const whatsappUrl =
-    "https://wa.me/5511999999999?text=Quero%20ser%20afiliado%20VisitaProva";
+    "https://wa.me/5515981788214?text=Quero%20ser%20afiliado%20VisitaProva";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#1E3A5F] text-white">
