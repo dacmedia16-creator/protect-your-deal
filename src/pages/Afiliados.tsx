@@ -1,5 +1,5 @@
 import { SEOHead } from "@/components/SEOHead";
-import { AnimatedSection } from "@/components/AnimatedSection";
+import AnimatedSection from "@/components/AnimatedSection";
 import { LogoIcon } from "@/components/LogoIcon";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
