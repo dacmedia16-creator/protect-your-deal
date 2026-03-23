@@ -80,9 +80,10 @@ const processMessageWithImages = (content: string): { text: string; images: stri
   const videos: string[] = [];
   
   text = text.replace(videoPattern, (_match, path: string) => {
-    const trimmedPath = path.trim();
-    if (trimmedPath.startsWith('/videos/') && trimmedPath.endsWith('.mp4')) {
-      videos.push(trimmedPath);
+    // Normalize: remove internal spaces (fixTextSpacing can turn .mp4 into . mp4)
+    const normalizedPath = path.trim().replace(/\s+/g, '');
+    if (normalizedPath.startsWith('/videos/') && normalizedPath.endsWith('.mp4')) {
+      videos.push(normalizedPath);
     }
     return '';
   });
