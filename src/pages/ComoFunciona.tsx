@@ -143,7 +143,7 @@ const ComoFunciona = () => {
         <AnimatedSection delay={900} className="text-center mt-12">
           <Button size="lg" className="text-base" asChild>
             <Link to="/registro-autonomo?plano=gratuito">
-              Criar Conta Grátis
+              Testar Grátis Agora
             </Link>
           </Button>
         </AnimatedSection>

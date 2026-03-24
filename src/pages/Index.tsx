@@ -249,7 +249,7 @@ const Index = () => {
                   <Link to="/auth">Entrar</Link>
                 </Button>
                 <Button asChild className="hidden sm:inline-flex">
-                  <a href="https://visitaprova.com.br/registro?plano=gratuito">Criar Conta Grátis</a>
+                  <a href="https://visitaprova.com.br/registro?plano=gratuito">Testar Grátis Agora</a>
                 </Button>
               </>
             )}
@@ -322,7 +322,7 @@ const Index = () => {
                         </Button>
                         <Button asChild className="w-full">
                           <a href="https://visitaprova.com.br/registro?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
-                            Criar Conta Grátis
+                            Testar Grátis Agora
                           </a>
                         </Button>
                       </>
@@ -842,7 +842,7 @@ const Index = () => {
           </p>
           <Button size="lg" variant="secondary" className="text-base" asChild>
             <Link to="/registro-autonomo?plano=gratuito">
-              Criar Conta Grátis
+              Testar Grátis Agora
             </Link>
           </Button>
         </div>
