@@ -15,6 +15,8 @@ import { LogoIcon } from '@/components/LogoIcon';
 import { WhatsAppFAB } from '@/components/WhatsAppFAB';
 import { DepoimentosSection } from '@/components/DepoimentosSection';
 import MobileAppMockup from '@/components/mockups/MobileAppMockup';
+import SofiaMockup from '@/components/mockups/SofiaMockup';
+import AnimatedSection from '@/components/AnimatedSection';
 import {
   FileCheck, 
   MessageSquare, 
@@ -571,6 +573,49 @@ const Index = () => {
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Sofia AI Assistant Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-transparent to-accent/5">
+        <div className="container mx-auto px-4">
+          <AnimatedSection>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Text */}
+              <div className="text-center md:text-left space-y-6">
+                <Badge variant="secondary" className="gap-1.5">
+                  <Wand2 className="h-3.5 w-3.5" />
+                  Assistente IA
+                </Badge>
+                <h2 className="text-3xl md:text-4xl font-heading font-bold">
+                  Conheça a Sofia: Sua Assistente Inteligente
+                </h2>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  A Sofia é sua assistente virtual integrada ao sistema. Ela conhece cada funcionalidade do VisitaProva e está pronta para te ajudar em tempo real.
+                </p>
+                <ul className="space-y-3 text-left">
+                  {[
+                    'Ajuda contextual em cada página',
+                    'Disponível 24/7, sem espera',
+                    'Respostas instantâneas sobre o sistema',
+                    'Sugere próximos passos e ações',
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-primary shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Mockup */}
+              <div className="flex justify-center md:justify-end">
+                <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 shadow-xl">
+                  <SofiaMockup />
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 
