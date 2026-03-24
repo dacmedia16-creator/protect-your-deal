@@ -114,7 +114,7 @@ const navGroups: NavGroup[] = [
       { href: '/admin/email', icon: Mail, label: 'Email Sistema' },
       { href: '/admin/sessoes', icon: Activity, label: 'Sessões' },
       { href: '/admin/marketing', icon: Image, label: 'Marketing' },
-      { href: '/admin/depoimentos', icon: MessageCircle, label: 'Depoimentos' },
+      { href: '/admin/depoimentos', icon: Users, label: 'Depoimentos' },
       { href: '/admin/diagnostico', icon: Stethoscope, label: 'Diagnóstico' },
       { href: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
     ],
