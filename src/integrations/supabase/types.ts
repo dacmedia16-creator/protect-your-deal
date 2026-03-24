@@ -683,6 +683,45 @@ export type Database = {
           },
         ]
       }
+      depoimentos: {
+        Row: {
+          ativo: boolean
+          avatar_url: string | null
+          cargo: string | null
+          created_at: string
+          empresa: string | null
+          id: string
+          nome: string
+          nota: number
+          ordem: number
+          texto: string
+        }
+        Insert: {
+          ativo?: boolean
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string
+          empresa?: string | null
+          id?: string
+          nome: string
+          nota?: number
+          ordem?: number
+          texto: string
+        }
+        Update: {
+          ativo?: boolean
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string
+          empresa?: string | null
+          id?: string
+          nome?: string
+          nota?: number
+          ordem?: number
+          texto?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           created_at: string

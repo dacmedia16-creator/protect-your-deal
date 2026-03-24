@@ -92,6 +92,7 @@ import AdminFichas from "./pages/admin/AdminFichas";
 import AdminRelatoriosFinanceiros from "./pages/admin/AdminRelatoriosFinanceiros";
 import AdminBackups from "./pages/admin/AdminBackups";
 import AdminMarketingImages from "./pages/admin/AdminMarketingImages";
+import AdminDepoimentos from "./pages/admin/AdminDepoimentos";
 import AdminAfiliados from "./pages/admin/AdminAfiliados";
 import AdminCupons from "./pages/admin/AdminCupons";
 import AdminComissoes from "./pages/admin/AdminComissoes";
@@ -256,6 +257,11 @@ const App = () => (
                 <Route path="/admin/marketing" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminMarketingImages />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/depoimentos" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminDepoimentos />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/afiliados" element={

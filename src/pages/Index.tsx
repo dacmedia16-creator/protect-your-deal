@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { LogoIcon } from '@/components/LogoIcon';
 import { WhatsAppFAB } from '@/components/WhatsAppFAB';
+import { DepoimentosSection } from '@/components/DepoimentosSection';
 import {
   FileCheck, 
   MessageSquare, 
@@ -642,6 +643,9 @@ const Index = () => {
           )}
         </div>
       </section>
+
+      {/* Depoimentos Section */}
+      <DepoimentosSection />
 
       {/* FAQ Section */}
       <section id="faq" className="py-20">
