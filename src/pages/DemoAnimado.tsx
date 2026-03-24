@@ -1051,7 +1051,7 @@ export default function DemoAnimado() {
             </p>
             <Button size="lg" className="gap-2 animate-pulse" asChild>
               <Link to="/registro">
-                Criar Conta Grátis
+                Testar Grátis Agora
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

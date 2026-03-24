@@ -227,7 +227,7 @@ const Funcionalidades = () => {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button asChild className="hidden sm:inline-flex">
-              <Link to="/registro-autonomo?plano=gratuito">Criar Conta Grátis</Link>
+              <Link to="/registro-autonomo?plano=gratuito">Testar Grátis Agora</Link>
             </Button>
 
             {/* Mobile menu */}
@@ -283,7 +283,7 @@ const Funcionalidades = () => {
                     </Button>
                     <Button asChild className="w-full">
                       <Link to="/registro-autonomo?plano=gratuito" onClick={() => setMobileMenuOpen(false)}>
-                        Criar Conta Grátis
+                        Testar Grátis Agora
                       </Link>
                     </Button>
                   </div>
@@ -440,7 +440,7 @@ const Funcionalidades = () => {
           <AnimatedSection delay={200}>
             <Button size="lg" variant="secondary" className="text-base" asChild>
               <Link to="/registro-autonomo?plano=gratuito">
-                Criar Conta Grátis
+                Testar Grátis Agora
               </Link>
             </Button>
           </AnimatedSection>

@@ -262,7 +262,7 @@ export default function TourAudioLanding() {
                 </Link>
                 <Link to="/registro">
                   <Button variant="outline" size="lg" className="text-lg px-10">
-                    Criar Conta Grátis
+                    Testar Grátis Agora
                   </Button>
                 </Link>
               </div>
