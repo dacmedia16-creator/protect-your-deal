@@ -519,6 +519,53 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Para Imobiliárias */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Building className="h-4 w-4" />
+              Para Imobiliárias
+            </div>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+              Gestão completa da sua equipe de corretores
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <Card className="bg-card border p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Controle em tempo real</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Tenha controle em tempo real de quais clientes sua equipe está atendendo.
+              </p>
+            </Card>
+            <Card className="bg-card border p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Proteção do histórico</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                Fim do roubo de clientes: se um corretor sair da imobiliária, o histórico de visitas e a prova de intermediação ficam com a empresa.
+              </p>
+            </Card>
+          </div>
+          <div className="text-center mt-10">
+            <Link to="/registro/tipo">
+              <Button size="lg" className="gap-2">
+                <Building className="h-5 w-5" />
+                Cadastrar minha Imobiliária
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="planos" className="py-20">
         <div className="container mx-auto px-4">
