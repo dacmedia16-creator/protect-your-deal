@@ -1,48 +1,51 @@
 
 
-## Criar Página Dedicada "Para Imobiliárias"
+## Adicionar Mockup de Celular na Hero Section
 
 ### Resumo
-Criar uma página standalone `/para-imobiliarias` seguindo o mesmo estilo da página `/afiliados` (dark gradient, AnimatedSection), focada em converter donos de imobiliárias. A seção existente na landing continuará como preview, com o CTA agora linkando para essa nova página.
+Transformar o hero da landing page de layout centralizado (texto-only) para um layout de 2 colunas: texto à esquerda e mockup de celular à direita, usando a screenshot real do app que o usuário enviou como referência visual.
 
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/ParaImobiliarias.tsx` | Criar página dedicada com as seções abaixo |
-| `src/App.tsx` | Adicionar rota pública `/para-imobiliarias` |
-| `src/pages/Index.tsx` | Atualizar CTA da seção "Para Imobiliárias" para linkar para `/para-imobiliarias` em vez de `/registro/tipo` |
+| `src/pages/Index.tsx` | Reestruturar a hero section (linhas 338-370) de `text-center max-w-3xl` para grid 2 colunas `md:grid-cols-2`. Texto/CTAs à esquerda (alinhados à esquerda em desktop), mockup à direita |
+| `src/components/mockups/MobileAppMockup.tsx` | Atualizar o conteúdo da tela para refletir melhor a interface real do app (baseado na screenshot): saudação "Bem-vindo!", cards de stats (Total Registros, Confirmadas, Pendentes), seção "Ações Rápidas" com items como "Novo Registro de Visita" e "Ver Registros" |
 
-### Estrutura da página `/para-imobiliarias`
+### Layout do Hero
 
-1. **Header** — Logo + "Voltar ao início" (mesmo padrão da página Afiliados)
+```text
+Desktop (md+):
+┌─────────────────────────────────────┐
+│  [Badge]              [Phone Mock]  │
+│  Prove Suas Visitas.  │ ┌────────┐ │
+│  Proteja Sua          │ │ App UI │ │
+│  Comissão.            │ │ Stats  │ │
+│                       │ │ Cards  │ │
+│  Subtítulo...         │ └────────┘ │
+│  [CTA] [CTA] [CTA]   │            │
+└─────────────────────────────────────┘
 
-2. **Hero** — Badge "Para Imobiliárias" + título impactante: "Gestão completa e segurança jurídica para sua imobiliária" + subtítulo + CTA "Cadastrar minha Imobiliária" → `/registro/tipo`
+Mobile:
+┌───────────────┐
+│ [Badge]       │
+│ Título        │
+│ Subtítulo     │
+│ [CTAs]        │
+│ [Phone Mock]  │
+└───────────────┘
+```
 
-3. **Problemas** — "Os riscos de não ter controle digital"
-   - Corretor sai e leva os clientes
-   - Sem prova de quem atendeu qual cliente
-   - Visitas sem rastreabilidade
-
-4. **Argumentos principais** — 2 cards destacados:
-   - "Controle em tempo real" — saber quais clientes sua equipe está atendendo
-   - "Proteção do histórico" — histórico fica com a empresa, não com o corretor
-
-5. **Funcionalidades para gestão** — Grid com benefícios específicos para imobiliárias:
-   - Dashboard com visão geral da equipe
-   - Relatórios por corretor
-   - Gestão de equipes
-   - Pesquisa de satisfação pós-visita
-
-6. **Como funciona** — Passos simplificados para a imobiliária
-
-7. **CTA Final** — "Cadastre sua Imobiliária" → `/registro/tipo`
-
-8. **Footer** — Logo + site
+### Mockup atualizado
+O `MobileAppMockup` será atualizado para mostrar uma tela mais fiel ao app real:
+- Header com logo "VisitaProva"
+- "Bem-vindo!" com subtítulo
+- 3 mini cards lado a lado: Total Registros (25), Confirmadas (23), Pendentes (2)
+- Cards de "Ações Rápidas": Novo Registro, Ver Registros
+- Bottom nav com ícones (Início, Registros, Convites, Pesquisas, Perfil)
 
 ### Estilo
-- Mesmo visual dark gradient da página Afiliados (`bg-gradient-to-b from-[#0F172A] to-[#1E3A5F] text-white`)
-- `AnimatedSection` para animações de scroll
-- Cards com `bg-white/5 backdrop-blur border border-white/10`
-- Cor de destaque: `#60A5FA` (azul) para consistência
+- Texto alinhado à esquerda em desktop, centralizado em mobile
+- Mockup com leve animação de float/shadow para destaque
+- Responsivo: mockup aparece abaixo do texto em mobile
 
