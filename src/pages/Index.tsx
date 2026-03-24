@@ -556,10 +556,10 @@ const Index = () => {
             </Card>
           </div>
           <div className="text-center mt-10">
-            <Link to="/registro/tipo">
+            <Link to="/para-imobiliarias">
               <Button size="lg" className="gap-2">
                 <Building className="h-5 w-5" />
-                Cadastrar minha Imobiliária
+                Saiba mais
               </Button>
             </Link>
           </div>

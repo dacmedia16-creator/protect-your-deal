@@ -155,6 +155,7 @@ const App = () => (
                 <Route path="/tutoriais" element={<Tutoriais />} />
                 <Route path="/app" element={<AppLanding />} />
                 <Route path="/afiliados" element={<Afiliados />} />
+                <Route path="/para-imobiliarias" element={<ParaImobiliarias />} />
 {/* Tour routes */}
                 <Route path="/tour" element={<TourAudioLanding />} />
                 <Route path="/tour-audio" element={<TourAudio />} />
