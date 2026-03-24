@@ -1,23 +1,48 @@
 
 
-## Adicionar seção "Para Imobiliárias" na Landing Page
+## Criar Página Dedicada "Para Imobiliárias"
 
 ### Resumo
-Inserir uma seção dedicada entre a seção "Prova Social / Autoridade" (linha 504) e a seção "Planos e Preços" (linha 522), com argumentos direcionados a imobiliárias.
+Criar uma página standalone `/para-imobiliarias` seguindo o mesmo estilo da página `/afiliados` (dark gradient, AnimatedSection), focada em converter donos de imobiliárias. A seção existente na landing continuará como preview, com o CTA agora linkando para essa nova página.
 
-### Mudança
+### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/Index.tsx` | Adicionar nova seção "Para Imobiliárias" entre as linhas 520-522 |
+| `src/pages/ParaImobiliarias.tsx` | Criar página dedicada com as seções abaixo |
+| `src/App.tsx` | Adicionar rota pública `/para-imobiliarias` |
+| `src/pages/Index.tsx` | Atualizar CTA da seção "Para Imobiliárias" para linkar para `/para-imobiliarias` em vez de `/registro/tipo` |
 
-### Conteúdo da seção
+### Estrutura da página `/para-imobiliarias`
 
-- **Badge**: Ícone Building + "Para Imobiliárias"
-- **Título**: "Gestão completa da sua equipe de corretores"
-- **2 cards** com os argumentos:
-  1. Ícone Users + "Controle em tempo real" — "Tenha controle em tempo real de quais clientes sua equipe está atendendo."
-  2. Ícone Shield + "Proteção do histórico" — "Fim do roubo de clientes: se um corretor sair da imobiliária, o histórico de visitas e a prova de intermediação ficam com a empresa."
-- **CTA**: Botão "Cadastrar minha Imobiliária" linkando para `/registro/tipo`
-- **Estilo**: fundo `bg-muted/30`, cards com `bg-card border`, consistente com as demais seções
+1. **Header** — Logo + "Voltar ao início" (mesmo padrão da página Afiliados)
+
+2. **Hero** — Badge "Para Imobiliárias" + título impactante: "Gestão completa e segurança jurídica para sua imobiliária" + subtítulo + CTA "Cadastrar minha Imobiliária" → `/registro/tipo`
+
+3. **Problemas** — "Os riscos de não ter controle digital"
+   - Corretor sai e leva os clientes
+   - Sem prova de quem atendeu qual cliente
+   - Visitas sem rastreabilidade
+
+4. **Argumentos principais** — 2 cards destacados:
+   - "Controle em tempo real" — saber quais clientes sua equipe está atendendo
+   - "Proteção do histórico" — histórico fica com a empresa, não com o corretor
+
+5. **Funcionalidades para gestão** — Grid com benefícios específicos para imobiliárias:
+   - Dashboard com visão geral da equipe
+   - Relatórios por corretor
+   - Gestão de equipes
+   - Pesquisa de satisfação pós-visita
+
+6. **Como funciona** — Passos simplificados para a imobiliária
+
+7. **CTA Final** — "Cadastre sua Imobiliária" → `/registro/tipo`
+
+8. **Footer** — Logo + site
+
+### Estilo
+- Mesmo visual dark gradient da página Afiliados (`bg-gradient-to-b from-[#0F172A] to-[#1E3A5F] text-white`)
+- `AnimatedSection` para animações de scroll
+- Cards com `bg-white/5 backdrop-blur border border-white/10`
+- Cor de destaque: `#60A5FA` (azul) para consistência
 
