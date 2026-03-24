@@ -1,29 +1,23 @@
 
 
-## Adicionar upload de foto nos depoimentos
+## Adicionar seção "Para Imobiliárias" na Landing Page
 
 ### Resumo
-Permitir que o super admin faça upload de uma foto ao cadastrar/editar um depoimento. A foto será armazenada no storage e exibida no card da landing page.
+Inserir uma seção dedicada entre a seção "Prova Social / Autoridade" (linha 504) e a seção "Planos e Preços" (linha 522), com argumentos direcionados a imobiliárias.
 
-### Mudanças
+### Mudança
 
-| Arquivo/Recurso | O que fazer |
-|-----------------|------------|
-| **Migration SQL** | Criar bucket `depoimentos` (público) no storage com política de leitura pública e upload/delete para super_admin |
-| `src/pages/admin/AdminDepoimentos.tsx` | Adicionar campo de upload de foto no dialog de criar/editar. Ao selecionar imagem, fazer upload para o bucket `depoimentos`, salvar a URL pública no campo `avatar_url` da tabela. Mostrar preview da foto atual. Permitir remover foto |
-| `src/components/DepoimentosSection.tsx` | Já suporta `avatar_url` — nenhuma mudança necessária |
+| Arquivo | O que fazer |
+|---------|------------|
+| `src/pages/Index.tsx` | Adicionar nova seção "Para Imobiliárias" entre as linhas 520-522 |
 
-### Detalhes técnicos
+### Conteúdo da seção
 
-**Storage bucket:**
-```sql
-INSERT INTO storage.buckets (id, name, public) VALUES ('depoimentos', 'depoimentos', true);
--- RLS: leitura pública, upload/delete para super_admin
-```
-
-**Admin dialog — campo de foto:**
-- Input file com accept `image/*`, limite 2MB
-- Preview da imagem atual (se houver)
-- Botão para remover foto
-- Upload ao selecionar arquivo, salva URL no `avatar_url`
+- **Badge**: Ícone Building + "Para Imobiliárias"
+- **Título**: "Gestão completa da sua equipe de corretores"
+- **2 cards** com os argumentos:
+  1. Ícone Users + "Controle em tempo real" — "Tenha controle em tempo real de quais clientes sua equipe está atendendo."
+  2. Ícone Shield + "Proteção do histórico" — "Fim do roubo de clientes: se um corretor sair da imobiliária, o histórico de visitas e a prova de intermediação ficam com a empresa."
+- **CTA**: Botão "Cadastrar minha Imobiliária" linkando para `/registro/tipo`
+- **Estilo**: fundo `bg-muted/30`, cards com `bg-card border`, consistente com as demais seções
 
