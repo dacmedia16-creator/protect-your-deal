@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { LogoIcon } from '@/components/LogoIcon';
 import { WhatsAppFAB } from '@/components/WhatsAppFAB';
 import { DepoimentosSection } from '@/components/DepoimentosSection';
+import MobileAppMockup from '@/components/mockups/MobileAppMockup';
 import {
   FileCheck, 
   MessageSquare, 
@@ -339,31 +340,38 @@ const Index = () => {
       <section className="relative py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Shield className="h-4 w-4" />
-              Proteja sua comissão desde a primeira visita
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Text Column */}
+            <div className="text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+                <Shield className="h-4 w-4" />
+                Proteja sua comissão desde a primeira visita
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
+                Prove Suas Visitas.{' '}
+                <span className="text-primary">Proteja Sua Comissão.</span>
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl md:mx-0 mx-auto">
+                Nunca mais perca um cliente por falta de comprovação. 
+                Registros digitais com confirmação via WhatsApp e comprovante PDF verificável.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                <Button size="lg" className="text-base shadow-lg" asChild>
+                  <a href="https://visitaprova.com.br/registro?plano=gratuito">
+                    Testar Grátis Agora
+                  </a>
+                </Button>
+                <Button size="lg" variant="outline" className="text-base" asChild>
+                  <Link to="/como-funciona">Ver Como Funciona</Link>
+                </Button>
+                <Button size="lg" variant="outline" className="text-base" asChild>
+                  <Link to="/tutoriais">📺 Como Usar (Vídeos)</Link>
+                </Button>
+              </div>
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
-              Prove Suas Visitas.{' '}
-              <span className="text-primary">Proteja Sua Comissão.</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Nunca mais perca um cliente por falta de comprovação. 
-              Registros digitais com confirmação via WhatsApp e comprovante PDF verificável.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-base shadow-lg" asChild>
-                <a href="https://visitaprova.com.br/registro?plano=gratuito">
-                  Testar Grátis Agora
-                </a>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base" asChild>
-                <Link to="/como-funciona">Ver Como Funciona</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base" asChild>
-                <Link to="/tutoriais">📺 Como Usar (Vídeos)</Link>
-              </Button>
+            {/* Mockup Column */}
+            <div className="flex justify-center md:justify-end">
+              <MobileAppMockup />
             </div>
           </div>
         </div>
