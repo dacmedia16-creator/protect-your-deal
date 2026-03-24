@@ -31,6 +31,7 @@ import Tutoriais from "./pages/Tutoriais";
 import TourAudio from "./pages/TourAudio";
 import TourAudioLanding from "./pages/TourAudioLanding";
 import Afiliados from "./pages/Afiliados";
+import ParaImobiliarias from "./pages/ParaImobiliarias";
 // import DemoAnimado from "./pages/DemoAnimado";
 
 // Auth pages
