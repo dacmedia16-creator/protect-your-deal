@@ -355,7 +355,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-base shadow-lg" asChild>
                 <a href="https://visitaprova.com.br/registro?plano=gratuito">
-                  Criar Conta Grátis
+                  Testar Grátis Agora
                 </a>
               </Button>
               <Button size="lg" variant="outline" className="text-base" asChild>
