@@ -31,6 +31,7 @@ import Tutoriais from "./pages/Tutoriais";
 import TourAudio from "./pages/TourAudio";
 import TourAudioLanding from "./pages/TourAudioLanding";
 import Afiliados from "./pages/Afiliados";
+import ParaImobiliarias from "./pages/ParaImobiliarias";
 // import DemoAnimado from "./pages/DemoAnimado";
 
 // Auth pages
@@ -154,6 +155,7 @@ const App = () => (
                 <Route path="/tutoriais" element={<Tutoriais />} />
                 <Route path="/app" element={<AppLanding />} />
                 <Route path="/afiliados" element={<Afiliados />} />
+                <Route path="/para-imobiliarias" element={<ParaImobiliarias />} />
 {/* Tour routes */}
                 <Route path="/tour" element={<TourAudioLanding />} />
                 <Route path="/tour-audio" element={<TourAudio />} />
