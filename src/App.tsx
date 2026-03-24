@@ -259,6 +259,11 @@ const App = () => (
                     <AdminMarketingImages />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/depoimentos" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminDepoimentos />
+                  </ProtectedRoute>
+                } />
                 <Route path="/admin/afiliados" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminAfiliados />
