@@ -661,6 +661,7 @@ const Index = () => {
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center mb-8">
                 {planos.map((plano) => {
+                  const isProfissional = plano.nome.toLowerCase().includes('profissional');
                   const isIndividual = plano.nome.toLowerCase().includes('individual');
                   const profileHint = plano.valor_mensal === 0 
                     ? 'Ideal para começar' 
@@ -671,19 +672,18 @@ const Index = () => {
                         : '';
                   
                   return (
-                    <Card key={plano.id} className={`relative overflow-hidden hover:shadow-lg transition-shadow ${isIndividual ? 'ring-2 ring-primary' : ''}`}>
-                      {/* Badge "Mais escolhido" para plano Individual */}
-                      {isIndividual && (
+                    <Card key={plano.id} className={`relative overflow-hidden hover:shadow-lg transition-shadow ${isProfissional ? 'ring-2 ring-primary' : ''}`}>
+                      {isProfissional && (
                         <Badge className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 bg-primary text-primary-foreground z-10">
                           Mais escolhido
                         </Badge>
                       )}
-                      {plano.valor_mensal === 0 && !isIndividual && (
+                      {plano.valor_mensal === 0 && !isProfissional && (
                         <div className="absolute top-3 right-3">
                           <Badge variant="success">Grátis</Badge>
                         </div>
                       )}
-                      <CardHeader className={isIndividual ? 'pt-10' : ''}>
+                      <CardHeader className={isProfissional ? 'pt-10' : ''}>
                         <CardTitle className="text-xl">{plano.nome}</CardTitle>
                         <CardDescription>{plano.descricao}</CardDescription>
                         {profileHint && (
