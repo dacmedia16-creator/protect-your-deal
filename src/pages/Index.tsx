@@ -725,7 +725,7 @@ const Index = () => {
                           )}
                         </ul>
 
-                        <Button className="w-full" variant={isIndividual ? 'default' : 'outline'} asChild>
+                        <Button className="w-full" variant={isProfissional ? 'default' : 'outline'} asChild>
                           <Link to={`/registro/tipo?plano=${plano.nome.toLowerCase().replace(/\s+/g, '-')}`}>
                             {plano.valor_mensal === 0 ? 'Testar Grátis Agora' : 'Escolher Plano'}
                           </Link>
