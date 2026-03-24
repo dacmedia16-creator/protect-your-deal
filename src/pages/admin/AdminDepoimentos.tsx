@@ -1,18 +1,18 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Star, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Loader2, Upload, X, User } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface DepoimentoForm {
   nome: string;
@@ -22,10 +22,11 @@ interface DepoimentoForm {
   nota: number;
   ordem: number;
   ativo: boolean;
+  avatar_url: string | null;
 }
 
 const emptyForm: DepoimentoForm = {
-  nome: '', cargo: '', empresa: '', texto: '', nota: 5, ordem: 0, ativo: true,
+  nome: '', cargo: '', empresa: '', texto: '', nota: 5, ordem: 0, ativo: true, avatar_url: null,
 };
 
 export default function AdminDepoimentos() {
@@ -33,6 +34,8 @@ export default function AdminDepoimentos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<DepoimentoForm>(emptyForm);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: depoimentos, isLoading } = useQuery({
     queryKey: ['admin-depoimentos'],
@@ -46,6 +49,58 @@ export default function AdminDepoimentos() {
     },
   });
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Imagem deve ter no máximo 2MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('depoimentos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('depoimentos')
+        .getPublicUrl(fileName);
+
+      setForm(f => ({ ...f, avatar_url: urlData.publicUrl }));
+      toast.success('Foto enviada');
+    } catch {
+      toast.error('Erro ao enviar foto');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (form.avatar_url) {
+      try {
+        const url = new URL(form.avatar_url);
+        const pathParts = url.pathname.split('/depoimentos/');
+        if (pathParts[1]) {
+          await supabase.storage.from('depoimentos').remove([pathParts[1]]);
+        }
+      } catch { /* ignore deletion errors */ }
+    }
+    setForm(f => ({ ...f, avatar_url: null }));
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = {
@@ -56,6 +111,7 @@ export default function AdminDepoimentos() {
         nota: form.nota,
         ordem: form.ordem,
         ativo: form.ativo,
+        avatar_url: form.avatar_url,
       };
       if (editingId) {
         const { error } = await supabase.from('depoimentos').update(payload).eq('id', editingId);
@@ -103,6 +159,7 @@ export default function AdminDepoimentos() {
     setForm({
       nome: d.nome, cargo: d.cargo || '', empresa: d.empresa || '',
       texto: d.texto, nota: d.nota, ordem: d.ordem, ativo: d.ativo,
+      avatar_url: d.avatar_url || null,
     });
     setDialogOpen(true);
   };
@@ -126,6 +183,46 @@ export default function AdminDepoimentos() {
                 <DialogTitle>{editingId ? 'Editar' : 'Novo'} Depoimento</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
+                {/* Photo upload */}
+                <div>
+                  <Label>Foto</Label>
+                  <div className="flex items-center gap-3 mt-1">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={form.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {form.nome ? form.nome.charAt(0).toUpperCase() : <User className="h-6 w-6" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={uploading}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+                          {form.avatar_url ? 'Trocar' : 'Enviar'}
+                        </Button>
+                        {form.avatar_url && (
+                          <Button type="button" variant="ghost" size="sm" onClick={handleRemovePhoto}>
+                            <X className="h-4 w-4 mr-1" /> Remover
+                          </Button>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground">Imagem até 2MB</span>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <Label>Nome *</Label>
                   <Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} />
@@ -163,7 +260,7 @@ export default function AdminDepoimentos() {
                 <Button
                   className="w-full"
                   onClick={() => saveMutation.mutate()}
-                  disabled={!form.nome || !form.texto || saveMutation.isPending}
+                  disabled={!form.nome || !form.texto || saveMutation.isPending || uploading}
                 >
                   {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Salvar
@@ -184,6 +281,7 @@ export default function AdminDepoimentos() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ordem</TableHead>
+                    <TableHead>Foto</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Cargo/Empresa</TableHead>
                     <TableHead>Nota</TableHead>
@@ -195,6 +293,14 @@ export default function AdminDepoimentos() {
                   {depoimentos.map((d: any) => (
                     <TableRow key={d.id}>
                       <TableCell>{d.ordem}</TableCell>
+                      <TableCell>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={d.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {d.nome?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
                       <TableCell className="font-medium">{d.nome}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {[d.cargo, d.empresa].filter(Boolean).join(' · ') || '—'}
