@@ -366,7 +366,7 @@ const Index = () => {
                 Prove Suas Visitas.{' '}
                 <span className="text-primary">Proteja Sua Comissão.</span>
               </h1>
-              <p className="text-red-600 font-semibold text-base md:text-lg mb-6 animate-fade-in">
+              <p className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in">
                 "Criado por um corretor que perdeu R$ 240 mil de comissão."
               </p>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl md:mx-0 mx-auto">
