@@ -1,21 +1,18 @@
 
 
-## Remover Arredondamento do Logo
-
-### Causa
-O componente `LogoIcon.tsx` aplica a classe `rounded-lg` na tag `<img>`, o que arredonda os cantos do logo.
+## Aumentar Tamanho Padrão do Logo
 
 ### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/components/LogoIcon.tsx` (linha 13) | Remover `rounded-lg` da className |
+| `src/components/LogoIcon.tsx` (linha 6) | Aumentar o `size` padrão de `44` para `56` |
 
 ```tsx
 // ANTES
-className={`rounded-lg object-contain ${className || ''}`}
+export const LogoIcon = ({ className, size = 44 }: LogoIconProps) => {
 
 // DEPOIS
-className={`object-contain ${className || ''}`}
+export const LogoIcon = ({ className, size = 56 }: LogoIconProps) => {
 ```
 
