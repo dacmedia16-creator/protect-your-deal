@@ -1,19 +1,17 @@
 
 
-## Atualizar Favicon para o Novo Logo
+## Adicionar Frase de Impacto no Hero da Landing Page
 
 ### Resumo
-Trocar o favicon do browser tab para usar a nova logo `vp-logo.png`.
+Adicionar a frase "Criado por um corretor que perdeu R$ 240 mil de comissão." como um destaque em vermelho abaixo do badge e acima do título principal no hero section.
 
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `index.html` | Trocar `<link rel="icon">` de `/favicon.svg` para `/vp-logo.png` (tipo `image/png`). Atualizar também `apple-touch-icon` e `mask-icon` para o novo logo |
+| `src/pages/Index.tsx` | Inserir uma nova linha entre o badge (linha 364) e o `<h1>` (linha 365) com a frase em destaque vermelho |
 
 ### Detalhes
-- Linha 60: `href="/favicon.svg"` → `href="/vp-logo.png"`, type `image/png`
-- Linha 61: manter fallback `.ico` ou remover
-- Linha 62: `href="/apple-touch-icon.png"` → `href="/vp-logo.png"`
-- Linha 63: `href="/favicon.svg"` → `href="/vp-logo.png"`
+- Inserir um `<p>` com a frase estilizada em vermelho (`text-red-600 font-semibold`) entre o badge e o h1
+- Formato: texto em tamanho médio (`text-base md:text-lg`), com destaque visual para chamar atenção como prova social/autoridade
 
