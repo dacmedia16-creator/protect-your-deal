@@ -10,7 +10,7 @@ export const LogoIcon = ({ className, size = 44 }: LogoIconProps) => {
       alt="VisitaProva" 
       width={size} 
       height={size}
-      className={`rounded-lg object-contain ${className || ''}`}
+      className={`object-contain ${className || ''}`}
     />
   );
 };
