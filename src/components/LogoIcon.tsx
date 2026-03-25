@@ -6,11 +6,11 @@ interface LogoIconProps {
 export const LogoIcon = ({ className, size = 32 }: LogoIconProps) => {
   return (
     <img 
-      src="/logo-icon.svg" 
+      src="/vp-logo.png" 
       alt="VisitaProva" 
       width={size} 
       height={size}
-      className={className}
+      className={`rounded-lg object-contain ${className || ''}`}
     />
   );
 };
