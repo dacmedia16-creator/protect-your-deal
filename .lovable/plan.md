@@ -1,20 +1,20 @@
 
 
-## Converter Depoimentos para Carrossel
+## Trocar o Logo do Header por Imagem PNG
 
 ### Resumo
-Trocar o grid de depoimentos por um carrossel que exibe um depoimento por vez, com navegação por setas e indicadores de posição (dots). Usar o componente `Carousel` já existente no projeto (`src/components/ui/carousel.tsx`) com autoplay.
+Substituir o ícone SVG atual (`LogoIcon`) no header da landing page pela nova logo PNG enviada pelo usuário (vp-logo.png).
 
-### Mudança
+### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/components/DepoimentosSection.tsx` | Substituir o `grid` por `Carousel`/`CarouselContent`/`CarouselItem` com autoplay via `embla-carousel-autoplay`. Adicionar setas de navegação e dots indicadores. Cada slide mostra 1 card centralizado (`max-w-2xl mx-auto`) |
+| `public/vp-logo.png` | Copiar a imagem enviada para o diretório público |
+| `src/components/LogoIcon.tsx` | Alterar de SVG (`/logo-icon.svg`) para a nova imagem PNG (`/vp-logo.png`), mantendo a mesma API (`size`, `className`) |
 
 ### Detalhes
-- Importar `Carousel`, `CarouselContent`, `CarouselItem`, `CarouselPrevious`, `CarouselNext` de `@/components/ui/carousel`
-- Usar plugin `embla-carousel-autoplay` (já instalado como dependência do carousel) com delay de 5s e `stopOnInteraction: false`
-- Cada `CarouselItem` contém o card do depoimento existente, centralizado
-- Adicionar dots de navegação abaixo do carrossel usando a API do Embla (`scrollTo`, `selectedScrollSnap`)
-- Setas posicionadas nas laterais do carrossel
+- Copiar `user-uploads://vp-logo.png` → `public/vp-logo.png`
+- Em `LogoIcon.tsx`, trocar o `src` de `/logo-icon.svg` para `/vp-logo.png`
+- Como `LogoIcon` é usado em vários lugares (header da landing, outras páginas institucionais, layouts), a troca centralizada atualiza tudo de uma vez
+- Adicionar `rounded-lg` ao componente para manter o arredondamento da logo original
 
