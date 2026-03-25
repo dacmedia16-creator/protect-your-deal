@@ -1,15 +1,20 @@
 
 
-## Trocar Logo por Nova Versão com Fundo Transparente
+## Aumentar Tamanho do Logo
 
-### Resumo
-Substituir o logo atual (`public/vp-logo.png`) pela nova imagem enviada (que já possui fundo escuro/transparente adequado), atualizando em todo o app.
+### Mudança
 
-### Mudanças
+| Arquivo | O que fazer |
+|---------|------------|
+| `src/components/LogoIcon.tsx` | Aumentar o `size` padrão de `32` para `44` |
 
-| Ação | Detalhes |
-|------|----------|
-| Copiar arquivo | `user-uploads://logo_vida_prova2_-_Editado.png` → `public/vp-logo.png` (sobrescreve o atual) |
+```tsx
+// ANTES
+export const LogoIcon = ({ className, size = 32 }: LogoIconProps) => {
 
-Todos os componentes (`LogoIcon`, `index.html`, etc.) já referenciam `/vp-logo.png`, então a troca do arquivo atualiza tudo automaticamente.
+// DEPOIS
+export const LogoIcon = ({ className, size = 44 }: LogoIconProps) => {
+```
+
+Isso aumenta o logo em todos os locais que usam o tamanho padrão. Locais que passam `size` explicitamente não serão afetados.
 
