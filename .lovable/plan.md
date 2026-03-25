@@ -1,34 +1,13 @@
 
 
-## Adicionar Seção "Palavras do CEO" na Página Sobre Nós
+## Adicionar "Sobre Nós" no Header da Landing Page
 
 ### Resumo
-Inserir uma seção com a foto do CEO e sua citação entre a seção "Nossa História" e "Por que existimos" na página `/sobre`.
+Adicionar o link "Sobre Nós" na navegação do header da landing page (desktop e mobile), apontando para `/sobre`.
 
-### Mudanças
+### Mudança
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/assets/ceo-photo.png` | Copiar a imagem enviada pelo usuário |
-| `src/pages/SobreNos.tsx` | Adicionar seção "Palavras do CEO" após a seção "Nossa História" (após linha ~157) |
-
-### Design da seção
-
-Layout 2 colunas (`md:grid-cols-[280px_1fr]`):
-- **Esquerda**: Foto do CEO em formato arredondado com borda e sombra
-- **Direita**: Citação em destaque com aspas estilizadas, nome e cargo abaixo
-
-```text
-┌──────────────────────────────────────┐
-│  ┌──────────┐  "O Visita Prova      │
-│  │          │  nasceu de uma dor     │
-│  │  [FOTO]  │  real que eu..."       │
-│  │          │                        │
-│  └──────────┘  — Fundador & CEO      │
-└──────────────────────────────────────┘
-```
-
-- Citação com `border-l-4 border-primary` e texto em itálico
-- Fundo limpo (sem `bg-muted/30` pois a seção anterior já usa)
-- `AnimatedSection` com delay incremental
+| `src/pages/Index.tsx` | Adicionar link "Sobre Nós" → `/sobre` no nav desktop (após "Tutoriais", linha ~227) e no nav mobile (após "Tutoriais", linha ~296) |
 
