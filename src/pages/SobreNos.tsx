@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SEOHead } from "@/components/SEOHead";
+import ceoPhoto from "@/assets/ceo-photo.png";
 import AnimatedSection from "@/components/AnimatedSection";
 import { LogoIcon } from "@/components/LogoIcon";
 import { Button } from "@/components/ui/button";
