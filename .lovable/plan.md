@@ -1,20 +1,18 @@
 
 
-## Aumentar Tamanho do Logo
+## Atualizar Logo nos Arquivos PWA e OG Image
 
-### Mudança
+### Problema
+O logo foi trocado apenas no `vp-logo.png`, mas os arquivos usados para preview de link (Open Graph) e PWA continuam com o logo antigo:
+- `public/pwa-512x512.png` — usado no `og:image`, `twitter:image` e no manifest PWA
+- `public/pwa-192x192.svg` — ícone PWA menor
 
-| Arquivo | O que fazer |
-|---------|------------|
-| `src/components/LogoIcon.tsx` | Aumentar o `size` padrão de `32` para `44` |
+### Mudanças
 
-```tsx
-// ANTES
-export const LogoIcon = ({ className, size = 32 }: LogoIconProps) => {
+| Ação | Detalhes |
+|------|----------|
+| Copiar `public/vp-logo.png` → `public/pwa-512x512.png` | Atualiza o preview de links (WhatsApp, redes sociais) e ícone PWA 512px |
+| Copiar `public/vp-logo.png` → `public/pwa-192x192.png` | Atualiza ícone PWA 192px |
 
-// DEPOIS
-export const LogoIcon = ({ className, size = 44 }: LogoIconProps) => {
-```
-
-Isso aumenta o logo em todos os locais que usam o tamanho padrão. Locais que passam `size` explicitamente não serão afetados.
+**Nota:** O preview no WhatsApp pode demorar para atualizar por causa do cache. Mas após o deploy, links novos já mostrarão o logo correto.
 
