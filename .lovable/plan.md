@@ -1,32 +1,44 @@
 
 
-## Adicionar Toggle "Exibir no Site" nos Planos
+## Plano: Mostrar logo VisitaProva quando não há imobiliária vinculada
 
-### Contexto
-Atualmente, o campo `ativo` controla se o plano aparece para cadastro e no site. O pedido é ter um controle separado para visibilidade no site público (landing page), independente do plano estar ativo.
+### O que muda
 
-### Mudanças
+Na página de login (`src/pages/Auth.tsx`), quando o email digitado não está vinculado a nenhuma imobiliária (ou seja, `imobiliariaData` é `null` e não está carregando), exibir o logo do VisitaProva no lugar onde apareceria o logo da imobiliária.
 
-**1. Migração de banco de dados**
-- Adicionar coluna `exibir_no_site` (boolean, default `true`) na tabela `planos`
+### Alteração
 
-```sql
-ALTER TABLE public.planos ADD COLUMN exibir_no_site boolean NOT NULL DEFAULT true;
+**Arquivo: `src/pages/Auth.tsx`**
+
+Onde hoje existe (linhas 531-548):
+```tsx
+{/* Logo da imobiliária quando encontrada */}
+{imobiliariaData && (
+  <div>...</div>
+)}
 ```
 
-**2. AdminPlanos.tsx — Form e UI**
-- Adicionar `exibir_no_site` ao `PlanoForm` interface e `defaultForm`
-- Adicionar um novo Switch "Exibir no site" no formulário de edição/criação (ao lado do switch "Plano ativo")
-- Mostrar um badge "Oculto no site" nos cards dos planos quando `exibir_no_site = false`
+Mudar para: sempre mostrar o bloco de logo. Se `imobiliariaData` existir, mostrar o logo/nome da imobiliária (comportamento atual). Se não existir e não estiver carregando, mostrar o `LogoIcon` do VisitaProva com o nome "VisitaProva".
 
-**3. Páginas públicas — Filtrar por `exibir_no_site`**
-- `src/pages/Index.tsx` — adicionar `.eq('exibir_no_site', true)` na query de planos
-- `src/pages/auth/RegistroCorretorAutonomo.tsx` — idem
-- `src/pages/auth/RegistroImobiliaria.tsx` — idem
+```tsx
+{imobiliariaData ? (
+  <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
+    {imobiliariaData.logo_url ? (
+      <img src={imobiliariaData.logo_url} alt={imobiliariaData.nome} ... />
+    ) : (
+      <div className="h-16 w-16 rounded-lg bg-muted ...">
+        <Building2 ... />
+      </div>
+    )}
+    <span>...</span>
+  </div>
+) : !loadingImobiliaria && (
+  <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
+    <LogoIcon size={48} />
+    <span className="text-sm text-muted-foreground font-medium">VisitaProva</span>
+  </div>
+)}
+```
 
-**4. Páginas internas de assinatura (manter sem filtro)**
-- `CorretorAssinatura.tsx` e `EmpresaAssinatura.tsx` já filtram por `ativo` — adicionar também `.eq('exibir_no_site', true)` para consistência
-
-### Resultado
-O admin poderá manter um plano ativo (assinaturas existentes funcionam) mas ocultá-lo do site público e das telas de registro/assinatura.
+O `LogoIcon` já está importado no arquivo.
 
