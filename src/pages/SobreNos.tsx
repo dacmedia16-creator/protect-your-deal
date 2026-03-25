@@ -155,7 +155,7 @@ const SobreNos = () => {
           <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 items-center">
             <div className="flex justify-center md:justify-start">
               <img
-                src="/src/assets/ceo-photo.png"
+                src={ceoPhoto}
                 alt="Foto do CEO do VisitaProva"
                 className="w-64 h-64 md:w-[280px] md:h-[280px] rounded-2xl object-cover shadow-lg border-2 border-primary/10"
               />
