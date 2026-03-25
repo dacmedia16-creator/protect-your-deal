@@ -959,6 +959,9 @@ const Index = () => {
               <Link to="/afiliados" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Seja um Afiliado
               </Link>
+              <Link to="/sobre" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Sobre Nós
+              </Link>
             </div>
           </div>
           
