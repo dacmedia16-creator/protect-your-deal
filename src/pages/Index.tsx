@@ -226,6 +226,12 @@ const Index = () => {
               Tutoriais
             </Link>
             <Link 
+              to="/sobre" 
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sobre Nós
+            </Link>
+            <Link 
               to="/instalar" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
@@ -293,6 +299,13 @@ const Index = () => {
                       className="text-base font-medium text-foreground hover:text-primary transition-colors"
                     >
                       Tutoriais
+                    </Link>
+                    <Link 
+                      to="/sobre" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Sobre Nós
                     </Link>
                     <Link 
                       to="/instalar" 
