@@ -149,8 +149,34 @@ const SobreNos = () => {
           </div>
         </AnimatedSection>
 
+        {/* Palavras do CEO */}
+        <AnimatedSection delay={175} className="mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 items-center">
+            <div className="flex justify-center md:justify-start">
+              <img
+                src="/src/assets/ceo-photo.png"
+                alt="Foto do CEO do VisitaProva"
+                className="w-64 h-64 md:w-[280px] md:h-[280px] rounded-2xl object-cover shadow-lg border-2 border-primary/10"
+              />
+            </div>
+            <div>
+              <div className="border-l-4 border-primary pl-6">
+                <p className="text-lg md:text-xl italic text-muted-foreground leading-relaxed">
+                  "O Visita Prova nasceu de uma dor real que eu enfrentei no mercado imobiliário. 
+                  Desde então, meu objetivo passou a ser claro: ajudar o corretor de imóveis a ser 
+                  mais respeitado, elevando o nível de profissionalismo da operação e educando 
+                  compradores, vendedores e profissionais sobre o valor da intermediação."
+                </p>
+                <p className="mt-4 font-heading font-semibold text-foreground">
+                  — Fundador & CEO
+                </p>
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
+
         {/* Por que existimos */}
-        <AnimatedSection delay={200} className="mb-16">
+        <AnimatedSection delay={225} className="mb-16">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">
               Por que <span className="text-primary">existimos</span>
