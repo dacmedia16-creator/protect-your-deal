@@ -362,6 +362,9 @@ const Index = () => {
                 <Shield className="h-4 w-4" />
                 Proteja sua comissão desde a primeira visita
               </div>
+              <p className="text-red-600 font-semibold text-base md:text-lg mb-4 animate-fade-in">
+                "Criado por um corretor que perdeu R$ 240 mil de comissão."
+              </p>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
                 Prove Suas Visitas.{' '}
                 <span className="text-primary">Proteja Sua Comissão.</span>
