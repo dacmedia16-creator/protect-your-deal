@@ -1,16 +1,19 @@
 
 
-## Corrigir Logo na Página de Login
+## Atualizar Favicon para o Novo Logo
 
-### Problema
-Na página `/auth`, o logo no painel azul esquerdo não aparece. A classe `brightness-0 invert` aplicada ao PNG não está funcionando corretamente para torná-lo branco sobre o fundo azul.
+### Resumo
+Trocar o favicon do browser tab para usar a nova logo `vp-logo.png`.
 
-### Correção
+### Mudanças
 
 | Arquivo | O que fazer |
 |---------|------------|
-| `src/pages/Auth.tsx` (linha 466) | Remover `brightness-0 invert` e usar `filter: drop-shadow(...)` ou simplesmente remover o filtro e deixar o logo com suas cores originais. Como o logo PNG tem fundo transparente com cores escuras, a solução é manter o logo original (sem filtro) já que ele deve ser visível sobre o fundo azul, ou aplicar `invert` + `brightness-200` para garantir contraste |
+| `index.html` | Trocar `<link rel="icon">` de `/favicon.svg` para `/vp-logo.png` (tipo `image/png`). Atualizar também `apple-touch-icon` e `mask-icon` para o novo logo |
 
-### Abordagem recomendada
-Trocar `className="brightness-0 invert"` por `className="brightness-0 invert"` não funciona bem com PNGs coloridos. A melhor solução: remover os filtros e deixar o logo com suas cores naturais, já que o novo logo PNG provavelmente já tem boa visibilidade. Se o logo for escuro, usar apenas `className="invert"`.
+### Detalhes
+- Linha 60: `href="/favicon.svg"` → `href="/vp-logo.png"`, type `image/png`
+- Linha 61: manter fallback `.ico` ou remover
+- Linha 62: `href="/apple-touch-icon.png"` → `href="/vp-logo.png"`
+- Linha 63: `href="/favicon.svg"` → `href="/vp-logo.png"`
 
