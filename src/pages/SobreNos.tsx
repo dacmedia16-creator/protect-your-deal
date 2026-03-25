@@ -176,7 +176,7 @@ const SobreNos = () => {
         </AnimatedSection>
 
         {/* Por que existimos */}
-        <AnimatedSection delay={200} className="mb-16">
+        <AnimatedSection delay={225} className="mb-16">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">
               Por que <span className="text-primary">existimos</span>
