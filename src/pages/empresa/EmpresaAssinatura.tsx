@@ -63,6 +63,7 @@ export default function EmpresaAssinatura() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .eq('exibir_no_site', true)
           .order('valor_mensal', { ascending: true });
 
         setPlanos(planosData || []);

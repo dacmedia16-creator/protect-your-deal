@@ -71,6 +71,7 @@ export default function CorretorAssinatura() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .eq('exibir_no_site', true)
           .order('valor_mensal');
 
         setPlanos(planosData || []);

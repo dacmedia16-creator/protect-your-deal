@@ -43,6 +43,7 @@ interface Plano {
   ativo: boolean;
   asaas_plan_id: string | null;
   tipo_cadastro: string | null;
+  exibir_no_site: boolean;
 }
 
 interface PlanoForm {
@@ -56,6 +57,7 @@ interface PlanoForm {
   valor_anual: number | null;
   ativo: boolean;
   asaas_plan_id: string;
+  exibir_no_site: boolean;
 }
 
 const defaultForm: PlanoForm = {
@@ -69,6 +71,7 @@ const defaultForm: PlanoForm = {
   valor_anual: null,
   ativo: true,
   asaas_plan_id: '',
+  exibir_no_site: true,
 };
 
 export default function AdminPlanos() {
@@ -116,6 +119,7 @@ export default function AdminPlanos() {
       valor_anual: plano.valor_anual,
       ativo: plano.ativo,
       asaas_plan_id: plano.asaas_plan_id || '',
+      exibir_no_site: plano.exibir_no_site,
     });
     setDialogOpen(true);
   }
@@ -361,6 +365,18 @@ export default function AdminPlanos() {
                   />
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="exibir_no_site">Exibir no site</Label>
+                    <p className="text-xs text-muted-foreground">Mostrar nas páginas públicas e de registro</p>
+                  </div>
+                  <Switch
+                    id="exibir_no_site"
+                    checked={form.exibir_no_site}
+                    onCheckedChange={(checked) => setForm({ ...form, exibir_no_site: checked })}
+                  />
+                </div>
+
                 <Button type="submit" className="w-full" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {editingId ? 'Salvar Alterações' : 'Criar Plano'}
@@ -399,6 +415,11 @@ export default function AdminPlanos() {
                       {!plano.ativo && (
                         <Badge variant="outline" className="text-muted-foreground">
                           Inativo
+                        </Badge>
+                      )}
+                      {!plano.exibir_no_site && (
+                        <Badge variant="secondary" className="text-xs">
+                          Oculto no site
                         </Badge>
                       )}
                     </CardTitle>

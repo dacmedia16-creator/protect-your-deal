@@ -151,6 +151,7 @@ export default function RegistroImobiliaria() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .eq('exibir_no_site', true)
           .eq('tipo_cadastro', 'cnpj')
           .order('valor_mensal', { ascending: true });
 
