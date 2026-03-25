@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, Quote } from 'lucide-react';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface Depoimento {
   id: string;
@@ -15,6 +17,8 @@ interface Depoimento {
 
 export function DepoimentosSection() {
   const [depoimentos, setDepoimentos] = useState<Depoimento[]>([]);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     const fetch = async () => {
@@ -27,6 +31,18 @@ export function DepoimentosSection() {
     };
     fetch();
   }, []);
+
+  const onSelect = useCallback(() => {
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+  }, [api]);
+
+  useEffect(() => {
+    if (!api) return;
+    onSelect();
+    api.on('select', onSelect);
+    return () => { api.off('select', onSelect); };
+  }, [api, onSelect]);
 
   if (depoimentos.length === 0) return null;
 
@@ -49,46 +65,76 @@ export function DepoimentosSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {depoimentos.map((d) => (
-            <Card key={d.id} className="relative overflow-hidden">
-              <CardContent className="p-6">
-                <Quote className="h-8 w-8 text-primary/20 mb-4" />
-                <p className="text-muted-foreground italic mb-6 leading-relaxed">
-                  "{d.texto}"
-                </p>
-                <div className="flex items-center gap-1 mb-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${i < d.nota ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30'}`}
-                    />
-                  ))}
-                </div>
-                <div className="flex items-center gap-3">
-                  {d.avatar_url ? (
-                    <img
-                      src={d.avatar_url}
-                      alt={d.nome}
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
-                      {getInitials(d.nome)}
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-semibold text-sm">{d.nome}</p>
-                    {(d.cargo || d.empresa) && (
-                      <p className="text-xs text-muted-foreground">
-                        {[d.cargo, d.empresa].filter(Boolean).join(' · ')}
-                      </p>
-                    )}
+        <div className="max-w-3xl mx-auto">
+          <Carousel
+            setApi={setApi}
+            plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
+            opts={{ loop: true }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {depoimentos.map((d) => (
+                <CarouselItem key={d.id}>
+                  <div className="px-2">
+                    <Card className="relative overflow-hidden">
+                      <CardContent className="p-8 text-center">
+                        <Quote className="h-10 w-10 text-primary/20 mx-auto mb-6" />
+                        <p className="text-muted-foreground italic mb-6 leading-relaxed text-lg">
+                          "{d.texto}"
+                        </p>
+                        <div className="flex items-center justify-center gap-1 mb-6">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${i < d.nota ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30'}`}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          {d.avatar_url ? (
+                            <img
+                              src={d.avatar_url}
+                              alt={d.nome}
+                              className="h-12 w-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
+                              {getInitials(d.nome)}
+                            </div>
+                          )}
+                          <div className="text-left">
+                            <p className="font-semibold">{d.nome}</p>
+                            {(d.cargo || d.empresa) && (
+                              <p className="text-sm text-muted-foreground">
+                                {[d.cargo, d.empresa].filter(Boolean).join(' · ')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="-left-4 md:-left-12" />
+            <CarouselNext className="-right-4 md:-right-12" />
+          </Carousel>
+
+          {depoimentos.length > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {depoimentos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => api?.scrollTo(i)}
+                  className={`h-2.5 rounded-full transition-all ${
+                    i === current ? 'w-8 bg-primary' : 'w-2.5 bg-primary/25'
+                  }`}
+                  aria-label={`Ir para depoimento ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
