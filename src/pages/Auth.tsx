@@ -528,8 +528,8 @@ export default function Auth() {
             <TabsContent value="login">
               <Card className="border-0 shadow-soft">
                 <CardHeader className="space-y-1">
-                  {/* Logo da imobiliária quando encontrada */}
-                  {imobiliariaData && (
+                  {/* Logo da imobiliária ou VisitaProva */}
+                  {imobiliariaData ? (
                     <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
                       {imobiliariaData.logo_url ? (
                         <img 
@@ -545,6 +545,11 @@ export default function Auth() {
                       <span className="text-sm text-muted-foreground font-medium">
                         {imobiliariaData.nome}
                       </span>
+                    </div>
+                  ) : !loadingImobiliaria && (
+                    <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
+                      <LogoIcon size={48} />
+                      <span className="text-sm text-muted-foreground font-medium">VisitaProva</span>
                     </div>
                   )}
                   
