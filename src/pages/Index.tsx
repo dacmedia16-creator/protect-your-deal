@@ -18,10 +18,10 @@ import MobileAppMockup from '@/components/mockups/MobileAppMockup';
 import SofiaMockup from '@/components/mockups/SofiaMockup';
 import AnimatedSection from '@/components/AnimatedSection';
 import {
-  FileCheck, 
-  MessageSquare, 
-  QrCode, 
-  Users, 
+  FileCheck,
+  MessageSquare,
+  QrCode,
+  Users,
   CheckCircle2,
   ClipboardCheck,
   Send,
@@ -38,8 +38,8 @@ import {
   Award,
   Scale,
   FileX,
-  Building,
-} from 'lucide-react';
+  Building } from
+'lucide-react';
 
 interface Plano {
   id: string;
@@ -64,139 +64,139 @@ const Index = () => {
 
   useEffect(() => {
     const fetchPlanos = async () => {
-      const { data } = await supabase
-        .from('planos')
-        .select('*')
-        .eq('ativo', true)
-        .order('valor_mensal', { ascending: true });
-      
+      const { data } = await supabase.
+      from('planos').
+      select('*').
+      eq('ativo', true).
+      order('valor_mensal', { ascending: true });
+
       if (data) {
         setPlanos(data);
       }
       setLoadingPlanos(false);
     };
-    
+
     fetchPlanos();
   }, []);
 
-  if (loading || (user && roleLoading)) {
+  if (loading || user && roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Proposta de Valor - 4 benefícios diretos
   const valuePropositions = [
-    {
-      icon: Shield,
-      title: 'Evite conflitos de comissão',
-      description: 'Tenha prova documental de que foi você quem apresentou o imóvel ao comprador.'
-    },
-    {
-      icon: FileCheck,
-      title: 'Comprove cada visita',
-      description: 'Registro com confirmação das duas partes via WhatsApp, com data, hora e aceite legal.'
-    },
-    {
-      icon: Award,
-      title: 'Mais profissionalismo',
-      description: 'Impressione proprietários e compradores com um processo moderno e organizado.'
-    },
-    {
-      icon: Scale,
-      title: 'Segurança jurídica',
-      description: 'Comprovante com QR Code verificável e protocolo único para cada visita.'
-    }
-  ];
+  {
+    icon: Shield,
+    title: 'Evite conflitos de comissão',
+    description: 'Tenha prova documental de que foi você quem apresentou o imóvel ao comprador.'
+  },
+  {
+    icon: FileCheck,
+    title: 'Comprove cada visita',
+    description: 'Registro com confirmação das duas partes via WhatsApp, com data, hora e aceite legal.'
+  },
+  {
+    icon: Award,
+    title: 'Mais profissionalismo',
+    description: 'Impressione proprietários e compradores com um processo moderno e organizado.'
+  },
+  {
+    icon: Scale,
+    title: 'Segurança jurídica',
+    description: 'Comprovante com QR Code verificável e protocolo único para cada visita.'
+  }];
+
 
   // Comparativo Papel vs VisitaProva
   const comparisons = [
-    { paper: 'Pode ser contestada ou perdida', visitaprova: 'Registro digital com backup automático' },
-    { paper: 'Sem validação das partes', visitaprova: 'Confirmação OTP via WhatsApp' },
-    { paper: 'Difícil comprovar autenticidade', visitaprova: 'QR Code + Protocolo único verificável' },
-    { paper: 'Informações incompletas', visitaprova: 'Formulário padronizado e completo' },
-    { paper: 'Demora para localizar', visitaprova: 'Busca instantânea por cliente ou imóvel' }
-  ];
+  { paper: 'Pode ser contestada ou perdida', visitaprova: 'Registro digital com backup automático' },
+  { paper: 'Sem validação das partes', visitaprova: 'Confirmação OTP via WhatsApp' },
+  { paper: 'Difícil comprovar autenticidade', visitaprova: 'QR Code + Protocolo único verificável' },
+  { paper: 'Informações incompletas', visitaprova: 'Formulário padronizado e completo' },
+  { paper: 'Demora para localizar', visitaprova: 'Busca instantânea por cliente ou imóvel' }];
+
 
   const features = [
-    {
-      icon: FileCheck,
-      title: 'Nunca mais perca uma ficha',
-      description: 'Todos os dados organizados na nuvem, acessíveis de qualquer lugar, a qualquer hora.'
-    },
-    {
-      icon: MessageSquare,
-      title: 'Prova irrefutável',
-      description: 'Proprietário e comprador confirmam a visita via WhatsApp com código único.'
-    },
-    {
-      icon: QrCode,
-      title: 'Autenticidade verificável',
-      description: 'Qualquer pessoa pode escanear o QR Code e confirmar a validade do comprovante.'
-    },
-    {
-      icon: Download,
-      title: 'Documento profissional',
-      description: 'PDF pronto para apresentar em qualquer negociação ou disputa de comissão.'
-    },
-    {
-      icon: Users,
-      title: 'Trabalho em parceria',
-      description: 'Divida visitas com outros corretores mantendo proteção jurídica para ambos.'
-    },
-    {
-      icon: Smartphone,
-      title: 'App no seu celular',
-      description: 'Instale o app e acesse seus registros rapidamente, de qualquer lugar.'
-    },
-    {
-      icon: Star,
-      title: 'Feedback automático',
-      description: 'Receba avaliações dos compradores após cada visita, direto no WhatsApp.'
-    },
-    {
-      icon: Wand2,
-      title: 'Assistente Sofia',
-      description: 'IA que te ajuda a usar o sistema, responde dúvidas e sugere ações.'
-    }
-  ];
+  {
+    icon: FileCheck,
+    title: 'Nunca mais perca uma ficha',
+    description: 'Todos os dados organizados na nuvem, acessíveis de qualquer lugar, a qualquer hora.'
+  },
+  {
+    icon: MessageSquare,
+    title: 'Prova irrefutável',
+    description: 'Proprietário e comprador confirmam a visita via WhatsApp com código único.'
+  },
+  {
+    icon: QrCode,
+    title: 'Autenticidade verificável',
+    description: 'Qualquer pessoa pode escanear o QR Code e confirmar a validade do comprovante.'
+  },
+  {
+    icon: Download,
+    title: 'Documento profissional',
+    description: 'PDF pronto para apresentar em qualquer negociação ou disputa de comissão.'
+  },
+  {
+    icon: Users,
+    title: 'Trabalho em parceria',
+    description: 'Divida visitas com outros corretores mantendo proteção jurídica para ambos.'
+  },
+  {
+    icon: Smartphone,
+    title: 'App no seu celular',
+    description: 'Instale o app e acesse seus registros rapidamente, de qualquer lugar.'
+  },
+  {
+    icon: Star,
+    title: 'Feedback automático',
+    description: 'Receba avaliações dos compradores após cada visita, direto no WhatsApp.'
+  },
+  {
+    icon: Wand2,
+    title: 'Assistente Sofia',
+    description: 'IA que te ajuda a usar o sistema, responde dúvidas e sugere ações.'
+  }];
+
 
   const steps = [
-    {
-      icon: ClipboardCheck,
-      number: '01',
-      title: 'Crie o Registro',
-      description: 'Preencha os dados do imóvel, proprietário e comprador interessado.'
-    },
-    {
-      icon: Send,
-      number: '02',
-      title: 'Envie o OTP',
-      description: 'Dispare códigos de confirmação via WhatsApp para proprietário e comprador.'
-    },
-    {
-      icon: CheckCircle2,
-      number: '03',
-      title: 'Aguarde Confirmação',
-      description: 'Ambas as partes confirmam a visita inserindo o código recebido.'
-    },
-    {
-      icon: Download,
-      number: '04',
-      title: 'Baixe o Comprovante',
-      description: 'Com a confirmação completa, baixe o PDF com QR Code de verificação.'
-    }
-  ];
+  {
+    icon: ClipboardCheck,
+    number: '01',
+    title: 'Crie o Registro',
+    description: 'Preencha os dados do imóvel, proprietário e comprador interessado.'
+  },
+  {
+    icon: Send,
+    number: '02',
+    title: 'Envie o OTP',
+    description: 'Dispare códigos de confirmação via WhatsApp para proprietário e comprador.'
+  },
+  {
+    icon: CheckCircle2,
+    number: '03',
+    title: 'Aguarde Confirmação',
+    description: 'Ambas as partes confirmam a visita inserindo o código recebido.'
+  },
+  {
+    icon: Download,
+    number: '04',
+    title: 'Baixe o Comprovante',
+    description: 'Com a confirmação completa, baixe o PDF com QR Code de verificação.'
+  }];
+
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead 
+      <SEOHead
         title="VisitaProva - Comprove Visitas Imobiliárias com WhatsApp OTP"
         description="Registre visitas imobiliárias com confirmação via WhatsApp. Ficha de visita digital, comprovante PDF com QR Code e prova de intermediação para corretores."
-        keywords="ficha de visita digital, comprovante de visita imobiliária, prova de intermediação, corretor de imóveis, OTP WhatsApp"
-      />
+        keywords="ficha de visita digital, comprovante de visita imobiliária, prova de intermediação, corretor de imóveis, OTP WhatsApp" />
+      
       {/* Header */}
       <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -207,53 +207,53 @@ const Index = () => {
           
           {/* Navigation Links - Desktop */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link 
-              to="/funcionalidades" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Link
+              to="/funcionalidades"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              
               Funcionalidades
             </Link>
-            <Link 
-              to="/como-funciona" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Link
+              to="/como-funciona"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              
               Como Funciona
             </Link>
-            <Link 
-              to="/tutoriais" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Link
+              to="/tutoriais"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              
               Tutoriais
             </Link>
-            <Link 
-              to="/sobre" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <Link
+              to="/sobre"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              
               Sobre Nós
             </Link>
-            <Link 
-              to="/instalar" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-            >
+            <Link
+              to="/instalar"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              
               <Smartphone className="h-4 w-4" />
               Baixar App
             </Link>
-            <a 
-              href="#planos" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <a
+              href="#planos"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              
               Ver Planos
             </a>
           </nav>
           
           <div className="flex items-center gap-3">
             {/* Desktop buttons */}
-            {user ? (
-              <Button asChild className="hidden sm:inline-flex">
+            {user ?
+            <Button asChild className="hidden sm:inline-flex">
                 <Link to={getRedirectPathByRole(role)}>Meu Dashboard</Link>
-              </Button>
-            ) : (
-              <>
+              </Button> :
+
+            <>
                 <Button variant="ghost" asChild className="hidden sm:inline-flex">
                   <Link to="/auth">Entrar</Link>
                 </Button>
@@ -261,7 +261,7 @@ const Index = () => {
                   <a href="https://visitaprova.com.br/registro?plano=gratuito">Testar Grátis Agora</a>
                 </Button>
               </>
-            )}
+            }
 
             {/* Mobile menu */}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -279,60 +279,60 @@ const Index = () => {
                   </div>
                   
                   <nav className="flex flex-col gap-4">
-                    <Link 
-                      to="/funcionalidades" 
+                    <Link
+                      to="/funcionalidades"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                    >
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                      
                       Funcionalidades
                     </Link>
-                    <Link 
-                      to="/como-funciona" 
+                    <Link
+                      to="/como-funciona"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                    >
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                      
                       Como Funciona
                     </Link>
-                    <Link 
-                      to="/tutoriais" 
+                    <Link
+                      to="/tutoriais"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                    >
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                      
                       Tutoriais
                     </Link>
-                    <Link 
-                      to="/sobre" 
+                    <Link
+                      to="/sobre"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                    >
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                      
                       Sobre Nós
                     </Link>
-                    <Link 
-                      to="/instalar" 
+                    <Link
+                      to="/instalar"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2"
-                    >
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2">
+                      
                       <Smartphone className="h-4 w-4" />
                       Baixar App
                     </Link>
-                    <a 
-                      href="#planos" 
+                    <a
+                      href="#planos"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                    >
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                      
                       Ver Planos
                     </a>
                   </nav>
                   
                   <div className="flex flex-col gap-3 pt-4 border-t">
-                    {user ? (
-                      <Button asChild className="w-full">
+                    {user ?
+                    <Button asChild className="w-full">
                         <Link to={getRedirectPathByRole(role)} onClick={() => setMobileMenuOpen(false)}>
                           Meu Dashboard
                         </Link>
-                      </Button>
-                    ) : (
-                      <>
+                      </Button> :
+
+                    <>
                         <Button variant="outline" asChild className="w-full">
                           <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Entrar</Link>
                         </Button>
@@ -342,7 +342,7 @@ const Index = () => {
                           </a>
                         </Button>
                       </>
-                    )}
+                    }
                   </div>
                 </div>
               </SheetContent>
@@ -366,9 +366,9 @@ const Index = () => {
                 Prove Suas Visitas.{' '}
                 <span className="text-primary">Proteja Sua Comissão.</span>
               </h1>
-               <Link to="/sobre" className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in cursor-pointer hover:underline block">
-                "Criado por um corretor que perdeu R$ 240 mil de comissão."
-               </Link>
+               <Link to="/sobre" className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in cursor-pointer hover:underline block">"Criado por um corretor que perdeu R$ 240 mil de comissão." (Clique )
+
+              </Link>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl md:mx-0 mx-auto">
                 Nunca mais perca um cliente por falta de comprovação. 
                 Registros digitais com confirmação via WhatsApp e comprovante PDF verificável.
@@ -404,15 +404,15 @@ const Index = () => {
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {valuePropositions.map((prop, index) => (
-              <div key={index} className="text-center p-6">
+            {valuePropositions.map((prop, index) =>
+            <div key={index} className="text-center p-6">
                 <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <prop.icon className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg mb-2">{prop.title}</h3>
                 <p className="text-muted-foreground text-sm">{prop.description}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -444,8 +444,8 @@ const Index = () => {
                 </div>
               </div>
               {/* Rows */}
-              {comparisons.map((comp, index) => (
-                <>
+              {comparisons.map((comp, index) =>
+              <>
                   <div key={`paper-${index}`} className="p-4 bg-card border border-border/50 text-sm text-muted-foreground">
                     {comp.paper}
                   </div>
@@ -453,7 +453,7 @@ const Index = () => {
                     {comp.visitaprova}
                   </div>
                 </>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -471,18 +471,18 @@ const Index = () => {
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <div 
-                key={index}
-                className="group p-6 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300"
-              >
+            {features.map((feature, index) =>
+            <div
+              key={index}
+              className="group p-6 rounded-xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+              
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground text-sm">{feature.description}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -500,8 +500,8 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-            {steps.map((step, index) => (
-              <div key={index} className="relative">
+            {steps.map((step, index) =>
+            <div key={index} className="relative">
                 <div className="text-6xl font-heading font-bold text-primary/10 absolute -top-4 -left-2">
                   {step.number}
                 </div>
@@ -513,7 +513,7 @@ const Index = () => {
                   <p className="text-muted-foreground text-sm">{step.description}</p>
                 </div>
               </div>
-            ))}
+            )}
           </div>
           
           {/* Micro-copy de autoridade */}
@@ -611,16 +611,16 @@ const Index = () => {
                 </p>
                 <ul className="space-y-3 text-left">
                   {[
-                    'Ajuda contextual em cada página',
-                    'Disponível 24/7, sem espera',
-                    'Respostas instantâneas sobre o sistema',
-                    'Sugere próximos passos e ações',
-                  ].map((item) => (
-                    <li key={item} className="flex items-center gap-2">
+                  'Ajuda contextual em cada página',
+                  'Disponível 24/7, sem espera',
+                  'Respostas instantâneas sobre o sistema',
+                  'Sugere próximos passos e ações'].
+                  map((item) =>
+                  <li key={item} className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-primary shrink-0" />
                       <span>{item}</span>
                     </li>
-                  ))}
+                  )}
                 </ul>
               </div>
 
@@ -646,86 +646,86 @@ const Index = () => {
               Escolha o plano ideal para você ou sua imobiliária.
             </p>
             {/* Toggle Mensal/Anual */}
-            {planos.some(p => p.valor_anual && p.valor_anual > 0) && (
-              <div className="inline-flex items-center gap-1 bg-muted rounded-full p-1">
+            {planos.some((p) => p.valor_anual && p.valor_anual > 0) &&
+            <div className="inline-flex items-center gap-1 bg-muted rounded-full p-1">
                 <button
-                  onClick={() => setPricingCiclo('mensal')}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                    pricingCiclo === 'mensal' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
+                onClick={() => setPricingCiclo('mensal')}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                pricingCiclo === 'mensal' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`
+                }>
+                
                   Mensal
                 </button>
                 <button
-                  onClick={() => setPricingCiclo('anual')}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                    pricingCiclo === 'anual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
+                onClick={() => setPricingCiclo('anual')}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                pricingCiclo === 'anual' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`
+                }>
+                
                   Anual
                   <Badge variant="outline" className="ml-1.5 text-[10px] py-0 border-primary/30 text-primary">Economize</Badge>
                 </button>
               </div>
-            )}
+            }
           </div>
 
-          {loadingPlanos ? (
-            <div className="flex justify-center py-12">
+          {loadingPlanos ?
+          <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <>
+            </div> :
+
+          <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-center mb-8">
                 {planos.map((plano) => {
-                  const isProfissional = plano.nome.toLowerCase().includes('profissional');
-                  const isIndividual = plano.nome.toLowerCase().includes('individual');
-                  const profileHint = plano.valor_mensal === 0 
-                    ? 'Ideal para começar' 
-                    : isIndividual 
-                      ? 'Ideal para corretores autônomos'
-                      : plano.max_corretores > 1 
-                        ? 'Ideal para imobiliárias em crescimento' 
-                        : '';
-                  
-                  return (
-                    <Card key={plano.id} className={`relative overflow-hidden hover:shadow-lg transition-shadow ${isProfissional ? 'ring-2 ring-primary' : ''}`}>
-                      {isProfissional && (
-                        <Badge className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 bg-primary text-primary-foreground z-10">
+                const isProfissional = plano.nome.toLowerCase().includes('profissional');
+                const isIndividual = plano.nome.toLowerCase().includes('individual');
+                const profileHint = plano.valor_mensal === 0 ?
+                'Ideal para começar' :
+                isIndividual ?
+                'Ideal para corretores autônomos' :
+                plano.max_corretores > 1 ?
+                'Ideal para imobiliárias em crescimento' :
+                '';
+
+                return (
+                  <Card key={plano.id} className={`relative overflow-hidden hover:shadow-lg transition-shadow ${isProfissional ? 'ring-2 ring-primary' : ''}`}>
+                      {isProfissional &&
+                    <Badge className="absolute -top-0 left-1/2 -translate-x-1/2 translate-y-3 bg-primary text-primary-foreground z-10">
                           Mais escolhido
                         </Badge>
-                      )}
-                      {plano.valor_mensal === 0 && !isProfissional && (
-                        <div className="absolute top-3 right-3">
+                    }
+                      {plano.valor_mensal === 0 && !isProfissional &&
+                    <div className="absolute top-3 right-3">
                           <Badge variant="success">Grátis</Badge>
                         </div>
-                      )}
+                    }
                       <CardHeader className={isProfissional ? 'pt-10' : ''}>
                         <CardTitle className="text-xl">{plano.nome}</CardTitle>
                         <CardDescription>{plano.descricao}</CardDescription>
-                        {profileHint && (
-                          <p className="text-xs text-primary font-medium mt-1">{profileHint}</p>
-                        )}
+                        {profileHint &&
+                      <p className="text-xs text-primary font-medium mt-1">{profileHint}</p>
+                      }
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="text-3xl font-bold">
-                          {plano.valor_mensal === 0 ? (
-                            'Grátis'
-                          ) : plano.valor_mensal === -1 ? (
-                            <span className="text-lg">Sob consulta</span>
-                          ) : pricingCiclo === 'anual' && plano.valor_anual ? (
-                            <>
+                          {plano.valor_mensal === 0 ?
+                        'Grátis' :
+                        plano.valor_mensal === -1 ?
+                        <span className="text-lg">Sob consulta</span> :
+                        pricingCiclo === 'anual' && plano.valor_anual ?
+                        <>
                               R$ {plano.valor_anual.toFixed(2).replace('.', ',')}
                               <span className="text-sm font-normal text-muted-foreground">/ano</span>
                               <div className="text-sm font-normal text-emerald-600 mt-1">
                                 Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
                               </div>
-                            </>
-                          ) : (
-                            <>
+                            </> :
+
+                        <>
                               R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}
                               <span className="text-sm font-normal text-muted-foreground">/mês</span>
                             </>
-                          )}
+                        }
                         </div>
                         
                         <ul className="space-y-2 text-sm">
@@ -733,12 +733,12 @@ const Index = () => {
                             <Check className="h-4 w-4 text-primary" />
                             {plano.max_fichas_mes === -1 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}
                           </li>
-                          {plano.max_corretores > 1 && (
-                            <li className="flex items-center gap-2">
+                          {plano.max_corretores > 1 &&
+                        <li className="flex items-center gap-2">
                               <Check className="h-4 w-4 text-primary" />
                               {plano.max_corretores === -1 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}
                             </li>
-                          )}
+                        }
                         </ul>
 
                         <Button className="w-full" variant={isProfissional ? 'default' : 'outline'} asChild>
@@ -747,16 +747,16 @@ const Index = () => {
                           </Link>
                         </Button>
                       </CardContent>
-                    </Card>
-                  );
-                })}
+                    </Card>);
+
+              })}
               </div>
               {/* Frase de reforço */}
               <p className="text-center text-muted-foreground font-medium">
                 Menos risco. Mais controle. Mais profissionalismo.
               </p>
             </>
-          )}
+          }
         </div>
       </section>
 
@@ -938,23 +938,23 @@ const Index = () => {
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                 <span className="text-center md:text-left">
-                  Rua Horacio Cenci, 9 - Parque Campolim<br/>
+                  Rua Horacio Cenci, 9 - Parque Campolim<br />
                   Sorocaba - SP, 18047-800
                 </span>
               </div>
-              <a 
-                href="tel:+5515981788214" 
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
+              <a
+                href="tel:+5515981788214"
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                
                 <Phone className="h-4 w-4 text-primary" />
                 (15) 98178-8214
               </a>
-              <a 
-                href="https://wa.me/5515981788214" 
+              <a
+                href="https://wa.me/5515981788214"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors"
-              >
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-green-500 transition-colors">
+                
                 <MessageSquare className="h-4 w-4 text-green-500" />
                 WhatsApp
               </a>
@@ -991,8 +991,8 @@ const Index = () => {
       </footer>
 
       <WhatsAppFAB />
-    </div>
-  );
+    </div>);
+
 };
 
 export default Index;
