@@ -362,13 +362,13 @@ const Index = () => {
                 <Shield className="h-4 w-4" />
                 Proteja sua comissão desde a primeira visita
               </div>
-              <p className="text-red-600 font-semibold text-base md:text-lg mb-4 animate-fade-in">
-                "Criado por um corretor que perdeu R$ 240 mil de comissão."
-              </p>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold tracking-tight mb-4">
                 Prove Suas Visitas.{' '}
                 <span className="text-primary">Proteja Sua Comissão.</span>
               </h1>
+              <p className="text-red-600 font-semibold text-base md:text-lg mb-6 animate-fade-in">
+                "Criado por um corretor que perdeu R$ 240 mil de comissão."
+              </p>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl md:mx-0 mx-auto">
                 Nunca mais perca um cliente por falta de comprovação. 
                 Registros digitais com confirmação via WhatsApp e comprovante PDF verificável.
