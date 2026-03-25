@@ -88,6 +88,7 @@ export default function RegistroCorretorAutonomo() {
           .from('planos')
           .select('*')
           .eq('ativo', true)
+          .eq('exibir_no_site', true)
           .eq('tipo_cadastro', 'cpf')
           .order('valor_mensal', { ascending: true });
 
