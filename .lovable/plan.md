@@ -1,18 +1,15 @@
 
 
-## Remover Fundo Quadriculado do Logo
+## Trocar Logo por Nova Versão com Fundo Transparente
 
-### Problema
-O arquivo `public/vp-logo.png` possui um fundo quadriculado (padrão de transparência) embutido na imagem.
-
-### Solução
-Reprocessar o arquivo PNG para adicionar um fundo branco sólido, removendo o padrão quadriculado.
+### Resumo
+Substituir o logo atual (`public/vp-logo.png`) pela nova imagem enviada (que já possui fundo escuro/transparente adequado), atualizando em todo o app.
 
 ### Mudanças
 
 | Ação | Detalhes |
 |------|----------|
-| Reprocessar `public/vp-logo.png` | Usar script para compor a imagem sobre um fundo branco sólido e salvar como novo PNG |
+| Copiar arquivo | `user-uploads://logo_vida_prova2_-_Editado.png` → `public/vp-logo.png` (sobrescreve o atual) |
 
-Nenhum código de componente precisa ser alterado — apenas o arquivo de imagem será atualizado.
+Todos os componentes (`LogoIcon`, `index.html`, etc.) já referenciam `/vp-logo.png`, então a troca do arquivo atualiza tudo automaticamente.
 
