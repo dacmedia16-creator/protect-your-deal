@@ -3,7 +3,7 @@ interface LogoIconProps {
   size?: number;
 }
 
-export const LogoIcon = ({ className, size = 32 }: LogoIconProps) => {
+export const LogoIcon = ({ className, size = 44 }: LogoIconProps) => {
   return (
     <img 
       src="/vp-logo.png" 
