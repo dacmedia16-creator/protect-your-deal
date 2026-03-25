@@ -301,6 +301,13 @@ const Index = () => {
                       Tutoriais
                     </Link>
                     <Link 
+                      to="/sobre" 
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                    >
+                      Sobre Nós
+                    </Link>
+                    <Link 
                       to="/instalar" 
                       onClick={() => setMobileMenuOpen(false)}
                       className="text-base font-medium text-foreground hover:text-primary transition-colors flex items-center gap-2"
