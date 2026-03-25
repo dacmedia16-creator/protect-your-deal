@@ -1,26 +1,15 @@
 
 
-## Tornar Frase de Impacto Clicável → /sobre
+## Trocar Logo do App para Nova Imagem
 
-### Mudança
+### Resumo
+Substituir o logo atual (`vp-logo.png`) pela nova imagem enviada (`logo_vida_prova2.png`) em todo o app.
 
-| Arquivo | O que fazer |
-|---------|------------|
-| `src/pages/Index.tsx` (linhas 369-371) | Trocar o `<p>` por um `<Link to="/sobre">` com classes adicionais `cursor-pointer hover:underline block` |
+### Mudanças
 
-### Código
+| Acao | Detalhes |
+|------|----------|
+| Copiar arquivo | `user-uploads://logo_vida_prova2.png` → `public/vp-logo.png` (sobrescreve o atual) |
 
-```tsx
-// ANTES
-<p className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in">
-  "Criado por um corretor que perdeu R$ 240 mil de comissão."
-</p>
-
-// DEPOIS
-<Link to="/sobre" className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in cursor-pointer hover:underline block">
-  "Criado por um corretor que perdeu R$ 240 mil de comissão."
-</Link>
-```
-
-`Link` já está importado no arquivo. Apenas 1 elemento alterado.
+Como todos os componentes e o `index.html` já referenciam `/vp-logo.png`, a troca do arquivo é suficiente. Nenhum código precisa ser alterado.
 
