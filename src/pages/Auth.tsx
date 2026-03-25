@@ -463,7 +463,7 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 gradient-primary p-12 flex-col justify-between">
         <div>
           <div className="flex items-center gap-3 text-primary-foreground">
-            <LogoIcon size={40} className="brightness-0 invert" />
+            <LogoIcon size={40} />
             <span className="font-display text-2xl font-bold">VisitaProva</span>
           </div>
         </div>
