@@ -1421,6 +1421,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string | null
+          exibir_no_site: boolean
           id: string
           max_clientes: number
           max_corretores: number
@@ -1437,6 +1438,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          exibir_no_site?: boolean
           id?: string
           max_clientes?: number
           max_corretores?: number
@@ -1453,6 +1455,7 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          exibir_no_site?: boolean
           id?: string
           max_clientes?: number
           max_corretores?: number

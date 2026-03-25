@@ -1,0 +1,1 @@
+ALTER TABLE public.planos ADD COLUMN exibir_no_site boolean NOT NULL DEFAULT true;
