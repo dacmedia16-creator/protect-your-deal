@@ -10,13 +10,13 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Building2, Users, UserCircle, Search, Loader2 } from 'lucide-react';
+import { Building2, Users, UserCircle, Search, Loader2, HardHat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface SearchResult {
   id: string;
-  type: 'imobiliaria' | 'usuario' | 'autonomo';
+  type: 'imobiliaria' | 'usuario' | 'autonomo' | 'construtora';
   name: string;
   subtitle?: string;
   status?: string;
@@ -160,8 +160,33 @@ export function GlobalSearch() {
     enabled: open && debouncedQuery.length >= 2,
   });
 
-  const isLoading = loadingImobiliarias || loadingUsuarios || loadingAutonomos;
-  const hasResults = (imobiliarias?.length || 0) + (usuarios?.length || 0) + (autonomos?.length || 0) > 0;
+  // Search construtoras
+  const { data: construtoras, isLoading: loadingConstrutoras } = useQuery({
+    queryKey: ['global-search-construtoras', debouncedQuery],
+    queryFn: async () => {
+      if (!debouncedQuery || debouncedQuery.length < 2) return [];
+      
+      const { data, error } = await supabase
+        .from('construtoras')
+        .select('id, nome, cnpj, email, status')
+        .or(`nome.ilike.%${debouncedQuery}%,cnpj.ilike.%${debouncedQuery}%,email.ilike.%${debouncedQuery}%`)
+        .limit(5);
+      
+      if (error) throw error;
+      
+      return (data || []).map((item): SearchResult => ({
+        id: item.id,
+        type: 'construtora',
+        name: item.nome,
+        subtitle: item.cnpj || item.email,
+        status: item.status,
+      }));
+    },
+    enabled: open && debouncedQuery.length >= 2,
+  });
+
+  const isLoading = loadingImobiliarias || loadingUsuarios || loadingAutonomos || loadingConstrutoras;
+  const hasResults = (imobiliarias?.length || 0) + (usuarios?.length || 0) + (autonomos?.length || 0) + (construtoras?.length || 0) > 0;
 
   const handleSelect = useCallback((result: SearchResult) => {
     setOpen(false);
@@ -176,6 +201,9 @@ export function GlobalSearch() {
         break;
       case 'autonomo':
         navigate(`/admin/autonomos/${result.id}`);
+        break;
+      case 'construtora':
+        navigate(`/admin/construtoras/${result.id}`);
         break;
     }
   }, [navigate]);
@@ -314,6 +342,30 @@ export function GlobalSearch() {
                     )}
                   </div>
                   {getStatusBadge(result.status)}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {/* Construtoras Group */}
+          {construtoras && construtoras.length > 0 && (
+            <CommandGroup heading="Construtoras">
+              {construtoras.map((result) => (
+                <CommandItem
+                  key={`const-${result.id}`}
+                  value={`const-${result.id}-${result.name}`}
+                  onSelect={() => handleSelect(result)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    <HardHat className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{result.name}</p>
+                    {result.subtitle && (
+                      <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                    )}
+                  </div>
+                  {getStatusBadge(result.status, 'construtora')}
                 </CommandItem>
               ))}
             </CommandGroup>

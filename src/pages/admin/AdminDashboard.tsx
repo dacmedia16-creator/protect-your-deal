@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Building2, Users, FileText, TrendingUp, AlertCircle } from 'lucide-react';
+import { Building2, Users, FileText, TrendingUp, AlertCircle, HardHat } from 'lucide-react';
 import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard } from '@/components/AnimatedContent';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -16,6 +16,8 @@ interface DashboardStats {
   assinaturasAtivas: number;
   assinaturasSuspensas: number;
   receitaMensal: number;
+  totalConstrutoras: number;
+  construtorasAtivas: number;
 }
 
 export default function AdminDashboard() {
@@ -75,10 +77,19 @@ export default function AdminDashboard() {
           .eq('status', 'ativa');
 
         const receitaMensal = activeSubscriptions?.reduce((total, sub) => {
-          // O Supabase retorna objeto direto quando se usa fkey específica
           const valorPlano = sub.plano?.valor_mensal ?? 0;
           return total + valorPlano;
         }, 0) || 0;
+
+        // Fetch construtoras
+        const { count: totalConstrutoras } = await supabase
+          .from('construtoras')
+          .select('*', { count: 'exact', head: true });
+
+        const { count: construtorasAtivas } = await supabase
+          .from('construtoras')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'ativo');
 
         setStats({
           totalImobiliarias: totalImobiliarias || 0,
@@ -89,6 +100,8 @@ export default function AdminDashboard() {
           assinaturasAtivas: assinaturasAtivas || 0,
           assinaturasSuspensas: assinaturasSuspensas || 0,
           receitaMensal,
+          totalConstrutoras: totalConstrutoras || 0,
+          construtorasAtivas: construtorasAtivas || 0,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -179,6 +192,23 @@ export default function AdminDashboard() {
           </Card>
           </AnimatedStatCard>
 
+          <AnimatedStatCard>
+            <Card
+            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            onClick={() => navigate('/admin/construtoras')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Construtoras</CardTitle>
+              <HardHat className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalConstrutoras}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats?.construtorasAtivas} ativas · Ver detalhes →
+              </p>
+            </CardContent>
+          </Card>
+          </AnimatedStatCard>
           <AnimatedStatCard>
             <Card
             className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"

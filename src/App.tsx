@@ -101,6 +101,8 @@ import AdminComissoes from "./pages/admin/AdminComissoes";
 import AdminIndicacoes from "./pages/admin/AdminIndicacoes";
 import AdminSessoes from "./pages/admin/AdminSessoes";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import AdminConstrutoras from "./pages/admin/AdminConstrutoras";
+import AdminDetalhesConstrutora from "./pages/admin/AdminDetalhesConstrutora";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
@@ -252,6 +254,16 @@ const App = () => (
                 <Route path="/admin/autonomos/:userId" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminDetalhesCorretorAutonomo />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/construtoras" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminConstrutoras />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/construtoras/:id" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminDetalhesConstrutora />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/financeiro" element={
