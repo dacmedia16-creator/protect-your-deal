@@ -73,6 +73,7 @@ const navGroups: NavGroup[] = [
     defaultOpen: true,
     items: [
       { href: '/admin/imobiliarias', icon: Building2, label: 'Imobiliárias' },
+      { href: '/admin/construtoras', icon: Building2, label: 'Construtoras' },
       { href: '/admin/autonomos', icon: UserCircle, label: 'Autônomos' },
       { href: '/admin/fichas', icon: FileText, label: 'Registros' },
       { href: '/admin/backups', icon: Archive, label: 'Backups' },
