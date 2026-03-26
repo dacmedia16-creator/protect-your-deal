@@ -262,6 +262,11 @@ const App = () => (
                     <AdminConstrutoras />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/construtoras/nova" element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminNovaConstrutora />
+                  </ProtectedRoute>
+                } />
                 <Route path="/admin/construtoras/:id" element={
                   <ProtectedRoute allowedRoles={['super_admin']}>
                     <AdminDetalhesConstrutora />
