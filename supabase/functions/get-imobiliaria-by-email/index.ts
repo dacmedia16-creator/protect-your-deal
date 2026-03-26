@@ -27,39 +27,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Buscar usuário pelo email usando listUsers com filtro
-    const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers({
-      perPage: 1,
-      page: 1,
-    })
-
-    if (usersError) {
-      console.error('Erro ao buscar usuários:', usersError)
-      return new Response(
-        JSON.stringify({ imobiliaria: null }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Buscar o usuário específico pelo email
-    const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const user = allUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase())
-
-    if (!user) {
-      console.log('Usuário não encontrado para email:', email)
-      return new Response(
-        JSON.stringify({ imobiliaria: null }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    console.log('Usuário encontrado:', user.id)
-
-    // Buscar profile e imobiliária_id
+    // Buscar diretamente na tabela profiles pelo email
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('imobiliaria_id')
-      .eq('user_id', user.id)
+      .ilike('email', email)
       .maybeSingle()
 
     if (profileError) {
@@ -71,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     if (!profile?.imobiliaria_id) {
-      console.log('Usuário não tem imobiliária vinculada')
+      console.log('Usuário não encontrado ou sem imobiliária vinculada')
       return new Response(
         JSON.stringify({ imobiliaria: null }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
