@@ -8,7 +8,17 @@ import { FileText, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { fichaStatusColors, getStatusColor, fichaStatusLabels } from '@/lib/fichaStatus';
+import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
+
+const fichaStatusLabels: Record<string, string> = {
+  pendente: 'Pendente',
+  aguardando_proprietario: 'Aguardando Proprietário',
+  aguardando_comprador: 'Aguardando Comprador',
+  completo: 'Completo',
+  confirmado: 'Confirmado',
+  finalizado_parcial: 'Finalizado Parcial',
+  cancelado: 'Cancelado',
+};
 
 export default function ConstutoraFichas() {
   useDocumentTitle('Fichas de Visita | Construtora');
