@@ -212,8 +212,8 @@ export default function AdminConstrutoras() {
                             <span>{c.parceiras_count} parceiras</span>
                             <span>{c.corretores_count} corretores</span>
                           </div>
-                          <Badge className={getStatusColor(c.assinatura_status || 'sem_assinatura', subscriptionStatusColors)} variant="outline">
-                            {c.assinatura_status || 'sem_assinatura'}
+                          <Badge className={getStatusColor(c.assinatura_status ?? 'sem_assinatura', subscriptionStatusColors)} variant="outline">
+                            {c.assinatura_status ?? 'sem_assinatura'}
                           </Badge>
                         </CardContent>
                       </Card>
@@ -252,8 +252,8 @@ export default function AdminConstrutoras() {
                             <Badge className={getStatusColor(c.status, entityStatusColors)}>{c.status}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(c.assinatura_status || 'sem_assinatura', subscriptionStatusColors)} variant="outline">
-                              {c.assinatura_status || 'sem_assinatura'}
+                            <Badge className={getStatusColor(c.assinatura_status ?? 'sem_assinatura', subscriptionStatusColors)} variant="outline">
+                              {c.assinatura_status ?? 'sem_assinatura'}
                             </Badge>
                           </TableCell>
                           <TableCell>
