@@ -27,19 +27,39 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Buscar diretamente na tabela profiles pelo email
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // 1. Tentar buscar pelo email no profiles
+    let profile: { imobiliaria_id: string | null; construtora_id: string | null } | null = null
+
+    const { data: profileByEmail, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('imobiliaria_id, construtora_id')
       .ilike('email', email)
       .maybeSingle()
 
     if (profileError) {
-      console.error('Erro ao buscar profile:', profileError)
-      return new Response(
-        JSON.stringify({ imobiliaria: null }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      console.error('Erro ao buscar profile por email:', profileError)
+    }
+
+    profile = profileByEmail
+
+    // 2. Fallback: se não encontrou no profiles, buscar via auth.users
+    if (!profile) {
+      console.log('Profile não encontrado por email, tentando fallback via auth...')
+      try {
+        const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email)
+        if (!userError && userData?.user) {
+          const userId = userData.user.id
+          console.log('Usuário encontrado no auth:', userId)
+          const { data: profileByUserId } = await supabaseAdmin
+            .from('profiles')
+            .select('imobiliaria_id, construtora_id')
+            .eq('user_id', userId)
+            .maybeSingle()
+          profile = profileByUserId
+        }
+      } catch (e) {
+        console.error('Erro no fallback auth:', e)
+      }
     }
 
     if (!profile?.imobiliaria_id && !profile?.construtora_id) {
@@ -53,7 +73,6 @@ Deno.serve(async (req) => {
     // Se tem imobiliaria_id, buscar na tabela imobiliarias
     if (profile.imobiliaria_id) {
       console.log('Imobiliária ID encontrada:', profile.imobiliaria_id)
-
       const { data: imobiliaria, error: imobiliariaError } = await supabaseAdmin
         .from('imobiliarias')
         .select('nome, logo_url')
@@ -69,7 +88,6 @@ Deno.serve(async (req) => {
       }
 
       console.log('Imobiliária encontrada:', imobiliaria?.nome)
-
       return new Response(
         JSON.stringify({ imobiliaria }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -79,7 +97,6 @@ Deno.serve(async (req) => {
     // Se tem construtora_id, buscar na tabela construtoras
     if (profile.construtora_id) {
       console.log('Construtora ID encontrada:', profile.construtora_id)
-
       const { data: construtora, error: construtoraError } = await supabaseAdmin
         .from('construtoras')
         .select('nome, logo_url')
@@ -95,7 +112,6 @@ Deno.serve(async (req) => {
       }
 
       console.log('Construtora encontrada:', construtora?.nome)
-
       return new Response(
         JSON.stringify({ imobiliaria: construtora }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
