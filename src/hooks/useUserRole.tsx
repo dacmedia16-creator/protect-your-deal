@@ -157,32 +157,37 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
             .from('imobiliarias')
             .select('*')
             .eq('id', roleData.imobiliaria_id)
-            .maybeSingle();
+            .maybeSingle()
+            .then(res => res);
           assPromise = supabase
             .from('assinaturas')
             .select(assinaturaSelect)
             .eq('imobiliaria_id', roleData.imobiliaria_id)
             .order('created_at', { ascending: false })
-            .maybeSingle();
+            .maybeSingle()
+            .then(res => res);
         } else if (constId) {
           orgPromise = supabase
             .from('construtoras')
             .select('*')
             .eq('id', constId)
-            .maybeSingle();
+            .maybeSingle()
+            .then(res => res);
           assPromise = supabase
             .from('assinaturas')
             .select(assinaturaSelect)
             .eq('construtora_id', constId)
             .order('created_at', { ascending: false })
-            .maybeSingle();
+            .maybeSingle()
+            .then(res => res);
         } else if (roleData.role === 'corretor') {
           assPromise = supabase
             .from('assinaturas')
             .select(assinaturaSelect)
             .eq('user_id', currentUserId)
             .order('created_at', { ascending: false })
-            .maybeSingle();
+            .maybeSingle()
+            .then(res => res);
         }
 
         // Execute all queries in parallel
