@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
     // Update profile with additional info
     const profileUpdate: any = {
       nome,
+      email,
       telefone: telefone || null,
       creci: creci || null,
     };
