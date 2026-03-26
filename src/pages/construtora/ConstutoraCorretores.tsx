@@ -150,10 +150,24 @@ export default function ConstutoraCorretores() {
       });
       if (error) {
         let msg = 'Erro ao criar corretor';
-        try { const ctx = (error as any)?.context; if (ctx instanceof Response) { const body = await ctx.json(); msg = body.error || msg; } } catch {}
-        toast.error(msg); return;
+        try {
+          const ctx = (error as any)?.context;
+          if (ctx instanceof Response) {
+            const body = await ctx.json();
+            msg = body.error || msg;
+          } else if (typeof ctx === 'string') {
+            msg = ctx;
+          }
+        } catch {}
+        console.error('Error creating corretor:', error);
+        toast.error(msg);
+        return;
       }
-      if (data && !(data as any).success) { toast.error((data as any).error || 'Erro ao criar corretor'); return; }
+      if (data && !(data as any).success) {
+        console.error('Backend error creating corretor:', data);
+        toast.error((data as any).error || 'Erro ao criar corretor');
+        return;
+      }
       toast.success('Corretor criado com sucesso!');
       setForm({ nome: '', email: '', senha: '', telefone: '', creci: '', cpf: '' });
       setCreateDialogOpen(false);
