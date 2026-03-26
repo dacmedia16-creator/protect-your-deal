@@ -68,23 +68,34 @@ Deno.serve(async (req) => {
 
     console.log("User is super_admin, fetching all users...");
 
-    // Use admin API to list all users
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-      perPage: 1000,
-    });
+    // Use admin API to list all users with pagination
+    const allUsers: any[] = [];
+    let page = 1;
+    
+    while (true) {
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 1000,
+      });
 
-    if (listError) {
-      console.error("Error listing users:", listError);
-      return new Response(
-        JSON.stringify({ error: "Error fetching users" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (listError) {
+        console.error("Error listing users:", listError);
+        return new Response(
+          JSON.stringify({ error: "Error fetching users" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      allUsers.push(...users);
+      
+      if (users.length < 1000) break;
+      page++;
     }
 
-    console.log(`Found ${users.length} users`);
+    console.log(`Found ${allUsers.length} users (${page} pages)`);
 
     // Return a simplified list with id and email
-    const userList = users.map((user) => ({
+    const userList = allUsers.map((user) => ({
       id: user.id,
       email: user.email,
       created_at: user.created_at,
