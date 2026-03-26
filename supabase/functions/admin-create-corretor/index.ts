@@ -59,11 +59,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (roleError || !roleData) {
+      console.error("Role check failed:", roleError?.message, "roleData:", roleData);
       return new Response(
         JSON.stringify({ error: "Acesso negado. Apenas administradores podem criar corretores." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("Role found:", roleData.role, "construtora_id:", roleData.construtora_id, "imobiliaria_id:", roleData.imobiliaria_id);
 
     // Determine linking
     let imobiliariaId: string | null = null;
@@ -125,6 +128,7 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
+      console.error("Auth create error:", createError.message);
       if (createError.message?.includes("already")) {
         return new Response(
           JSON.stringify({ error: "Este email já está cadastrado" }),
@@ -136,6 +140,8 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("User created successfully:", authData.user?.id);
 
     if (!authData.user) {
       return new Response(
