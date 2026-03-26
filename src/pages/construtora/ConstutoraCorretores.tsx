@@ -148,7 +148,11 @@ export default function ConstutoraCorretores() {
       const { data, error } = await invokeWithRetry<{ success: boolean; error?: string }>('admin-create-corretor', {
         body: { nome: form.nome, email: form.email, senha: form.senha, telefone: form.telefone || undefined, creci: form.creci || undefined, cpf: form.cpf || undefined, construtora: true },
       });
-      if (error) { toast.error('Erro ao criar corretor'); return; }
+      if (error) {
+        let msg = 'Erro ao criar corretor';
+        try { const ctx = (error as any)?.context; if (ctx instanceof Response) { const body = await ctx.json(); msg = body.error || msg; } } catch {}
+        toast.error(msg); return;
+      }
       if (data && !(data as any).success) { toast.error((data as any).error || 'Erro ao criar corretor'); return; }
       toast.success('Corretor criado com sucesso!');
       setForm({ nome: '', email: '', senha: '', telefone: '', creci: '', cpf: '' });
@@ -170,7 +174,11 @@ export default function ConstutoraCorretores() {
       const { data, error } = await invokeWithRetry<{ success: boolean; error?: string }>('admin-update-corretor', {
         body: { user_id: editTarget.user_id, nome: editForm.nome.trim(), telefone: editForm.telefone.trim() || null, creci: editForm.creci.trim() || null, cpf: editForm.cpf.trim() || null },
       });
-      if (error) { toast.error('Erro ao atualizar corretor'); return; }
+      if (error) {
+        let msg = 'Erro ao atualizar corretor';
+        try { const ctx = (error as any)?.context; if (ctx instanceof Response) { const body = await ctx.json(); msg = body.error || msg; } } catch {}
+        toast.error(msg); return;
+      }
       if (data && !(data as any).success) { toast.error((data as any).error || 'Erro ao atualizar'); return; }
       toast.success('Corretor atualizado!');
       setEditDialogOpen(false);
@@ -188,7 +196,11 @@ export default function ConstutoraCorretores() {
       const { error } = await invokeWithRetry<{ success: boolean }>('admin-update-corretor', {
         body: { user_id: userId, ativo: newAtivo },
       });
-      if (error) { toast.error('Erro ao atualizar status'); } else {
+      if (error) {
+        let msg = 'Erro ao atualizar status';
+        try { const ctx = (error as any)?.context; if (ctx instanceof Response) { const body = await ctx.json(); msg = body.error || msg; } } catch {}
+        toast.error(msg);
+      } else {
         toast.success(newAtivo ? 'Corretor ativado' : 'Corretor desativado');
         fetchData();
       }
