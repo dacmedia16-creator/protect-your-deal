@@ -255,7 +255,7 @@ export default function ConstutoraCorretores() {
                         {c.profile?.ativo !== false ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
-                    <TableCell><RoleBadge role={c.role} variant="compact" /></TableCell>
+                    <TableCell><RoleBadge role={c.role as AppRole} variant="compact" /></TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button
                         variant="ghost"
