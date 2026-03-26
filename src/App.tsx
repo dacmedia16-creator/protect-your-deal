@@ -104,6 +104,7 @@ import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminConstrutoras from "./pages/admin/AdminConstrutoras";
 import AdminDetalhesConstrutora from "./pages/admin/AdminDetalhesConstrutora";
 import AdminNovaConstrutora from "./pages/admin/AdminNovaConstrutora";
+import RegistroConstrutora from "./pages/auth/RegistroConstrutora";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
@@ -154,7 +155,7 @@ const App = () => (
                 <Route path="/registro/tipo" element={<RegistroTipo />} />
                 <Route path="/registro-tipo" element={<RegistroTipo />} />
                 <Route path="/registro-autonomo" element={<RegistroCorretorAutonomo />} />
-                <Route path="/registro-construtora" element={<Navigate to="/registro-tipo" replace />} />
+                <Route path="/registro-construtora" element={<RegistroConstrutora />} />
                 <Route path="/registro-vinculado" element={<RegistroVinculado />} />
                 <Route path="/convite/:token" element={<AceitarConvite />} />
                 <Route path="/cadastro-concluido" element={<CadastroConcluido />} />
