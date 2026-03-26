@@ -200,7 +200,7 @@ export default function ConstutoraCorretores() {
             </div>
             <div className="space-y-2">
               <Label>Senha *</Label>
-              <PasswordInput value={form.senha} onChange={e => setForm(f => ({ ...f, senha: e.target.value }))} placeholder="Mínimo 6 caracteres" />
+              <PasswordInput value={form.senha} onChange={val => setForm(f => ({ ...f, senha: val }))} placeholder="Mínimo 6 caracteres" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
