@@ -1,44 +1,42 @@
 
 
-## Plano: Mostrar logo VisitaProva quando não há imobiliária vinculada
+## Plano: Corrigir busca de imobiliária por email no login
 
-### O que muda
+### Problema
 
-Na página de login (`src/pages/Auth.tsx`), quando o email digitado não está vinculado a nenhuma imobiliária (ou seja, `imobiliariaData` é `null` e não está carregando), exibir o logo do VisitaProva no lugar onde apareceria o logo da imobiliária.
+A edge function `get-imobiliaria-by-email` chama `supabaseAdmin.auth.admin.listUsers()` sem filtro e busca o email na lista retornada (máx. ~1000 usuários). Usuários além desse limite não são encontrados, então o logo da imobiliária nunca aparece.
+
+### Solução
+
+Substituir a busca por `listUsers()` por uma query direta na tabela `profiles` usando o campo `email` (que já existe na tabela profiles), eliminando a dependência do `auth.admin.listUsers()`.
 
 ### Alteração
 
-**Arquivo: `src/pages/Auth.tsx`**
+**Arquivo: `supabase/functions/get-imobiliaria-by-email/index.ts`**
 
-Onde hoje existe (linhas 531-548):
-```tsx
-{/* Logo da imobiliária quando encontrada */}
-{imobiliariaData && (
-  <div>...</div>
-)}
+Reescrever a lógica para:
+1. Buscar diretamente em `profiles` pelo email (em vez de listar todos os auth users)
+2. Se encontrar, buscar os dados da imobiliária pelo `imobiliaria_id`
+3. Remover as chamadas `listUsers()` completamente
+
+```typescript
+// Em vez de:
+const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers()
+const user = allUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+
+// Usar:
+const { data: profile } = await supabaseAdmin
+  .from('profiles')
+  .select('imobiliaria_id')
+  .ilike('email', email)
+  .maybeSingle()
 ```
 
-Mudar para: sempre mostrar o bloco de logo. Se `imobiliariaData` existir, mostrar o logo/nome da imobiliária (comportamento atual). Se não existir e não estiver carregando, mostrar o `LogoIcon` do VisitaProva com o nome "VisitaProva".
+Isso resolve o problema de escala e torna a busca mais eficiente.
 
-```tsx
-{imobiliariaData ? (
-  <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
-    {imobiliariaData.logo_url ? (
-      <img src={imobiliariaData.logo_url} alt={imobiliariaData.nome} ... />
-    ) : (
-      <div className="h-16 w-16 rounded-lg bg-muted ...">
-        <Building2 ... />
-      </div>
-    )}
-    <span>...</span>
-  </div>
-) : !loadingImobiliaria && (
-  <div className="flex flex-col items-center gap-2 pb-4 border-b border-border mb-4">
-    <LogoIcon size={48} />
-    <span className="text-sm text-muted-foreground font-medium">VisitaProva</span>
-  </div>
-)}
-```
+### Detalhes técnicos
 
-O `LogoIcon` já está importado no arquivo.
+- A tabela `profiles` tem campo `email` que é sincronizado com o auth
+- Usar `ilike` para busca case-insensitive
+- Se `profiles` não tiver campo `email`, buscar via `auth.admin.listUsers({ filter: email })` — mas a API do Supabase GoTrue não suporta filtro por email no `listUsers`, então a alternativa é usar `getUserByEmail` (disponível no admin client) caso não haja email em profiles
 
