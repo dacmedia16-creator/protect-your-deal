@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useUserRole, AppRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { Card, CardContent } from '@/components/ui/card';
