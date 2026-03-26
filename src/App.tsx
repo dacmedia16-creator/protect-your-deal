@@ -106,6 +106,16 @@ import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
 import AfiliadoPerfil from "./pages/afiliado/AfiliadoPerfil";
 
+// Construtora pages
+import ConstrutoraDashboard from "./pages/construtora/ConstrutoraDashboard";
+import ConstutoraEmpreendimentos from "./pages/construtora/ConstutoraEmpreendimentos";
+import ConstutoraImobiliarias from "./pages/construtora/ConstutoraImobiliarias";
+import ConstutoraCorretores from "./pages/construtora/ConstutoraCorretores";
+import ConstutoraFichas from "./pages/construtora/ConstutoraFichas";
+import ConstutoraRelatorios from "./pages/construtora/ConstutoraRelatorios";
+import ConstutoraConfiguracoes from "./pages/construtora/ConstutoraConfiguracoes";
+import ConstutoraAssinatura from "./pages/construtora/ConstutoraAssinatura";
+
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
@@ -141,6 +151,7 @@ const App = () => (
                 <Route path="/registro/tipo" element={<RegistroTipo />} />
                 <Route path="/registro-tipo" element={<RegistroTipo />} />
                 <Route path="/registro-autonomo" element={<RegistroCorretorAutonomo />} />
+                <Route path="/registro-construtora" element={<Navigate to="/registro-tipo" replace />} />
                 <Route path="/registro-vinculado" element={<RegistroVinculado />} />
                 <Route path="/convite/:token" element={<AceitarConvite />} />
                 <Route path="/cadastro-concluido" element={<CadastroConcluido />} />
@@ -352,6 +363,48 @@ const App = () => (
                 <Route path="/empresa/pesquisas" element={
                   <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
                     <EmpresaPesquisas />
+                  </ProtectedRoute>
+                } />
+
+                {/* Construtora routes */}
+                <Route path="/construtora" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstrutoraDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/empreendimentos" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraEmpreendimentos />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/imobiliarias" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraImobiliarias />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/corretores" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraCorretores />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/fichas" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraFichas />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/relatorios" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraRelatorios />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/configuracoes" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraConfiguracoes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/assinatura" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraAssinatura />
                   </ProtectedRoute>
                 } />
                 <Route path="/pesquisas" element={
