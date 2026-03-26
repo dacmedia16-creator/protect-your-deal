@@ -1,58 +1,44 @@
 
 
-## Plano: Otimizar velocidade do login/carregamento para construtoras
+## Plano: Corrigir lentidão causada pelas RLS policies do módulo construtora
 
 ### Diagnóstico
 
-O problema tem duas causas:
+As RLS policies criadas para o módulo construtora estão causando lentidão global no sistema por três razões:
 
-1. **`useUserRole` faz queries sequenciais**: Após o login, o hook executa 4 chamadas ao banco em série (user_roles → profiles → construtoras → assinaturas), cada uma esperando a anterior terminar. Isso cria um gargalo de ~1-2s.
+1. **Sem índice adequado**: `user_roles` não tem índice em `(user_id, construtora_id)`. A função `get_user_construtora()` faz full scan na tabela.
 
-2. **Edge function `get-imobiliaria-by-email` com fallback lento**: Se o email não está no `profiles`, a função chama `getUserByEmail` no auth (cold start + API call extra). A migração anterior deveria ter corrigido isso, mas novos usuários criados por fluxos antigos podem ainda ter email null.
+2. **Chamadas duplas nas policies**: Policies como `construtora_id = get_user_construtora(auth.uid()) AND get_user_construtora(auth.uid()) IS NOT NULL` chamam a função **duas vezes** por avaliação de linha — em `fichas_visita`, `assinaturas` e `user_roles`.
 
-### Correções
+3. **Avaliação em todas as queries**: Mesmo para usuários que NÃO são de construtora, o Postgres avalia essas policies (e chama `get_user_construtora`) em cada SELECT nessas tabelas.
 
-**1. Paralelizar queries no `useUserRole` (src/hooks/useUserRole.tsx)**
+### Correções (1 migração SQL)
 
-Após obter `roleData`, disparar as queries de `profiles`, `construtoras`/`imobiliarias` e `assinaturas` em paralelo com `Promise.all` em vez de sequencialmente.
-
-Trecho atual (sequencial):
-```
-const profileData = await supabase.from('profiles')...
-const constData = await supabase.from('construtoras')...
-const assData = await supabase.from('assinaturas')...
-```
-
-Trecho novo (paralelo):
-```
-const [profileResult, constResult, assResult] = await Promise.all([
-  supabase.from('profiles').select('ativo').eq('user_id', currentUserId).maybeSingle(),
-  supabase.from('construtoras').select('*').eq('id', constId).maybeSingle(),
-  supabase.from('assinaturas').select('...').eq('construtora_id', constId)...maybeSingle(),
-]);
-```
-
-**2. Garantir email no profile via trigger (migração SQL)**
-
-Criar/atualizar o trigger `handle_new_user` para sempre copiar `email` de `auth.users` para `profiles`, evitando o fallback lento na edge function.
-
+**1. Criar índice em `user_roles`**
 ```sql
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (user_id, nome, email)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'nome', ''),
-    NEW.email
-  )
-  ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email WHERE profiles.email IS NULL;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+CREATE INDEX idx_user_roles_user_construtora 
+  ON public.user_roles(user_id, construtora_id) 
+  WHERE construtora_id IS NOT NULL;
 ```
+
+**2. Reescrever policies para eliminar chamadas duplas**
+
+Substituir o padrão `X = get_user_construtora(auth.uid()) AND get_user_construtora(auth.uid()) IS NOT NULL` por uma única chamada que já resolve ambas as condições:
+
+- `assinaturas`: `construtora_id IS NOT NULL AND construtora_id = get_user_construtora(auth.uid())`
+- `fichas_visita`: mesma correção
+- `user_roles`: mesma correção
+
+Colocar `construtora_id IS NOT NULL` primeiro faz o Postgres rejeitar linhas sem construtora antes de chamar a função.
+
+**3. Adicionar índice geral em `user_roles(user_id)`**
+```sql
+CREATE INDEX idx_user_roles_user_id ON public.user_roles(user_id);
+```
+Isso acelera todas as funções que consultam `user_roles` por `user_id` (`get_user_construtora`, `get_user_imobiliaria`, `has_role`, `is_imobiliaria_admin`, etc.).
 
 ### Impacto esperado
-- Redução de ~50% no tempo de carregamento do role (3 queries paralelas vs sequenciais)
-- Eliminação do fallback lento na edge function de logo
+- Eliminação de ~50% das chamadas de função nas RLS policies
+- Queries indexadas em vez de full scans
+- Melhora perceptível em todas as telas do sistema
 
