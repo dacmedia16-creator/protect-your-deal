@@ -149,8 +149,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
           .eq('user_id', currentUserId)
           .maybeSingle();
 
-        let orgPromise: Promise<any> = Promise.resolve({ data: null });
-        let assPromise: Promise<any> = Promise.resolve({ data: null });
+        let orgPromise: PromiseLike<any> = Promise.resolve({ data: null });
+        let assPromise: PromiseLike<any> = Promise.resolve({ data: null });
 
         if (roleData.imobiliaria_id) {
           orgPromise = supabase
