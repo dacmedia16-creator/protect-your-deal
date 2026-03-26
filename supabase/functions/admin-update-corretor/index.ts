@@ -98,8 +98,8 @@ Deno.serve(async (req) => {
 
     console.log('admin-update-corretor: isLiderOfMembro:', isLiderOfMembro);
 
-    // Authorization check: must be super_admin, imobiliaria_admin, or team leader
-    if (!isSuperAdmin && !adminRole && !isLiderOfMembro) {
+    // Authorization check: must be super_admin, imobiliaria_admin, construtora_admin, or team leader
+    if (!isSuperAdmin && !adminRole && !construtoraAdminRole && !isLiderOfMembro) {
       console.log('admin-update-corretor: User has no permission');
       return new Response(
         JSON.stringify({ error: 'Sem permissão para alterar este corretor' }),
