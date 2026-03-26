@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   try {
     const { email } = await req.json()
     
-    console.log('Buscando imobiliária para email:', email)
+    console.log('Buscando imobiliária/construtora para email:', email)
     
     if (!email) {
       return new Response(
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     // Buscar diretamente na tabela profiles pelo email
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('imobiliaria_id')
+      .select('imobiliaria_id, construtora_id')
       .ilike('email', email)
       .maybeSingle()
 
@@ -42,35 +42,68 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (!profile?.imobiliaria_id) {
-      console.log('Usuário não encontrado ou sem imobiliária vinculada')
+    if (!profile?.imobiliaria_id && !profile?.construtora_id) {
+      console.log('Usuário não encontrado ou sem imobiliária/construtora vinculada')
       return new Response(
         JSON.stringify({ imobiliaria: null }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Imobiliária ID encontrada:', profile.imobiliaria_id)
+    // Se tem imobiliaria_id, buscar na tabela imobiliarias
+    if (profile.imobiliaria_id) {
+      console.log('Imobiliária ID encontrada:', profile.imobiliaria_id)
 
-    // Buscar dados da imobiliária (apenas nome e logo)
-    const { data: imobiliaria, error: imobiliariaError } = await supabaseAdmin
-      .from('imobiliarias')
-      .select('nome, logo_url')
-      .eq('id', profile.imobiliaria_id)
-      .maybeSingle()
+      const { data: imobiliaria, error: imobiliariaError } = await supabaseAdmin
+        .from('imobiliarias')
+        .select('nome, logo_url')
+        .eq('id', profile.imobiliaria_id)
+        .maybeSingle()
 
-    if (imobiliariaError) {
-      console.error('Erro ao buscar imobiliária:', imobiliariaError)
+      if (imobiliariaError) {
+        console.error('Erro ao buscar imobiliária:', imobiliariaError)
+        return new Response(
+          JSON.stringify({ imobiliaria: null }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log('Imobiliária encontrada:', imobiliaria?.nome)
+
       return new Response(
-        JSON.stringify({ imobiliaria: null }),
+        JSON.stringify({ imobiliaria }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Imobiliária encontrada:', imobiliaria?.nome)
+    // Se tem construtora_id, buscar na tabela construtoras
+    if (profile.construtora_id) {
+      console.log('Construtora ID encontrada:', profile.construtora_id)
+
+      const { data: construtora, error: construtoraError } = await supabaseAdmin
+        .from('construtoras')
+        .select('nome, logo_url')
+        .eq('id', profile.construtora_id)
+        .maybeSingle()
+
+      if (construtoraError) {
+        console.error('Erro ao buscar construtora:', construtoraError)
+        return new Response(
+          JSON.stringify({ imobiliaria: null }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log('Construtora encontrada:', construtora?.nome)
+
+      return new Response(
+        JSON.stringify({ imobiliaria: construtora }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     return new Response(
-      JSON.stringify({ imobiliaria }),
+      JSON.stringify({ imobiliaria: null }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
