@@ -2291,6 +2291,10 @@ export type Database = {
         Returns: string
       }
       cleanup_expired_otps: { Args: never; Returns: undefined }
+      empreendimento_belongs_to_construtora: {
+        Args: { _construtora_id: string; _empreendimento_id: string }
+        Returns: boolean
+      }
       generate_protocolo: { Args: never; Returns: string }
       get_afiliado_id: { Args: { _user_id: string }; Returns: string }
       get_cupom_by_afiliado: {
