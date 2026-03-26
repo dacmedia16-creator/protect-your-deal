@@ -118,29 +118,52 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Verify the corretor belongs to the same imobiliaria (unless super_admin or leader)
+    // Verify the corretor belongs to the same imobiliaria or construtora (unless super_admin or leader)
     if (!isSuperAdmin && !isLiderOfMembro) {
-      const { data: corretorRole, error: corretorRoleError } = await supabaseAdmin
-        .from('user_roles')
-        .select('imobiliaria_id')
-        .eq('user_id', user_id)
-        .eq('role', 'corretor')
-        .single();
+      if (construtoraAdminRole && !adminRole) {
+        // Construtora admin: verify corretor belongs to same construtora
+        const { data: corretorRole, error: corretorRoleError } = await supabaseAdmin
+          .from('user_roles')
+          .select('construtora_id')
+          .eq('user_id', user_id)
+          .eq('role', 'corretor')
+          .single();
 
-      if (corretorRoleError || !corretorRole) {
-        console.log('admin-update-corretor: Corretor not found');
-        return new Response(
-          JSON.stringify({ error: 'Corretor not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+        if (corretorRoleError || !corretorRole) {
+          return new Response(
+            JSON.stringify({ error: 'Corretor not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
-      if (corretorRole.imobiliaria_id !== imobiliariaId) {
-        console.log('admin-update-corretor: Corretor belongs to different imobiliaria');
-        return new Response(
-          JSON.stringify({ error: 'Corretor not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        if (corretorRole.construtora_id !== construtoraId) {
+          return new Response(
+            JSON.stringify({ error: 'Corretor not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else if (adminRole) {
+        // Imobiliaria admin: verify corretor belongs to same imobiliaria
+        const { data: corretorRole, error: corretorRoleError } = await supabaseAdmin
+          .from('user_roles')
+          .select('imobiliaria_id')
+          .eq('user_id', user_id)
+          .eq('role', 'corretor')
+          .single();
+
+        if (corretorRoleError || !corretorRole) {
+          return new Response(
+            JSON.stringify({ error: 'Corretor not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (corretorRole.imobiliaria_id !== imobiliariaId) {
+          return new Response(
+            JSON.stringify({ error: 'Corretor not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
     }
 
