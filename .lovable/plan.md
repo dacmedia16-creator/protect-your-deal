@@ -1,37 +1,46 @@
 
 
-## Plano: Alinhar página de Corretores da Construtora com a da Imobiliária
+## Plano: Corrigir criação de corretor pela construtora
 
-### Problema
-A página `ConstutoraCorretores` (386 linhas) é muito mais simples que a `EmpresaCorretores` (1285 linhas). Faltam KPIs, busca, contagem de fichas, dropdown de ações, layout mobile responsivo e redefinição de senha.
+### Problema identificado
+Os logs mostram que a edge function `admin-create-corretor` foi chamada corretamente (`Creating corretor: Fernando@gmail.com construtora: true`), mas não há log de sucesso ou erro após isso. O frontend mostra apenas "Erro ao criar corretor" sem detalhes, porque o tratamento de erro não extrai a mensagem real do backend.
 
-### O que será implementado
+Dois problemas:
 
-Reescrever `ConstutoraCorretores.tsx` seguindo o mesmo design da imobiliária, adaptado ao contexto da construtora (sem equipes, sem convites).
+1. **Frontend não extrai mensagem de erro do backend** — Quando a edge function retorna status não-2xx (403, 400, 500), o SDK Supabase coloca o erro em `error` mas a mensagem real está em `error.context`. O frontend ignora isso e mostra mensagem genérica.
 
-**1. Header unificado com toolbar**
-- Título "Corretores" + subtítulo "X corretores"
-- Campo de busca por nome/CRECI
-- Botão "Criar"
+2. **Possível email duplicado** — `Fernando@gmail.com` pode já existir no sistema, causando erro que é engolido.
 
-**2. KPI Cards** (grid 3 colunas)
-- Ativos / Inativos / Total de Fichas
+### Correções
 
-**3. Tabela desktop com dropdown de ações**
-- Colunas: Nome (com RoleBadge), CRECI, Telefone, Fichas, Status, Ações (...)
-- Dropdown: Editar, Desativar/Ativar, Redefinir Senha
-- Contagem de fichas por corretor (`fichas_visita` count)
+**Arquivo:** `src/pages/construtora/ConstutoraCorretores.tsx`
 
-**4. Layout mobile responsivo**
-- Cards clicáveis com nome, badges, CRECI, fichas e dropdown de ações (mesmo padrão da imobiliária)
+Melhorar tratamento de erro em `handleCreate`, `handleEdit`, `handleToggleAtivo` e `handleResetPassword` para extrair a mensagem real do backend, seguindo o padrão documentado em `admin-api-error-handling-pattern`:
 
-**5. Redefinir Senha**
-- Dialog para definir nova senha chamando `admin-reset-corretor-password`
-- Requer atualização da edge function para aceitar `construtora_admin`
+```typescript
+// Extrair mensagem real do erro
+if (error) {
+  let msg = 'Erro ao criar corretor';
+  try {
+    const ctx = (error as any)?.context;
+    if (ctx instanceof Response) {
+      const body = await ctx.json();
+      msg = body.error || msg;
+    }
+  } catch {}
+  toast.error(msg);
+  return;
+}
+```
+
+**Arquivo:** `supabase/functions/admin-create-corretor/index.ts`
+
+Adicionar logs de diagnóstico após cada ponto de decisão para facilitar debug futuro:
+- Log após role check: `console.log("Role found:", roleData.role, "construtora_id:", roleData.construtora_id)`
+- Log após criação do usuário: `console.log("User created:", userId)`
+- Log em caso de erro: `console.error("Create error:", createError.message)`
 
 ### Arquivos alterados
-1. `src/pages/construtora/ConstutoraCorretores.tsx` — Reescrita completa seguindo padrão da imobiliária
-2. `supabase/functions/admin-reset-corretor-password/index.ts` — Adicionar suporte a `construtora_admin`
-
-### Sem alterações no banco de dados
+1. `src/pages/construtora/ConstutoraCorretores.tsx` — Melhorar extração de mensagens de erro
+2. `supabase/functions/admin-create-corretor/index.ts` — Adicionar logs de diagnóstico
 
