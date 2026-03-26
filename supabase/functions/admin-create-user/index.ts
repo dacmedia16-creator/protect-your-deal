@@ -11,8 +11,9 @@ interface RequestBody {
   nome: string;
   telefone?: string;
   creci?: string;
-  role: 'corretor' | 'imobiliaria_admin';
-  imobiliaria_id: string;
+  role: 'corretor' | 'imobiliaria_admin' | 'construtora_admin';
+  imobiliaria_id?: string;
+  construtora_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -70,10 +71,10 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: RequestBody = await req.json();
-    const { email, password, nome, telefone, creci, role, imobiliaria_id } = body;
+    const { email, password, nome, telefone, creci, role, imobiliaria_id, construtora_id } = body;
 
     // Validate required fields
-    if (!email || !password || !nome || !role || !imobiliaria_id) {
+    if (!email || !password || !nome || !role) {
       return new Response(
         JSON.stringify({ error: 'email, password, nome, role e imobiliaria_id são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -88,28 +89,43 @@ Deno.serve(async (req) => {
     }
 
     // Validate role
-    if (!['corretor', 'imobiliaria_admin'].includes(role)) {
+    if (!['corretor', 'imobiliaria_admin', 'construtora_admin'].includes(role)) {
       return new Response(
-        JSON.stringify({ error: 'Role inválido. Use corretor ou imobiliaria_admin' }),
+        JSON.stringify({ error: 'Role inválido. Use corretor, imobiliaria_admin ou construtora_admin' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify imobiliaria exists
-    const { data: imobiliaria, error: imobError } = await supabaseAdmin
-      .from('imobiliarias')
-      .select('id, nome')
-      .eq('id', imobiliaria_id)
-      .maybeSingle();
+    // Verify entity exists based on role
+    if (role === 'construtora_admin' && construtora_id) {
+      const { data: construtora, error: constError } = await supabaseAdmin
+        .from('construtoras')
+        .select('id, nome')
+        .eq('id', construtora_id)
+        .maybeSingle();
 
-    if (imobError || !imobiliaria) {
-      return new Response(
-        JSON.stringify({ error: 'Imobiliária não encontrada' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (constError || !construtora) {
+        return new Response(
+          JSON.stringify({ error: 'Construtora não encontrada' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log('Creating user for construtora:', construtora.nome);
+    } else if (imobiliaria_id) {
+      const { data: imobiliaria, error: imobError } = await supabaseAdmin
+        .from('imobiliarias')
+        .select('id, nome')
+        .eq('id', imobiliaria_id)
+        .maybeSingle();
+
+      if (imobError || !imobiliaria) {
+        return new Response(
+          JSON.stringify({ error: 'Imobiliária não encontrada' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log('Creating user for imobiliaria:', imobiliaria.nome);
     }
-
-    console.log('Creating user for imobiliaria:', imobiliaria.nome);
 
     // Create user in auth.users
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -137,14 +153,17 @@ Deno.serve(async (req) => {
     console.log('User created:', newUser.user.id);
 
     // Update profile with additional info
+    const profileUpdate: any = {
+      nome,
+      telefone: telefone || null,
+      creci: creci || null,
+    };
+    if (imobiliaria_id) profileUpdate.imobiliaria_id = imobiliaria_id;
+    if (construtora_id) profileUpdate.construtora_id = construtora_id;
+
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        nome,
-        telefone: telefone || null,
-        creci: creci || null,
-        imobiliaria_id,
-      })
+      .update(profileUpdate)
       .eq('user_id', newUser.user.id);
 
     if (profileError) {
@@ -153,13 +172,16 @@ Deno.serve(async (req) => {
     }
 
     // Create user_role
+    const roleInsert: any = {
+      user_id: newUser.user.id,
+      role,
+    };
+    if (imobiliaria_id) roleInsert.imobiliaria_id = imobiliaria_id;
+    if (construtora_id) roleInsert.construtora_id = construtora_id;
+
     const { error: roleCreateError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id: newUser.user.id,
-        role,
-        imobiliaria_id,
-      });
+      .insert(roleInsert);
 
     if (roleCreateError) {
       console.error('Role creation error:', roleCreateError);
