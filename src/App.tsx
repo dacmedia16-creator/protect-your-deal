@@ -509,7 +509,7 @@ const App = () => (
                   </ProtectedRoute>
                 } />
                 <Route path="/perfil" element={
-                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin']}>
+                  <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin', 'construtora_admin']}>
                     <Perfil />
                   </ProtectedRoute>
                 } />
