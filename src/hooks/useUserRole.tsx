@@ -2,12 +2,14 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-export type AppRole = 'super_admin' | 'imobiliaria_admin' | 'corretor' | 'afiliado';
+export type AppRole = 'super_admin' | 'imobiliaria_admin' | 'corretor' | 'afiliado' | 'construtora_admin';
 
 interface UserRoleContextType {
   role: AppRole | null;
   imobiliariaId: string | null;
   imobiliaria: Imobiliaria | null;
+  construtoraId: string | null;
+  construtora: Construtora | null;
   assinatura: Assinatura | null;
   ativo: boolean | null;
   loading: boolean;
@@ -16,6 +18,20 @@ interface UserRoleContextType {
 }
 
 interface Imobiliaria {
+  id: string;
+  nome: string;
+  cnpj: string | null;
+  email: string;
+  telefone: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  estado: string | null;
+  logo_url: string | null;
+  status: string;
+  codigo: number | null;
+}
+
+interface Construtora {
   id: string;
   nome: string;
   cnpj: string | null;
@@ -53,6 +69,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [imobiliariaId, setImobiliariaId] = useState<string | null>(null);
   const [imobiliaria, setImobiliaria] = useState<Imobiliaria | null>(null);
+  const [construtoraId, setConstrutoraId] = useState<string | null>(null);
+  const [construtora, setConstrutora] = useState<Construtora | null>(null);
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [ativo, setAtivo] = useState<boolean | null>(null);
   const [internalLoading, setInternalLoading] = useState(false);
@@ -65,6 +83,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       setRole(null);
       setImobiliariaId(null);
       setImobiliaria(null);
+      setConstrutoraId(null);
+      setConstrutora(null);
       setAssinatura(null);
       setAtivo(null);
       setInternalLoading(false);
@@ -81,7 +101,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       // Fetch user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('role, imobiliaria_id')
+        .select('role, imobiliaria_id, construtora_id')
         .eq('user_id', currentUserId)
         .maybeSingle();
 
@@ -102,6 +122,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       if (roleData) {
         setRole(roleData.role as AppRole);
         setImobiliariaId(roleData.imobiliaria_id);
+        setConstrutoraId((roleData as any).construtora_id || null);
 
         // Fetch user's active status from profile
         const { data: profileData } = await supabase
@@ -142,6 +163,46 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
               )
             `)
             .eq('imobiliaria_id', roleData.imobiliaria_id)
+            .order('created_at', { ascending: false })
+            .maybeSingle();
+
+          if (assData) {
+            setAssinatura({
+              ...assData,
+              plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
+            });
+          }
+        } else if ((roleData as any).construtora_id) {
+          // Construtora admin - fetch construtora details
+          const constId = (roleData as any).construtora_id;
+          const { data: constData } = await supabase
+            .from('construtoras')
+            .select('*')
+            .eq('id', constId)
+            .maybeSingle();
+
+          setConstrutora(constData);
+
+          // Fetch subscription for construtora
+          const { data: assData } = await supabase
+            .from('assinaturas')
+            .select(`
+              id,
+              status,
+              data_inicio,
+              data_fim,
+              proxima_cobranca,
+              plano:planos!assinaturas_plano_id_fkey (
+                id,
+                nome,
+                max_corretores,
+                max_fichas_mes,
+                max_clientes,
+                max_imoveis,
+                valor_mensal
+              )
+            `)
+            .eq('construtora_id', constId)
             .order('created_at', { ascending: false })
             .maybeSingle();
 
@@ -244,6 +305,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       role, 
       imobiliariaId, 
       imobiliaria, 
+      construtoraId,
+      construtora,
       assinatura, 
       ativo,
       loading: isLoading,

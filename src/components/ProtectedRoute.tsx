@@ -54,6 +54,8 @@ export function ProtectedRoute({
     // Redirect to appropriate dashboard based on role
     if (role === 'super_admin') {
       return <Navigate to="/admin" replace />;
+    } else if (role === 'construtora_admin') {
+      return <Navigate to="/construtora" replace />;
     } else if (role === 'imobiliaria_admin') {
       return <Navigate to="/empresa" replace />;
     } else if (role === 'afiliado') {

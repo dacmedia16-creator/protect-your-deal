@@ -111,7 +111,8 @@ export const getRoleBadgeVariant = (role: string): BadgeVariant => {
 
 export const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
-  imobiliaria_admin: 'Admin',
+  imobiliaria_admin: 'Admin Imobiliária',
+  construtora_admin: 'Admin Construtora',
   corretor: 'Corretor',
 };
 

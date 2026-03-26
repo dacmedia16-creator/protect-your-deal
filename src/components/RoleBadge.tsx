@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Shield, Building2, UserCheck, UserX } from 'lucide-react';
+import { Shield, Building2, UserCheck, UserX, HardHat } from 'lucide-react';
 import { AppRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 
@@ -21,9 +21,14 @@ const roleConfig: Record<string, {
     className: 'bg-destructive/10 text-destructive border-destructive/20' 
   },
   imobiliaria_admin: { 
-    label: 'Admin', 
+    label: 'Admin Imobiliária', 
     icon: Building2, 
     className: 'bg-primary/10 text-primary border-primary/20' 
+  },
+  construtora_admin: { 
+    label: 'Admin Construtora', 
+    icon: HardHat, 
+    className: 'bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400' 
   },
   corretor: { 
     label: 'Corretor', 

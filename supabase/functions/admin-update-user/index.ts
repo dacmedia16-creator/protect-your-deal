@@ -10,8 +10,9 @@ interface RequestBody {
   nome?: string;
   telefone?: string;
   creci?: string;
-  role?: 'corretor' | 'imobiliaria_admin';
+  role?: 'corretor' | 'imobiliaria_admin' | 'construtora_admin';
   imobiliaria_id?: string | null;
+  construtora_id?: string | null;
   email?: string;
 }
 
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: RequestBody = await req.json();
-    const { user_id, nome, telefone, creci, role, imobiliaria_id, email } = body;
+    const { user_id, nome, telefone, creci, role, imobiliaria_id, construtora_id, email } = body;
 
     if (!user_id) {
       return new Response(
@@ -127,6 +128,7 @@ Deno.serve(async (req) => {
       if (telefone !== undefined) profileUpdate.telefone = telefone;
       if (creci !== undefined) profileUpdate.creci = creci;
       if (imobiliaria_id !== undefined) profileUpdate.imobiliaria_id = imobiliaria_id;
+      if (construtora_id !== undefined) profileUpdate.construtora_id = construtora_id;
 
       const { error: profileError } = await supabaseAdmin
         .from('profiles')
@@ -148,8 +150,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update role and/or imobiliaria_id if provided
-    if (role || imobiliaria_id !== undefined) {
+    // Update role and/or imobiliaria_id/construtora_id if provided
+    if (role || imobiliaria_id !== undefined || construtora_id !== undefined) {
       // First, get existing user_role
       const { data: existingRole } = await supabaseAdmin
         .from('user_roles')
@@ -161,6 +163,7 @@ Deno.serve(async (req) => {
         const roleUpdate: any = {};
         if (role) roleUpdate.role = role;
         if (imobiliaria_id !== undefined) roleUpdate.imobiliaria_id = imobiliaria_id;
+        if (construtora_id !== undefined) roleUpdate.construtora_id = construtora_id;
 
         const { error: roleUpdateError } = await supabaseAdmin
           .from('user_roles')
