@@ -110,24 +110,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch users from auth
-    const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
+    // Fetch emails from profiles table (no 1000 user limit)
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id, email")
+      .in("user_id", userIds);
 
-    if (usersError) {
-      console.error("Error listing users:", usersError);
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
       return new Response(
-        JSON.stringify({ error: "Error fetching users" }),
+        JSON.stringify({ error: "Error fetching user emails" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Create a map of user_id -> email
     const emailsMap: Record<string, string> = {};
-    const userIdsSet = new Set(userIds);
-    
-    for (const user of users || []) {
-      if (userIdsSet.has(user.id)) {
-        emailsMap[user.id] = user.email || "";
+    for (const profile of profiles || []) {
+      if (profile.email) {
+        emailsMap[profile.user_id] = profile.email;
       }
     }
 

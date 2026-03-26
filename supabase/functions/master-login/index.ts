@@ -39,14 +39,9 @@ serve(async (req) => {
     );
 
     // Find user by email
-    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    if (listError) {
-      console.error("Error listing users:", listError);
-      throw listError;
-    }
-
-    const targetUser = usersData.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (!targetUser) {
+    const { data: { user: targetUser }, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    if (userError || !targetUser) {
+      console.log("User not found for email:", email);
       return new Response(
         JSON.stringify({ error: "Usuário não encontrado" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
