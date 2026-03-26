@@ -1,42 +1,64 @@
 
 
-## Plano: Corrigir busca de imobiliária por email no login
+## Plano: Corrigir limite de 1000 usuários em todas as Edge Functions
 
 ### Problema
 
-A edge function `get-imobiliaria-by-email` chama `supabaseAdmin.auth.admin.listUsers()` sem filtro e busca o email na lista retornada (máx. ~1000 usuários). Usuários além desse limite não são encontrados, então o logo da imobiliária nunca aparece.
+Além da `get-imobiliaria-by-email` (já corrigida), existem **3 outras edge functions** que usam `listUsers()` e são afetadas pelo limite de ~1000 usuários:
 
-### Solução
+### Funções afetadas
 
-Substituir a busca por `listUsers()` por uma query direta na tabela `profiles` usando o campo `email` (que já existe na tabela profiles), eliminando a dependência do `auth.admin.listUsers()`.
+**1. `master-login/index.ts`** — Login master
+- Usa `listUsers()` para buscar usuário por email
+- **Impacto**: Login master não funciona para usuários além dos primeiros 1000
+- **Correção**: Usar `supabaseAdmin.auth.admin.getUserByEmail(email)` (API nativa do admin client que não tem limite)
 
-### Alteração
+**2. `admin-get-corretores-emails/index.ts`** — Buscar emails de corretores
+- Usa `listUsers()` para criar mapa user_id → email
+- **Impacto**: Corretores após os primeiros 1000 aparecem sem email na listagem admin
+- **Correção**: Buscar emails diretamente da tabela `profiles` (que já tem campo `email`)
 
-**Arquivo: `supabase/functions/get-imobiliaria-by-email/index.ts`**
-
-Reescrever a lógica para:
-1. Buscar diretamente em `profiles` pelo email (em vez de listar todos os auth users)
-2. Se encontrar, buscar os dados da imobiliária pelo `imobiliaria_id`
-3. Remover as chamadas `listUsers()` completamente
-
-```typescript
-// Em vez de:
-const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers()
-const user = allUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase())
-
-// Usar:
-const { data: profile } = await supabaseAdmin
-  .from('profiles')
-  .select('imobiliaria_id')
-  .ilike('email', email)
-  .maybeSingle()
-```
-
-Isso resolve o problema de escala e torna a busca mais eficiente.
+**3. `admin-list-users/index.ts`** — Listar todos usuários (admin)
+- Usa `listUsers({ perPage: 1000 })` para listar todos
+- **Impacto**: Admin só vê os primeiros 1000 usuários
+- **Correção**: Implementar paginação com `listUsers({ page, perPage })` iterando até buscar todos, ou buscar dados da tabela `profiles` + `user_roles`
 
 ### Detalhes técnicos
 
-- A tabela `profiles` tem campo `email` que é sincronizado com o auth
-- Usar `ilike` para busca case-insensitive
-- Se `profiles` não tiver campo `email`, buscar via `auth.admin.listUsers({ filter: email })` — mas a API do Supabase GoTrue não suporta filtro por email no `listUsers`, então a alternativa é usar `getUserByEmail` (disponível no admin client) caso não haja email em profiles
+| Função | Solução | Complexidade |
+|--------|---------|-------------|
+| `master-login` | `getUserByEmail(email)` | Simples |
+| `admin-get-corretores-emails` | Query em `profiles` pelo email | Simples |
+| `admin-list-users` | Paginação loop ou query `profiles` + `user_roles` | Média |
+
+### Alterações
+
+**`master-login/index.ts`**
+```typescript
+// Substituir listUsers() + find por:
+const { data: { user: targetUser }, error } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+```
+
+**`admin-get-corretores-emails/index.ts`**
+```typescript
+// Substituir listUsers() + map por query em profiles:
+const { data: profiles } = await supabaseAdmin
+  .from('profiles')
+  .select('user_id, email')
+  .in('user_id', userIds);
+const emailsMap = Object.fromEntries(profiles.map(p => [p.user_id, p.email]));
+```
+
+**`admin-list-users/index.ts`**
+```typescript
+// Paginar para buscar todos os usuários:
+let allUsers = [];
+let page = 1;
+while (true) {
+  const { data: { users } } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+  allUsers.push(...users);
+  if (users.length < 1000) break;
+  page++;
+}
+```
 
