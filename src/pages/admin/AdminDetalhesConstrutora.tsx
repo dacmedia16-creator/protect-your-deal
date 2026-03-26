@@ -481,7 +481,7 @@ export default function AdminDetalhesConstrutora() {
                 <CardTitle>Assinatura</CardTitle>
                 <CardDescription>
                   {assinatura ? (
-                    <span>Status: <Badge className={getStatusColor(assinatura.status ?? '', subscriptionStatusColors)}>{assinatura.status}</Badge></span>
+                    <span>Status: <Badge className={getStatusColor(subscriptionStatusColors, assinatura.status ?? '')}>{assinatura.status}</Badge></span>
                   ) : 'Nenhuma assinatura ativa'}
                 </CardDescription>
               </CardHeader>

@@ -204,7 +204,7 @@ export default function AdminConstrutoras() {
                               {c.codigo && <Badge variant="outline" className="text-xs">#{c.codigo}</Badge>}
                               <span className="font-medium">{c.nome}</span>
                             </div>
-                            <Badge className={getStatusColor(c.status, entityStatusColors)}>{c.status}</Badge>
+                            <Badge className={getStatusColor(entityStatusColors, c.status)}>{c.status}</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">{c.email}</p>
                           <div className="flex gap-3 text-xs text-muted-foreground">
@@ -212,7 +212,7 @@ export default function AdminConstrutoras() {
                             <span>{c.parceiras_count} parceiras</span>
                             <span>{c.corretores_count} corretores</span>
                           </div>
-                          <Badge className={getStatusColor(c.assinatura_status ?? 'sem_assinatura', subscriptionStatusColors)} variant="outline">
+                          <Badge className={getStatusColor(subscriptionStatusColors, c.assinatura_status ?? 'sem_assinatura')} variant="outline">
                             {c.assinatura_status ?? 'sem_assinatura'}
                           </Badge>
                         </CardContent>
@@ -249,10 +249,10 @@ export default function AdminConstrutoras() {
                           <TableCell>{c.empreendimentos_count}</TableCell>
                           <TableCell>{c.parceiras_count}</TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(c.status, entityStatusColors)}>{c.status}</Badge>
+                            <Badge className={getStatusColor(entityStatusColors, c.status)}>{c.status}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(c.assinatura_status ?? 'sem_assinatura', subscriptionStatusColors)} variant="outline">
+                            <Badge className={getStatusColor(subscriptionStatusColors, c.assinatura_status ?? 'sem_assinatura')} variant="outline">
                               {c.assinatura_status ?? 'sem_assinatura'}
                             </Badge>
                           </TableCell>
