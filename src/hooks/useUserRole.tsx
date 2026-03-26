@@ -172,6 +172,46 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
               plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
             });
           }
+        } else if ((roleData as any).construtora_id) {
+          // Construtora admin - fetch construtora details
+          const constId = (roleData as any).construtora_id;
+          const { data: constData } = await supabase
+            .from('construtoras')
+            .select('*')
+            .eq('id', constId)
+            .maybeSingle();
+
+          setConstrutora(constData);
+
+          // Fetch subscription for construtora
+          const { data: assData } = await supabase
+            .from('assinaturas')
+            .select(`
+              id,
+              status,
+              data_inicio,
+              data_fim,
+              proxima_cobranca,
+              plano:planos!assinaturas_plano_id_fkey (
+                id,
+                nome,
+                max_corretores,
+                max_fichas_mes,
+                max_clientes,
+                max_imoveis,
+                valor_mensal
+              )
+            `)
+            .eq('construtora_id', constId)
+            .order('created_at', { ascending: false })
+            .maybeSingle();
+
+          if (assData) {
+            setAssinatura({
+              ...assData,
+              plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
+            });
+          }
         } else if (roleData.role === 'corretor') {
           // Corretor autônomo - buscar assinatura individual via user_id
           const { data: assData } = await supabase
@@ -265,6 +305,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       role, 
       imobiliariaId, 
       imobiliaria, 
+      construtoraId,
+      construtora,
       assinatura, 
       ativo,
       loading: isLoading,
