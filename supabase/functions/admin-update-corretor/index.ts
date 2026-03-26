@@ -56,10 +56,10 @@ Deno.serve(async (req) => {
 
     console.log('admin-update-corretor: Authenticated user:', user.id);
 
-    // Check if user is imobiliaria_admin or super_admin
+    // Check if user is imobiliaria_admin, construtora_admin, or super_admin
     const { data: roles, error: rolesError } = await supabaseAdmin
       .from('user_roles')
-      .select('role, imobiliaria_id')
+      .select('role, imobiliaria_id, construtora_id')
       .eq('user_id', user.id);
 
     if (rolesError) {
@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
     const isSuperAdmin = roles?.some(r => r.role === 'super_admin');
     const adminRole = roles?.find(r => r.role === 'imobiliaria_admin');
     const imobiliariaId = adminRole?.imobiliaria_id;
+    const construtoraAdminRole = roles?.find(r => r.role === 'construtora_admin');
+    const construtoraId = construtoraAdminRole?.construtora_id;
 
     // Parse request body
     const body: UpdateCorretorRequest = await req.json();
