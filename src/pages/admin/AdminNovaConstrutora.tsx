@@ -390,7 +390,7 @@ export default function AdminNovaConstrutora() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-500" />
+              <Check className="h-5 w-5 text-emerald-500" />
               Construtora criada com sucesso!
             </DialogTitle>
             <DialogDescription>
