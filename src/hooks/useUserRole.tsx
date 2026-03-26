@@ -69,6 +69,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [imobiliariaId, setImobiliariaId] = useState<string | null>(null);
   const [imobiliaria, setImobiliaria] = useState<Imobiliaria | null>(null);
+  const [construtoraId, setConstrutoraId] = useState<string | null>(null);
+  const [construtora, setConstrutora] = useState<Construtora | null>(null);
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [ativo, setAtivo] = useState<boolean | null>(null);
   const [internalLoading, setInternalLoading] = useState(false);
