@@ -162,9 +162,14 @@ export default function AdminConstrutoras() {
   return (
     <SuperAdminLayout>
       <AnimatedContent className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Construtoras</h1>
-          <p className="text-muted-foreground">Gerencie as construtoras cadastradas</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Construtoras</h1>
+            <p className="text-muted-foreground">Gerencie as construtoras cadastradas</p>
+          </div>
+          <Button onClick={() => navigate('/admin/construtoras/nova')}>
+            <HardHat className="h-4 w-4 mr-2" /> Nova Construtora
+          </Button>
         </div>
 
         <Card>
