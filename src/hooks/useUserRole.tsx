@@ -122,128 +122,96 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       if (roleData) {
         setRole(roleData.role as AppRole);
         setImobiliariaId(roleData.imobiliaria_id);
-        setConstrutoraId((roleData as any).construtora_id || null);
+        const constId = (roleData as any).construtora_id || null;
+        setConstrutoraId(constId);
 
-        // Fetch user's active status from profile
-        const { data: profileData } = await supabase
+        const assinaturaSelect = `
+          id,
+          status,
+          data_inicio,
+          data_fim,
+          proxima_cobranca,
+          plano:planos!assinaturas_plano_id_fkey (
+            id,
+            nome,
+            max_corretores,
+            max_fichas_mes,
+            max_clientes,
+            max_imoveis,
+            valor_mensal
+          )
+        `;
+
+        // Build parallel promises based on role type
+        const profilePromise = supabase
           .from('profiles')
           .select('ativo')
           .eq('user_id', currentUserId)
           .maybeSingle();
 
-        setAtivo(profileData?.ativo ?? true);
+        let orgPromise: PromiseLike<any> = Promise.resolve({ data: null });
+        let assPromise: PromiseLike<any> = Promise.resolve({ data: null });
 
-        // Fetch imobiliaria details if user has one
         if (roleData.imobiliaria_id) {
-          const { data: imobData } = await supabase
+          orgPromise = supabase
             .from('imobiliarias')
             .select('*')
             .eq('id', roleData.imobiliaria_id)
-            .maybeSingle();
-
-          setImobiliaria(imobData);
-
-          // Fetch subscription for imobiliária
-          const { data: assData } = await supabase
+            .maybeSingle()
+            .then(res => res);
+          assPromise = supabase
             .from('assinaturas')
-            .select(`
-              id,
-              status,
-              data_inicio,
-              data_fim,
-              proxima_cobranca,
-              plano:planos!assinaturas_plano_id_fkey (
-                id,
-                nome,
-                max_corretores,
-                max_fichas_mes,
-                max_clientes,
-                max_imoveis,
-                valor_mensal
-              )
-            `)
+            .select(assinaturaSelect)
             .eq('imobiliaria_id', roleData.imobiliaria_id)
             .order('created_at', { ascending: false })
-            .maybeSingle();
-
-          if (assData) {
-            setAssinatura({
-              ...assData,
-              plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
-            });
-          }
-        } else if ((roleData as any).construtora_id) {
-          // Construtora admin - fetch construtora details
-          const constId = (roleData as any).construtora_id;
-          const { data: constData } = await supabase
+            .maybeSingle()
+            .then(res => res);
+        } else if (constId) {
+          orgPromise = supabase
             .from('construtoras')
             .select('*')
             .eq('id', constId)
-            .maybeSingle();
-
-          setConstrutora(constData);
-
-          // Fetch subscription for construtora
-          const { data: assData } = await supabase
+            .maybeSingle()
+            .then(res => res);
+          assPromise = supabase
             .from('assinaturas')
-            .select(`
-              id,
-              status,
-              data_inicio,
-              data_fim,
-              proxima_cobranca,
-              plano:planos!assinaturas_plano_id_fkey (
-                id,
-                nome,
-                max_corretores,
-                max_fichas_mes,
-                max_clientes,
-                max_imoveis,
-                valor_mensal
-              )
-            `)
+            .select(assinaturaSelect)
             .eq('construtora_id', constId)
             .order('created_at', { ascending: false })
-            .maybeSingle();
-
-          if (assData) {
-            setAssinatura({
-              ...assData,
-              plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
-            });
-          }
+            .maybeSingle()
+            .then(res => res);
         } else if (roleData.role === 'corretor') {
-          // Corretor autônomo - buscar assinatura individual via user_id
-          const { data: assData } = await supabase
+          assPromise = supabase
             .from('assinaturas')
-            .select(`
-              id,
-              status,
-              data_inicio,
-              data_fim,
-              proxima_cobranca,
-              plano:planos!assinaturas_plano_id_fkey (
-                id,
-                nome,
-                max_corretores,
-                max_fichas_mes,
-                max_clientes,
-                max_imoveis,
-                valor_mensal
-              )
-            `)
+            .select(assinaturaSelect)
             .eq('user_id', currentUserId)
             .order('created_at', { ascending: false })
-            .maybeSingle();
+            .maybeSingle()
+            .then(res => res);
+        }
 
-          if (assData) {
-            setAssinatura({
-              ...assData,
-              plano: Array.isArray(assData.plano) ? assData.plano[0] : assData.plano
-            });
-          } else {
-            setAssinatura(null);
-          }
+        // Execute all queries in parallel
+        const [profileResult, orgResult, assResult] = await Promise.all([
+          profilePromise,
+          orgPromise,
+          assPromise,
+        ]);
+
+        setAtivo(profileResult.data?.ativo ?? true);
+
+        if (roleData.imobiliaria_id) {
+          setImobiliaria(orgResult.data);
+        } else if (constId) {
+          setConstrutora(orgResult.data);
+        }
+
+        if (assResult.data) {
+          setAssinatura({
+            ...assResult.data,
+            plano: Array.isArray(assResult.data.plano) ? assResult.data.plano[0] : assResult.data.plano
+          });
+        } else {
+          setAssinatura(null);
         }
       } else {
         // No role in user_roles - check if user is an afiliado
