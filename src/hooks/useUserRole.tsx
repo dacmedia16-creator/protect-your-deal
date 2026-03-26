@@ -2,12 +2,14 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-export type AppRole = 'super_admin' | 'imobiliaria_admin' | 'corretor' | 'afiliado';
+export type AppRole = 'super_admin' | 'imobiliaria_admin' | 'corretor' | 'afiliado' | 'construtora_admin';
 
 interface UserRoleContextType {
   role: AppRole | null;
   imobiliariaId: string | null;
   imobiliaria: Imobiliaria | null;
+  construtoraId: string | null;
+  construtora: Construtora | null;
   assinatura: Assinatura | null;
   ativo: boolean | null;
   loading: boolean;
@@ -16,6 +18,20 @@ interface UserRoleContextType {
 }
 
 interface Imobiliaria {
+  id: string;
+  nome: string;
+  cnpj: string | null;
+  email: string;
+  telefone: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  estado: string | null;
+  logo_url: string | null;
+  status: string;
+  codigo: number | null;
+}
+
+interface Construtora {
   id: string;
   nome: string;
   cnpj: string | null;
@@ -65,6 +81,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       setRole(null);
       setImobiliariaId(null);
       setImobiliaria(null);
+      setConstrutoraId(null);
+      setConstrutora(null);
       setAssinatura(null);
       setAtivo(null);
       setInternalLoading(false);
@@ -81,7 +99,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       // Fetch user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('role, imobiliaria_id')
+        .select('role, imobiliaria_id, construtora_id')
         .eq('user_id', currentUserId)
         .maybeSingle();
 
@@ -102,6 +120,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       if (roleData) {
         setRole(roleData.role as AppRole);
         setImobiliariaId(roleData.imobiliaria_id);
+        setConstrutoraId((roleData as any).construtora_id || null);
 
         // Fetch user's active status from profile
         const { data: profileData } = await supabase
