@@ -12,91 +12,87 @@ interface CreateCorretorRequest {
   telefone?: string;
   creci?: string;
   cpf?: string;
-  autonomo?: boolean; // Flag to create autonomous corretor
+  autonomo?: boolean;
+  construtora?: boolean;
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("No authorization header provided");
       return new Response(
         JSON.stringify({ error: "Authorization header required" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create Supabase clients
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
 
-    // Verify the current user is authenticated using token directly
     const token = authHeader.replace("Bearer ", "");
     const { data: { user: currentUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !currentUser) {
-      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Current user ID:", currentUser.id);
-
-    // Parse request body
     const body: CreateCorretorRequest = await req.json();
-    const { nome, email, senha, telefone, creci, cpf, autonomo } = body;
+    const { nome, email, senha, telefone, creci, cpf, autonomo, construtora } = body;
 
-    console.log("Creating corretor:", email, "autonomo:", autonomo);
+    console.log("Creating corretor:", email, "autonomo:", autonomo, "construtora:", construtora);
 
-    // Check if the current user is an admin
+    // Check caller role — allow imobiliaria_admin, super_admin, or construtora_admin
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .select("role, imobiliaria_id")
+      .select("role, imobiliaria_id, construtora_id")
       .eq("user_id", currentUser.id)
-      .in("role", ["imobiliaria_admin", "super_admin"])
+      .in("role", ["imobiliaria_admin", "super_admin", "construtora_admin"])
       .maybeSingle();
 
-    if (roleError) {
-      console.error("Role check error:", roleError);
-      return new Response(
-        JSON.stringify({ error: "Error checking user role" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!roleData) {
-      console.error("User is not an admin");
+    if (roleError || !roleData) {
       return new Response(
         JSON.stringify({ error: "Acesso negado. Apenas administradores podem criar corretores." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Determine imobiliaria_id based on request
+    // Determine linking
     let imobiliariaId: string | null = null;
-    
-    if (autonomo) {
-      // Only super_admin can create autonomous corretores
+    let construtoraId: string | null = null;
+
+    if (construtora) {
+      // Construtora flow
+      if (roleData.role !== "construtora_admin" && roleData.role !== "super_admin") {
+        return new Response(
+          JSON.stringify({ error: "Apenas administradores de construtora podem criar corretores vinculados à construtora" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      construtoraId = roleData.construtora_id || null;
+      if (!construtoraId && roleData.role !== "super_admin") {
+        return new Response(
+          JSON.stringify({ error: "Usuário não está vinculado a uma construtora" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (autonomo) {
       if (roleData.role !== "super_admin") {
         return new Response(
           JSON.stringify({ error: "Apenas super admins podem criar corretores autônomos" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      // imobiliariaId stays null for autonomous
-      imobiliariaId = null;
     } else {
-      // Regular flow - link to imobiliaria
+      // Regular imobiliaria flow
       imobiliariaId = roleData.imobiliaria_id;
       if (!imobiliariaId && roleData.role !== "super_admin") {
         return new Response(
@@ -106,14 +102,13 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Validate required fields
+    // Validate
     if (!nome || !email || !senha) {
       return new Response(
         JSON.stringify({ error: "Nome, email e senha são obrigatórios" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
     if (senha.length < 6) {
       return new Response(
         JSON.stringify({ error: "A senha deve ter pelo menos 6 caracteres" }),
@@ -121,17 +116,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 1. Create the user account
-    console.log("Creating user account...");
+    // Create user
     const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
+      email,
       password: senha,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: { nome: nome },
+      email_confirm: true,
+      user_metadata: { nome },
     });
 
     if (createError) {
-      console.error("Create user error:", createError);
       if (createError.message?.includes("already")) {
         return new Response(
           JSON.stringify({ error: "Este email já está cadastrado" }),
@@ -152,21 +145,18 @@ Deno.serve(async (req) => {
     }
 
     const userId = authData.user.id;
-    console.log("User created:", userId);
 
-    // 2. Create the user_role as corretor (with or without imobiliaria)
-    console.log("Creating user role...", imobiliariaId ? `for imobiliaria ${imobiliariaId}` : "as autonomous");
+    // Create role
     const { error: userRoleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
         user_id: userId,
         role: "corretor",
         imobiliaria_id: imobiliariaId,
+        construtora_id: construtoraId,
       });
 
     if (userRoleError) {
-      console.error("User role error:", userRoleError);
-      // Rollback: delete the user
       await supabaseAdmin.auth.admin.deleteUser(userId);
       return new Response(
         JSON.stringify({ error: "Erro ao criar permissões: " + userRoleError.message }),
@@ -174,15 +164,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("User role created");
-
-    // 3. Update profile with additional info (garantir ativo = true)
-    console.log("Updating profile...");
-    const { error: profileError } = await supabaseAdmin
+    // Update profile
+    await supabaseAdmin
       .from("profiles")
       .update({
         imobiliaria_id: imobiliariaId,
-        nome: nome,
+        nome,
         telefone: telefone || null,
         creci: creci || null,
         cpf: cpf || null,
@@ -191,19 +178,11 @@ Deno.serve(async (req) => {
       })
       .eq("user_id", userId);
 
-    if (profileError) {
-      console.error("Profile error:", profileError);
-      // Non-critical, continue
-    }
-
-    console.log("Corretor created successfully", autonomo ? "(autonomous)" : "");
-
     return new Response(
       JSON.stringify({
         success: true,
-        message: autonomo ? "Corretor autônomo criado com sucesso!" : "Corretor criado com sucesso!",
+        message: construtora ? "Corretor da construtora criado com sucesso!" : autonomo ? "Corretor autônomo criado com sucesso!" : "Corretor criado com sucesso!",
         user_id: userId,
-        autonomo: !!autonomo,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
