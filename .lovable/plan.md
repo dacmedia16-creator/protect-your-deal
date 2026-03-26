@@ -1,22 +1,24 @@
 
 
-## Plano: Adicionar upload de logo na página de configurações da Construtora
+## Plano: Corrigir constraint `chk_assinatura_owner`
 
-A página `ConstutoraConfiguracoes.tsx` não possui funcionalidade de upload de logo. A página equivalente para imobiliárias (`EmpresaConfiguracoes.tsx`) já tem essa funcionalidade. O bucket `logos-construtoras` já existe e é público.
+### Problema
+A constraint `chk_assinatura_owner` na tabela `assinaturas` só permite dois cenários (imobiliaria_id OR user_id), mas não reconhece `construtora_id` como owner válido.
 
-### Alterações
+### Correção
 
-**1. Atualizar `src/pages/construtora/ConstutoraConfiguracoes.tsx`**
-- Adicionar seção de upload/remoção de logo (baseado no padrão de `EmpresaConfiguracoes.tsx`)
-- Upload para bucket `logos-construtoras` com path `{construtoraId}/logo-{timestamp}.{ext}`
-- Validação: apenas imagens, máximo 2MB
-- Ao fazer upload: remove logo anterior, faz upload do novo, atualiza `construtoras.logo_url`
-- Botão de remover logo existente
-- Exibir preview da logo atual (avatar circular com fallback para ícone)
+**Migração SQL — uma única alteração**
 
-### Detalhes técnicos
-- Bucket `logos-construtoras` já existe e é público
-- Tabela `construtoras` já tem coluna `logo_url`
-- RLS já permite `construtora_admin` atualizar sua construtora
-- Reutilizar mesmo padrão de `extractFilePathFromUrl`, `handleLogoUpload`, `handleRemoveLogo` do `EmpresaConfiguracoes`
+```sql
+ALTER TABLE public.assinaturas DROP CONSTRAINT chk_assinatura_owner;
+
+ALTER TABLE public.assinaturas
+ADD CONSTRAINT chk_assinatura_owner CHECK (
+  (imobiliaria_id IS NOT NULL AND user_id IS NULL AND construtora_id IS NULL) OR
+  (imobiliaria_id IS NULL AND user_id IS NOT NULL AND construtora_id IS NULL) OR
+  (imobiliaria_id IS NULL AND user_id IS NULL AND construtora_id IS NOT NULL)
+);
+```
+
+Nenhuma alteração de código necessária — o insert em `AdminDetalhesConstrutora.tsx` já passa `construtora_id` corretamente.
 
