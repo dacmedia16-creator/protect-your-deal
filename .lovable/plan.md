@@ -1,42 +1,37 @@
 
 
-## Plano: Adicionar opções completas no dropdown de Construtoras
+## Plano: Corrigir exclusão de construtoras
 
-Atualmente o dropdown de construtoras só tem "Ver detalhes" e "Suspender/Ativar". O objetivo é equiparar com as opções de imobiliárias.
+### Problema
+As foreign keys `user_roles_construtora_id_fkey`, `assinaturas_construtora_id_fkey`, `fichas_visita_construtora_id_fkey` e `profiles_construtora_id_fkey` não têm `ON DELETE CASCADE`, então a exclusão falha quando há registros vinculados.
 
-### Opções a adicionar
+As FKs de `empreendimentos` e `construtora_imobiliarias` já têm CASCADE.
 
-1. **Alterar Plano** — Dialog com select de planos, cria ou atualiza assinatura com `construtora_id`
-2. **Desativar/Ativar Assinatura** — Toggle do status da assinatura (só aparece se tem assinatura)
-3. **Excluir** — Deleta a construtora (com confirmação via toast ou inline)
+### Correção
 
-A opção "Desabilitar Pesquisa" não se aplica a construtoras (feature flag é de imobiliárias).
+**Migração SQL — alterar 4 foreign keys para CASCADE ou SET NULL**
 
-### Alterações em `src/pages/admin/AdminConstrutoras.tsx`
+```sql
+-- user_roles: CASCADE (deletar roles junto)
+ALTER TABLE public.user_roles DROP CONSTRAINT user_roles_construtora_id_fkey;
+ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_construtora_id_fkey
+  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE CASCADE;
 
-**Novos estados e dados:**
-- `planos` (fetch de planos ativos), `selectedPlanoId`, `isPlanoDialogOpen`, `construtoraToChangePlan`, `isChangingPlano`
-- `isTogglingAssinatura` para controle de loading
+-- assinaturas: CASCADE (deletar assinaturas junto)
+ALTER TABLE public.assinaturas DROP CONSTRAINT assinaturas_construtora_id_fkey;
+ALTER TABLE public.assinaturas ADD CONSTRAINT assinaturas_construtora_id_fkey
+  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE CASCADE;
 
-**Novas funções:**
-- `fetchPlanos()` — busca planos ativos
-- `openPlanoDialog(c)` — abre dialog de alterar plano
-- `handleChangePlano()` — atualiza ou insere assinatura com `construtora_id` (mesmo padrão de AdminImobiliarias mas com `construtora_id` em vez de `imobiliaria_id`)
-- `toggleAssinatura(c)` — alterna status da assinatura por `construtora_id`
-- `deleteConstrutora(id)` — deleta da tabela `construtoras`
+-- fichas_visita: SET NULL (manter fichas, limpar referência)
+ALTER TABLE public.fichas_visita DROP CONSTRAINT fichas_visita_construtora_id_fkey;
+ALTER TABLE public.fichas_visita ADD CONSTRAINT fichas_visita_construtora_id_fkey
+  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE SET NULL;
 
-**Enriquecer interface Construtora:** adicionar `assinatura_id`, `assinatura_plano_id`, `assinatura_plano_nome` (já tem `assinatura_status`)
+-- profiles: SET NULL (manter perfis, limpar referência)
+ALTER TABLE public.profiles DROP CONSTRAINT profiles_construtora_id_fkey;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_construtora_id_fkey
+  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE SET NULL;
+```
 
-**No fetchConstrutoras:** buscar também `assinatura.id`, `assinatura.plano_id` e plano nome
-
-**Novos imports:** `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`, `Label`, `CreditCard`, `Ban`, `Trash2`
-
-**Dropdown atualizado (desktop e mobile):**
-- Ver detalhes
-- Suspender/Ativar Construtora
-- Alterar Plano
-- Desativar/Ativar Assinatura (condicional)
-- Excluir (vermelho)
-
-**Dialog de alterar plano** — mesmo layout do AdminImobiliarias
+Nenhuma alteração de código necessária — o `deleteConstrutora` em `AdminConstrutoras.tsx` já faz o delete corretamente, o banco é que bloqueia.
 
