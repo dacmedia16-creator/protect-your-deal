@@ -1,46 +1,32 @@
 
 
-## Plano: Implementar Relatórios Reais para Construtora
+## Plano: Corrigir página de Corretores da Construtora e adicionar criação
 
-### Objetivo
-Substituir o placeholder em `ConstutoraRelatorios.tsx` por uma dashboard com KPIs, gráficos e tabela, mostrando fichas agrupadas por empreendimento e por imobiliária parceira.
+### Problema
+1. **Erro 400**: A query tenta fazer join `profiles!inner(...)` via `user_roles`, mas não existe foreign key entre essas tabelas. Erro: `"Could not find a relationship between 'user_roles' and 'profiles'"`.
+2. **Sem opção de criar corretor**: A página só lista, não permite adicionar novos corretores.
 
-### Dados disponíveis
-- `fichas_visita` tem `construtora_id`, `empreendimento_id`, `imobiliaria_id`, `status`, `convertido_venda`, `valor_venda`, `created_at`
-- `empreendimentos` tem `nome`, `construtora_id`
-- `construtora_imobiliarias` + `imobiliarias` para nomes das parceiras
-- RLS policy "Construtora admin pode ver fichas dos seus empreendimentos" already exists
+### Correção
 
-### Estrutura da página
+**Arquivo:** `src/pages/construtora/ConstutoraCorretores.tsx`
 
-**1. Filtros** - Data início/fim (default 6 meses), status
+**1. Corrigir query** — Buscar em 2 etapas:
+- Primeiro: buscar `user_roles` filtrados por `construtora_id` e `role = 'corretor'`
+- Depois: buscar `profiles` usando os `user_id`s retornados
+- Combinar no client-side (mesmo padrão usado em `AdminCorretoresAutonomos` e `AdminDetalhesConstrutora`)
 
-**2. KPI Cards** (grid 4 colunas)
-- Total de Registros
-- Confirmados
-- Taxa de Confirmação (%)
-- Vendas Registradas
+**2. Adicionar funcionalidade de criar corretor** — Dialog com formulário (nome, email, senha, telefone, creci, cpf) que chama a edge function `admin-create-corretor` passando os dados. A edge function já suporta criação por `construtora_admin` (precisa ajuste: atualmente só permite `imobiliaria_admin` e `super_admin`).
 
-**3. Gráfico de barras - Registros por Mês** (6 meses, total vs confirmadas)
+**3. Atualizar edge function `admin-create-corretor`** — Adicionar suporte a `construtora_id`: quando o caller é `construtora_admin`, vincular o corretor à construtora em vez de imobiliária.
 
-**4. Gráfico de barras horizontal - Por Empreendimento** (total fichas por empreendimento)
+### Detalhes técnicos
 
-**5. Gráfico de barras horizontal - Por Imobiliária Parceira** (total fichas por imobiliária)
+- Query corrigida: 2 queries separadas (`user_roles` + `profiles`) combinadas via `user_id`
+- Edge function: adicionar check para `construtora_admin` role e aceitar `construtora_id` no body
+- UI: botão "Novo Corretor" + Dialog com form (nome, email, senha obrigatórios; telefone, creci, cpf opcionais)
+- Toggle ativo/inativo para corretores existentes
 
-**6. Tabela detalhada** - Registros com protocolo, empreendimento, imobiliária, data, status
-
-### Alterações
-
-**1 arquivo modificado:** `src/pages/construtora/ConstutoraRelatorios.tsx`
-
-- Fetch `fichas_visita` where `construtora_id` matches, with date/status filters
-- Fetch `empreendimentos` for name mapping
-- Fetch `construtora_imobiliarias` + `imobiliarias` for partner name mapping
-- Compute KPIs via `useMemo`
-- Compute monthly data, per-empreendimento data, per-imobiliaria data
-- Render using same patterns as `EmpresaRelatorios.tsx`: recharts `BarChart`, shadcn Cards/Table
-- Add CSV export button
-
-### Sem alterações no banco de dados
-Todas as tabelas e RLS policies necessárias já existem.
+### Arquivos alterados
+1. `src/pages/construtora/ConstutoraCorretores.tsx` — Reescrever query + adicionar dialog de criação
+2. `supabase/functions/admin-create-corretor/index.ts` — Suporte a `construtora_admin` caller
 
