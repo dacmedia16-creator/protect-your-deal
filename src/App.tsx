@@ -103,6 +103,7 @@ import AdminSessoes from "./pages/admin/AdminSessoes";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminConstrutoras from "./pages/admin/AdminConstrutoras";
 import AdminDetalhesConstrutora from "./pages/admin/AdminDetalhesConstrutora";
+import AdminNovaConstrutora from "./pages/admin/AdminNovaConstrutora";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
