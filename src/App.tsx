@@ -104,6 +104,7 @@ import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminConstrutoras from "./pages/admin/AdminConstrutoras";
 import AdminDetalhesConstrutora from "./pages/admin/AdminDetalhesConstrutora";
 import AdminNovaConstrutora from "./pages/admin/AdminNovaConstrutora";
+import RegistroConstrutora from "./pages/auth/RegistroConstrutora";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
