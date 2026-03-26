@@ -1,41 +1,58 @@
 
 
-## Plano: Corrigir logo da construtora não aparecendo no login
+## Plano: Otimizar velocidade do login/carregamento para construtoras
 
-### Problema raiz
-O email do usuário construtora não está salvo na tabela `profiles`. A edge function `get-imobiliaria-by-email` busca por `profiles.email`, mas o campo está `NULL` porque a função `admin-create-user` não inclui `email` no update do profile. O trigger `handle_new_user` também não salva o email.
+### Diagnóstico
 
-Dados confirmados: o usuário "Amaral" (construtora "Planeta") tem `email: null` no profile.
+O problema tem duas causas:
 
-### Correções (2 partes)
+1. **`useUserRole` faz queries sequenciais**: Após o login, o hook executa 4 chamadas ao banco em série (user_roles → profiles → construtoras → assinaturas), cada uma esperando a anterior terminar. Isso cria um gargalo de ~1-2s.
 
-**1. Atualizar `supabase/functions/admin-create-user/index.ts`**
-- Na linha ~156, adicionar `email` ao `profileUpdate`:
-```typescript
-const profileUpdate: any = {
-  nome,
-  email,  // ← ADICIONAR
-  telefone: telefone || null,
-  creci: creci || null,
-};
+2. **Edge function `get-imobiliaria-by-email` com fallback lento**: Se o email não está no `profiles`, a função chama `getUserByEmail` no auth (cold start + API call extra). A migração anterior deveria ter corrigido isso, mas novos usuários criados por fluxos antigos podem ainda ter email null.
+
+### Correções
+
+**1. Paralelizar queries no `useUserRole` (src/hooks/useUserRole.tsx)**
+
+Após obter `roleData`, disparar as queries de `profiles`, `construtoras`/`imobiliarias` e `assinaturas` em paralelo com `Promise.all` em vez de sequencialmente.
+
+Trecho atual (sequencial):
+```
+const profileData = await supabase.from('profiles')...
+const constData = await supabase.from('construtoras')...
+const assData = await supabase.from('assinaturas')...
 ```
 
-**2. Atualizar `supabase/functions/get-imobiliaria-by-email/index.ts`**
-- Adicionar fallback: se `profiles` não encontrar por email, buscar na `user_roles` via auth (precisa buscar o user pelo email no auth). Mais simples: buscar o email no auth.users e depois buscar o profile pelo user_id.
-- Fluxo atualizado:
-  1. Tentar buscar em `profiles` por email (atual)
-  2. Se não encontrar, usar `supabaseAdmin.auth.admin.listUsers()` para encontrar o user_id pelo email
-  3. Se encontrou user_id, buscar `profiles` por `user_id` e pegar `construtora_id`/`imobiliaria_id`
+Trecho novo (paralelo):
+```
+const [profileResult, constResult, assResult] = await Promise.all([
+  supabase.from('profiles').select('ativo').eq('user_id', currentUserId).maybeSingle(),
+  supabase.from('construtoras').select('*').eq('id', constId).maybeSingle(),
+  supabase.from('assinaturas').select('...').eq('construtora_id', constId)...maybeSingle(),
+]);
+```
 
-**3. Migração SQL para corrigir dados existentes**
+**2. Garantir email no profile via trigger (migração SQL)**
+
+Criar/atualizar o trigger `handle_new_user` para sempre copiar `email` de `auth.users` para `profiles`, evitando o fallback lento na edge function.
+
 ```sql
--- Preencher email dos profiles que estão null usando auth.users
-UPDATE profiles p
-SET email = u.email
-FROM auth.users u
-WHERE p.user_id = u.id AND p.email IS NULL;
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, nome, email)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'nome', ''),
+    NEW.email
+  )
+  ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email WHERE profiles.email IS NULL;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-### Resumo
-- A causa é `email = null` no profile
-- A correção mais robusta é: corrigir o `admin-create-user` para sempre salvar o email, corrigir dados existentes via migração, e adicionar fallback no `get-imobiliaria-by-email`
+### Impacto esperado
+- Redução de ~50% no tempo de carregamento do role (3 queries paralelas vs sequenciais)
+- Eliminação do fallback lento na edge function de logo
+
