@@ -1,25 +1,42 @@
 
 
-## Plano: Criar admin da construtora junto com a empresa
+## Plano: Adicionar opções completas no dropdown de Construtoras
 
-Adicionar uma seção opcional no formulário de `AdminNovaConstrutora.tsx` para criar o usuário administrador no mesmo passo, usando a edge function `admin-create-user` já existente.
+Atualmente o dropdown de construtoras só tem "Ver detalhes" e "Suspender/Ativar". O objetivo é equiparar com as opções de imobiliárias.
 
-### Alterações
+### Opções a adicionar
 
-**1. Atualizar `src/pages/admin/AdminNovaConstrutora.tsx`**
+1. **Alterar Plano** — Dialog com select de planos, cria ou atualiza assinatura com `construtora_id`
+2. **Desativar/Ativar Assinatura** — Toggle do status da assinatura (só aparece se tem assinatura)
+3. **Excluir** — Deleta a construtora (com confirmação via toast ou inline)
 
-- Adicionar checkbox/switch "Criar usuário administrador" (default: ativado)
-- Quando ativado, exibir campos: Nome do admin, Email do admin, Senha (com `PasswordInput` e gerador)
-- Atualizar schema Zod com campos condicionais (`admin_nome`, `admin_email`, `admin_senha`)
-- No `onSubmit`:
-  1. Criar a construtora (como já faz)
-  2. Criar assinatura se plano selecionado (como já faz)
-  3. Se admin habilitado: invocar `admin-create-user` com `role: 'construtora_admin'` e `construtora_id`
-  4. Exibir dialog de sucesso com credenciais (email + senha) para copiar
-- Importar `PasswordInput`, `Switch`, `Dialog` e ícones necessários
+A opção "Desabilitar Pesquisa" não se aplica a construtoras (feature flag é de imobiliárias).
 
-### Detalhes técnicos
-- A edge function `admin-create-user` já suporta `role: 'construtora_admin'` e `construtora_id`
-- Se a criação do admin falhar, a construtora já foi criada — exibir toast de aviso (mesmo padrão do `AdminUsuarios`)
-- Dialog de sucesso mostra credenciais com botão de copiar, igual ao fluxo existente em `AdminCorretoresAutonomos`
+### Alterações em `src/pages/admin/AdminConstrutoras.tsx`
+
+**Novos estados e dados:**
+- `planos` (fetch de planos ativos), `selectedPlanoId`, `isPlanoDialogOpen`, `construtoraToChangePlan`, `isChangingPlano`
+- `isTogglingAssinatura` para controle de loading
+
+**Novas funções:**
+- `fetchPlanos()` — busca planos ativos
+- `openPlanoDialog(c)` — abre dialog de alterar plano
+- `handleChangePlano()` — atualiza ou insere assinatura com `construtora_id` (mesmo padrão de AdminImobiliarias mas com `construtora_id` em vez de `imobiliaria_id`)
+- `toggleAssinatura(c)` — alterna status da assinatura por `construtora_id`
+- `deleteConstrutora(id)` — deleta da tabela `construtoras`
+
+**Enriquecer interface Construtora:** adicionar `assinatura_id`, `assinatura_plano_id`, `assinatura_plano_nome` (já tem `assinatura_status`)
+
+**No fetchConstrutoras:** buscar também `assinatura.id`, `assinatura.plano_id` e plano nome
+
+**Novos imports:** `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`, `Label`, `CreditCard`, `Ban`, `Trash2`
+
+**Dropdown atualizado (desktop e mobile):**
+- Ver detalhes
+- Suspender/Ativar Construtora
+- Alterar Plano
+- Desativar/Ativar Assinatura (condicional)
+- Excluir (vermelho)
+
+**Dialog de alterar plano** — mesmo layout do AdminImobiliarias
 
