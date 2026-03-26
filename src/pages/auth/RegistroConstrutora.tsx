@@ -543,8 +543,7 @@ export default function RegistroConstrutora() {
                     <PasswordInput
                       placeholder="Mínimo 6 caracteres"
                       value={adminForm.senha}
-                      onChange={(e) => setAdminForm({ ...adminForm, senha: e.target.value })}
-                      required
+                      onChange={(value) => setAdminForm({ ...adminForm, senha: value })}
                     />
                   </div>
                   <div>
@@ -552,8 +551,7 @@ export default function RegistroConstrutora() {
                     <PasswordInput
                       placeholder="Repita a senha"
                       value={adminForm.confirmarSenha}
-                      onChange={(e) => setAdminForm({ ...adminForm, confirmarSenha: e.target.value })}
-                      required
+                      onChange={(value) => setAdminForm({ ...adminForm, confirmarSenha: value })}
                     />
                   </div>
                 </div>
