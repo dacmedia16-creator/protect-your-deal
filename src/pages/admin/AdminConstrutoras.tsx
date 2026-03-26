@@ -12,12 +12,17 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, MoreHorizontal, HardHat, Eye, Power, Building2, Users } from 'lucide-react';
+import { Search, MoreHorizontal, HardHat, Eye, Power, CreditCard, Ban, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { AnimatedContent, AnimatedList, AnimatedItem } from '@/components/AnimatedContent';
 
 interface Construtora {
@@ -35,6 +40,16 @@ interface Construtora {
   parceiras_count?: number;
   corretores_count?: number;
   assinatura_status?: string;
+  assinatura_id?: string | null;
+  assinatura_plano_id?: string | null;
+  assinatura_plano_nome?: string | null;
+}
+
+interface Plano {
+  id: string;
+  nome: string;
+  valor_mensal: number;
+  max_corretores: number;
 }
 
 export default function AdminConstrutoras() {
@@ -42,6 +57,21 @@ export default function AdminConstrutoras() {
   const [construtoras, setConstrutoras] = useState<Construtora[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [planos, setPlanos] = useState<Plano[]>([]);
+  const [isPlanoDialogOpen, setIsPlanoDialogOpen] = useState(false);
+  const [construtoraToChangePlan, setConstrutoraToChangePlan] = useState<Construtora | null>(null);
+  const [selectedPlanoId, setSelectedPlanoId] = useState('');
+  const [isChangingPlano, setIsChangingPlano] = useState(false);
+  const [isTogglingAssinatura, setIsTogglingAssinatura] = useState<string | null>(null);
+
+  async function fetchPlanos() {
+    const { data } = await supabase
+      .from('planos')
+      .select('id, nome, valor_mensal, max_corretores')
+      .eq('ativo', true)
+      .order('valor_mensal');
+    setPlanos(data || []);
+  }
 
   async function fetchConstrutoras() {
     try {
@@ -72,11 +102,21 @@ export default function AdminConstrutoras() {
 
           const { data: assData } = await supabase
             .from('assinaturas')
-            .select('status')
+            .select('id, status, plano_id')
             .eq('construtora_id', c.id)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
+
+          let assinatura_plano_nome: string | null = null;
+          if (assData?.plano_id) {
+            const { data: planoData } = await supabase
+              .from('planos')
+              .select('nome')
+              .eq('id', assData.plano_id)
+              .maybeSingle();
+            assinatura_plano_nome = planoData?.nome || null;
+          }
 
           return {
             ...c,
@@ -84,6 +124,9 @@ export default function AdminConstrutoras() {
             parceiras_count: parceiras_count || 0,
             corretores_count: corretores_count || 0,
             assinatura_status: assData?.status || 'sem_assinatura',
+            assinatura_id: assData?.id || null,
+            assinatura_plano_id: assData?.plano_id || null,
+            assinatura_plano_nome,
           };
         })
       );
@@ -99,6 +142,7 @@ export default function AdminConstrutoras() {
 
   useEffect(() => {
     fetchConstrutoras();
+    fetchPlanos();
   }, []);
 
   async function toggleStatus(c: Construtora) {
@@ -117,11 +161,129 @@ export default function AdminConstrutoras() {
     }
   }
 
+  async function toggleAssinatura(c: Construtora) {
+    if (!c.assinatura_status || c.assinatura_status === 'sem_assinatura') {
+      toast.error('Construtora não possui assinatura vinculada');
+      return;
+    }
+
+    setIsTogglingAssinatura(c.id);
+    try {
+      const novoStatus = c.assinatura_status === 'ativa' ? 'suspensa' : 'ativa';
+      const { error } = await supabase
+        .from('assinaturas')
+        .update({ status: novoStatus })
+        .eq('construtora_id', c.id);
+
+      if (error) throw error;
+      toast.success(novoStatus === 'ativa' ? 'Assinatura ativada com sucesso!' : 'Assinatura suspensa com sucesso!');
+      fetchConstrutoras();
+    } catch (error: any) {
+      console.error('Error toggling subscription:', error);
+      toast.error(error.message || 'Erro ao alterar status da assinatura');
+    } finally {
+      setIsTogglingAssinatura(null);
+    }
+  }
+
+  function openPlanoDialog(c: Construtora) {
+    setConstrutoraToChangePlan(c);
+    setSelectedPlanoId(c.assinatura_plano_id || '');
+    setIsPlanoDialogOpen(true);
+  }
+
+  async function handleChangePlano() {
+    if (!construtoraToChangePlan || !selectedPlanoId) {
+      toast.error('Selecione um plano');
+      return;
+    }
+
+    setIsChangingPlano(true);
+    try {
+      if (construtoraToChangePlan.assinatura_id) {
+        const { error } = await supabase
+          .from('assinaturas')
+          .update({ plano_id: selectedPlanoId, status: 'ativa' })
+          .eq('id', construtoraToChangePlan.assinatura_id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('assinaturas')
+          .insert({
+            construtora_id: construtoraToChangePlan.id,
+            plano_id: selectedPlanoId,
+            status: 'ativa',
+            data_inicio: new Date().toISOString().split('T')[0],
+          });
+        if (error) throw error;
+      }
+
+      toast.success('Plano alterado com sucesso!');
+      setIsPlanoDialogOpen(false);
+      setConstrutoraToChangePlan(null);
+      setSelectedPlanoId('');
+      fetchConstrutoras();
+    } catch (error: any) {
+      console.error('Error changing plan:', error);
+      toast.error(error.message || 'Erro ao alterar plano');
+    } finally {
+      setIsChangingPlano(false);
+    }
+  }
+
+  async function deleteConstrutora(id: string) {
+    if (!confirm('Tem certeza que deseja excluir esta construtora? Esta ação não pode ser desfeita.')) return;
+
+    try {
+      const { error } = await supabase
+        .from('construtoras')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Construtora excluída com sucesso');
+      fetchConstrutoras();
+    } catch (error) {
+      console.error('Error deleting construtora:', error);
+      toast.error('Erro ao excluir construtora');
+    }
+  }
+
   const filtered = construtoras.filter(c =>
     c.nome.toLowerCase().includes(search.toLowerCase()) ||
     c.email.toLowerCase().includes(search.toLowerCase()) ||
     c.cnpj?.includes(search)
   );
+
+  function renderDropdownItems(c: Construtora, stopPropagation: boolean) {
+    const stop = (e: React.MouseEvent) => { if (stopPropagation) e.stopPropagation(); };
+    return (
+      <>
+        <DropdownMenuItem onClick={(e) => { stop(e); navigate(`/admin/construtoras/${c.id}`); }}>
+          <Eye className="h-4 w-4 mr-2" /> Ver detalhes
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => { stop(e); toggleStatus(c); }}>
+          <Power className="h-4 w-4 mr-2" />
+          {c.status === 'ativo' ? 'Suspender' : 'Ativar'}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => { stop(e); openPlanoDialog(c); }}>
+          <CreditCard className="h-4 w-4 mr-2" /> Alterar Plano
+        </DropdownMenuItem>
+        {c.assinatura_status && c.assinatura_status !== 'sem_assinatura' && (
+          <DropdownMenuItem onClick={(e) => { stop(e); toggleAssinatura(c); }}>
+            <Ban className="h-4 w-4 mr-2" />
+            {c.assinatura_status === 'ativa' ? 'Desativar Assinatura' : 'Ativar Assinatura'}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onClick={(e) => { stop(e); deleteConstrutora(c.id); }}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+        </DropdownMenuItem>
+      </>
+    );
+  }
 
   if (loading) {
     return (
@@ -199,27 +361,36 @@ export default function AdminConstrutoras() {
                 <AnimatedList className="grid grid-cols-1 gap-3 md:hidden">
                   {filtered.map((c) => (
                     <AnimatedItem key={c.id}>
-                      <Card
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => navigate(`/admin/construtoras/${c.id}`)}
-                      >
+                      <Card className="cursor-pointer hover:shadow-md transition-shadow">
                         <CardContent className="p-4 space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" onClick={() => navigate(`/admin/construtoras/${c.id}`)}>
                               {c.codigo && <Badge variant="outline" className="text-xs">#{c.codigo}</Badge>}
                               <span className="font-medium">{c.nome}</span>
                             </div>
-                            <Badge className={getStatusColor(entityStatusColors, c.status)}>{c.status}</Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {renderDropdownItems(c, false)}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                           <p className="text-sm text-muted-foreground">{c.email}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusColor(entityStatusColors, c.status)}>{c.status}</Badge>
+                            <Badge className={getStatusColor(subscriptionStatusColors, c.assinatura_status ?? 'sem_assinatura')} variant="outline">
+                              {c.assinatura_status ?? 'sem_assinatura'}
+                            </Badge>
+                          </div>
                           <div className="flex gap-3 text-xs text-muted-foreground">
                             <span>{c.empreendimentos_count} empreendimentos</span>
                             <span>{c.parceiras_count} parceiras</span>
                             <span>{c.corretores_count} corretores</span>
                           </div>
-                          <Badge className={getStatusColor(subscriptionStatusColors, c.assinatura_status ?? 'sem_assinatura')} variant="outline">
-                            {c.assinatura_status ?? 'sem_assinatura'}
-                          </Badge>
                         </CardContent>
                       </Card>
                     </AnimatedItem>
@@ -269,13 +440,7 @@ export default function AdminConstrutoras() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/admin/construtoras/${c.id}`); }}>
-                                  <Eye className="h-4 w-4 mr-2" /> Ver detalhes
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); toggleStatus(c); }}>
-                                  <Power className="h-4 w-4 mr-2" />
-                                  {c.status === 'ativo' ? 'Suspender' : 'Ativar'}
-                                </DropdownMenuItem>
+                                {renderDropdownItems(c, true)}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -288,6 +453,49 @@ export default function AdminConstrutoras() {
             )}
           </CardContent>
         </Card>
+
+        {/* Dialog para alterar plano */}
+        <Dialog open={isPlanoDialogOpen} onOpenChange={setIsPlanoDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Plano da Construtora</DialogTitle>
+              <DialogDescription>
+                Selecione o novo plano para {construtoraToChangePlan?.nome}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Plano atual</Label>
+                <p className="text-sm text-muted-foreground">
+                  {construtoraToChangePlan?.assinatura_plano_nome || 'Sem plano'}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Novo plano</Label>
+                <Select value={selectedPlanoId} onValueChange={setSelectedPlanoId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um plano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {planos.map((plano) => (
+                      <SelectItem key={plano.id} value={plano.id}>
+                        {plano.nome} - R$ {plano.valor_mensal.toFixed(2)} ({plano.max_corretores} corretores)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPlanoDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleChangePlano} disabled={isChangingPlano || !selectedPlanoId}>
+                {isChangingPlano ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </AnimatedContent>
     </SuperAdminLayout>
   );
