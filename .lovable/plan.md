@@ -1,77 +1,46 @@
 
 
-## Plano: Corrigir recursão infinita nas RLS policies de empreendimentos
+## Plano: Implementar Relatórios Reais para Construtora
 
-### Problema
-Erro `42P17: infinite recursion detected in policy for relation "empreendimentos"`. A causa é um ciclo entre duas policies:
+### Objetivo
+Substituir o placeholder em `ConstutoraRelatorios.tsx` por uma dashboard com KPIs, gráficos e tabela, mostrando fichas agrupadas por empreendimento e por imobiliária parceira.
 
-1. **`empreendimentos`** → policy "Imobiliaria parceira pode ver empreendimentos" consulta `empreendimento_imobiliarias`
-2. **`empreendimento_imobiliarias`** → policy "Construtora admin pode gerenciar" consulta `empreendimentos`
+### Dados disponíveis
+- `fichas_visita` tem `construtora_id`, `empreendimento_id`, `imobiliaria_id`, `status`, `convertido_venda`, `valor_venda`, `created_at`
+- `empreendimentos` tem `nome`, `construtora_id`
+- `construtora_imobiliarias` + `imobiliarias` para nomes das parceiras
+- RLS policy "Construtora admin pode ver fichas dos seus empreendimentos" already exists
 
-Quando o Postgres avalia a policy de `empreendimentos`, ele precisa ler `empreendimento_imobiliarias`, que por sua vez precisa ler `empreendimentos` novamente → recursão infinita.
+### Estrutura da página
 
-### Correção (1 migration SQL)
+**1. Filtros** - Data início/fim (default 6 meses), status
 
-**Recriar a policy de `empreendimento_imobiliarias`** para usar `get_user_construtora()` em vez de fazer JOIN com `empreendimentos`:
+**2. KPI Cards** (grid 4 colunas)
+- Total de Registros
+- Confirmados
+- Taxa de Confirmação (%)
+- Vendas Registradas
 
-```sql
--- Drop the recursive policy
-DROP POLICY "Construtora admin pode gerenciar empreendimento_imobiliarias" 
-  ON public.empreendimento_imobiliarias;
+**3. Gráfico de barras - Registros por Mês** (6 meses, total vs confirmadas)
 
--- Recreate without querying empreendimentos
-CREATE POLICY "Construtora admin pode gerenciar empreendimento_imobiliarias"
-  ON public.empreendimento_imobiliarias
-  FOR ALL
-  TO authenticated
-  USING (
-    is_construtora_admin(auth.uid(), (SELECT construtora_id FROM public.empreendimentos WHERE id = empreendimento_imobiliarias.empreendimento_id))
-  )
-  WITH CHECK (
-    is_construtora_admin(auth.uid(), (SELECT construtora_id FROM public.empreendimentos WHERE id = empreendimento_imobiliarias.empreendimento_id))
-  );
-```
+**4. Gráfico de barras horizontal - Por Empreendimento** (total fichas por empreendimento)
 
-Wait -- that still queries empreendimentos. The real fix is to store `construtora_id` on `empreendimento_imobiliarias` or use a different approach.
+**5. Gráfico de barras horizontal - Por Imobiliária Parceira** (total fichas por imobiliária)
 
-Actually, the simplest fix: change the `empreendimento_imobiliarias` policy to use `get_user_construtora()` to check if the user's construtora owns any of the linked empreendimentos indirectly -- but we can't avoid the join.
+**6. Tabela detalhada** - Registros com protocolo, empreendimento, imobiliária, data, status
 
-**Better approach**: Use a SECURITY DEFINER function to break the recursion:
+### Alterações
 
-```sql
--- Create helper function (SECURITY DEFINER bypasses RLS)
-CREATE OR REPLACE FUNCTION public.empreendimento_belongs_to_construtora(
-  _empreendimento_id uuid, _construtora_id uuid
-) RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.empreendimentos
-    WHERE id = _empreendimento_id AND construtora_id = _construtora_id
-  )
-$$;
+**1 arquivo modificado:** `src/pages/construtora/ConstutoraRelatorios.tsx`
 
--- Drop recursive policy
-DROP POLICY "Construtora admin pode gerenciar empreendimento_imobiliarias"
-  ON public.empreendimento_imobiliarias;
+- Fetch `fichas_visita` where `construtora_id` matches, with date/status filters
+- Fetch `empreendimentos` for name mapping
+- Fetch `construtora_imobiliarias` + `imobiliarias` for partner name mapping
+- Compute KPIs via `useMemo`
+- Compute monthly data, per-empreendimento data, per-imobiliaria data
+- Render using same patterns as `EmpresaRelatorios.tsx`: recharts `BarChart`, shadcn Cards/Table
+- Add CSV export button
 
--- Recreate using SECURITY DEFINER function (bypasses RLS on empreendimentos)
-CREATE POLICY "Construtora admin pode gerenciar empreendimento_imobiliarias"
-  ON public.empreendimento_imobiliarias
-  FOR ALL TO authenticated
-  USING (
-    empreendimento_belongs_to_construtora(empreendimento_id, get_user_construtora(auth.uid()))
-  )
-  WITH CHECK (
-    empreendimento_belongs_to_construtora(empreendimento_id, get_user_construtora(auth.uid()))
-  );
-```
-
-This breaks the recursion because `empreendimento_belongs_to_construtora` is SECURITY DEFINER, so it bypasses RLS when reading `empreendimentos`.
-
-### Resultado esperado
-- Criação de empreendimentos funciona sem erro
-- Listagem de empreendimentos carrega normalmente
-- Sem impacto em outras tabelas
+### Sem alterações no banco de dados
+Todas as tabelas e RLS policies necessárias já existem.
 
