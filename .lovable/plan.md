@@ -1,37 +1,20 @@
 
 
-## Plano: Corrigir exclusão de construtoras
+## Plano: Exibir logo da construtora na tela de login
 
 ### Problema
-As foreign keys `user_roles_construtora_id_fkey`, `assinaturas_construtora_id_fkey`, `fichas_visita_construtora_id_fkey` e `profiles_construtora_id_fkey` não têm `ON DELETE CASCADE`, então a exclusão falha quando há registros vinculados.
-
-As FKs de `empreendimentos` e `construtora_imobiliarias` já têm CASCADE.
+A edge function `get-imobiliaria-by-email` só verifica `imobiliaria_id` no perfil do usuário. Quando o email pertence a um usuário de construtora (que tem `construtora_id` no profile, não `imobiliaria_id`), a função retorna `null` e o logo não aparece.
 
 ### Correção
 
-**Migração SQL — alterar 4 foreign keys para CASCADE ou SET NULL**
+**1. Atualizar `supabase/functions/get-imobiliaria-by-email/index.ts`**
 
-```sql
--- user_roles: CASCADE (deletar roles junto)
-ALTER TABLE public.user_roles DROP CONSTRAINT user_roles_construtora_id_fkey;
-ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_construtora_id_fkey
-  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE CASCADE;
+Após verificar que `profile.imobiliaria_id` é null, verificar se o profile tem `construtora_id`. Se sim, buscar `nome` e `logo_url` na tabela `construtoras` e retornar no mesmo formato.
 
--- assinaturas: CASCADE (deletar assinaturas junto)
-ALTER TABLE public.assinaturas DROP CONSTRAINT assinaturas_construtora_id_fkey;
-ALTER TABLE public.assinaturas ADD CONSTRAINT assinaturas_construtora_id_fkey
-  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE CASCADE;
+Alterações:
+- No select do profile, adicionar `construtora_id` junto com `imobiliaria_id`
+- Se `imobiliaria_id` é null mas `construtora_id` existe, buscar em `construtoras` em vez de `imobiliarias`
+- Retornar `{ imobiliaria: { nome, logo_url } }` no mesmo formato (o frontend já consome esse shape)
 
--- fichas_visita: SET NULL (manter fichas, limpar referência)
-ALTER TABLE public.fichas_visita DROP CONSTRAINT fichas_visita_construtora_id_fkey;
-ALTER TABLE public.fichas_visita ADD CONSTRAINT fichas_visita_construtora_id_fkey
-  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE SET NULL;
-
--- profiles: SET NULL (manter perfis, limpar referência)
-ALTER TABLE public.profiles DROP CONSTRAINT profiles_construtora_id_fkey;
-ALTER TABLE public.profiles ADD CONSTRAINT profiles_construtora_id_fkey
-  FOREIGN KEY (construtora_id) REFERENCES construtoras(id) ON DELETE SET NULL;
-```
-
-Nenhuma alteração de código necessária — o `deleteConstrutora` em `AdminConstrutoras.tsx` já faz o delete corretamente, o banco é que bloqueia.
+Nenhuma alteração no frontend necessária — o Auth.tsx já renderiza o logo baseado no campo `logo_url` do objeto retornado.
 
