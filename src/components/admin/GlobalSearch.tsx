@@ -346,6 +346,30 @@ export function GlobalSearch() {
               ))}
             </CommandGroup>
           )}
+          {/* Construtoras Group */}
+          {construtoras && construtoras.length > 0 && (
+            <CommandGroup heading="Construtoras">
+              {construtoras.map((result) => (
+                <CommandItem
+                  key={`const-${result.id}`}
+                  value={`const-${result.id}-${result.name}`}
+                  onSelect={() => handleSelect(result)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    <HardHat className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{result.name}</p>
+                    {result.subtitle && (
+                      <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                    )}
+                  </div>
+                  {getStatusBadge(result.status, 'construtora')}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Building2, Users, FileText, TrendingUp, AlertCircle } from 'lucide-react';
+import { Building2, Users, FileText, TrendingUp, AlertCircle, HardHat } from 'lucide-react';
 import { AnimatedContent, AnimatedStatsGrid, AnimatedStatCard } from '@/components/AnimatedContent';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -16,6 +16,8 @@ interface DashboardStats {
   assinaturasAtivas: number;
   assinaturasSuspensas: number;
   receitaMensal: number;
+  totalConstrutoras: number;
+  construtorasAtivas: number;
 }
 
 export default function AdminDashboard() {
@@ -75,10 +77,19 @@ export default function AdminDashboard() {
           .eq('status', 'ativa');
 
         const receitaMensal = activeSubscriptions?.reduce((total, sub) => {
-          // O Supabase retorna objeto direto quando se usa fkey específica
           const valorPlano = sub.plano?.valor_mensal ?? 0;
           return total + valorPlano;
         }, 0) || 0;
+
+        // Fetch construtoras
+        const { count: totalConstrutoras } = await supabase
+          .from('construtoras')
+          .select('*', { count: 'exact', head: true });
+
+        const { count: construtorasAtivas } = await supabase
+          .from('construtoras')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'ativo');
 
         setStats({
           totalImobiliarias: totalImobiliarias || 0,
@@ -89,6 +100,8 @@ export default function AdminDashboard() {
           assinaturasAtivas: assinaturasAtivas || 0,
           assinaturasSuspensas: assinaturasSuspensas || 0,
           receitaMensal,
+          totalConstrutoras: totalConstrutoras || 0,
+          construtorasAtivas: construtorasAtivas || 0,
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
