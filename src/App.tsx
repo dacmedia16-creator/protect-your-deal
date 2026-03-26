@@ -101,6 +101,8 @@ import AdminComissoes from "./pages/admin/AdminComissoes";
 import AdminIndicacoes from "./pages/admin/AdminIndicacoes";
 import AdminSessoes from "./pages/admin/AdminSessoes";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import AdminConstrutoras from "./pages/admin/AdminConstrutoras";
+import AdminDetalhesConstrutora from "./pages/admin/AdminDetalhesConstrutora";
 // Afiliado pages
 import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
 import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
