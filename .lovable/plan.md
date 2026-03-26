@@ -1,46 +1,46 @@
 
 
-## Plano: Corrigir criação de corretor pela construtora
+## Plano: Corrigir criação e listagem de corretores da construtora
 
-### Problema identificado
-Os logs mostram que a edge function `admin-create-corretor` foi chamada corretamente (`Creating corretor: Fernando@gmail.com construtora: true`), mas não há log de sucesso ou erro após isso. O frontend mostra apenas "Erro ao criar corretor" sem detalhes, porque o tratamento de erro não extrai a mensagem real do backend.
+### Causa raiz
+Dois problemas interligados:
 
-Dois problemas:
+1. **RLS bloqueia leitura de profiles**: A tabela `profiles` não tem política SELECT para `construtora_admin`. O frontend consulta `profiles` com o client normal (não service role), então retorna vazio — os corretores existem mas não aparecem na lista.
 
-1. **Frontend não extrai mensagem de erro do backend** — Quando a edge function retorna status não-2xx (403, 400, 500), o SDK Supabase coloca o erro em `error` mas a mensagem real está em `error.context`. O frontend ignora isso e mostra mensagem genérica.
+2. **Erro de email duplicado não é exibido**: O primeiro teste com `Fernando@gmail.com` falhou porque o email já existia. O backend retornou corretamente `{ error: "Este email já está cadastrado" }` com status 400, mas o frontend mostrou mensagem genérica.
 
-2. **Possível email duplicado** — `Fernando@gmail.com` pode já existir no sistema, causando erro que é engolido.
+Os logs confirmam que o segundo teste (`Fernando1@gmail.com`) **foi criado com sucesso** no backend. O corretor existe, mas a listagem não o mostra por causa do RLS.
 
 ### Correções
 
-**Arquivo:** `src/pages/construtora/ConstutoraCorretores.tsx`
+**1. Migration: Adicionar política SELECT em `profiles` para construtora_admin**
 
-Melhorar tratamento de erro em `handleCreate`, `handleEdit`, `handleToggleAtivo` e `handleResetPassword` para extrair a mensagem real do backend, seguindo o padrão documentado em `admin-api-error-handling-pattern`:
-
-```typescript
-// Extrair mensagem real do erro
-if (error) {
-  let msg = 'Erro ao criar corretor';
-  try {
-    const ctx = (error as any)?.context;
-    if (ctx instanceof Response) {
-      const body = await ctx.json();
-      msg = body.error || msg;
-    }
-  } catch {}
-  toast.error(msg);
-  return;
-}
+```sql
+CREATE POLICY "Construtora admin pode ver perfis dos seus corretores"
+ON public.profiles
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM user_roles ur
+    WHERE ur.user_id = profiles.user_id
+      AND ur.role = 'corretor'
+      AND ur.construtora_id = get_user_construtora(auth.uid())
+      AND get_user_construtora(auth.uid()) IS NOT NULL
+  )
+);
 ```
 
-**Arquivo:** `supabase/functions/admin-create-corretor/index.ts`
+Isso permite que o `construtora_admin` veja profiles de corretores vinculados à sua construtora (via `user_roles.construtora_id`).
 
-Adicionar logs de diagnóstico após cada ponto de decisão para facilitar debug futuro:
-- Log após role check: `console.log("Role found:", roleData.role, "construtora_id:", roleData.construtora_id)`
-- Log após criação do usuário: `console.log("User created:", userId)`
-- Log em caso de erro: `console.error("Create error:", createError.message)`
+**2. Frontend: melhorar feedback de erro no `handleCreate`**
+
+O padrão de extração de erro via `(error as any)?.context` pode falhar se o SDK retornar o erro de forma diferente. Adicionar fallback para `data?.error` quando `data.success` é falso, e logar o erro no console para debug.
 
 ### Arquivos alterados
-1. `src/pages/construtora/ConstutoraCorretores.tsx` — Melhorar extração de mensagens de erro
-2. `supabase/functions/admin-create-corretor/index.ts` — Adicionar logs de diagnóstico
+1. **Migration SQL** — Nova política RLS em `profiles`
+2. `src/pages/construtora/ConstutoraCorretores.tsx` — Melhorar log de debug nos handlers de erro
+
+### Sem alterações nas edge functions
+O backend está funcionando corretamente (logs confirmam criação bem-sucedida).
 
