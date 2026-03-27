@@ -1,28 +1,24 @@
 
 
-## Plano: Tornar cards de imobiliárias parceiras clicáveis
+## Plano: Tornar "Confirmado" clicável no card de status
 
 ### Problema
-Os cards de imobiliárias parceiras na página `/construtora/imobiliarias` não são clicáveis. O usuário quer poder clicar no card para ver mais detalhes.
+No card de status da ficha, os textos "Proprietário confirmou" e "Comprador confirmou" (com ícone verde) não são clicáveis. O usuário quer poder clicar neles para ver os detalhes da confirmação (dados jurídicos: nome, CPF, localização, IP, data/hora).
 
 ### Solução
 
-#### Alterar `ConstutoraImobiliarias.tsx`
+Alterar os elementos de confirmação no Status Card (linhas ~1205-1241 de `DetalhesFicha.tsx`) para serem clicáveis e rolar suavemente até a seção "Dados Jurídicos" que já existe mais abaixo na página.
 
-Envolver o `<Card>` com um `<Link>` ou usar `onClick` + `navigate` para redirecionar ao clicar no card. Como não existe uma página de detalhes da imobiliária para construtora, a melhor abordagem é navegar para a página de fichas filtrada por imobiliária:
+#### Alterações em `DetalhesFicha.tsx`
 
-- Envolver o card principal com `onClick={() => navigate('/construtora/fichas?imobiliaria=' + p.imobiliaria_id)}` e adicionar `cursor-pointer hover:border-primary transition-colors`
-- Os botões internos (WhatsApp, Empreendimentos, dropdown) devem usar `e.stopPropagation()` para não disparar a navegação do card
-- Importar `useNavigate` de `react-router-dom`
-
-#### Atualizar `ConstutoraFichas.tsx`
-
-- Ler o query param `imobiliaria` da URL
-- Se presente, filtrar as fichas exibidas apenas para aquela imobiliária
-- Mostrar um indicador visual (badge ou texto) de que está filtrando por imobiliária, com botão para limpar o filtro
+1. Adicionar `id="dados-juridicos"` ao Card de Dados Jurídicos (linha ~2396) para servir como âncora
+2. Envolver os textos "Proprietário confirmou" e "Comprador confirmou" em um botão/link com:
+   - `cursor-pointer hover:underline` para indicar que é clicável
+   - `onClick` que faz `document.getElementById('dados-juridicos')?.scrollIntoView({ behavior: 'smooth' })`
+   - Manter o visual atual (ícone verde + texto)
 
 ### Detalhes técnicos
-- `useSearchParams` para ler/limpar o filtro na URL
-- O filtro será aplicado no frontend sobre os dados já carregados (a RPC `get_fichas_construtora` já retorna `corretor_imobiliaria`)
-- O `stopPropagation` nos botões impede conflito de cliques
+- Não precisa de migração ou mudança de dados
+- Apenas alteração visual/interativa no componente existente
+- A seção "Dados Jurídicos" já é renderizada quando a ficha está completa/finalizada, então o scroll sempre encontrará o elemento
 
