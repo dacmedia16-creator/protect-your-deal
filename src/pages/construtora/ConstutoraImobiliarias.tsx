@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -104,7 +105,7 @@ export default function ConstutoraImobiliarias() {
         if (!f.imobiliaria_id) return;
         if (!stats[f.imobiliaria_id]) stats[f.imobiliaria_id] = { total: 0, confirmadas: 0 };
         stats[f.imobiliaria_id].total++;
-        if (f.status === 'confirmado') stats[f.imobiliaria_id].confirmadas++;
+        if (isFichaConfirmada(f.status)) stats[f.imobiliaria_id].confirmadas++;
       });
       return stats;
     },
