@@ -8,7 +8,7 @@ import { DepoimentosSection } from '@/components/DepoimentosSection';
 import { WhatsAppFAB } from '@/components/WhatsAppFAB';
 import {
   Shield, Clock, FileText, MessageSquare, Mic, Camera, Video,
-  Scale, Landmark, DollarSign, CheckCircle2, XCircle, ArrowRight,
+  Scale, Landmark, DollarSign, CheckCircle2, XCircle, ArrowRight, ArrowLeft,
   Quote, Zap, Users, Lock, Eye, Heart, ChevronRight, Award,
   AlertTriangle, Ban, CreditCard, Gavel, Instagram, Linkedin,
   Mail, Phone, MapPin, Star
