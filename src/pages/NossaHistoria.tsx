@@ -157,7 +157,7 @@ export default function NossaHistoria() {
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-display font-bold leading-[1.15] tracking-tight text-foreground mb-6">
                   Perdi uma comissão de mais de{' '}
                   <span className="text-primary">R$ 200 mil.</span>{' '}
-                  Foi dessa dor que nasceu o Visita Prova.
+                  Foi dessa dor real do mercado que nasceu o Visita Prova.
                 </h1>
               </AnimatedSection>
 
@@ -171,7 +171,7 @@ export default function NossaHistoria() {
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 mb-10">
                   <Button size="lg" asChild className="text-base">
                     <Link to="/registro-autonomo">
                       Quero proteger minhas visitas
@@ -181,6 +181,22 @@ export default function NossaHistoria() {
                   <Button size="lg" variant="outline" asChild className="text-base">
                     <Link to="/como-funciona">Entender como funciona</Link>
                   </Button>
+                </div>
+              </AnimatedSection>
+
+              {/* Founder signature block */}
+              <AnimatedSection delay={400}>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={denisPhoto}
+                    alt="Denis Souza"
+                    className="h-14 w-14 rounded-full object-cover border-2 border-primary/20"
+                  />
+                  <div className="text-left">
+                    <p className="font-display font-bold text-foreground text-sm">Denis Souza</p>
+                    <p className="text-xs text-muted-foreground">Fundador do Visita Prova | Corretor de imóveis</p>
+                    <p className="text-xs text-muted-foreground/80 italic mt-1">"Eu criei o Visita Prova porque vivi na pele o que muitos corretores têm medo de viver."</p>
+                  </div>
                 </div>
               </AnimatedSection>
             </div>
@@ -209,7 +225,7 @@ export default function NossaHistoria() {
                   />
                 </div>
                 <div className="mt-4 text-center">
-                  <p className="font-display font-bold text-foreground">Denis</p>
+                  <p className="font-display font-bold text-foreground">Denis Souza</p>
                   <p className="text-sm text-muted-foreground">Fundador &amp; CEO · Corretor de Imóveis</p>
                 </div>
               </div>
@@ -226,7 +242,8 @@ export default function NossaHistoria() {
 
               <AnimatedSection delay={100}>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-8">
-                  Essa não é uma história criada para vender software.
+                  Essa não é uma história criada para vender software.{' '}
+                  <span className="text-primary">É a origem real do Visita Prova.</span>
                 </h2>
               </AnimatedSection>
 
@@ -243,9 +260,10 @@ export default function NossaHistoria() {
               </AnimatedSection>
 
               <AnimatedSection delay={300}>
-                <div className="mt-10 border-l-4 border-primary pl-6 py-2">
-                  <p className="text-xl md:text-2xl font-display font-semibold text-foreground italic">
-                    "Eu não criei o Visita Prova por ideia. Eu criei por necessidade."
+                <div className="mt-10 bg-primary/5 border border-primary/20 rounded-2xl p-8">
+                  <p className="text-2xl md:text-3xl font-display font-bold text-foreground italic leading-snug">
+                    "Eu não criei o Visita Prova por ideia.{' '}
+                    <span className="text-primary">Eu criei por necessidade.</span>"
                   </p>
                 </div>
               </AnimatedSection>
@@ -270,14 +288,14 @@ export default function NossaHistoria() {
 
             <div className="space-y-6 border-l-2 border-border/60 pl-6 ml-4">
               <TimelineItem number={1} text="O proprietário tinha urgência na venda do imóvel." delay={100} />
-              <TimelineItem number={2} text="O imóvel foi captado e começou todo o trabalho comercial." delay={150} />
-              <TimelineItem number={3} text="Foi encontrada uma compradora interessada." delay={200} />
-              <TimelineItem number={4} text="A negociação durou quase um ano, com acompanhamento constante." delay={250} />
-              <TimelineItem number={5} text="Houve acompanhamento constante dos dois lados, sempre com dedicação total." delay={300} />
-              <TimelineItem number={6} text="Tudo aparentava confiança e respeito pelo trabalho." delay={350} />
-              <TimelineItem number={7} text="Até que comprador e vendedor pararam de responder." delay={400} />
+              <TimelineItem number={2} text="Eu fiz a captação e comecei todo o trabalho comercial." delay={150} />
+              <TimelineItem number={3} text="Depois de muito esforço, encontrei uma compradora interessada." delay={200} />
+              <TimelineItem number={4} text="Durante quase um ano, acompanhei a negociação de perto." delay={250} />
+              <TimelineItem number={5} text="Conduzi comprador e vendedor com dedicação constante durante todo o processo." delay={300} />
+              <TimelineItem number={6} text="Tudo parecia indicar confiança, respeito e boa-fé." delay={350} />
+              <TimelineItem number={7} text="Até que comprador e vendedor simplesmente pararam de responder." delay={400} />
               <TimelineItem number={8} text="Depois veio o bloqueio. Sem explicações, sem retorno." delay={450} />
-              <TimelineItem number={9} text="Ficou claro: o corretor havia sido passado para trás." delay={500} />
+              <TimelineItem number={9} text="Foi aí que ficou claro: depois de quase um ano de trabalho, eu tinha sido passado para trás." delay={500} />
             </div>
           </div>
         </div>
@@ -304,10 +322,11 @@ export default function NossaHistoria() {
             </AnimatedSection>
 
             <AnimatedSection delay={200}>
-              <div className="bg-card border border-border/60 rounded-2xl p-8 md:p-10 shadow-soft">
-                <p className="text-xl md:text-2xl font-display font-semibold text-foreground leading-snug italic">
-                  "É uma dor que machuca não só o bolso. Machuca a motivação, a confiança e o
-                  respeito pelo próprio trabalho."
+              <div className="bg-card border border-border/60 border-l-4 border-l-primary rounded-2xl p-10 md:p-14 shadow-soft">
+                <p className="text-2xl md:text-3xl font-display font-bold text-foreground leading-snug italic">
+                  "É uma dor que machuca não só o bolso.{' '}
+                  <span className="text-primary">Machuca a motivação, a confiança e o
+                  respeito pelo próprio trabalho.</span>"
                 </p>
               </div>
             </AnimatedSection>
@@ -344,9 +363,10 @@ export default function NossaHistoria() {
             </div>
 
             <AnimatedSection delay={700}>
-              <div className="mt-10 border-l-4 border-primary pl-6 py-2">
-                <p className="text-lg md:text-xl font-display font-semibold text-foreground">
-                  "Não bastava ter trabalhado. Era preciso provar que o trabalho existiu."
+              <div className="mt-10 bg-card border border-border/60 rounded-2xl p-8 md:p-10 text-center shadow-soft">
+                <p className="text-xl md:text-2xl lg:text-3xl font-display font-bold text-foreground leading-snug">
+                  "Não bastava ter trabalhado.{' '}
+                  <span className="text-primary">Era preciso provar que o trabalho existiu.</span>"
                 </p>
               </div>
             </AnimatedSection>
@@ -359,14 +379,17 @@ export default function NossaHistoria() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <AnimatedSection>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-6">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-4">
                 Ganhar a ação não significou paz.
               </h2>
+              <p className="text-xl md:text-2xl font-display font-bold text-primary mb-6">
+                Eu ganhei a ação principal. E ainda assim, quase 3 anos depois, continuo sem receber.
+              </p>
             </AnimatedSection>
 
             <AnimatedSection delay={100}>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-10">
-                Antes mesmo da vitória, já tinham sido investidos mais de R$ 20 mil com advogado,
+                Antes mesmo da vitória, eu já tinha investido mais de R$ 20 mil com advogado,
                 cartório e despesas do processo. Os danos morais não foram reconhecidos. E, por isso,
                 ainda houve condenação em sucumbência para o advogado da outra parte. A cobrança
                 veio antes do recebimento da própria comissão.
@@ -427,7 +450,8 @@ export default function NossaHistoria() {
 
               <AnimatedSection delay={100}>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-4">
-                  Foi assim que nasceu o <span className="text-primary">Visita Prova.</span>
+                  Foi assim que uma dor real se transformou no{' '}
+                  <span className="text-primary">Visita Prova.</span>
                 </h2>
               </AnimatedSection>
 
@@ -439,6 +463,14 @@ export default function NossaHistoria() {
                 </p>
               </AnimatedSection>
             </div>
+
+            <AnimatedSection delay={175}>
+              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 md:p-8 text-center mb-8">
+                <p className="text-lg md:text-xl font-display font-semibold text-foreground">
+                  "O corretor não deveria descobrir tarde demais que trabalhou sem proteção."
+                </p>
+              </div>
+            </AnimatedSection>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
               <BenefitCard icon={Zap} title="Registro simples e rápido" description="Crie registros de visita em segundos, direto pelo celular, sem burocracia." delay={200} />
@@ -453,10 +485,10 @@ export default function NossaHistoria() {
       </section>
 
       {/* ═══════════════════ 9. COMPARATIVO ═══════════════════ */}
-      <section className="py-20 md:py-28">
+      <section className="py-24 md:py-32">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-16">
               <AnimatedSection>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-4">
                   O Visita Prova não age só no pós.{' '}
@@ -524,9 +556,10 @@ export default function NossaHistoria() {
             </AnimatedSection>
 
             <AnimatedSection delay={200}>
-              <div className="border-l-4 border-primary pl-6 py-2 text-left max-w-xl mx-auto">
-                <p className="text-xl md:text-2xl font-display font-semibold text-foreground italic">
-                  "Eu transformei uma dor real em uma solução real."
+              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-8 max-w-xl mx-auto">
+                <p className="text-xl md:text-2xl font-display font-bold text-foreground italic">
+                  "Eu transformei uma dor real em{' '}
+                  <span className="text-primary">uma solução real.</span>"
                 </p>
               </div>
             </AnimatedSection>
@@ -582,8 +615,8 @@ export default function NossaHistoria() {
 
             <AnimatedSection delay={100}>
               <p className="text-base md:text-lg text-white/80 mb-10 max-w-xl mx-auto">
-                Não espere o problema acontecer para correr atrás de prova. Profissionalize sua visita,
-                fortaleça seu processo e reduza o risco de conflito desde o início.
+                Não espere o problema acontecer para correr atrás de provas improvisadas. Profissionalize sua visita,
+                reduza riscos e fortaleça seu trabalho desde o início.
               </p>
             </AnimatedSection>
 
