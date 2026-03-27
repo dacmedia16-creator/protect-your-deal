@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import denisPhoto from '@/assets/DenisfotoBanner.png';
 import { SEOHead } from '@/components/SEOHead';
 import AnimatedSection from '@/components/AnimatedSection';
 import { LogoIcon } from '@/components/LogoIcon';
@@ -195,39 +196,60 @@ export default function NossaHistoria() {
       {/* ═══════════════════ 2. FUNDADOR ═══════════════════ */}
       <section className="py-20 md:py-28 bg-muted/20">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <AnimatedSection>
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-                <Heart className="h-4 w-4" />
-                O Fundador
-              </span>
-            </AnimatedSection>
-
-            <AnimatedSection delay={100}>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-8">
-                Essa não é uma história criada para vender software.
-              </h2>
-            </AnimatedSection>
-
-            <AnimatedSection delay={200}>
-              <div className="relative">
-                <Quote className="absolute -top-2 -left-2 h-10 w-10 text-primary/15" />
-                <p className="text-base md:text-lg text-muted-foreground leading-relaxed pl-8 md:pl-10">
-                  Eu sou corretor de imóveis. O Visita Prova não nasceu de teoria. Nasceu de uma
-                  dor real, de uma frustração real e de um problema que milhares de corretores
-                  conhecem muito bem: trabalhar durante meses, aproximar comprador e vendedor,
-                  conduzir uma negociação e, no final, ser deixado de fora do fechamento.
-                </p>
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
+            {/* Photo - appears first on mobile */}
+            <AnimatedSection direction="right" className="order-first md:order-last">
+              <div className="flex flex-col items-center">
+                <div className="rounded-2xl overflow-hidden shadow-lg border border-border/30">
+                  <img
+                    src={denisPhoto}
+                    alt="Denis — Fundador do Visita Prova"
+                    className="w-full h-auto object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="font-display font-bold text-foreground">Denis</p>
+                  <p className="text-sm text-muted-foreground">Fundador &amp; CEO · Corretor de Imóveis</p>
+                </div>
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={300}>
-              <div className="mt-10 border-l-4 border-primary pl-6 py-2">
-                <p className="text-xl md:text-2xl font-display font-semibold text-foreground italic">
-                  "Eu não criei o Visita Prova por ideia. Eu criei por necessidade."
-                </p>
-              </div>
-            </AnimatedSection>
+            {/* Text */}
+            <div>
+              <AnimatedSection>
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+                  <Heart className="h-4 w-4" />
+                  O Fundador
+                </span>
+              </AnimatedSection>
+
+              <AnimatedSection delay={100}>
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground mb-8">
+                  Essa não é uma história criada para vender software.
+                </h2>
+              </AnimatedSection>
+
+              <AnimatedSection delay={200}>
+                <div className="relative">
+                  <Quote className="absolute -top-2 -left-2 h-10 w-10 text-primary/15" />
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed pl-8 md:pl-10">
+                    Eu sou corretor de imóveis. O Visita Prova não nasceu de teoria. Nasceu de uma
+                    dor real, de uma frustração real e de um problema que milhares de corretores
+                    conhecem muito bem: trabalhar durante meses, aproximar comprador e vendedor,
+                    conduzir uma negociação e, no final, ser deixado de fora do fechamento.
+                  </p>
+                </div>
+              </AnimatedSection>
+
+              <AnimatedSection delay={300}>
+                <div className="mt-10 border-l-4 border-primary pl-6 py-2">
+                  <p className="text-xl md:text-2xl font-display font-semibold text-foreground italic">
+                    "Eu não criei o Visita Prova por ideia. Eu criei por necessidade."
+                  </p>
+                </div>
+              </AnimatedSection>
+            </div>
           </div>
         </div>
       </section>
