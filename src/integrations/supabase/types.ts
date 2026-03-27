@@ -2343,6 +2343,7 @@ export type Database = {
         Returns: {
           comprador_nome: string
           convertido_venda: boolean
+          corretor_imobiliaria_nome: string
           corretor_nome: string
           created_at: string
           data_visita: string

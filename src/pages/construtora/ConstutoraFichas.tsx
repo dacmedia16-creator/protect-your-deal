@@ -27,7 +27,16 @@ interface Ficha {
   data_visita: string;
   status: string;
   corretor_nome?: string;
+  corretor_imobiliaria?: string;
   convertido_venda?: boolean;
+}
+
+function abreviarNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 1) return nome;
+  const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e'];
+  const sobrenome = partes.slice(1).find(p => !preposicoes.includes(p.toLowerCase()));
+  return sobrenome ? `${partes[0]} ${sobrenome[0].toUpperCase()}.` : partes[0];
 }
 
 export default function ConstutoraFichas() {
@@ -59,6 +68,7 @@ export default function ConstutoraFichas() {
         data_visita: f.data_visita,
         status: f.status,
         corretor_nome: f.corretor_nome ?? undefined,
+        corretor_imobiliaria: f.corretor_imobiliaria_nome ?? undefined,
         convertido_venda: f.convertido_venda ?? false,
       })));
     } catch (error) {
@@ -147,7 +157,12 @@ export default function ConstutoraFichas() {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <div className="flex items-center gap-1">
                             <User className="h-3.5 w-3.5" />
-                            <span>{ficha.corretor_nome || <span className="italic">(Sem corretor)</span>}</span>
+                            <div className="flex flex-col">
+                              <span>{ficha.corretor_nome ? abreviarNome(ficha.corretor_nome) : <span className="italic">(Sem corretor)</span>}</span>
+                              {ficha.corretor_imobiliaria && (
+                                <span className="text-[10px] text-muted-foreground/70">{ficha.corretor_imobiliaria}</span>
+                              )}
+                            </div>
                           </div>
                           <span>•</span>
                           <div className="flex items-center gap-1">
@@ -190,7 +205,18 @@ export default function ConstutoraFichas() {
                       {filteredFichas.map((ficha) => (
                         <TableRow key={ficha.id}>
                           <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
-                          <TableCell>{ficha.corretor_nome || <span className="text-muted-foreground italic text-sm">(Sem corretor)</span>}</TableCell>
+                          <TableCell>
+                            {ficha.corretor_nome ? (
+                              <div>
+                                <span>{abreviarNome(ficha.corretor_nome)}</span>
+                                {ficha.corretor_imobiliaria && (
+                                  <p className="text-xs text-muted-foreground">{ficha.corretor_imobiliaria}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic text-sm">(Sem corretor)</span>
+                            )}
+                          </TableCell>
                           <TableCell className="hidden lg:table-cell max-w-[200px] truncate">{ficha.imovel_endereco}</TableCell>
                           <TableCell className="hidden xl:table-cell">{ficha.proprietario_nome || '-'}</TableCell>
                           <TableCell className="hidden xl:table-cell">{ficha.comprador_nome || '-'}</TableCell>
