@@ -1,33 +1,24 @@
 
 
-## Plano: Adicionar edição e exclusão de empreendimentos
+## Plano: Corrigir exclusão de corretores no módulo Construtora
 
-### Alterações em `src/pages/construtora/ConstutoraEmpreendimentos.tsx`
+### Problema
+A edge function `empresa-delete-corretor` só aceita `imobiliaria_admin` na verificação de role (linha 52). Quando um `construtora_admin` tenta excluir, recebe 403.
 
-**1. Adicionar estado para edição e exclusão**
-- `editingEmp` (empreendimento sendo editado, ou null para criação)
-- `deleteId` + `deleteDialogOpen` para confirmação de exclusão
+### Alteração em `supabase/functions/empresa-delete-corretor/index.ts`
 
-**2. Reutilizar o Dialog para edição**
-- Ao abrir dialog, se `editingEmp` existe, preencher campos com dados existentes
-- Título muda para "Editar Empreendimento" / "Novo Empreendimento"
-- Botão de submit muda texto conforme modo
+**1. Expandir verificação de role (linhas 48-61)**
+- Buscar role do caller sem filtrar por role específico
+- Aceitar `imobiliaria_admin` OU `construtora_admin`
+- Extrair tanto `imobiliaria_id` quanto `construtora_id` do resultado
 
-**3. Adicionar mutation de update**
-- `updateMutation`: faz `.update({...}).eq('id', editingEmp.id)` no Supabase
-- O botão de submit chama `createMutation` ou `updateMutation` conforme o modo
+**2. Ajustar verificação de pertencimento (linhas 85-105)**
+- Se caller é `construtora_admin`: verificar `construtora_id` do target via `user_roles` (não via `profiles.imobiliaria_id`)
+- Se caller é `imobiliaria_admin`: manter lógica atual via `profiles.imobiliaria_id`
 
-**4. Adicionar mutation de delete**
-- `deleteMutation`: faz `.delete().eq('id', deleteId)` no Supabase
-- Toast de sucesso e invalidação da query
+**3. Ajustar verificação de admin do target (linhas 107-120)**
+- Se caller é `construtora_admin`: bloquear exclusão de outro `construtora_admin`
+- Se caller é `imobiliaria_admin`: manter bloqueio de outro `imobiliaria_admin`
 
-**5. Adicionar botões de ação nos cards**
-- `DropdownMenu` com `MoreVertical` no header de cada card
-- Opções: "Editar" (abre dialog preenchido) e "Excluir" (abre AlertDialog de confirmação)
-
-**6. AlertDialog para confirmação de exclusão**
-- Texto: "Tem certeza que deseja excluir o empreendimento X?"
-- Botões: Cancelar / Excluir (destructive, com loading)
-
-**Imports adicionais**: `DropdownMenu*`, `AlertDialog*`, `MoreVertical`, `Pencil`, `Trash2`
+A lógica de deleção em si (steps 1-12) permanece inalterada.
 
