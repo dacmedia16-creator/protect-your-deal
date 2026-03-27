@@ -133,6 +133,7 @@ import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
 import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
 import EmpresaFichas from "./pages/empresa/EmpresaFichas";
 import EmpresaPesquisas from "./pages/empresa/EmpresaPesquisas";
+import EmpresaParceriasConstrutoras from "./pages/empresa/EmpresaParceriasConstrutoras";
 
 const queryClient = new QueryClient();
 
