@@ -281,8 +281,8 @@ export default function NovaFicha() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação para construtora: exigir empreendimento
-    if (isConstrutora && !empreendimentoId) {
+    // Validação para construtora ou modo parceira: exigir empreendimento
+    if ((isConstrutora || modoConstrutoraParceira) && !empreendimentoId) {
       toast({
         variant: 'destructive',
         title: 'Erro de validação',
@@ -291,10 +291,19 @@ export default function NovaFicha() {
       return;
     }
 
-    const fichaSchema = createFichaSchema(isConstrutora ? 'comprador' : modoCriacao);
+    if (modoConstrutoraParceira && !selectedConstrutoraId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Selecione uma construtora parceira',
+      });
+      return;
+    }
+
+    const fichaSchema = createFichaSchema((isConstrutora || modoConstrutoraParceira) ? 'comprador' : modoCriacao);
     const result = fichaSchema.safeParse({
       ...formData,
-      // Para construtora, preencher campos obrigatórios que vêm do empreendimento
+      // Para construtora/parceira, preencher campos obrigatórios que vêm do empreendimento
       imovel_endereco: formData.imovel_endereco || 'auto',
       imovel_tipo: formData.imovel_tipo || 'auto',
     });
