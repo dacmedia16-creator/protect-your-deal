@@ -1,28 +1,33 @@
 
 
-## Plano: Adicionar política RLS para busca de imobiliárias pelo construtora_admin
+## Plano: Adicionar header com botão "Voltar" na página Nossa História
 
 ### Problema
-A tabela `imobiliarias` não possui nenhuma política RLS que permita usuários com role `construtora_admin` fazer SELECT. Quando o admin da construtora busca uma imobiliária para convidar como parceira, o RLS bloqueia a query e retorna zero resultados.
+A página `/nossa-historia` não possui header com botão de voltar. Todas as outras páginas institucionais (Como Funciona, Termos de Uso, Política de Privacidade, Sobre Nós) têm um header sticky com logo e botão "Voltar".
 
 ### Solução
-Criar uma política RLS na tabela `imobiliarias` permitindo que `construtora_admin` possa ler imobiliárias com status `ativo`.
+Adicionar um header sticky no topo da página `NossaHistoria.tsx`, seguindo o padrão de `ComoFunciona.tsx`:
 
-### Migração SQL
-```sql
-CREATE POLICY "Construtora admin pode buscar imobiliárias ativas"
-  ON public.imobiliarias
-  FOR SELECT
-  TO authenticated
-  USING (
-    status = 'ativo'
-    AND EXISTS (
-      SELECT 1 FROM public.user_roles
-      WHERE user_roles.user_id = auth.uid()
-        AND user_roles.role = 'construtora_admin'
-    )
-  );
+```tsx
+<header className="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
+  <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+    <Button variant="ghost" asChild>
+      <Link to="/" className="flex items-center gap-2">
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
+      </Link>
+    </Button>
+    <div className="flex items-center gap-2">
+      <LogoIcon size={24} />
+      <span className="font-heading text-lg font-bold">VisitaProva</span>
+    </div>
+    <div className="w-20" />
+  </div>
+</header>
 ```
 
-Nenhuma alteração de código necessária — apenas a política de segurança faltava.
+### Alteração
+- **Arquivo:** `src/pages/NossaHistoria.tsx`
+- Importar `ArrowLeft` (já tem outros ícones do lucide)
+- Inserir o header logo após o `<WhatsAppFAB />`, antes da seção hero
 
