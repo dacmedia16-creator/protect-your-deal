@@ -151,9 +151,10 @@ interface ImovelSelecionado {
 export default function NovaFicha() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { imobiliariaId, loading: roleLoading } = useUserRole();
+  const { imobiliariaId, construtoraId, construtora, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isConstrutora = !!construtoraId;
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   
   
@@ -179,6 +180,13 @@ export default function NovaFicha() {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Forçar modo comprador para corretores de construtora
+  useEffect(() => {
+    if (isConstrutora) {
+      setModoCriacao('comprador');
+    }
+  }, [isConstrutora]);
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -238,16 +246,18 @@ export default function NovaFicha() {
     setIsSubmitting(true);
 
     try {
-      // Always resolve imobiliaria_id from backend (must match RLS function get_user_imobiliaria(auth.uid()))
-      const { data: dbImobiliariaId, error: dbImobiliariaError } = await supabase.rpc(
-        'get_user_imobiliaria',
-        { _user_id: user.id }
-      );
+      // Resolve imobiliaria_id and construtora_id from backend
+      const [imobResult, constResult] = await Promise.all([
+        supabase.rpc('get_user_imobiliaria', { _user_id: user.id }),
+        supabase.rpc('get_user_construtora', { _user_id: user.id }),
+      ]);
 
-      if (dbImobiliariaError) throw dbImobiliariaError;
+      if (imobResult.error) throw imobResult.error;
+      const dbImobiliariaId = imobResult.data;
+      const dbConstrutoraId = constResult.data;
 
-      // Corretor autônomo (sem imobiliária) pode criar fichas normalmente
-      const isCorretorAutonomo = !dbImobiliariaId;
+      // Corretor autônomo (sem imobiliária e sem construtora)
+      const isCorretorAutonomo = !dbImobiliariaId && !dbConstrutoraId;
       
       if (isCorretorAutonomo) {
         console.info('[NovaFicha] Corretor autônomo criando ficha sem imobiliária');
@@ -263,30 +273,47 @@ export default function NovaFicha() {
 
       const protocolo = await generateProtocolo();
       
+      // Para construtora, proprietário é a própria construtora (pré-preenchido e pré-confirmado)
+      const isConstrutoraBroker = !!dbConstrutoraId;
+      
       // Preparar dados conforme o modo
-      const incluiProprietario = modoCriacao === 'completo' || modoCriacao === 'proprietario';
+      const incluiProprietario = !isConstrutoraBroker && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
       const incluiComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
+
+      const insertData: any = {
+        user_id: user.id,
+        imobiliaria_id: dbImobiliariaId || null,
+        construtora_id: dbConstrutoraId || null,
+        protocolo,
+        imovel_endereco: formData.imovel_endereco,
+        imovel_tipo: formData.imovel_tipo,
+        comprador_autopreenchimento: incluiComprador ? formData.comprador_autopreenchimento : false,
+        comprador_nome: incluiComprador && !formData.comprador_autopreenchimento ? formData.comprador_nome : null,
+        comprador_cpf: incluiComprador ? formData.comprador_cpf || null : null,
+        comprador_telefone: incluiComprador ? formData.comprador_telefone.replace(/\D/g, '') : null,
+        data_visita: formData.data_visita,
+        observacoes: formData.observacoes || null,
+      };
+
+      if (isConstrutoraBroker && construtora) {
+        // Proprietário = construtora (auto-preenchido e auto-confirmado)
+        insertData.proprietario_nome = construtora.nome;
+        insertData.proprietario_cpf = construtora.cnpj || null;
+        insertData.proprietario_telefone = construtora.telefone?.replace(/\D/g, '') || null;
+        insertData.proprietario_autopreenchimento = false;
+        insertData.proprietario_confirmado_em = new Date().toISOString();
+        insertData.status = 'aguardando_comprador';
+      } else {
+        insertData.proprietario_autopreenchimento = incluiProprietario ? formData.proprietario_autopreenchimento : false;
+        insertData.proprietario_nome = incluiProprietario && !formData.proprietario_autopreenchimento ? formData.proprietario_nome : null;
+        insertData.proprietario_cpf = incluiProprietario ? formData.proprietario_cpf || null : null;
+        insertData.proprietario_telefone = incluiProprietario ? formData.proprietario_telefone.replace(/\D/g, '') : null;
+        insertData.status = 'pendente';
+      }
 
       const { data, error } = await supabase
         .from('fichas_visita')
-        .insert({
-          user_id: user.id,
-          imobiliaria_id: dbImobiliariaId || null,
-          protocolo,
-          imovel_endereco: formData.imovel_endereco,
-          imovel_tipo: formData.imovel_tipo,
-          proprietario_autopreenchimento: incluiProprietario ? formData.proprietario_autopreenchimento : false,
-          proprietario_nome: incluiProprietario && !formData.proprietario_autopreenchimento ? formData.proprietario_nome : null,
-          proprietario_cpf: incluiProprietario ? formData.proprietario_cpf || null : null,
-          proprietario_telefone: incluiProprietario ? formData.proprietario_telefone.replace(/\D/g, '') : null,
-          comprador_autopreenchimento: incluiComprador ? formData.comprador_autopreenchimento : false,
-          comprador_nome: incluiComprador && !formData.comprador_autopreenchimento ? formData.comprador_nome : null,
-          comprador_cpf: incluiComprador ? formData.comprador_cpf || null : null,
-          comprador_telefone: incluiComprador ? formData.comprador_telefone.replace(/\D/g, '') : null,
-          data_visita: formData.data_visita,
-          observacoes: formData.observacoes || null,
-          status: 'pendente',
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -296,13 +323,14 @@ export default function NovaFicha() {
       if (enviarWhatsappAutomatico) {
         const queueItems = [];
 
-        if (incluiProprietario) {
+        // Construtora: proprietário já confirmado, não enviar OTP
+        if (incluiProprietario && !isConstrutoraBroker) {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'proprietario',
             app_url: OTP_URL,
             user_id: user.id,
-            prioridade: 10, // Alta prioridade para envio imediato
+            prioridade: 10,
           });
         }
 
@@ -401,7 +429,7 @@ export default function NovaFicha() {
     );
   }
 
-  const showProprietario = modoCriacao === 'completo' || modoCriacao === 'proprietario';
+  const showProprietario = !isConstrutora && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
   const showComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
 
   return (
@@ -415,7 +443,27 @@ export default function NovaFicha() {
 
       <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Modo de Criação */}
+          {/* Info card para construtora */}
+          {isConstrutora && construtora && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Proprietário: {construtora.nome}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Os dados do proprietário serão preenchidos automaticamente com os dados da construtora. A confirmação do proprietário é dispensada.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Modo de Criação - oculto para construtora */}
+          {!isConstrutora && (
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -458,6 +506,7 @@ export default function NovaFicha() {
               </RadioGroup>
             </CardContent>
           </Card>
+          )}
 
           {/* Dados do Imóvel */}
           <Card>
