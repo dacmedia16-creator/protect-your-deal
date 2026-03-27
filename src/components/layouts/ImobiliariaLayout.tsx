@@ -174,7 +174,10 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
                   )}
                 >
                   <item.icon className="h-5 w-5" />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.href === '/empresa/parcerias-construtoras' && pendingCount ? (
+                    <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-[10px]">{pendingCount}</Badge>
+                  ) : null}
                 </Link>
               );
             })}
