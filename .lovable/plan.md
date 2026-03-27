@@ -1,46 +1,88 @@
 
 
-## Plano: Corrigir criação e listagem de corretores da construtora
+## Plano: Alinhar módulo Construtora com Imobiliária (mantendo Empreendimentos e Parcerias)
 
-### Causa raiz
-Dois problemas interligados:
+### Visão geral
+Reescrever todas as páginas do módulo construtora para ficarem no mesmo nível de qualidade e funcionalidade do módulo imobiliária, mantendo as páginas exclusivas (Empreendimentos e Imobiliárias Parceiras).
 
-1. **RLS bloqueia leitura de profiles**: A tabela `profiles` não tem política SELECT para `construtora_admin`. O frontend consulta `profiles` com o client normal (não service role), então retorna vazio — os corretores existem mas não aparecem na lista.
+### Comparação de funcionalidades
 
-2. **Erro de email duplicado não é exibido**: O primeiro teste com `Fernando@gmail.com` falhou porque o email já existia. O backend retornou corretamente `{ error: "Este email já está cadastrado" }` com status 400, mas o frontend mostrou mensagem genérica.
+| Página | Imobiliária (referência) | Construtora (atual) | Ação |
+|--------|-------------------------|---------------------|------|
+| Dashboard | KPIs avançados, gráfico mensal, ações rápidas, uso do plano | 4 cards simples | Reescrever |
+| Corretores | KPIs, busca, dropdown ações, detalhes | Já alinhado (feito antes) | Manter |
+| Corretores/:userId | Perfil, KPIs, fichas, pesquisas | Não existe | Criar |
+| Equipes | CRUD hierárquico, membros, líder, cores | Não existe | Criar (requer migration) |
+| Fichas | Busca, mobile cards, link detalhes, delete | Tabela básica | Reescrever |
+| Relatórios | Gráficos, evolução, performance por corretor | Básico | Reescrever |
+| Assinatura | Planos, pagamento, uso | Só mostra status | Reescrever |
+| Configurações | Zod, tabs, logo, copiar código | Form básico | Reescrever |
+| Empreendimentos | — (exclusivo construtora) | Já existe | Manter |
+| Imob. Parceiras | — (exclusivo construtora) | Já existe | Manter |
 
-Os logs confirmam que o segundo teste (`Fernando1@gmail.com`) **foi criado com sucesso** no backend. O corretor existe, mas a listagem não o mostra por causa do RLS.
+### Alterações necessárias
 
-### Correções
+**1. Migration SQL — Suporte a equipes para construtora**
+- Tornar `equipes.imobiliaria_id` nullable
+- Adicionar `equipes.construtora_id uuid REFERENCES construtoras(id)`
+- CHECK constraint: pelo menos um dos dois preenchido
+- Atualizar trigger `check_equipe_imobiliaria` para suportar construtora
+- RLS policies em `equipes` e `equipes_membros` para `construtora_admin`
 
-**1. Migration: Adicionar política SELECT em `profiles` para construtora_admin**
+**2. `ConstrutoraDashboard.tsx`** — Reescrever seguindo EmpresaDashboard
+- KPIs: Corretores ativos, Fichas do mês, taxa confirmação, crescimento MoM
+- Gráfico de barras mensal (últimos 6 meses)
+- Ações rápidas
+- Card de uso do plano com progress bars
 
-```sql
-CREATE POLICY "Construtora admin pode ver perfis dos seus corretores"
-ON public.profiles
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM user_roles ur
-    WHERE ur.user_id = profiles.user_id
-      AND ur.role = 'corretor'
-      AND ur.construtora_id = get_user_construtora(auth.uid())
-      AND get_user_construtora(auth.uid()) IS NOT NULL
-  )
-);
-```
+**3. `ConstutoraFichas.tsx`** — Reescrever seguindo EmpresaFichas
+- Busca por protocolo, endereço, nomes
+- Layout mobile com cards clicáveis (link para `/fichas/:id`)
+- Tabela desktop com nome do corretor
+- Badge "Vendido", DeleteFichaDialog
 
-Isso permite que o `construtora_admin` veja profiles de corretores vinculados à sua construtora (via `user_roles.construtora_id`).
+**4. `ConstutoraRelatorios.tsx`** — Reescrever seguindo EmpresaRelatorios
+- Gráfico de evolução 6 meses (total vs confirmadas)
+- Performance por corretor com métricas individuais
 
-**2. Frontend: melhorar feedback de erro no `handleCreate`**
+**5. `ConstutoraAssinatura.tsx`** — Reescrever seguindo EmpresaAssinatura
+- Listagem de planos disponíveis
+- Link de pagamento via `asaas-payment-link`
+- Estatísticas de uso (corretores, fichas/mês)
 
-O padrão de extração de erro via `(error as any)?.context` pode falhar se o SDK retornar o erro de forma diferente. Adicionar fallback para `data?.error` quando `data.success` é falso, e logar o erro no console para debug.
+**6. `ConstutoraConfiguracoes.tsx`** — Aprimorar seguindo EmpresaConfiguracoes
+- Validação com Zod + react-hook-form
+- Tabs (Dados, Notificações, Integrações)
+- Formatação CNPJ/telefone
 
-### Arquivos alterados
-1. **Migration SQL** — Nova política RLS em `profiles`
-2. `src/pages/construtora/ConstutoraCorretores.tsx` — Melhorar log de debug nos handlers de erro
+**7. `ConstutoraDetalhesCorretor.tsx`** — Criar (seguindo EmpresaDetalhesCorretor)
+- Perfil do corretor, KPIs, tabela de fichas recentes
 
-### Sem alterações nas edge functions
-O backend está funcionando corretamente (logs confirmam criação bem-sucedida).
+**8. `ConstutoraEquipes.tsx`** — Criar (seguindo EmpresaEquipes)
+- CRUD de equipes hierárquicas, membros, líder, cores, busca
+- Usa `construtoraId` ao invés de `imobiliariaId`
+
+**9. `ConstutoraLayout.tsx`** — Adicionar item "Equipes" no menu
+
+**10. `App.tsx`** — Adicionar rotas:
+- `/construtora/equipes` → ConstutoraEquipes
+- `/construtora/corretores/:userId` → ConstutoraDetalhesCorretor
+
+### Arquivos afetados
+1. Migration SQL (equipes schema + RLS)
+2. `src/pages/construtora/ConstrutoraDashboard.tsx`
+3. `src/pages/construtora/ConstutoraFichas.tsx` (renomeado de ConstutoraFichas)
+4. `src/pages/construtora/ConstutoraRelatorios.tsx`
+5. `src/pages/construtora/ConstutoraAssinatura.tsx` (renomeado)
+6. `src/pages/construtora/ConstutoraConfiguracoes.tsx` (renomeado)
+7. `src/pages/construtora/ConstutoraDetalhesCorretor.tsx` (novo)
+8. `src/pages/construtora/ConstutoraEquipes.tsx` (novo)
+9. `src/components/layouts/ConstutoraLayout.tsx`
+10. `src/App.tsx`
+
+### Ordem de implementação
+Devido ao volume, será implementado em 3-4 mensagens:
+1. Migration + Equipes + DetalhesCorretor + Layout + Rotas
+2. Dashboard + Fichas
+3. Relatórios + Assinatura + Configurações
 
