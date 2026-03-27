@@ -1883,6 +1883,7 @@ export type Database = {
           client_email: string | null
           client_name: string | null
           client_phone: string | null
+          construtora_id: string | null
           corretor_id: string
           created_at: string
           expires_at: string
@@ -1898,6 +1899,7 @@ export type Database = {
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
+          construtora_id?: string | null
           corretor_id: string
           created_at?: string
           expires_at?: string
@@ -1913,6 +1915,7 @@ export type Database = {
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
+          construtora_id?: string | null
           corretor_id?: string
           created_at?: string
           expires_at?: string
@@ -1925,6 +1928,13 @@ export type Database = {
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "surveys_construtora_id_fkey"
+            columns: ["construtora_id"]
+            isOneToOne: false
+            referencedRelation: "construtoras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "surveys_ficha_id_fkey"
             columns: ["ficha_id"]
