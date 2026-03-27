@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     // Fetch ficha FIRST to get imobiliaria_id and determine who added the buyer
     const { data: ficha, error: fichaError } = await supabaseAdmin
       .from('fichas_visita')
-      .select('id, status, user_id, imobiliaria_id, corretor_parceiro_id, parte_preenchida_parceiro, comprador_nome, comprador_telefone, comprador_cpf, comprador_confirmado_em')
+      .select('id, status, user_id, imobiliaria_id, construtora_id, corretor_parceiro_id, parte_preenchida_parceiro, comprador_nome, comprador_telefone, comprador_cpf, comprador_confirmado_em')
       .eq('id', ficha_id)
       .maybeSingle();
 
@@ -152,6 +152,7 @@ Deno.serve(async (req) => {
         ficha_id,
         corretor_id: userId,
         imobiliaria_id: ficha.imobiliaria_id,
+        construtora_id: ficha.construtora_id || null,
         client_name: ficha.comprador_nome,
         client_phone: ficha.comprador_telefone,
         status: 'sent',
