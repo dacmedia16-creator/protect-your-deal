@@ -421,7 +421,7 @@ export default function NovaFicha() {
         const queueItems = [];
 
         // Construtora: proprietário já confirmado, não enviar OTP
-        if (incluiProprietario && !isConstrutoraBroker) {
+        if (incluiProprietario && !isConstrutoraBroker && !isParceiraMode) {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'proprietario',
