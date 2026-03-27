@@ -1016,11 +1016,12 @@ export type Database = {
       equipes: {
         Row: {
           ativa: boolean | null
+          construtora_id: string | null
           cor: string | null
           created_at: string
           descricao: string | null
           id: string
-          imobiliaria_id: string
+          imobiliaria_id: string | null
           lider_id: string | null
           nome: string
           parent_id: string | null
@@ -1028,11 +1029,12 @@ export type Database = {
         }
         Insert: {
           ativa?: boolean | null
+          construtora_id?: string | null
           cor?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
-          imobiliaria_id: string
+          imobiliaria_id?: string | null
           lider_id?: string | null
           nome: string
           parent_id?: string | null
@@ -1040,17 +1042,25 @@ export type Database = {
         }
         Update: {
           ativa?: boolean | null
+          construtora_id?: string | null
           cor?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
-          imobiliaria_id?: string
+          imobiliaria_id?: string | null
           lider_id?: string | null
           nome?: string
           parent_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "equipes_construtora_id_fkey"
+            columns: ["construtora_id"]
+            isOneToOne: false
+            referencedRelation: "construtoras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "equipes_imobiliaria_id_fkey"
             columns: ["imobiliaria_id"]

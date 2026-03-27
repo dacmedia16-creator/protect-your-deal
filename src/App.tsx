@@ -119,6 +119,8 @@ import ConstutoraFichas from "./pages/construtora/ConstutoraFichas";
 import ConstutoraRelatorios from "./pages/construtora/ConstutoraRelatorios";
 import ConstutoraConfiguracoes from "./pages/construtora/ConstutoraConfiguracoes";
 import ConstutoraAssinatura from "./pages/construtora/ConstutoraAssinatura";
+import ConstutoraEquipes from "./pages/construtora/ConstutoraEquipes";
+import ConstutoraDetalhesCorretor from "./pages/construtora/ConstutoraDetalhesCorretor";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
@@ -424,6 +426,16 @@ const App = () => (
                 <Route path="/construtora/assinatura" element={
                   <ProtectedRoute allowedRoles={['construtora_admin']}>
                     <ConstutoraAssinatura />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/equipes" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraEquipes />
+                  </ProtectedRoute>
+                } />
+                <Route path="/construtora/corretores/:userId" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraDetalhesCorretor />
                   </ProtectedRoute>
                 } />
                 <Route path="/pesquisas" element={
