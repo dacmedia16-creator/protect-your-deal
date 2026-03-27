@@ -1,4 +1,4 @@
-import { Users, Search, Filter, Phone, Mail, Tag, Building2 } from 'lucide-react';
+import { Users, Search, Filter, Phone, Building2 } from 'lucide-react';
 
 const CRMMockup = () => {
   const clients = [
