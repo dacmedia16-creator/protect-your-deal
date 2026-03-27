@@ -33,6 +33,7 @@ import TourAudioLanding from "./pages/TourAudioLanding";
 import Afiliados from "./pages/Afiliados";
 import ParaImobiliarias from "./pages/ParaImobiliarias";
 import SobreNos from "./pages/SobreNos";
+import NossaHistoria from "./pages/NossaHistoria";
 
 
 // Auth pages
