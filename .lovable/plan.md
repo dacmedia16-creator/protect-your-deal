@@ -1,35 +1,58 @@
-Diagnóstico rápido (com base nos logs atuais):
-- O erro principal de exclusão **não é mais 403**; agora é **500** na função de backend `empresa-delete-corretor`.
-- Causa exata já confirmada nos logs: `ReferenceError: targetProfile is not defined` em `supabase/functions/empresa-delete-corretor/index.ts` (linha do log ~164).
-- No código, `targetProfile` só existe no branch de `imobiliaria_admin`, mas está sendo usado depois do `if/else` também para `construtora_admin`.
-- Em paralelo, continuam warnings de `forwardRef` ligados ao `AlertDialog` na tela de corretores.
 
-Plano de correção (implementação):
-1) Corrigir crash da função `empresa-delete-corretor` (prioridade máxima)
-- Ajustar escopo das variáveis no backend:
-  - criar variável comum (ex.: `targetNome`) antes do `if/else`;
-  - preencher no branch de imobiliária com `targetProfile?.nome`;
-  - no branch de construtora, buscar nome do perfil (ou usar fallback com `targetUserId`);
-- Trocar o log que hoje usa `targetProfile.nome` por versão segura (`targetNome ?? targetUserId`);
-- Garantir que nenhum acesso a variável de branch ocorra fora do escopo.
 
-2) Blindar fluxo de autorização/pertencimento para construtora (sem alterar regra de negócio)
-- Manter verificação de mesma `construtora_id`;
-- Manter bloqueio para excluir outro `construtora_admin`;
-- Adicionar guard clauses explícitas para IDs nulos/inválidos antes da deleção (evita novos 500 silenciosos).
+## Plano: Landing Page Premium — História do Fundador
 
-3) Melhorar feedback de erro no front (`ConstutoraCorretores.tsx`)
-- No `handleRemoveCorretor`, extrair mensagem real da resposta da função (via `error.context` quando disponível), em vez de exibir só “Edge Function returned non-2xx”;
-- Mostrar toast com erro amigável retornado pelo backend, para facilitar diagnóstico futuro.
+### Resumo
+Criar uma nova página `/nossa-historia` com 13 seções narrativas premium, seguindo a estrutura e copy exatos do briefing. A página será independente da landing principal (`Index.tsx`) e terá estética SaaS de alto padrão.
 
-4) Corrigir warnings de `forwardRef` no `AlertDialog` (mesma rodada)
-- Ajustar wrapper de `src/components/ui/alert-dialog.tsx` para evitar passagem de `ref` em componentes que não aceitam;
-- Validar especificamente a renderização de `ConstutoraCorretores` com o modal de desativação aberto/fechado.
+### Arquivos a criar/editar
 
-Validação após correção:
-- Teste E2E em `/construtora/corretores`:
-  1. excluir corretor comum da mesma construtora => sucesso (200);
-  2. tentar excluir admin da mesma construtora => bloqueio (403 com mensagem correta);
-  3. confirmar que não há `ReferenceError` nos logs da função;
-  4. confirmar ausência dos warnings de `forwardRef` no console dessa tela.
-- Nenhuma migração de banco é necessária para este ajuste.
+**1. `src/pages/NossaHistoria.tsx`** (~800-1000 linhas)
+Página completa com todas as 13 seções do briefing. Componentes internos para manter tudo coeso:
+
+- **Hero**: Headline emocional + bloco de números (R$200mil, R$20mil, 1 ano, 3 anos) com estética de "authority component" (glassmorphism + bordas sutis)
+- **Seção Fundador**: Layout editorial com foto do CEO (`ceo-photo.png`), aspas grandes, assinatura visual
+- **Timeline Narrativa**: Blocos sequenciais com ritmo visual (ícones numerados, linhas conectoras)
+- **Seção Dor/Impacto**: Frase em destaque com tipografia grande, fundo sutil escuro
+- **Seção Provas**: Grid premium de ícones (WhatsApp, áudios, fotos, cartório, advogado etc.)
+- **Seção Injustiça**: Mini-cards com status ("Ganhei a ação", "Ainda não recebi", "Contas bloqueadas", "Paguei antes de receber")
+- **Virada/Insight**: Transição visual clara — frase central em destaque
+- **Origem do Produto**: Cards premium de benefícios (6 cards com ícones)
+- **Comparativo**: Duas colunas (Sem formalização vs Com Visita Prova) com ícones ✗/✓
+- **Propósito**: Frase final forte do fundador
+- **Prova Social**: `DepoimentosSection` existente + placeholders para logos e métricas
+- **CTA Final**: Background gradient, dois botões
+- **Footer Premium**: Logo, links institucionais, WhatsApp, redes, termos/privacidade
+
+### Componentes reutilizados
+- `SEOHead`, `AnimatedSection`, `LogoIcon`, `Button`, `Card`, `DepoimentosSection`, `WhatsAppFAB`
+- Foto do CEO: `import ceoPhoto from "@/assets/ceo-photo.png"`
+
+### Design e estilo
+- **Tipografia**: `Plus Jakarta Sans` (headings), `Inter` (body) — já configurados
+- **Cores**: Paleta existente (primary blue `#2563EB`, slate `#0F172A`, muted backgrounds)
+- **Espaçamento**: `py-20 md:py-28` entre seções para respiração premium
+- **Animações**: `AnimatedSection` com delays escalonados por seção
+- **Cards de números**: `backdrop-blur-sm bg-card/80 border border-border/50` (classe `.glass` existente)
+- **Frases de destaque**: `text-2xl md:text-3xl font-heading` com `border-l-4 border-primary`
+- **Comparativo**: Grid 2 colunas com fundo vermelho sutil (sem) vs verde sutil (com)
+- **Dark mode**: Totalmente suportado via variáveis CSS existentes
+- **Mobile**: Stack vertical em todas as seções, tipografia responsiva
+
+### Rota
+**2. `src/App.tsx`** — Adicionar rota:
+```
+<Route path="/nossa-historia" element={<NossaHistoria />} />
+```
+
+### Links de navegação
+- CTAs "Quero proteger minhas visitas" → `/registro-autonomo`
+- "Entender como funciona" → `/como-funciona`
+- "Falar com a equipe" → WhatsApp link existente
+- Footer links → `/termos-de-uso`, `/politica-privacidade`, `/funcionalidades`
+
+### Performance
+- Sem dependências novas — usa apenas componentes e libs já instalados
+- Imagens lazy-loaded
+- Seções animadas via IntersectionObserver (já implementado em `AnimatedSection`)
+
