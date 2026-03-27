@@ -29,6 +29,7 @@ interface Ficha {
   status: string;
   corretor_nome?: string;
   corretor_imobiliaria?: string;
+  corretor_imobiliaria_id?: string;
   convertido_venda?: boolean;
 }
 
