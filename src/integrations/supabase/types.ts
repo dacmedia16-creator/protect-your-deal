@@ -2426,6 +2426,25 @@ export type Database = {
           nome: string
         }[]
       }
+      get_surveys_construtora: {
+        Args: { p_construtora_id: string }
+        Returns: {
+          client_name: string
+          client_phone: string
+          comprador_nome: string
+          corretor_imobiliaria_nome: string
+          corretor_nome: string
+          created_at: string
+          ficha_id: string
+          id: string
+          imovel_endereco: string
+          protocolo: string
+          responded_at: string
+          sent_at: string
+          status: string
+          token: string
+        }[]
+      }
       get_user_construtora: { Args: { _user_id: string }; Returns: string }
       get_user_imobiliaria: { Args: { _user_id: string }; Returns: string }
       get_user_subscription: {
