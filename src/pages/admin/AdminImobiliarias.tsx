@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck, LogIn, Loader2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck, LogIn, Loader2, FileText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -62,6 +62,7 @@ interface Imobiliaria {
   assinatura_plano_id?: string;
   assinatura_plano_nome?: string;
   survey_enabled?: boolean;
+  fichas_count?: number;
 }
 
 interface Plano {
@@ -144,11 +145,18 @@ export default function AdminImobiliarias() {
             .eq('feature_key', 'post_visit_survey')
             .maybeSingle();
 
+          // Count fichas
+          const { count: fichasCount } = await supabase
+            .from('fichas_visita')
+            .select('*', { count: 'exact', head: true })
+            .eq('imobiliaria_id', imob.id);
+
           const planoData = assData?.plano as { nome: string } | null;
 
           return {
             ...imob,
             corretores_count: count || 0,
+            fichas_count: fichasCount || 0,
             assinatura_status: assData?.status || 'sem_assinatura',
             assinatura_id: assData?.id,
             assinatura_plano_id: assData?.plano_id,
@@ -577,9 +585,15 @@ export default function AdminImobiliarias() {
                             {imob.assinatura_status === 'cancelada' && 'Cancelada'}
                             {imob.assinatura_status === 'sem_assinatura' && 'Sem assinatura'}
                           </Badge>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground ml-auto">
-                            <Users className="h-4 w-4" />
-                            <span>{imob.corretores_count}</span>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              <span>{imob.corretores_count}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4" />
+                              <span>{imob.fichas_count}</span>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -600,6 +614,7 @@ export default function AdminImobiliarias() {
                         <TableHead>Status</TableHead>
                         <TableHead>Assinatura</TableHead>
                         <TableHead>Corretores</TableHead>
+                        <TableHead>Registros</TableHead>
                         <TableHead className="hidden lg:table-cell">Cadastro</TableHead>
                         <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
@@ -658,6 +673,12 @@ export default function AdminImobiliarias() {
                             <div className="flex items-center gap-1">
                               <Users className="h-4 w-4 text-muted-foreground" />
                               {imob.corretores_count}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              {imob.fichas_count}
                             </div>
                           </TableCell>
                           <TableCell className="hidden lg:table-cell text-muted-foreground">
