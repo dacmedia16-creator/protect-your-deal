@@ -122,6 +122,7 @@ import ConstutoraConfiguracoes from "./pages/construtora/ConstutoraConfiguracoes
 import ConstutoraAssinatura from "./pages/construtora/ConstutoraAssinatura";
 import ConstutoraEquipes from "./pages/construtora/ConstutoraEquipes";
 import ConstutoraDetalhesCorretor from "./pages/construtora/ConstutoraDetalhesCorretor";
+import ConstutoraPesquisas from "./pages/construtora/ConstutoraPesquisas";
 
 // Empresa (Imobiliaria Admin) pages
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
