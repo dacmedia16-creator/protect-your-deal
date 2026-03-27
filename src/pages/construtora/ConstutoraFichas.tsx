@@ -3,6 +3,7 @@ import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
+import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 
 interface Ficha {
   id: string;
@@ -35,6 +37,9 @@ export default function ConstutoraFichas() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  // Hook de notificação para fichas confirmadas
+  useFichaNotification();
 
   const fetchFichas = useCallback(async () => {
     if (!construtoraId) return;
