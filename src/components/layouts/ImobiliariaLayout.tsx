@@ -35,10 +35,25 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { imobiliaria, assinatura } = useUserRole();
+  const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+
+  const { data: pendingCount } = useQuery({
+    queryKey: ['parcerias-pendentes-count', imobiliariaId],
+    queryFn: async () => {
+      if (!imobiliariaId) return 0;
+      const { count, error } = await supabase
+        .from('construtora_imobiliarias')
+        .select('id', { count: 'exact', head: true })
+        .eq('imobiliaria_id', imobiliariaId)
+        .eq('status', 'pendente');
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!imobiliariaId,
+  });
 
   const handleSignOut = async () => {
     if (isLoggingOut) return;
