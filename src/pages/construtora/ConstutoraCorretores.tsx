@@ -1,12 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Users, Loader2, Search, MoreHorizontal, UserPlus, Pencil,
-  UserCheck, UserX, KeyRound, Shield, FileText
+  UserCheck, UserX, KeyRound, Shield, FileText, Users2, Crown,
+  Trash2, ShieldCheck,
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -18,10 +20,20 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { PasswordInput } from '@/components/PasswordInput';
+import { EquipeBadge } from '@/components/EquipeBadge';
 import { toast } from 'sonner';
 import { invokeWithRetry } from '@/lib/invokeWithRetry';
 import { cn } from '@/lib/utils';
+
+interface Equipe {
+  id: string;
+  nome: string;
+  cor: string;
+}
 
 interface CorretorData {
   user_id: string;
@@ -32,15 +44,22 @@ interface CorretorData {
   cpf: string | null;
   ativo: boolean;
   fichas_count: number;
+  equipe: Equipe | null;
+  role: 'corretor' | 'construtora_admin';
+  isLider: boolean;
+  equipeQueLidera: string | null;
 }
 
 export default function ConstutoraCorretores() {
   useDocumentTitle('Corretores | Construtora');
   const { construtoraId } = useUserRole();
+  const navigate = useNavigate();
 
   const [corretores, setCorretores] = useState<CorretorData[]>([]);
+  const [equipes, setEquipes] = useState<Equipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [equipeFilter, setEquipeFilter] = useState<string>('all');
 
   // Create dialog
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -59,17 +78,39 @@ export default function ConstutoraCorretores() {
   const [resetTarget, setResetTarget] = useState<CorretorData | null>(null);
   const [newPassword, setNewPassword] = useState('');
 
+  // Move equipe dialog
+  const [moveEquipeDialogOpen, setMoveEquipeDialogOpen] = useState(false);
+  const [movingEquipe, setMovingEquipe] = useState(false);
+  const [moveTarget, setMoveTarget] = useState<CorretorData | null>(null);
+  const [selectedEquipeId, setSelectedEquipeId] = useState('');
+
   // Deactivate confirmation
   const [deactivateTarget, setDeactivateTarget] = useState<CorretorData | null>(null);
 
   async function fetchData() {
     if (!construtoraId) return;
     try {
+      // Fetch equipes
+      const { data: equipesData } = await supabase
+        .from('equipes')
+        .select('id, nome, cor, lider_id')
+        .eq('construtora_id', construtoraId)
+        .eq('ativa', true)
+        .order('nome');
+
+      setEquipes((equipesData || []).map((e: any) => ({ id: e.id, nome: e.nome, cor: e.cor })));
+
+      // Build leaders map
+      const lideresMap: Record<string, string> = {};
+      (equipesData || []).forEach((equipe: any) => {
+        if (equipe.lider_id) lideresMap[equipe.lider_id] = equipe.nome;
+      });
+
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role')
         .eq('construtora_id', construtoraId)
-        .eq('role', 'corretor');
+        .in('role', ['corretor', 'construtora_admin']);
 
       if (rolesError) throw rolesError;
       if (!roles?.length) { setCorretores([]); setLoading(false); return; }
@@ -83,6 +124,17 @@ export default function ConstutoraCorretores() {
 
       if (profilesError) throw profilesError;
 
+      // Fetch equipes_membros
+      const { data: membrosData } = await supabase
+        .from('equipes_membros')
+        .select('user_id, equipe:equipes!equipes_membros_equipe_id_fkey(id, nome, cor)')
+        .in('user_id', userIds);
+
+      const membrosMap: Record<string, Equipe | null> = {};
+      (membrosData || []).forEach((m: any) => {
+        if (m.equipe) membrosMap[m.user_id] = m.equipe;
+      });
+
       // Count fichas per corretor
       const enriched = await Promise.all(
         (profiles || []).map(async (p) => {
@@ -90,6 +142,8 @@ export default function ConstutoraCorretores() {
             .from('fichas_visita')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', p.user_id);
+
+          const roleData = roles.find(r => r.user_id === p.user_id);
 
           return {
             user_id: p.user_id,
@@ -100,6 +154,10 @@ export default function ConstutoraCorretores() {
             cpf: (p as any).cpf || null,
             ativo: p.ativo ?? true,
             fichas_count: count || 0,
+            equipe: membrosMap[p.user_id] || null,
+            role: (roleData?.role as 'corretor' | 'construtora_admin') || 'corretor',
+            isLider: !!lideresMap[p.user_id],
+            equipeQueLidera: lideresMap[p.user_id] || null,
           };
         })
       );
@@ -120,16 +178,26 @@ export default function ConstutoraCorretores() {
     return corretores
       .filter(c => {
         const s = search.toLowerCase();
-        return c.nome.toLowerCase().includes(s) || c.creci?.toLowerCase().includes(s);
+        const matchesSearch = c.nome.toLowerCase().includes(s) || c.creci?.toLowerCase().includes(s);
+        const matchesEquipe = equipeFilter === 'all' || 
+          (equipeFilter === 'none' && !c.equipe) ||
+          c.equipe?.id === equipeFilter;
+        return matchesSearch && matchesEquipe;
       })
-      .sort((a, b) => (b.fichas_count || 0) - (a.fichas_count || 0));
-  }, [corretores, search]);
+      .sort((a, b) => {
+        if (a.role === 'construtora_admin' && b.role !== 'construtora_admin') return -1;
+        if (a.role !== 'construtora_admin' && b.role === 'construtora_admin') return 1;
+        if (a.isLider && !b.isLider) return -1;
+        if (!a.isLider && b.isLider) return 1;
+        return (b.fichas_count || 0) - (a.fichas_count || 0);
+      });
+  }, [corretores, search, equipeFilter]);
 
   // KPIs
   const stats = useMemo(() => ({
     ativos: corretores.filter(c => c.ativo).length,
     inativos: corretores.filter(c => !c.ativo).length,
-    totalFichas: corretores.reduce((sum, c) => sum + c.fichas_count, 0),
+    semEquipe: corretores.filter(c => c.role === 'corretor' && !c.equipe).length,
   }), [corretores]);
 
   // --- Handlers ---
@@ -152,19 +220,13 @@ export default function ConstutoraCorretores() {
         let msg = 'Erro ao criar corretor';
         try {
           const ctx = (error as any)?.context;
-          if (ctx instanceof Response) {
-            const body = await ctx.json();
-            msg = body.error || msg;
-          } else if (typeof ctx === 'string') {
-            msg = ctx;
-          }
+          if (ctx instanceof Response) { const body = await ctx.json(); msg = body.error || msg; }
+          else if (typeof ctx === 'string') msg = ctx;
         } catch {}
-        console.error('Error creating corretor:', error);
         toast.error(msg);
         return;
       }
       if (data && !(data as any).success) {
-        console.error('Backend error creating corretor:', data);
         toast.error((data as any).error || 'Erro ao criar corretor');
         return;
       }
@@ -251,6 +313,58 @@ export default function ConstutoraCorretores() {
     } finally { setResetting(false); }
   };
 
+  const openMoveEquipeDialog = (c: CorretorData) => {
+    setMoveTarget(c);
+    setSelectedEquipeId(c.equipe?.id || '');
+    setMoveEquipeDialogOpen(true);
+  };
+
+  const handleMoveToEquipe = async () => {
+    if (!moveTarget) return;
+    setMovingEquipe(true);
+    try {
+      // Remove from current team
+      if (moveTarget.equipe) {
+        await supabase.from('equipes_membros').delete().eq('user_id', moveTarget.user_id);
+      }
+      // Add to new team
+      if (selectedEquipeId && selectedEquipeId !== 'none') {
+        const { error } = await supabase.from('equipes_membros').insert({
+          equipe_id: selectedEquipeId,
+          user_id: moveTarget.user_id,
+          cargo: 'corretor',
+        });
+        if (error) throw error;
+        toast.success('Corretor movido para a equipe!');
+      } else {
+        toast.success('Corretor removido da equipe!');
+      }
+      setMoveEquipeDialogOpen(false);
+      setMoveTarget(null);
+      setSelectedEquipeId('');
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao mover corretor');
+    } finally { setMovingEquipe(false); }
+  };
+
+  const handleRemoveCorretor = async (userId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este corretor permanentemente? Esta ação não pode ser desfeita.')) return;
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('empresa-delete-corretor', {
+        body: { user_id: userId },
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success('Corretor excluído com sucesso');
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao excluir corretor');
+    }
+  };
+
   if (loading) {
     return (
       <ConstutoraLayout>
@@ -270,11 +384,29 @@ export default function ConstutoraCorretores() {
             <h1 className="text-2xl font-display font-bold text-foreground">Corretores</h1>
             <p className="text-muted-foreground">{corretores.length} corretores</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 flex-1 lg:max-w-xl">
+          <div className="flex flex-col sm:flex-row gap-2 flex-1 lg:max-w-2xl">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar por nome ou CRECI..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
+            <Select value={equipeFilter} onValueChange={setEquipeFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <Users2 className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Equipe" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="none">Sem equipe</SelectItem>
+                {equipes.map((equipe) => (
+                  <SelectItem key={equipe.id} value={equipe.id}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: equipe.cor }} />
+                      {equipe.nome}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="whitespace-nowrap">
@@ -345,10 +477,10 @@ export default function ConstutoraCorretores() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Fichas</p>
-                <p className="text-2xl font-bold text-primary">{stats.totalFichas}</p>
+                <p className="text-sm text-muted-foreground">Sem Equipe</p>
+                <p className="text-2xl font-bold text-warning">{stats.semEquipe}</p>
               </div>
-              <FileText className="h-8 w-8 text-primary/40" />
+              <Users2 className="h-8 w-8 text-warning/40" />
             </div>
           </Card>
         </div>
@@ -367,7 +499,11 @@ export default function ConstutoraCorretores() {
                 {/* Mobile Layout */}
                 <div className="space-y-3 md:hidden">
                   {filtered.map(c => (
-                    <Card key={c.user_id} className={cn(!c.ativo && 'opacity-60')}>
+                    <Card
+                      key={c.user_id}
+                      className={cn("cursor-pointer hover:shadow-md active:bg-muted/30 transition-all", !c.ativo && 'opacity-60')}
+                      onClick={() => navigate(`/construtora/corretores/${c.user_id}`)}
+                    >
                       <CardContent className="p-3 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-medium">{c.nome}</span>
@@ -376,9 +512,22 @@ export default function ConstutoraCorretores() {
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge variant="outline" className="gap-1 text-xs h-5">
-                            <Shield className="h-3 w-3" /> Corretor
+                          <Badge
+                            variant={c.role === 'construtora_admin' ? 'default' : 'outline'}
+                            className="gap-1 text-xs h-5"
+                          >
+                            {c.role === 'construtora_admin' ? (
+                              <><ShieldCheck className="h-3 w-3" />Admin</>
+                            ) : (
+                              <><Shield className="h-3 w-3" />Corretor</>
+                            )}
                           </Badge>
+                          {c.isLider && (
+                            <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-5">
+                              <Crown className="h-3 w-3" />Líder
+                            </Badge>
+                          )}
+                          {c.equipe && <EquipeBadge nome={c.equipe.nome} cor={c.equipe.cor} />}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           {c.creci && <span>CRECI: {c.creci}</span>}
@@ -387,7 +536,7 @@ export default function ConstutoraCorretores() {
                             <span>{c.fichas_count} fichas</span>
                           </div>
                         </div>
-                        <div className="flex justify-end pt-2 border-t border-border/50">
+                        <div className="flex justify-end pt-2 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
@@ -396,11 +545,17 @@ export default function ConstutoraCorretores() {
                               <DropdownMenuItem onClick={() => openEditDialog(c)}>
                                 <Pencil className="h-4 w-4 mr-2" /> Editar
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openMoveEquipeDialog(c)}>
+                                <Users2 className="h-4 w-4 mr-2" /> {c.equipe ? 'Mudar Equipe' : 'Adicionar à Equipe'}
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleToggleAtivo(c)}>
                                 {c.ativo ? <><UserX className="h-4 w-4 mr-2" /> Desativar</> : <><UserCheck className="h-4 w-4 mr-2" /> Ativar</>}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openResetDialog(c)}>
                                 <KeyRound className="h-4 w-4 mr-2" /> Redefinir Senha
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleRemoveCorretor(c.user_id)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" /> Remover
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -416,8 +571,9 @@ export default function ConstutoraCorretores() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome</TableHead>
+                        <TableHead className="hidden sm:table-cell">Equipe</TableHead>
                         <TableHead>CRECI</TableHead>
-                        <TableHead>Telefone</TableHead>
+                        <TableHead className="hidden lg:table-cell">Telefone</TableHead>
                         <TableHead>Fichas</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="w-[50px]"></TableHead>
@@ -428,16 +584,29 @@ export default function ConstutoraCorretores() {
                         <TableRow key={c.user_id} className={cn(!c.ativo && 'opacity-60')}>
                           <TableCell>
                             <div className="space-y-1">
-                              <span className="font-medium">{c.nome}</span>
-                              <div className="flex items-center gap-1.5">
-                                <Badge variant="outline" className="gap-1 text-xs h-5">
-                                  <Shield className="h-3 w-3" /> Corretor
+                              <button
+                                onClick={() => navigate(`/construtora/corretores/${c.user_id}`)}
+                                className="font-medium hover:underline hover:text-primary cursor-pointer transition-colors block"
+                              >
+                                {c.nome}
+                              </button>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge variant={c.role === 'construtora_admin' ? 'default' : 'outline'} className="gap-1 text-xs h-5">
+                                  {c.role === 'construtora_admin' ? <><ShieldCheck className="h-3 w-3" />Admin</> : <><Shield className="h-3 w-3" />Corretor</>}
                                 </Badge>
+                                {c.isLider && (
+                                  <Badge variant="outline" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-5" title={`Líder da equipe ${c.equipeQueLidera}`}>
+                                    <Crown className="h-3 w-3" />Líder
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            {c.equipe ? <EquipeBadge nome={c.equipe.nome} cor={c.equipe.cor} /> : <span className="text-muted-foreground text-sm">-</span>}
+                          </TableCell>
                           <TableCell>{c.creci || '—'}</TableCell>
-                          <TableCell>{c.telefone || '—'}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{c.telefone || '—'}</TableCell>
                           <TableCell>{c.fichas_count}</TableCell>
                           <TableCell>
                             <Badge variant={c.ativo ? 'default' : 'secondary'}>
@@ -453,11 +622,17 @@ export default function ConstutoraCorretores() {
                                 <DropdownMenuItem onClick={() => openEditDialog(c)}>
                                   <Pencil className="h-4 w-4 mr-2" /> Editar
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openMoveEquipeDialog(c)}>
+                                  <Users2 className="h-4 w-4 mr-2" /> {c.equipe ? 'Mudar Equipe' : 'Adicionar à Equipe'}
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleToggleAtivo(c)}>
                                   {c.ativo ? <><UserX className="h-4 w-4 mr-2" /> Desativar</> : <><UserCheck className="h-4 w-4 mr-2" /> Ativar</>}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => openResetDialog(c)}>
                                   <KeyRound className="h-4 w-4 mr-2" /> Redefinir Senha
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleRemoveCorretor(c.user_id)} className="text-destructive focus:text-destructive">
+                                  <Trash2 className="h-4 w-4 mr-2" /> Remover
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -521,6 +696,47 @@ export default function ConstutoraCorretores() {
             <Button onClick={handleResetPassword} disabled={resetting} className="w-full">
               {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
               Redefinir Senha
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move to Equipe Dialog */}
+      <Dialog open={moveEquipeDialogOpen} onOpenChange={setMoveEquipeDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Mover para Equipe</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Selecione a equipe para <strong>{moveTarget?.nome}</strong>
+            </p>
+            {moveTarget?.equipe && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Equipe atual:</span>
+                <EquipeBadge nome={moveTarget.equipe.nome} cor={moveTarget.equipe.cor} />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Nova Equipe</Label>
+              <Select value={selectedEquipeId} onValueChange={setSelectedEquipeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem equipe</SelectItem>
+                  {equipes.map((equipe) => (
+                    <SelectItem key={equipe.id} value={equipe.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: equipe.cor }} />
+                        {equipe.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleMoveToEquipe} disabled={movingEquipe} className="w-full">
+              {movingEquipe ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Users2 className="h-4 w-4 mr-2" />}
+              Confirmar
             </Button>
           </div>
         </DialogContent>
