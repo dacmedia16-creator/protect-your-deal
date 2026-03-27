@@ -239,12 +239,12 @@ export default function NovaFicha() {
     }
   }, [user, authLoading, navigate]);
 
-  // Forçar modo comprador para corretores de construtora
+  // Forçar modo comprador para corretores de construtora ou modo construtora parceira
   useEffect(() => {
-    if (isConstrutora) {
+    if (isConstrutora || modoConstrutoraParceira) {
       setModoCriacao('comprador');
     }
-  }, [isConstrutora]);
+  }, [isConstrutora, modoConstrutoraParceira]);
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
