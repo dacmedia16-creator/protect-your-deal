@@ -29,6 +29,7 @@ import {
   Users,
   ChevronRight,
   Share2,
+  Building2,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
@@ -49,6 +50,21 @@ export default function Dashboard() {
   const isCorretorVinculado = role === 'corretor' && !!imobiliariaId;
   const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
+
+  // Query para buscar parcerias ativas com construtoras
+  const { data: parceriasConstrutoras = [] } = useQuery({
+    queryKey: ['parcerias-construtoras-dashboard', imobiliariaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('construtora_imobiliarias')
+        .select('id, construtora_id, construtoras!construtora_imobiliarias_construtora_id_fkey(nome)')
+        .eq('imobiliaria_id', imobiliariaId!)
+        .eq('status', 'ativa');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!imobiliariaId,
+  });
   const [showDebug, setShowDebug] = useState(false);
   const [showIndicaPulse, setShowIndicaPulse] = useState(true);
 
@@ -499,6 +515,23 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
 
+          {parceriasConstrutoras.length > 0 && (
+            <Card 
+              className="cursor-pointer hover:shadow-medium transition-shadow group border-orange-500/20"
+              onClick={() => navigate('/fichas/nova?modo=construtora')}
+            >
+              <CardHeader>
+                <div className="h-12 w-12 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Building2 className="h-6 w-6 text-orange-600" />
+                </div>
+                <CardTitle>Registro Construtoras</CardTitle>
+                <CardDescription>
+                  Crie fichas para empreendimentos de construtoras parceiras
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
             onClick={() => navigate('/fichas')}
@@ -564,6 +597,23 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {parceriasConstrutoras.length > 0 && (
+            <Card 
+              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
+              onClick={() => navigate('/fichas/nova?modo=construtora')}
+            >
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-orange-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm">Registro Construtoras</p>
+                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card 
             className="cursor-pointer active:bg-muted/50 transition-colors"
