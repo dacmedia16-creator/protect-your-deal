@@ -1,4 +1,4 @@
-import { Shield, FileCheck, Users, Home, Plus, ClipboardList, MessageSquare, Star, User } from 'lucide-react';
+import { Shield, FileCheck, Home, Plus, ClipboardList, MessageSquare, Star, User } from 'lucide-react';
 
 const MobileAppMockup = () => {
   return (

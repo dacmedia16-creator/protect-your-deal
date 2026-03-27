@@ -33,7 +33,7 @@ import TourAudioLanding from "./pages/TourAudioLanding";
 import Afiliados from "./pages/Afiliados";
 import ParaImobiliarias from "./pages/ParaImobiliarias";
 import SobreNos from "./pages/SobreNos";
-// import DemoAnimado from "./pages/DemoAnimado";
+
 
 // Auth pages
 import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
@@ -178,7 +178,7 @@ const App = () => (
 {/* Tour routes */}
                 <Route path="/tour" element={<TourAudioLanding />} />
                 <Route path="/tour-audio" element={<TourAudio />} />
-                {/* <Route path="/demo" element={<DemoAnimado />} /> */}
+                
                 <Route path="/convite-parceiro/:token" element={<ConviteParceiro />} />
                 <Route path="/convite-externo/:token" element={<ConviteParceiroExterno />} />
                 <Route path="/termos-de-uso" element={<TermosDeUso />} />
