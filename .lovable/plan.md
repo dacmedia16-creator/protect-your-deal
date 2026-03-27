@@ -1,28 +1,30 @@
 
 
-## Plano: Substituir campos de endereço/tipo por seleção de empreendimento para construtora
+## Plano: Corrigir acesso de corretores da construtora aos empreendimentos
 
 ### Problema
-Quando um corretor de construtora cria uma ficha, ele precisa digitar endereço e tipo do imóvel manualmente. Mas a construtora já tem empreendimentos cadastrados com esses dados.
+A tabela `empreendimentos` tem RLS que permite leitura apenas para `construtora_admin` (via `is_construtora_admin`). Corretores vinculados à construtora **não têm permissão de SELECT**, então a query no `NovaFicha.tsx` retorna vazio para eles.
 
 ### Solução
-Para corretores de construtora (`isConstrutora = true`), substituir os campos "Endereço completo" e "Tipo do imóvel" por um **Select de empreendimentos** disponíveis da construtora. Ao selecionar um empreendimento, os campos `imovel_endereco` e `imovel_tipo` são preenchidos automaticamente com os dados do empreendimento, e o `empreendimento_id` é salvo na ficha.
+Adicionar uma política RLS de SELECT na tabela `empreendimentos` para corretores da construtora:
 
-### Mudanças em `src/pages/NovaFicha.tsx`
+```sql
+CREATE POLICY "Corretor da construtora pode ver empreendimentos"
+  ON public.empreendimentos
+  FOR SELECT
+  TO authenticated
+  USING (
+    construtora_id IN (
+      SELECT ur.construtora_id FROM public.user_roles ur
+      WHERE ur.user_id = auth.uid() AND ur.construtora_id IS NOT NULL
+    )
+  );
+```
 
-1. **Query de empreendimentos**: Adicionar `useQuery` para buscar empreendimentos ativos da construtora (`empreendimentos` WHERE `construtora_id = construtoraId` AND `status = 'ativo'`)
+Isso permite que qualquer usuário vinculado à construtora (admin ou corretor) veja os empreendimentos da sua construtora.
 
-2. **Estado**: Adicionar `empreendimentoId` ao estado do formulário
+### Alteração
+- 1 migração SQL — nova RLS policy na tabela `empreendimentos`
 
-3. **UI condicional na seção "Dados do Imóvel"**:
-   - Se `isConstrutora`: mostrar um `Select` com os empreendimentos (nome + endereço)
-   - Ao selecionar, preencher `imovel_endereco` com o endereço do empreendimento e `imovel_tipo` com o tipo
-   - Se NÃO construtora: manter campos atuais (endereço + tipo)
-
-4. **Submit**: Incluir `empreendimento_id` no `insertData` quando for construtora
-
-5. **Validação**: Para construtora, validar que um empreendimento foi selecionado ao invés de exigir endereço/tipo digitados
-
-### Arquivos afetados
-- `src/pages/NovaFicha.tsx` — única alteração necessária
+Nenhuma alteração de código frontend necessária.
 
