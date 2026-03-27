@@ -85,13 +85,13 @@ export default function ConstutoraFichas() {
 
   useEffect(() => { fetchFichas(); }, [fetchFichas]);
 
+  // Nome da imobiliária filtrada
+  const imobiliariaFilterName = imobiliariaFilter
+    ? fichas.find(f => f.corretor_imobiliaria_id === imobiliariaFilter)?.corretor_imobiliaria
+    : null;
+
   const filteredFichas = fichas.filter(f => {
-    // Filtro por imobiliária (via query param)
-    if (imobiliariaFilter && f.corretor_imobiliaria !== undefined) {
-      // Comparar pelo nome da imobiliária — a RPC retorna o nome, não o ID
-      // Precisamos de uma abordagem diferente: vamos buscar fichas que tenham corretor_imobiliaria
-      // e comparar. Como não temos o ID direto, filtramos fichas que vieram dessa imobiliária.
-    }
+    if (imobiliariaFilter && f.corretor_imobiliaria_id !== imobiliariaFilter) return false;
 
     const matchSearch =
       !search ||
