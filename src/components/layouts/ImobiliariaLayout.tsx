@@ -57,6 +57,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
     { href: '/empresa/fichas', icon: FileText, label: 'Registros de Visita' },
     ...(surveyEnabled ? [{ href: '/empresa/pesquisas', icon: ClipboardCheck, label: 'Pesquisas' }] : []),
     { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
+    { href: '/empresa/parcerias-construtoras', icon: Handshake, label: 'Construtoras' },
     { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
     { href: '/empresa/configuracoes', icon: Settings, label: 'Configurações' },
   ];

@@ -389,8 +389,12 @@ const App = () => (
                     <EmpresaPesquisas />
                   </ProtectedRoute>
                 } />
+                <Route path="/empresa/parcerias-construtoras" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaParceriasConstrutoras />
+                  </ProtectedRoute>
+                } />
 
-                {/* Construtora routes */}
                 <Route path="/construtora" element={
                   <ProtectedRoute allowedRoles={['construtora_admin']}>
                     <ConstrutoraDashboard />
