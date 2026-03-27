@@ -206,10 +206,21 @@ export default function ConstutoraPesquisas() {
     media: { label: 'Média', color: 'hsl(var(--primary))' }
   };
 
+  // Adapt flat RPC data to the shape expected by useSurveyExport
+  const toExportShape = (s: Survey) => ({
+    ...s,
+    fichas_visita: s.imovel_endereco ? {
+      id: s.ficha_id,
+      imovel_endereco: s.imovel_endereco,
+      comprador_nome: s.comprador_nome,
+      protocolo: s.protocolo || '',
+    } : null,
+  });
+
   const handleExportExcel = () => {
     if (!surveys) return;
     try {
-      exportToExcel(surveys, construtora?.nome || 'Construtora');
+      exportToExcel(surveys.map(toExportShape), construtora?.nome || 'Construtora');
       toast.success('Relatório exportado com sucesso!');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
@@ -219,7 +230,7 @@ export default function ConstutoraPesquisas() {
   const handleExportPDF = () => {
     if (!surveys) return;
     try {
-      exportToPDF(surveys, construtora?.nome || 'Construtora');
+      exportToPDF(surveys.map(toExportShape), construtora?.nome || 'Construtora');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
     }
@@ -227,7 +238,7 @@ export default function ConstutoraPesquisas() {
 
   const handleExportSinglePDF = (survey: Survey) => {
     try {
-      exportSingleToPDF(survey, construtora?.nome || 'Construtora');
+      exportSingleToPDF(toExportShape(survey), construtora?.nome || 'Construtora');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao exportar');
     }
