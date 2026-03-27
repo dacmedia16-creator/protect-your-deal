@@ -421,6 +421,11 @@ const App = () => (
                     <ConstutoraFichas />
                   </ProtectedRoute>
                 } />
+                <Route path="/construtora/pesquisas" element={
+                  <ProtectedRoute allowedRoles={['construtora_admin']}>
+                    <ConstutoraPesquisas />
+                  </ProtectedRoute>
+                } />
                 <Route path="/construtora/relatorios" element={
                   <ProtectedRoute allowedRoles={['construtora_admin']}>
                     <ConstutoraRelatorios />
