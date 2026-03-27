@@ -137,6 +137,19 @@ export default function ConstutoraFichas() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar por protocolo, endereço, corretor..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
+            {imobiliariaFilter && (
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="secondary" className="gap-1.5">
+                  Imobiliária: {imobiliariaFilterName || 'Filtrada'}
+                  <button
+                    onClick={() => setSearchParams({})}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {filteredFichas.length === 0 ? (
