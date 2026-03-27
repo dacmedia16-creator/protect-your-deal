@@ -652,7 +652,7 @@ export default function NovaFicha() {
           )}
 
           {/* Modo de Criação - oculto para construtora */}
-          {!isConstrutora && (
+          {!isConstrutora && !modoConstrutoraParceira && (
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
