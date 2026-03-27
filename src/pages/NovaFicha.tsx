@@ -697,7 +697,8 @@ export default function NovaFicha() {
           </Card>
           )}
 
-          {/* Dados do Imóvel */}
+          {/* Dados do Imóvel - oculto para modo construtora parceira (já no card acima) */}
+          {!modoConstrutoraParceira && (
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -790,6 +791,7 @@ export default function NovaFicha() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Dados do Proprietário */}
           {showProprietario && (
