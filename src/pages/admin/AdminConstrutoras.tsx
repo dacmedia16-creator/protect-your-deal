@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, MoreHorizontal, HardHat, Eye, Power, CreditCard, Ban, Trash2 } from 'lucide-react';
+import { Search, MoreHorizontal, HardHat, Eye, Power, CreditCard, Ban, Trash2, ClipboardCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { AnimatedContent, AnimatedList, AnimatedItem } from '@/components/AnimatedContent';
@@ -43,6 +43,7 @@ interface Construtora {
   assinatura_id?: string | null;
   assinatura_plano_id?: string | null;
   assinatura_plano_nome?: string | null;
+  survey_enabled?: boolean;
 }
 
 interface Plano {
@@ -63,6 +64,7 @@ export default function AdminConstrutoras() {
   const [selectedPlanoId, setSelectedPlanoId] = useState('');
   const [isChangingPlano, setIsChangingPlano] = useState(false);
   const [isTogglingAssinatura, setIsTogglingAssinatura] = useState<string | null>(null);
+  const [isTogglingFeature, setIsTogglingFeature] = useState<string | null>(null);
 
   async function fetchPlanos() {
     const { data } = await supabase
@@ -118,6 +120,13 @@ export default function AdminConstrutoras() {
             assinatura_plano_nome = planoData?.nome || null;
           }
 
+          const { data: flagData } = await supabase
+            .from('construtora_feature_flags')
+            .select('enabled')
+            .eq('construtora_id', c.id)
+            .eq('feature_key', 'post_visit_survey')
+            .maybeSingle();
+
           return {
             ...c,
             empreendimentos_count: empreendimentos_count || 0,
@@ -127,6 +136,7 @@ export default function AdminConstrutoras() {
             assinatura_id: assData?.id || null,
             assinatura_plano_id: assData?.plano_id || null,
             assinatura_plano_nome,
+            survey_enabled: flagData?.enabled ?? false,
           };
         })
       );
@@ -183,6 +193,27 @@ export default function AdminConstrutoras() {
       toast.error(error.message || 'Erro ao alterar status da assinatura');
     } finally {
       setIsTogglingAssinatura(null);
+    }
+  }
+
+  async function toggleSurveyFeature(c: Construtora) {
+    setIsTogglingFeature(c.id);
+    try {
+      const newEnabled = !c.survey_enabled;
+      const { error } = await supabase
+        .from('construtora_feature_flags')
+        .upsert(
+          { construtora_id: c.id, feature_key: 'post_visit_survey', enabled: newEnabled, updated_at: new Date().toISOString() },
+          { onConflict: 'construtora_id,feature_key' }
+        );
+      if (error) throw error;
+      toast.success(newEnabled ? 'Pesquisa habilitada com sucesso!' : 'Pesquisa desabilitada com sucesso!');
+      fetchConstrutoras();
+    } catch (error: any) {
+      console.error('Error toggling survey feature:', error);
+      toast.error(error.message || 'Erro ao alterar pesquisa');
+    } finally {
+      setIsTogglingFeature(null);
     }
   }
 
@@ -275,6 +306,10 @@ export default function AdminConstrutoras() {
             {c.assinatura_status === 'ativa' ? 'Desativar Assinatura' : 'Ativar Assinatura'}
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={(e) => { stop(e); toggleSurveyFeature(c); }} disabled={isTogglingFeature === c.id}>
+          <ClipboardCheck className="h-4 w-4 mr-2" />
+          {c.survey_enabled ? 'Desabilitar Pesquisa' : 'Habilitar Pesquisa'}
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={(e) => { stop(e); deleteConstrutora(c.id); }}
           className="text-destructive focus:text-destructive"
