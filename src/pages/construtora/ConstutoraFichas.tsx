@@ -205,7 +205,18 @@ export default function ConstutoraFichas() {
                       {filteredFichas.map((ficha) => (
                         <TableRow key={ficha.id}>
                           <TableCell className="font-mono text-sm">{ficha.protocolo}</TableCell>
-                          <TableCell>{ficha.corretor_nome || <span className="text-muted-foreground italic text-sm">(Sem corretor)</span>}</TableCell>
+                          <TableCell>
+                            {ficha.corretor_nome ? (
+                              <div>
+                                <span>{abreviarNome(ficha.corretor_nome)}</span>
+                                {ficha.corretor_imobiliaria && (
+                                  <p className="text-xs text-muted-foreground">{ficha.corretor_imobiliaria}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic text-sm">(Sem corretor)</span>
+                            )}
+                          </TableCell>
                           <TableCell className="hidden lg:table-cell max-w-[200px] truncate">{ficha.imovel_endereco}</TableCell>
                           <TableCell className="hidden xl:table-cell">{ficha.proprietario_nome || '-'}</TableCell>
                           <TableCell className="hidden xl:table-cell">{ficha.comprador_nome || '-'}</TableCell>
