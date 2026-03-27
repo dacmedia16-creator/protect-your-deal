@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useFichaNotification } from '@/hooks/useFichaNotification';
+import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { STATUS_CONFIRMADO } from '@/lib/fichaStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +34,10 @@ export default function ConstrutoraDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Hooks de notificação em tempo real
+  useFichaNotification();
+  useAssinaturaNotification();
 
   useEffect(() => {
     async function fetchStats() {

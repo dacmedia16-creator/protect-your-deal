@@ -3,6 +3,7 @@ import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
+import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 
 interface Ficha {
   id: string;
@@ -35,6 +37,9 @@ export default function ConstutoraFichas() {
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  // Hook de notificação para fichas confirmadas
+  useFichaNotification();
 
   const fetchFichas = useCallback(async () => {
     if (!construtoraId) return;
@@ -162,6 +167,17 @@ export default function ConstutoraFichas() {
                             <span>{format(new Date(ficha.data_visita), "dd/MM/yy", { locale: ptBR })}</span>
                           </div>
                         </div>
+                        {/* Footer com delete */}
+                        <div 
+                          className="flex justify-end pt-2 border-t border-border/50" 
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DeleteFichaDialog 
+                            fichaId={ficha.id} 
+                            protocolo={ficha.protocolo}
+                            onDeleted={fetchFichas}
+                          />
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -179,7 +195,7 @@ export default function ConstutoraFichas() {
                         <TableHead className="hidden xl:table-cell">Comprador</TableHead>
                         <TableHead>Data</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="w-[60px] text-right">Ações</TableHead>
+                        <TableHead className="w-[100px] text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -204,9 +220,16 @@ export default function ConstutoraFichas() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Link to={`/fichas/${ficha.id}`}>
-                              <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
-                            </Link>
+                            <div className="flex items-center justify-end gap-1">
+                              <Link to={`/fichas/${ficha.id}`}>
+                                <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                              </Link>
+                              <DeleteFichaDialog 
+                                fichaId={ficha.id} 
+                                protocolo={ficha.protocolo}
+                                onDeleted={fetchFichas}
+                              />
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
