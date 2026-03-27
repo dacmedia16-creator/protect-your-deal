@@ -431,6 +431,41 @@ export type Database = {
           },
         ]
       }
+      construtora_feature_flags: {
+        Row: {
+          construtora_id: string
+          created_at: string | null
+          enabled: boolean
+          feature_key: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          construtora_id: string
+          created_at?: string | null
+          enabled?: boolean
+          feature_key: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          construtora_id?: string
+          created_at?: string | null
+          enabled?: boolean
+          feature_key?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "construtora_feature_flags_construtora_id_fkey"
+            columns: ["construtora_id"]
+            isOneToOne: false
+            referencedRelation: "construtoras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       construtora_imobiliarias: {
         Row: {
           construtora_id: string
