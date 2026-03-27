@@ -27,7 +27,16 @@ interface Ficha {
   data_visita: string;
   status: string;
   corretor_nome?: string;
+  corretor_imobiliaria?: string;
   convertido_venda?: boolean;
+}
+
+function abreviarNome(nome: string): string {
+  const partes = nome.trim().split(/\s+/);
+  if (partes.length <= 1) return nome;
+  const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e'];
+  const sobrenome = partes.slice(1).find(p => !preposicoes.includes(p.toLowerCase()));
+  return sobrenome ? `${partes[0]} ${sobrenome[0].toUpperCase()}.` : partes[0];
 }
 
 export default function ConstutoraFichas() {
