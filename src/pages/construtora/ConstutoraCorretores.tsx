@@ -356,7 +356,17 @@ export default function ConstutoraCorretores() {
         body: { user_id: userId },
         headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Extract real error message from edge function response
+        let msg = 'Erro ao excluir corretor';
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) msg = body.error;
+          }
+        } catch { /* fallback to generic */ }
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       toast.success('Corretor excluído com sucesso');
       fetchData();

@@ -84,8 +84,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch target profile name for logging (shared across branches)
+    let targetNome = targetUserId;
+    const { data: targetProfileData } = await supabaseAdmin
+      .from('profiles')
+      .select('nome, imobiliaria_id')
+      .eq('user_id', targetUserId)
+      .maybeSingle();
+    if (targetProfileData?.nome) {
+      targetNome = targetProfileData.nome;
+    }
+
     // Verify target user belongs to the same organization
     if (callerRole === 'construtora_admin') {
+      if (!adminConstrutoraId) {
+        return new Response(
+          JSON.stringify({ error: 'Construtora não identificada para o administrador' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       // For construtora_admin: check target's user_roles for same construtora_id
       const { data: targetRoleData, error: targetRoleError } = await supabaseAdmin
         .from('user_roles')
@@ -110,22 +127,21 @@ Deno.serve(async (req) => {
         );
       }
     } else {
+      if (!adminImobiliariaId) {
+        return new Response(
+          JSON.stringify({ error: 'Imobiliária não identificada para o administrador' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       // For imobiliaria_admin: check target's profile for same imobiliaria_id
-      const { data: targetProfile, error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .select('imobiliaria_id, nome')
-        .eq('user_id', targetUserId)
-        .maybeSingle();
-
-      if (profileError || !targetProfile) {
-        console.error('Target profile error:', profileError);
+      if (!targetProfileData) {
         return new Response(
           JSON.stringify({ error: 'Corretor não encontrado' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      if (targetProfile.imobiliaria_id !== adminImobiliariaId) {
+      if (targetProfileData.imobiliaria_id !== adminImobiliariaId) {
         return new Response(
           JSON.stringify({ error: 'Este corretor não pertence à sua imobiliária' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -148,7 +164,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log('Starting deletion process for corretor:', targetUserId, targetProfile.nome);
+    console.log('Starting deletion process for corretor:', targetUserId, targetNome);
 
     // ====== STEP 1: Clear phone number to free it for reuse ======
     console.log('[1/9] Clearing phone number from profile...');
