@@ -526,21 +526,24 @@ export default function NovaFicha() {
     );
   }
 
-  const showProprietario = !isConstrutora && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
+  const showProprietario = !isConstrutora && !modoConstrutoraParceira && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
   const showComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
+
+  // Lista de empreendimentos para o select (construtora nativa ou parceira)
+  const empreendimentosParaSelect = modoConstrutoraParceira ? empreendimentosParceira : empreendimentos;
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
       <MobileHeader
-        title="Novo Registro de Visita"
-        subtitle="Preencha os dados da visita"
+        title={modoConstrutoraParceira ? "Registro Construtora" : "Novo Registro de Visita"}
+        subtitle={modoConstrutoraParceira ? "Crie fichas para empreendimentos parceiros" : "Preencha os dados da visita"}
         backPath="/fichas"
       />
 
       <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Info card para construtora */}
+          {/* Info card para construtora nativa */}
           {isConstrutora && construtora && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6">
@@ -555,6 +558,95 @@ export default function NovaFicha() {
                     </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Seleção de construtora parceira */}
+          {modoConstrutoraParceira && (
+            <Card className="border-orange-500/30 bg-orange-500/5">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Construtora Parceira</CardTitle>
+                    <CardDescription>Selecione a construtora e o empreendimento</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="construtora-parceira">Construtora *</Label>
+                  <Select
+                    value={selectedConstrutoraId}
+                    onValueChange={(value) => {
+                      setSelectedConstrutoraId(value);
+                      setEmpreendimentoId('');
+                      setFormData(prev => ({ ...prev, imovel_endereco: '', imovel_tipo: '' }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a construtora" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parceriasConstrutoras.map((p) => {
+                        const constData = p.construtoras as any;
+                        return (
+                          <SelectItem key={p.construtora_id} value={p.construtora_id}>
+                            {constData?.nome || 'Construtora'}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedConstrutoraId && (
+                  <div className="space-y-2">
+                    <Label htmlFor="empreendimento-parceira">Empreendimento *</Label>
+                    <Select
+                      value={empreendimentoId}
+                      onValueChange={(value) => {
+                        setEmpreendimentoId(value);
+                        const emp = empreendimentosParceira.find(e => e.id === value);
+                        if (emp) {
+                          const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
+                          setFormData(prev => ({
+                            ...prev,
+                            imovel_endereco: endereco || emp.nome,
+                            imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={empreendimentosParceira.length === 0 ? "Nenhum empreendimento liberado" : "Selecione o empreendimento"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empreendimentosParceira.map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            <div className="flex flex-col">
+                              <span>{emp.nome}</span>
+                              {emp.endereco && (
+                                <span className="text-xs text-muted-foreground">{emp.endereco}{emp.cidade ? `, ${emp.cidade}` : ''}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {empreendimentoId && (
+                  <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
+                    <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
+                    <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
+                    <p className="mt-2 text-xs">O proprietário será preenchido automaticamente com os dados da construtora.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
