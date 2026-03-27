@@ -1,63 +1,28 @@
 
 
-## Plano: Mostrar corretor e imobiliária na listagem de pesquisas da construtora
+## Plano: Tornar cards de imobiliárias parceiras clicáveis
 
 ### Problema
-A página de Pesquisas da construtora não mostra qual corretor/imobiliária parceira enviou a pesquisa. A construtora não consegue distinguir de quem veio cada pesquisa.
+Os cards de imobiliárias parceiras na página `/construtora/imobiliarias` não são clicáveis. O usuário quer poder clicar no card para ver mais detalhes.
 
 ### Solução
 
-#### 1. Migração: criar RPC `get_surveys_construtora`
-Função SECURITY DEFINER que faz JOIN com `profiles` e `imobiliarias` (mesmo padrão de `get_fichas_construtora`):
+#### Alterar `ConstutoraImobiliarias.tsx`
 
-```sql
-CREATE OR REPLACE FUNCTION public.get_surveys_construtora(p_construtora_id uuid)
-RETURNS TABLE(
-  id uuid, token text, status text, sent_at timestamptz, responded_at timestamptz,
-  client_name text, client_phone text, ficha_id uuid,
-  imovel_endereco text, comprador_nome text, protocolo text,
-  corretor_nome text, corretor_imobiliaria_nome text,
-  created_at timestamptz
-)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public'
-AS $$
-BEGIN
-  IF NOT (is_construtora_admin(auth.uid(), p_construtora_id) OR is_super_admin(auth.uid())) THEN
-    RAISE EXCEPTION 'Sem permissão';
-  END IF;
-  RETURN QUERY
-  SELECT s.id, s.token, s.status, s.sent_at, s.responded_at,
-    s.client_name, s.client_phone, s.ficha_id,
-    fv.imovel_endereco, fv.comprador_nome, fv.protocolo,
-    p.nome, i.nome,
-    s.created_at
-  FROM surveys s
-  LEFT JOIN fichas_visita fv ON fv.id = s.ficha_id
-  LEFT JOIN profiles p ON p.user_id = s.corretor_id
-  LEFT JOIN user_roles ur ON ur.user_id = s.corretor_id AND ur.imobiliaria_id IS NOT NULL
-  LEFT JOIN imobiliarias i ON i.id = ur.imobiliaria_id
-  WHERE s.construtora_id = p_construtora_id
-  ORDER BY s.created_at DESC;
-END; $$;
-```
+Envolver o `<Card>` com um `<Link>` ou usar `onClick` + `navigate` para redirecionar ao clicar no card. Como não existe uma página de detalhes da imobiliária para construtora, a melhor abordagem é navegar para a página de fichas filtrada por imobiliária:
 
-#### 2. Atualizar `ConstutoraPesquisas.tsx`
-- Substituir a query Supabase direta por chamada à RPC `get_surveys_construtora`
-- Buscar `survey_responses` separadamente para as surveys retornadas
-- Adicionar `corretor_nome` e `corretor_imobiliaria_nome` à interface `Survey`
-- Usar `abreviarNome()` para exibir o nome do corretor abreviado
-- Adicionar coluna "Corretor" na tabela desktop e info no card mobile
-- Mostrar nome abreviado + imobiliária em texto muted abaixo
+- Envolver o card principal com `onClick={() => navigate('/construtora/fichas?imobiliaria=' + p.imobiliaria_id)}` e adicionar `cursor-pointer hover:border-primary transition-colors`
+- Os botões internos (WhatsApp, Empreendimentos, dropdown) devem usar `e.stopPropagation()` para não disparar a navegação do card
+- Importar `useNavigate` de `react-router-dom`
 
-Exemplo visual na coluna Corretor:
-```text
-Denis S.
-Imob. ABC
-```
+#### Atualizar `ConstutoraFichas.tsx`
+
+- Ler o query param `imobiliaria` da URL
+- Se presente, filtrar as fichas exibidas apenas para aquela imobiliária
+- Mostrar um indicador visual (badge ou texto) de que está filtrando por imobiliária, com botão para limpar o filtro
 
 ### Detalhes técnicos
-- RPC SECURITY DEFINER contorna a limitação de RLS que impede construtora_admin de ler profiles/imobiliarias
-- A query de `survey_responses` será feita em paralelo usando os IDs retornados pela RPC (RLS já permite via política existente)
-- O filtro de status será aplicado no frontend (a RPC retorna todas)
-- Função `abreviarNome`: primeiro nome + inicial do segundo + "."
+- `useSearchParams` para ler/limpar o filtro na URL
+- O filtro será aplicado no frontend sobre os dados já carregados (a RPC `get_fichas_construtora` já retorna `corretor_imobiliaria`)
+- O `stopPropagation` nos botões impede conflito de cliques
 
