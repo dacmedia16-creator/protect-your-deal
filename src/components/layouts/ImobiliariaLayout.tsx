@@ -20,9 +20,9 @@ import {
   X,
   UserCircle,
   ClipboardCheck,
-  Loader2
+  Loader2,
+  Handshake,
 } from 'lucide-react';
-import { Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
