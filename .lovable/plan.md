@@ -1,30 +1,13 @@
 
 
-## Plano: Corrigir acesso de corretores da construtora aos empreendimentos
+## Plano: Permitir construtora_admin acessar detalhes da ficha
 
 ### Problema
-A tabela `empreendimentos` tem RLS que permite leitura apenas para `construtora_admin` (via `is_construtora_admin`). Corretores vinculados à construtora **não têm permissão de SELECT**, então a query no `NovaFicha.tsx` retorna vazio para eles.
+A rota `/fichas/:id` no `App.tsx` tem `allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin']}` — falta `construtora_admin`. Por isso, ao clicar no ícone do olho na lista de fichas da construtora, o usuário é bloqueado.
 
 ### Solução
-Adicionar uma política RLS de SELECT na tabela `empreendimentos` para corretores da construtora:
+Adicionar `'construtora_admin'` ao array `allowedRoles` da rota `/fichas/:id` em `src/App.tsx`.
 
-```sql
-CREATE POLICY "Corretor da construtora pode ver empreendimentos"
-  ON public.empreendimentos
-  FOR SELECT
-  TO authenticated
-  USING (
-    construtora_id IN (
-      SELECT ur.construtora_id FROM public.user_roles ur
-      WHERE ur.user_id = auth.uid() AND ur.construtora_id IS NOT NULL
-    )
-  );
-```
-
-Isso permite que qualquer usuário vinculado à construtora (admin ou corretor) veja os empreendimentos da sua construtora.
-
-### Alteração
-- 1 migração SQL — nova RLS policy na tabela `empreendimentos`
-
-Nenhuma alteração de código frontend necessária.
+### Arquivo afetado
+- `src/App.tsx` — linha 471, adicionar `'construtora_admin'` ao array de roles
 
