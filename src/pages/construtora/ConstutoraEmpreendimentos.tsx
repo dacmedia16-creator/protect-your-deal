@@ -8,10 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Building, Loader2, MapPin } from 'lucide-react';
+import { Plus, Building, Loader2, MapPin, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ConstutoraEmpreendimentos() {
@@ -19,6 +21,10 @@ export default function ConstutoraEmpreendimentos() {
   const { construtoraId } = useUserRole();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingEmp, setEditingEmp] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteName, setDeleteName] = useState('');
   const [nome, setNome] = useState('');
   const [endereco, setEndereco] = useState('');
   const [cidade, setCidade] = useState('');
@@ -26,6 +32,28 @@ export default function ConstutoraEmpreendimentos() {
   const [tipo, setTipo] = useState('residencial');
   const [totalUnidades, setTotalUnidades] = useState('');
   const [descricao, setDescricao] = useState('');
+
+  const resetForm = () => {
+    setNome(''); setEndereco(''); setCidade(''); setEstado(''); setTipo('residencial'); setTotalUnidades(''); setDescricao('');
+    setEditingEmp(null);
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
+
+  const openEditDialog = (emp: any) => {
+    setEditingEmp(emp);
+    setNome(emp.nome || '');
+    setEndereco(emp.endereco || '');
+    setCidade(emp.cidade || '');
+    setEstado(emp.estado || '');
+    setTipo(emp.tipo || 'residencial');
+    setTotalUnidades(emp.total_unidades ? String(emp.total_unidades) : '');
+    setDescricao(emp.descricao || '');
+    setDialogOpen(true);
+  };
 
   const { data: empreendimentos, isLoading } = useQuery({
     queryKey: ['empreendimentos', construtoraId],
@@ -46,13 +74,8 @@ export default function ConstutoraEmpreendimentos() {
     mutationFn: async () => {
       const { error } = await supabase.from('empreendimentos').insert({
         construtora_id: construtoraId!,
-        nome,
-        endereco: endereco || null,
-        cidade: cidade || null,
-        estado: estado || null,
-        tipo,
-        total_unidades: totalUnidades ? parseInt(totalUnidades) : null,
-        descricao: descricao || null,
+        nome, endereco: endereco || null, cidade: cidade || null, estado: estado || null,
+        tipo, total_unidades: totalUnidades ? parseInt(totalUnidades) : null, descricao: descricao || null,
       });
       if (error) throw error;
     },
@@ -60,10 +83,51 @@ export default function ConstutoraEmpreendimentos() {
       toast.success('Empreendimento criado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['empreendimentos'] });
       setDialogOpen(false);
-      setNome(''); setEndereco(''); setCidade(''); setEstado(''); setTipo('residencial'); setTotalUnidades(''); setDescricao('');
+      resetForm();
     },
     onError: (err: any) => toast.error(err.message || 'Erro ao criar empreendimento'),
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('empreendimentos').update({
+        nome, endereco: endereco || null, cidade: cidade || null, estado: estado || null,
+        tipo, total_unidades: totalUnidades ? parseInt(totalUnidades) : null, descricao: descricao || null,
+      }).eq('id', editingEmp.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Empreendimento atualizado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['empreendimentos'] });
+      setDialogOpen(false);
+      resetForm();
+    },
+    onError: (err: any) => toast.error(err.message || 'Erro ao atualizar empreendimento'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('empreendimentos').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Empreendimento excluído com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['empreendimentos'] });
+      setDeleteDialogOpen(false);
+      setDeleteId(null);
+    },
+    onError: (err: any) => toast.error(err.message || 'Erro ao excluir empreendimento'),
+  });
+
+  const handleSubmit = () => {
+    if (editingEmp) {
+      updateMutation.mutate();
+    } else {
+      createMutation.mutate();
+    }
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   const statusColors: Record<string, string> = {
     ativo: 'bg-green-500/10 text-green-600 border-green-500/20',
@@ -80,13 +144,13 @@ export default function ConstutoraEmpreendimentos() {
             <h1 className="text-3xl font-heading font-bold">Empreendimentos</h1>
             <p className="text-muted-foreground">Gerencie os empreendimentos da construtora</p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" /> Novo Empreendimento</Button>
+              <Button onClick={openCreateDialog}><Plus className="h-4 w-4 mr-2" /> Novo Empreendimento</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Novo Empreendimento</DialogTitle>
+                <DialogTitle>{editingEmp ? 'Editar Empreendimento' : 'Novo Empreendimento'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div><Label>Nome *</Label><Input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome do empreendimento" /></div>
@@ -110,9 +174,9 @@ export default function ConstutoraEmpreendimentos() {
                   <div><Label>Total Unidades</Label><Input type="number" value={totalUnidades} onChange={e => setTotalUnidades(e.target.value)} /></div>
                 </div>
                 <div><Label>Descrição</Label><Input value={descricao} onChange={e => setDescricao(e.target.value)} placeholder="Descrição do empreendimento" /></div>
-                <Button onClick={() => createMutation.mutate()} disabled={!nome || createMutation.isPending} className="w-full">
-                  {createMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                  Criar Empreendimento
+                <Button onClick={handleSubmit} disabled={!nome || isPending} className="w-full">
+                  {isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  {editingEmp ? 'Salvar Alterações' : 'Criar Empreendimento'}
                 </Button>
               </div>
             </DialogContent>
@@ -133,9 +197,29 @@ export default function ConstutoraEmpreendimentos() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{emp.nome}</CardTitle>
-                    <Badge variant="outline" className={statusColors[emp.status] || ''}>
-                      {emp.status === 'ativo' ? 'Ativo' : emp.status === 'em_obras' ? 'Em Obras' : emp.status === 'entregue' ? 'Entregue' : 'Cancelado'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={statusColors[emp.status] || ''}>
+                        {emp.status === 'ativo' ? 'Ativo' : emp.status === 'em_obras' ? 'Em Obras' : emp.status === 'entregue' ? 'Entregue' : 'Cancelado'}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(emp)}>
+                            <Pencil className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => { setDeleteId(emp.id); setDeleteName(emp.nome); setDeleteDialogOpen(true); }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -155,6 +239,28 @@ export default function ConstutoraEmpreendimentos() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir empreendimento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o empreendimento <strong>{deleteName}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ConstutoraLayout>
   );
 }
