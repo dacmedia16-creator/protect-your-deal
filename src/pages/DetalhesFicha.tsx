@@ -1205,7 +1205,9 @@ export default function DetalhesFicha() {
                   {ficha.proprietario_confirmado_em ? (
                     <div className="flex items-center gap-2 text-success">
                       <CheckCircle className="h-5 w-5" />
-                      <span className="text-sm font-medium">Proprietário confirmou</span>
+                      <span className="text-sm font-medium">
+                        {ficha.construtora_id ? 'Construtora (confirmado automaticamente)' : 'Proprietário confirmou'}
+                      </span>
                     </div>
                   ) : proprietarioFaltando ? (
                     <div className="flex items-center gap-2 text-amber-500">
