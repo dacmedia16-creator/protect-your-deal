@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
@@ -151,15 +151,55 @@ interface ImovelSelecionado {
 
 export default function NovaFicha() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { imobiliariaId, construtoraId, construtora, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConstrutora = !!construtoraId;
+  const modoConstrutoraParceira = !isConstrutora && !!imobiliariaId && searchParams.get('modo') === 'construtora';
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   const [empreendimentoId, setEmpreendimentoId] = useState<string>('');
+  const [selectedConstrutoraId, setSelectedConstrutoraId] = useState<string>('');
 
-  // Buscar empreendimentos da construtora
+  // Buscar construtoras parceiras (para corretores de imobiliária)
+  const { data: parceriasConstrutoras = [] } = useQuery({
+    queryKey: ['parcerias-construtoras', imobiliariaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('construtora_imobiliarias')
+        .select('construtora_id, construtoras!construtora_imobiliarias_construtora_id_fkey(id, nome, cnpj, telefone)')
+        .eq('imobiliaria_id', imobiliariaId!)
+        .eq('status', 'ativa');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: modoConstrutoraParceira,
+  });
+
+  // Buscar empreendimentos liberados para a imobiliária da construtora parceira selecionada
+  const { data: empreendimentosParceira = [] } = useQuery({
+    queryKey: ['empreendimentos-parceira', selectedConstrutoraId, imobiliariaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('empreendimentos')
+        .select('id, nome, endereco, cidade, estado, tipo')
+        .eq('construtora_id', selectedConstrutoraId)
+        .eq('status', 'ativo')
+        .order('nome');
+      if (error) throw error;
+      // Filter to only those linked to this imobiliaria via empreendimento_imobiliarias
+      const { data: linkedIds } = await supabase
+        .from('empreendimento_imobiliarias')
+        .select('empreendimento_id')
+        .eq('imobiliaria_id', imobiliariaId!);
+      const allowedIds = new Set((linkedIds || []).map(l => l.empreendimento_id));
+      return (data || []).filter(e => allowedIds.has(e.id));
+    },
+    enabled: modoConstrutoraParceira && !!selectedConstrutoraId,
+  });
+
+  // Buscar empreendimentos da construtora nativa
   const { data: empreendimentos = [] } = useQuery({
     queryKey: ['empreendimentos-construtora', construtoraId],
     queryFn: async () => {
