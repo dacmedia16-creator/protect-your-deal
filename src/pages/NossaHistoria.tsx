@@ -136,6 +136,23 @@ export default function NossaHistoria() {
       />
       <WhatsAppFAB />
 
+      {/* Header */}
+      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Button variant="ghost" asChild>
+            <Link to="/" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2">
+            <LogoIcon size={24} />
+            <span className="font-heading text-lg font-bold">VisitaProva</span>
+          </div>
+          <div className="w-20" />
+        </div>
+      </header>
+
       {/* ═══════════════════ 1. HERO ═══════════════════ */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         {/* Background accent */}
