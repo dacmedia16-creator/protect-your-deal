@@ -357,15 +357,20 @@ export default function NovaFicha() {
       
       // Para construtora, proprietário é a própria construtora (pré-preenchido e pré-confirmado)
       const isConstrutoraBroker = !!dbConstrutoraId;
+      // Modo parceira: corretor de imobiliária criando ficha via construtora parceira
+      const isParceiraMode = modoConstrutoraParceira && !!selectedConstrutoraId;
+      const selectedParceira = isParceiraMode 
+        ? parceriasConstrutoras.find(p => p.construtora_id === selectedConstrutoraId)
+        : null;
       
       // Preparar dados conforme o modo
-      const incluiProprietario = !isConstrutoraBroker && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
+      const incluiProprietario = !isConstrutoraBroker && !isParceiraMode && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
       const incluiComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
 
       const insertData: any = {
         user_id: user.id,
         imobiliaria_id: dbImobiliariaId || null,
-        construtora_id: dbConstrutoraId || null,
+        construtora_id: isParceiraMode ? selectedConstrutoraId : (dbConstrutoraId || null),
         protocolo,
         imovel_endereco: formData.imovel_endereco,
         imovel_tipo: formData.imovel_tipo,
@@ -379,10 +384,19 @@ export default function NovaFicha() {
       };
 
       if (isConstrutoraBroker && construtora) {
-        // Proprietário = construtora (auto-preenchido e auto-confirmado)
+        // Proprietário = construtora nativa (auto-preenchido e auto-confirmado)
         insertData.proprietario_nome = construtora.nome;
         insertData.proprietario_cpf = construtora.cnpj || null;
         insertData.proprietario_telefone = construtora.telefone?.replace(/\D/g, '') || null;
+        insertData.proprietario_autopreenchimento = false;
+        insertData.proprietario_confirmado_em = new Date().toISOString();
+        insertData.status = 'aguardando_comprador';
+      } else if (isParceiraMode && selectedParceira) {
+        // Proprietário = construtora parceira selecionada
+        const constData = selectedParceira.construtoras as any;
+        insertData.proprietario_nome = constData?.nome || 'Construtora';
+        insertData.proprietario_cpf = constData?.cnpj || null;
+        insertData.proprietario_telefone = constData?.telefone?.replace(/\D/g, '') || null;
         insertData.proprietario_autopreenchimento = false;
         insertData.proprietario_confirmado_em = new Date().toISOString();
         insertData.status = 'aguardando_comprador';
