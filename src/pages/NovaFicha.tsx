@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { OTP_URL } from '@/lib/appConfig';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -156,6 +157,23 @@ export default function NovaFicha() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConstrutora = !!construtoraId;
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
+  const [empreendimentoId, setEmpreendimentoId] = useState<string>('');
+
+  // Buscar empreendimentos da construtora
+  const { data: empreendimentos = [] } = useQuery({
+    queryKey: ['empreendimentos-construtora', construtoraId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('empreendimentos')
+        .select('id, nome, endereco, cidade, estado, tipo')
+        .eq('construtora_id', construtoraId!)
+        .eq('status', 'ativo')
+        .order('nome');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isConstrutora && !!construtoraId,
+  });
   
   
   const [enviarWhatsappAutomatico, setEnviarWhatsappAutomatico] = useState(true);
@@ -223,8 +241,23 @@ export default function NovaFicha() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const fichaSchema = createFichaSchema(modoCriacao);
-    const result = fichaSchema.safeParse(formData);
+    // Validação para construtora: exigir empreendimento
+    if (isConstrutora && !empreendimentoId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Selecione um empreendimento',
+      });
+      return;
+    }
+
+    const fichaSchema = createFichaSchema(isConstrutora ? 'comprador' : modoCriacao);
+    const result = fichaSchema.safeParse({
+      ...formData,
+      // Para construtora, preencher campos obrigatórios que vêm do empreendimento
+      imovel_endereco: formData.imovel_endereco || 'auto',
+      imovel_tipo: formData.imovel_tipo || 'auto',
+    });
     if (!result.success) {
       toast({
         variant: 'destructive',
@@ -287,6 +320,7 @@ export default function NovaFicha() {
         protocolo,
         imovel_endereco: formData.imovel_endereco,
         imovel_tipo: formData.imovel_tipo,
+        empreendimento_id: empreendimentoId || null,
         comprador_autopreenchimento: incluiComprador ? formData.comprador_autopreenchimento : false,
         comprador_nome: incluiComprador && !formData.comprador_autopreenchimento ? formData.comprador_nome : null,
         comprador_cpf: incluiComprador ? formData.comprador_cpf || null : null,
@@ -517,39 +551,88 @@ export default function NovaFicha() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Dados do Imóvel</CardTitle>
-                  <CardDescription>Informações sobre o imóvel visitado</CardDescription>
+                  <CardDescription>
+                    {isConstrutora ? 'Selecione o empreendimento' : 'Informações sobre o imóvel visitado'}
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="imovel_endereco">Endereço completo *</Label>
-                <Input
-                  id="imovel_endereco"
-                  placeholder="Rua, número, bairro, cidade"
-                  value={formData.imovel_endereco}
-                  onChange={(e) => setFormData({ ...formData, imovel_endereco: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="imovel_tipo">Tipo do imóvel *</Label>
-                <Select
-                  value={formData.imovel_tipo}
-                  onValueChange={(value) => setFormData({ ...formData, imovel_tipo: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposImovel.map((tipo) => (
-                      <SelectItem key={tipo} value={tipo}>
-                        {tipo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {isConstrutora ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="empreendimento">Empreendimento *</Label>
+                    <Select
+                      value={empreendimentoId}
+                      onValueChange={(value) => {
+                        setEmpreendimentoId(value);
+                        const emp = empreendimentos.find(e => e.id === value);
+                        if (emp) {
+                          const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
+                          setFormData(prev => ({
+                            ...prev,
+                            imovel_endereco: endereco || emp.nome,
+                            imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o empreendimento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empreendimentos.map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            <div className="flex flex-col">
+                              <span>{emp.nome}</span>
+                              {emp.endereco && (
+                                <span className="text-xs text-muted-foreground">{emp.endereco}{emp.cidade ? `, ${emp.cidade}` : ''}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {empreendimentoId && (
+                    <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
+                      <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
+                      <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="imovel_endereco">Endereço completo *</Label>
+                    <Input
+                      id="imovel_endereco"
+                      placeholder="Rua, número, bairro, cidade"
+                      value={formData.imovel_endereco}
+                      onChange={(e) => setFormData({ ...formData, imovel_endereco: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="imovel_tipo">Tipo do imóvel *</Label>
+                    <Select
+                      value={formData.imovel_tipo}
+                      onValueChange={(value) => setFormData({ ...formData, imovel_tipo: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tiposImovel.map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>
+                            {tipo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
