@@ -157,7 +157,12 @@ export default function ConstutoraFichas() {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <div className="flex items-center gap-1">
                             <User className="h-3.5 w-3.5" />
-                            <span>{ficha.corretor_nome || <span className="italic">(Sem corretor)</span>}</span>
+                            <div className="flex flex-col">
+                              <span>{ficha.corretor_nome ? abreviarNome(ficha.corretor_nome) : <span className="italic">(Sem corretor)</span>}</span>
+                              {ficha.corretor_imobiliaria && (
+                                <span className="text-[10px] text-muted-foreground/70">{ficha.corretor_imobiliaria}</span>
+                              )}
+                            </div>
                           </div>
                           <span>•</span>
                           <div className="flex items-center gap-1">
