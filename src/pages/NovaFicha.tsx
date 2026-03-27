@@ -241,8 +241,23 @@ export default function NovaFicha() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const fichaSchema = createFichaSchema(modoCriacao);
-    const result = fichaSchema.safeParse(formData);
+    // Validação para construtora: exigir empreendimento
+    if (isConstrutora && !empreendimentoId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Selecione um empreendimento',
+      });
+      return;
+    }
+
+    const fichaSchema = createFichaSchema(isConstrutora ? 'comprador' : modoCriacao);
+    const result = fichaSchema.safeParse({
+      ...formData,
+      // Para construtora, preencher campos obrigatórios que vêm do empreendimento
+      imovel_endereco: formData.imovel_endereco || 'auto',
+      imovel_tipo: formData.imovel_tipo || 'auto',
+    });
     if (!result.success) {
       toast({
         variant: 'destructive',
