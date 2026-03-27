@@ -1,12 +1,12 @@
-import { forwardRef } from 'react';
+import React from 'react';
 
 interface LogoFullProps {
   className?: string;
   showTagline?: boolean;
 }
 
-export const LogoFull = forwardRef<HTMLImageElement, LogoFullProps>(
-  ({ className }, ref) => {
+const LogoFull = React.forwardRef<HTMLImageElement, LogoFullProps>(
+  function LogoFull({ className }, ref) {
     return (
       <img 
         ref={ref}
@@ -19,3 +19,5 @@ export const LogoFull = forwardRef<HTMLImageElement, LogoFullProps>(
 );
 
 LogoFull.displayName = 'LogoFull';
+
+export { LogoFull };

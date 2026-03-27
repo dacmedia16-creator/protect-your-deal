@@ -1,12 +1,12 @@
-import { forwardRef } from 'react';
+import React from 'react';
 
 interface LogoIconProps {
   className?: string;
   size?: number;
 }
 
-export const LogoIcon = forwardRef<HTMLImageElement, LogoIconProps>(
-  ({ className, size = 56 }, ref) => {
+const LogoIcon = React.forwardRef<HTMLImageElement, LogoIconProps>(
+  function LogoIcon({ className, size = 56 }, ref) {
     return (
       <img 
         ref={ref}
@@ -21,3 +21,5 @@ export const LogoIcon = forwardRef<HTMLImageElement, LogoIconProps>(
 );
 
 LogoIcon.displayName = 'LogoIcon';
+
+export { LogoIcon };
