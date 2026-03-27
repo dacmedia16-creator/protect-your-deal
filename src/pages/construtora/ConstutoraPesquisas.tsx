@@ -37,7 +37,6 @@ import {
   Loader2,
   CheckCircle,
   Clock,
-  ExternalLink,
   Star,
   ArrowLeft,
   Download,
@@ -46,6 +45,7 @@ import {
   BarChart3,
   MapPin,
   Calendar,
+  User,
 } from 'lucide-react';
 import { useSurveyExport } from '@/hooks/useSurveyExport';
 import { toast } from 'sonner';
@@ -77,16 +77,23 @@ interface Survey {
   client_name: string | null;
   client_phone: string | null;
   ficha_id: string;
-  fichas_visita: {
-    id: string;
-    imovel_endereco: string;
-    comprador_nome: string | null;
-    protocolo: string;
-  } | null;
+  imovel_endereco: string | null;
+  comprador_nome: string | null;
+  protocolo: string | null;
+  corretor_nome: string | null;
+  corretor_imobiliaria_nome: string | null;
+  created_at: string;
   survey_responses: SurveyResponse[];
 }
 
 type FilterStatus = 'all' | 'pending' | 'responded';
+
+function abreviarNome(nome: string | null): string {
+  if (!nome) return '';
+  const parts = nome.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[1][0]}.`;
+}
 
 export default function ConstutoraPesquisas() {
   const { construtora } = useUserRole();
@@ -97,61 +104,46 @@ export default function ConstutoraPesquisas() {
   const navigate = useNavigate();
 
   const { data: surveys, isLoading, refetch } = useQuery({
-    queryKey: ['construtora-surveys', construtoraId, filter],
+    queryKey: ['construtora-surveys', construtoraId],
     queryFn: async () => {
-      let query = supabase
-        .from('surveys')
-        .select(`
-          id,
-          token,
-          status,
-          sent_at,
-          responded_at,
-          client_name,
-          client_phone,
-          ficha_id,
-          fichas_visita (
-            id,
-            imovel_endereco,
-            comprador_nome,
-            protocolo
-          ),
-          survey_responses (
-            id,
-            rating_location,
-            rating_size,
-            rating_layout,
-            rating_finishes,
-            rating_conservation,
-            rating_common_areas,
-            rating_price,
-            liked_most,
-            liked_least,
-            would_buy,
-            created_at
-          )
-        `)
-        .eq('construtora_id', construtoraId!)
-        .order('created_at', { ascending: false });
+      // 1. Fetch surveys via RPC (includes corretor + imobiliaria names)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_surveys_construtora', { p_construtora_id: construtoraId! });
 
-      if (filter === 'pending') {
-        query = query.in('status', ['pending', 'sent']);
-      } else if (filter === 'responded') {
-        query = query.eq('status', 'responded');
-      }
+      if (rpcError) throw rpcError;
+      if (!rpcData || rpcData.length === 0) return [] as Survey[];
 
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      return (data || []).map(survey => ({
-        ...survey,
-        survey_responses: Array.isArray(survey.survey_responses) 
-          ? survey.survey_responses 
-          : survey.survey_responses ? [survey.survey_responses] : []
+      // 2. Fetch survey_responses for all survey IDs
+      const surveyIds = rpcData.map((s: any) => s.id);
+      const { data: responses, error: respError } = await supabase
+        .from('survey_responses')
+        .select('*')
+        .in('survey_id', surveyIds);
+
+      if (respError) throw respError;
+
+      // 3. Map responses to surveys
+      const responsesMap = new Map<string, SurveyResponse[]>();
+      (responses || []).forEach((r: any) => {
+        const list = responsesMap.get(r.survey_id) || [];
+        list.push(r);
+        responsesMap.set(r.survey_id, list);
+      });
+
+      return rpcData.map((s: any) => ({
+        ...s,
+        survey_responses: responsesMap.get(s.id) || [],
       })) as Survey[];
     },
     enabled: !!construtoraId,
   });
+
+  const filteredSurveys = useMemo(() => {
+    if (!surveys) return [];
+    if (filter === 'pending') return surveys.filter(s => s.status === 'pending' || s.status === 'sent');
+    if (filter === 'responded') return surveys.filter(s => s.status === 'responded');
+    return surveys;
+  }, [surveys, filter]);
 
   const ratingLabels: Record<string, string> = {
     rating_location: 'Localização',
@@ -194,9 +186,7 @@ export default function ConstutoraPesquisas() {
   const averagesData = useMemo(() => {
     const respondedSurveysList = surveys?.filter(s => s.status === 'responded') || [];
     const responses = respondedSurveysList.flatMap(s => s.survey_responses);
-    
     if (responses.length === 0) return null;
-    
     const criteria = [
       { key: 'rating_location' as const, label: 'Localização' },
       { key: 'rating_size' as const, label: 'Tamanho' },
@@ -206,7 +196,6 @@ export default function ConstutoraPesquisas() {
       { key: 'rating_common_areas' as const, label: 'Áreas Comuns' },
       { key: 'rating_price' as const, label: 'Preço' },
     ];
-    
     return criteria.map(c => ({
       criterio: c.label,
       media: responses.reduce((sum, r) => sum + (r[c.key] || 0), 0) / responses.length,
@@ -334,29 +323,13 @@ export default function ConstutoraPesquisas() {
                     layout="vertical" 
                     margin={{ left: 0, right: 30, top: 10, bottom: 10 }}
                   >
-                    <XAxis 
-                      type="number" 
-                      domain={[0, 5]} 
-                      tickCount={6} 
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      type="category" 
-                      dataKey="criterio" 
-                      width={100} 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
+                    <XAxis type="number" domain={[0, 5]} tickCount={6} fontSize={12} />
+                    <YAxis type="category" dataKey="criterio" width={100} fontSize={12} tickLine={false} axisLine={false} />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
                       formatter={(value) => [`${Number(value).toFixed(1)} / 5`, 'Média']}
                     />
-                    <Bar 
-                      dataKey="media" 
-                      radius={[0, 4, 4, 0]}
-                      maxBarSize={30}
-                    >
+                    <Bar dataKey="media" radius={[0, 4, 4, 0]} maxBarSize={30}>
                       {averagesData.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
@@ -393,11 +366,11 @@ export default function ConstutoraPesquisas() {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : surveys && surveys.length > 0 ? (
+            ) : filteredSurveys.length > 0 ? (
               <>
                 {/* Mobile Layout */}
                 <div className="md:hidden space-y-3 p-4">
-                  {surveys.map((survey) => (
+                  {filteredSurveys.map((survey) => (
                     <div 
                       key={survey.id}
                       className="bg-background border rounded-lg p-3 space-y-2 cursor-pointer hover:shadow-md active:bg-muted/30 transition-all"
@@ -409,15 +382,28 @@ export default function ConstutoraPesquisas() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-medium text-sm line-clamp-1">
-                          {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                          {survey.client_name || survey.comprador_nome || 'Cliente'}
                         </span>
                         {getStatusBadge(survey.status)}
                       </div>
                       
                       <div className="flex items-start gap-2 text-muted-foreground">
                         <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm line-clamp-2">{survey.fichas_visita?.imovel_endereco || '-'}</p>
+                        <p className="text-sm line-clamp-2">{survey.imovel_endereco || '-'}</p>
                       </div>
+
+                      {/* Corretor info */}
+                      {survey.corretor_nome && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <User className="h-3.5 w-3.5 flex-shrink-0" />
+                          <div className="text-sm">
+                            <span>{abreviarNome(survey.corretor_nome)}</span>
+                            {survey.corretor_imobiliaria_nome && (
+                              <span className="text-xs text-muted-foreground"> · {survey.corretor_imobiliaria_nome}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5" />
@@ -441,7 +427,7 @@ export default function ConstutoraPesquisas() {
                         )}
                         <DeleteSurveyDialog
                           surveyId={survey.id}
-                          clientName={survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                          clientName={survey.client_name || survey.comprador_nome || 'Cliente'}
                           onDeleted={() => refetch()}
                         />
                       </div>
@@ -456,19 +442,32 @@ export default function ConstutoraPesquisas() {
                       <TableRow>
                         <TableHead>Cliente</TableHead>
                         <TableHead>Imóvel</TableHead>
+                        <TableHead>Corretor</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Data Envio</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {surveys.map((survey) => (
+                      {filteredSurveys.map((survey) => (
                         <TableRow key={survey.id}>
                           <TableCell className="font-medium">
-                            {survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                            {survey.client_name || survey.comprador_nome || 'Cliente'}
                           </TableCell>
                           <TableCell className="max-w-[200px] truncate">
-                            {survey.fichas_visita?.imovel_endereco || '-'}
+                            {survey.imovel_endereco || '-'}
+                          </TableCell>
+                          <TableCell>
+                            {survey.corretor_nome ? (
+                              <div>
+                                <p className="text-sm font-medium">{abreviarNome(survey.corretor_nome)}</p>
+                                {survey.corretor_imobiliaria_nome && (
+                                  <p className="text-xs text-muted-foreground">{survey.corretor_imobiliaria_nome}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
                           </TableCell>
                           <TableCell>{getStatusBadge(survey.status)}</TableCell>
                           <TableCell>
@@ -500,7 +499,7 @@ export default function ConstutoraPesquisas() {
                               )}
                               <DeleteSurveyDialog
                                 surveyId={survey.id}
-                                clientName={survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente'}
+                                clientName={survey.client_name || survey.comprador_nome || 'Cliente'}
                                 onDeleted={() => refetch()}
                               />
                             </div>
@@ -528,16 +527,24 @@ export default function ConstutoraPesquisas() {
           <DialogHeader>
             <DialogTitle>Resposta da Pesquisa</DialogTitle>
             <DialogDescription>
-              Feedback de {selectedSurvey?.client_name || selectedSurvey?.fichas_visita?.comprador_nome || 'cliente'}
+              Feedback de {selectedSurvey?.client_name || selectedSurvey?.comprador_nome || 'cliente'}
             </DialogDescription>
           </DialogHeader>
 
           {response && (
             <div className="space-y-6 py-4">
-              {selectedSurvey?.fichas_visita && (
+              {selectedSurvey?.imovel_endereco && (
                 <div className="p-3 bg-muted rounded-lg text-sm">
-                  <p className="font-medium">{selectedSurvey.fichas_visita.imovel_endereco}</p>
-                  <p className="text-muted-foreground">Protocolo: {selectedSurvey.fichas_visita.protocolo}</p>
+                  <p className="font-medium">{selectedSurvey.imovel_endereco}</p>
+                  {selectedSurvey.protocolo && (
+                    <p className="text-muted-foreground">Protocolo: {selectedSurvey.protocolo}</p>
+                  )}
+                  {selectedSurvey.corretor_nome && (
+                    <p className="text-muted-foreground mt-1">
+                      Corretor: {abreviarNome(selectedSurvey.corretor_nome)}
+                      {selectedSurvey.corretor_imobiliaria_nome && ` · ${selectedSurvey.corretor_imobiliaria_nome}`}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -561,9 +568,7 @@ export default function ConstutoraPesquisas() {
                               }`}
                             />
                           ))}
-                          <span className="ml-2 text-sm font-medium">
-                            {numericValue}
-                          </span>
+                          <span className="ml-2 text-sm font-medium">{numericValue}</span>
                         </div>
                       </div>
                     );
