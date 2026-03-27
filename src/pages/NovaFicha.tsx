@@ -155,7 +155,7 @@ export default function NovaFicha() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConstrutora = !!construtoraId;
-  const [modoCriacao, setModoCriacao] = useState<ModoCriacao>(isConstrutora ? 'comprador' : 'completo');
+  const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   
   
   const [enviarWhatsappAutomatico, setEnviarWhatsappAutomatico] = useState(true);
