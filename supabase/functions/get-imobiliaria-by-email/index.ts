@@ -62,7 +62,59 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fallback: se profile não tem imobiliaria_id nem construtora_id, buscar via user_roles
     if (!profile?.imobiliaria_id && !profile?.construtora_id) {
+      console.log('Profile sem vínculo direto, tentando fallback via user_roles...')
+      
+      // Precisamos do user_id para buscar em user_roles
+      let userId: string | null = null
+      
+      // Tentar obter user_id do auth
+      try {
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserByEmail(email)
+        if (userData?.user) {
+          userId = userData.user.id
+        }
+      } catch (e) {
+        console.error('Erro ao buscar user_id para fallback:', e)
+      }
+      
+      if (userId) {
+        const { data: roleData } = await supabaseAdmin
+          .from('user_roles')
+          .select('imobiliaria_id, construtora_id')
+          .eq('user_id', userId)
+          .maybeSingle()
+        
+        if (roleData?.imobiliaria_id) {
+          console.log('Fallback: imobiliaria_id encontrada via user_roles:', roleData.imobiliaria_id)
+          const { data: imobiliaria } = await supabaseAdmin
+            .from('imobiliarias')
+            .select('nome, logo_url')
+            .eq('id', roleData.imobiliaria_id)
+            .maybeSingle()
+          
+          return new Response(
+            JSON.stringify({ imobiliaria }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+        
+        if (roleData?.construtora_id) {
+          console.log('Fallback: construtora_id encontrada via user_roles:', roleData.construtora_id)
+          const { data: construtora } = await supabaseAdmin
+            .from('construtoras')
+            .select('nome, logo_url')
+            .eq('id', roleData.construtora_id)
+            .maybeSingle()
+          
+          return new Response(
+            JSON.stringify({ imobiliaria: construtora }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+      }
+      
       console.log('Usuário não encontrado ou sem imobiliária/construtora vinculada')
       return new Response(
         JSON.stringify({ imobiliaria: null }),
