@@ -175,6 +175,7 @@ Deno.serve(async (req) => {
       .from("profiles")
       .update({
         imobiliaria_id: imobiliariaId,
+        construtora_id: construtoraId,
         nome,
         telefone: telefone || null,
         creci: creci || null,
