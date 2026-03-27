@@ -44,24 +44,26 @@ Deno.serve(async (req) => {
 
     console.log('Current user ID:', currentUser.id);
 
-    // Verify user is imobiliaria_admin
+    // Verify user is imobiliaria_admin or construtora_admin
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .select('role, imobiliaria_id')
+      .select('role, imobiliaria_id, construtora_id')
       .eq('user_id', currentUser.id)
-      .eq('role', 'imobiliaria_admin')
+      .in('role', ['imobiliaria_admin', 'construtora_admin'])
       .maybeSingle();
 
     if (roleError || !roleData) {
       console.error('Role check error:', roleError);
       return new Response(
-        JSON.stringify({ error: 'Acesso negado: apenas admin da imobiliária pode excluir corretores' }),
+        JSON.stringify({ error: 'Acesso negado: apenas administradores podem excluir corretores' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const callerRole = roleData.role as string;
     const adminImobiliariaId = roleData.imobiliaria_id;
-    console.log('Admin imobiliaria_id:', adminImobiliariaId);
+    const adminConstrutoraId = roleData.construtora_id;
+    console.log('Caller role:', callerRole, 'imobiliaria_id:', adminImobiliariaId, 'construtora_id:', adminConstrutoraId);
 
     // Parse request body
     const body: RequestBody = await req.json();
@@ -82,41 +84,68 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify target user belongs to the same imobiliaria
-    const { data: targetProfile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('imobiliaria_id, nome')
-      .eq('user_id', targetUserId)
-      .maybeSingle();
+    // Verify target user belongs to the same organization
+    if (callerRole === 'construtora_admin') {
+      // For construtora_admin: check target's user_roles for same construtora_id
+      const { data: targetRoleData, error: targetRoleError } = await supabaseAdmin
+        .from('user_roles')
+        .select('role, construtora_id')
+        .eq('user_id', targetUserId)
+        .eq('construtora_id', adminConstrutoraId)
+        .maybeSingle();
 
-    if (profileError || !targetProfile) {
-      console.error('Target profile error:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Corretor não encontrado' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      if (targetRoleError || !targetRoleData) {
+        console.error('Target role error:', targetRoleError);
+        return new Response(
+          JSON.stringify({ error: 'Este corretor não pertence à sua construtora' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (targetProfile.imobiliaria_id !== adminImobiliariaId) {
-      return new Response(
-        JSON.stringify({ error: 'Este corretor não pertence à sua imobiliária' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      // Prevent deleting another construtora_admin
+      if (targetRoleData.role === 'construtora_admin') {
+        return new Response(
+          JSON.stringify({ error: 'Não é possível excluir outro administrador' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      // For imobiliaria_admin: check target's profile for same imobiliaria_id
+      const { data: targetProfile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('imobiliaria_id, nome')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
 
-    // Check if target user is also an admin (prevent deleting other admins)
-    const { data: targetRole } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', targetUserId)
-      .eq('role', 'imobiliaria_admin')
-      .maybeSingle();
+      if (profileError || !targetProfile) {
+        console.error('Target profile error:', profileError);
+        return new Response(
+          JSON.stringify({ error: 'Corretor não encontrado' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (targetRole) {
-      return new Response(
-        JSON.stringify({ error: 'Não é possível excluir outro administrador' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (targetProfile.imobiliaria_id !== adminImobiliariaId) {
+        return new Response(
+          JSON.stringify({ error: 'Este corretor não pertence à sua imobiliária' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Prevent deleting another imobiliaria_admin
+      const { data: targetAdminRole } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', targetUserId)
+        .eq('role', 'imobiliaria_admin')
+        .maybeSingle();
+
+      if (targetAdminRole) {
+        return new Response(
+          JSON.stringify({ error: 'Não é possível excluir outro administrador' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     console.log('Starting deletion process for corretor:', targetUserId, targetProfile.nome);
