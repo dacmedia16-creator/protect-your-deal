@@ -1,70 +1,60 @@
 
 
-## Plano: Fluxo de aceite para convites de parceria Construtora → Imobiliária
+## Plano: Proprietário pré-preenchido e pré-confirmado em fichas de construtora
 
-### Situação atual
-Quando a construtora "convida" uma imobiliária, o registro é inserido direto em `construtora_imobiliarias` com `status: 'ativa'`. Não há notificação nem aceite.
-
-### Proposta
-Implementar um fluxo de convite com aceite, onde a imobiliária precisa aprovar a parceria antes dela ficar ativa.
+### Contexto
+Quando um corretor vinculado a uma construtora cria uma ficha, a construtora é a proprietária do imóvel. Portanto, os dados do proprietário devem ser preenchidos automaticamente com os dados da construtora (nome, CNPJ, telefone) e a confirmação OTP do proprietário deve ser dispensada (já marcada como confirmada).
 
 ### Mudanças
 
-**1. Database — Novo status "pendente" no fluxo**
-- Alterar o INSERT para usar `status: 'pendente'` ao invés de `'ativa'`
-- Nenhuma migração necessária — a coluna `status` já é `text` e aceita qualquer valor
+**1. `src/pages/NovaFicha.tsx` — Detectar corretor de construtora e pré-preencher**
+- Extrair `construtoraId` e `construtora` de `useUserRole()`
+- Se `construtoraId` existir:
+  - Forçar `modoCriacao` para `'comprador'` (esconder seção proprietário do formulário)
+  - No `handleSubmit`, preencher automaticamente:
+    - `proprietario_nome` = nome da construtora
+    - `proprietario_cpf` = CNPJ da construtora
+    - `proprietario_telefone` = telefone da construtora
+    - `proprietario_autopreenchimento` = false (dados reais, não autopreenchimento)
+    - `construtora_id` = construtoraId
+    - `proprietario_confirmado_em` = `new Date().toISOString()` (marcar como já confirmado)
+  - Status inicial: `'aguardando_comprador'` ao invés de `'pendente'`
+  - Apenas enfileirar OTP do comprador (não do proprietário)
+  - Mostrar um card informativo: "O proprietário será preenchido automaticamente com os dados da construtora"
+  - Esconder a opção de modo de criação (RadioGroup) ou mostrar apenas "Completo" que na verdade só pede comprador
 
-**2. Notificação para a imobiliária**
-- Ao inserir a parceria pendente, enviar notificação via WhatsApp para o admin da imobiliária (buscar telefone via `user_roles` + `profiles`)
-- Usar a edge function `send-whatsapp` existente
-- Mensagem informando que a construtora X deseja uma parceria, com link para aceitar
+**2. `src/pages/NovaFicha.tsx` — Resolver `construtora_id` no backend**
+- Adicionar chamada `supabase.rpc('get_user_construtora', { _user_id: user.id })` para obter o `construtora_id` do corretor
+- Usar no INSERT da ficha
 
-**3. Página/UI de aceite na imobiliária**
-- No layout da imobiliária, adicionar um indicador de convites pendentes (badge no menu)
-- Criar seção em `/empresa/configuracoes` ou nova página `/empresa/parcerias-construtoras` listando convites pendentes
-- Cada convite mostra: nome da construtora, data do convite, botões "Aceitar" e "Recusar"
-- Aceitar: `UPDATE construtora_imobiliarias SET status = 'ativa'`
-- Recusar: `DELETE` ou `UPDATE SET status = 'recusada'`
+**3. `src/pages/DetalhesFicha.tsx` — Tratar proprietário já confirmado**
+- Quando `proprietario_confirmado_em` já estiver preenchido mas não houver OTP de proprietário, mostrar badge "Proprietário: Construtora (confirmado automaticamente)" ao invés de botão para enviar OTP
+- O fluxo de PDF deve funcionar normalmente pois `proprietario_confirmado_em` já estará preenchido
 
-**4. RLS — Permitir imobiliária atualizar seus convites**
-- Adicionar política UPDATE na tabela `construtora_imobiliarias` para `imobiliaria_admin`:
-```sql
-CREATE POLICY "Imobiliaria admin pode aceitar/recusar parcerias"
-  ON public.construtora_imobiliarias
-  FOR UPDATE
-  TO authenticated
-  USING (imobiliaria_id = get_user_imobiliaria(auth.uid())
-    AND is_imobiliaria_admin(auth.uid(), imobiliaria_id))
-  WITH CHECK (imobiliaria_id = get_user_imobiliaria(auth.uid())
-    AND is_imobiliaria_admin(auth.uid(), imobiliaria_id));
-```
+**4. `supabase/functions/verify-otp/index.ts` — Sem alteração necessária**
+- O fluxo de OTP do comprador continua normal
+- Quando o comprador confirmar, o status mudará para `completo` (pois `proprietario_confirmado_em` já existe)
+- A geração de PDF e emails funcionarão normalmente
 
-**5. Ajustes na tela da construtora**
-- `ConstutoraImobiliarias.tsx`: mudar INSERT para `status: 'pendente'`
-- Mostrar badge "Pendente" nos cards de parceiras com status pendente
-- Filtrar parceiras por status (ativa/pendente/recusada)
-
-**6. Ajustes nas queries existentes**
-- Queries que usam `construtora_imobiliarias` para vincular empreendimentos devem filtrar apenas `status = 'ativa'`
-- A RLS de `empreendimentos` (SELECT para imobiliária parceira) já depende de `empreendimento_imobiliarias`, então não é afetada
+**5. Validação de limites (check_plan_limits)**
+- Como o corretor da construtora pode não ter `imobiliaria_id`, verificar se a lógica de limites funciona com `construtora_id` nas assinaturas — já existe tratamento para corretor autônomo, mas pode precisar de ajuste para construtora
 
 ### Arquivos afetados
-- `src/pages/construtora/ConstutoraImobiliarias.tsx` — status pendente + badge
-- Nova página ou seção: `src/pages/empresa/EmpresaParceriasConstrutoras.tsx`
-- `src/App.tsx` — nova rota
-- `src/components/layouts/ImobiliariaLayout.tsx` — link no menu + badge
-- 1 migração SQL — RLS para UPDATE na `construtora_imobiliarias`
+- `src/pages/NovaFicha.tsx` — lógica principal de pré-preenchimento
+- `src/pages/DetalhesFicha.tsx` — UI para proprietário já confirmado (construtora)
 
 ### Fluxo resumido
 ```text
-Construtora busca imobiliária
+Corretor de construtora abre /fichas/nova
        ↓
-Insere construtora_imobiliarias (status: pendente)
+Dados do proprietário = dados da construtora (automático)
        ↓
-WhatsApp enviado ao admin da imobiliária
+Preenche apenas dados do comprador + imóvel
        ↓
-Admin da imobiliária vê convite no painel
+INSERT com proprietário preenchido + confirmado_em + status: aguardando_comprador
        ↓
-  Aceitar → status: ativa    |    Recusar → status: recusada
+OTP enviado apenas para o comprador
+       ↓
+Comprador confirma → status: completo → PDF gerado
 ```
 
