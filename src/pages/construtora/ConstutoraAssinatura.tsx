@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ interface UsageStats {
 export default function ConstutoraAssinatura() {
   useDocumentTitle('Assinatura | Construtora');
   const { construtoraId, assinatura } = useUserRole();
+  useAssinaturaNotification();
   const [planos, setPlanos] = useState<Plano[]>([]);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,15 @@ export default function ConstutoraAssinatura() {
         throw new Error(data?.error || 'Link não gerado');
       }
     } catch (error: any) {
-      toast.error('Erro ao gerar link de pagamento', { description: error.message });
+      const errorMessage = error.message || 'Erro desconhecido ao gerar link de pagamento';
+      toast.error('Erro ao gerar link de pagamento', {
+        description: errorMessage,
+        duration: 10000,
+        action: {
+          label: 'Tentar novamente',
+          onClick: () => handleSubscribe(planoId),
+        },
+      });
     } finally {
       setSubscribing(null);
     }
