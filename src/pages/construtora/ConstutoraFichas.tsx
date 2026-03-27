@@ -15,8 +15,9 @@ import { FileText, Loader2, Eye, Search, PartyPopper, MapPin, Calendar, User } f
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
+import { X } from 'lucide-react';
 
 interface Ficha {
   id: string;
@@ -28,6 +29,7 @@ interface Ficha {
   status: string;
   corretor_nome?: string;
   corretor_imobiliaria?: string;
+  corretor_imobiliaria_id?: string;
   convertido_venda?: boolean;
 }
 
@@ -43,6 +45,8 @@ export default function ConstutoraFichas() {
   useDocumentTitle('Registros de Visita | Construtora');
   const { construtoraId } = useUserRole();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const imobiliariaFilter = searchParams.get('imobiliaria');
   const [fichas, setFichas] = useState<Ficha[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -69,6 +73,7 @@ export default function ConstutoraFichas() {
         status: f.status,
         corretor_nome: f.corretor_nome ?? undefined,
         corretor_imobiliaria: f.corretor_imobiliaria_nome ?? undefined,
+        corretor_imobiliaria_id: f.corretor_imobiliaria_id ?? undefined,
         convertido_venda: f.convertido_venda ?? false,
       })));
     } catch (error) {
@@ -80,13 +85,24 @@ export default function ConstutoraFichas() {
 
   useEffect(() => { fetchFichas(); }, [fetchFichas]);
 
-  const filteredFichas = fichas.filter(f =>
-    f.protocolo.toLowerCase().includes(search.toLowerCase()) ||
-    f.imovel_endereco.toLowerCase().includes(search.toLowerCase()) ||
-    f.corretor_nome?.toLowerCase().includes(search.toLowerCase()) ||
-    f.proprietario_nome?.toLowerCase().includes(search.toLowerCase()) ||
-    f.comprador_nome?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Nome da imobiliária filtrada
+  const imobiliariaFilterName = imobiliariaFilter
+    ? fichas.find(f => f.corretor_imobiliaria_id === imobiliariaFilter)?.corretor_imobiliaria
+    : null;
+
+  const filteredFichas = fichas.filter(f => {
+    if (imobiliariaFilter && f.corretor_imobiliaria_id !== imobiliariaFilter) return false;
+
+    const matchSearch =
+      !search ||
+      f.protocolo.toLowerCase().includes(search.toLowerCase()) ||
+      f.imovel_endereco.toLowerCase().includes(search.toLowerCase()) ||
+      f.corretor_nome?.toLowerCase().includes(search.toLowerCase()) ||
+      f.proprietario_nome?.toLowerCase().includes(search.toLowerCase()) ||
+      f.comprador_nome?.toLowerCase().includes(search.toLowerCase());
+
+    return matchSearch;
+  });
 
   const statusLabels: Record<string, string> = {
     pendente: 'Pendente',
@@ -121,6 +137,19 @@ export default function ConstutoraFichas() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar por protocolo, endereço, corretor..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
+            {imobiliariaFilter && (
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="secondary" className="gap-1.5">
+                  Imobiliária: {imobiliariaFilterName || 'Filtrada'}
+                  <button
+                    onClick={() => setSearchParams({})}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {filteredFichas.length === 0 ? (

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
@@ -31,6 +32,7 @@ import {
 export default function ConstutoraImobiliarias() {
   useDocumentTitle('Imobiliárias Parceiras | Construtora');
   const { construtoraId } = useUserRole();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [searchFilter, setSearchFilter] = useState('');
@@ -324,7 +326,8 @@ export default function ConstutoraImobiliarias() {
               const linkedEmps = getLinkedEmps(p.imobiliaria_id);
 
               return (
-                <Card key={p.id} className="flex flex-col">
+                <Card key={p.id} className="flex flex-col cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => navigate(`/construtora/fichas?imobiliaria=${p.imobiliaria_id}`)}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3 min-w-0">
@@ -358,7 +361,7 @@ export default function ConstutoraImobiliarias() {
                           {p.status === 'ativa' ? 'Ativa' : p.status === 'pendente' ? 'Pendente' : p.status === 'recusada' ? 'Recusada' : 'Suspensa'}
                         </Badge>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
@@ -443,9 +446,10 @@ export default function ConstutoraImobiliarias() {
                           variant="outline"
                           size="sm"
                           className="flex-1 gap-1 text-xs"
-                          onClick={() =>
-                            window.open(`https://wa.me/${formatPhone(imob.telefone)}`, '_blank')
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`https://wa.me/${formatPhone(imob.telefone)}`, '_blank');
+                          }}
                         >
                           <Phone className="h-3 w-3" /> WhatsApp
                         </Button>
@@ -454,7 +458,8 @@ export default function ConstutoraImobiliarias() {
                         variant="outline"
                         size="sm"
                         className="flex-1 gap-1 text-xs"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setLinkImobId(p.imobiliaria_id);
                           setLinkOpen(true);
                         }}
