@@ -233,6 +233,11 @@ const Index = () => {
               Sobre Nós
             </Link>
             <Link
+              to="/nossa-historia"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Nossa História
+            </Link>
+            <Link
               to="/instalar"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               
@@ -307,6 +312,12 @@ const Index = () => {
                       className="text-base font-medium text-foreground hover:text-primary transition-colors">
                       
                       Sobre Nós
+                    </Link>
+                    <Link
+                      to="/nossa-historia"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-base font-medium text-foreground hover:text-primary transition-colors">
+                      Nossa História
                     </Link>
                     <Link
                       to="/instalar"
@@ -978,6 +989,9 @@ const Index = () => {
               </Link>
               <Link to="/sobre" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Sobre Nós
+              </Link>
+              <Link to="/nossa-historia" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Nossa História
               </Link>
             </div>
           </div>
