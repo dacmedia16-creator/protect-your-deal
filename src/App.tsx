@@ -133,6 +133,7 @@ import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
 import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
 import EmpresaFichas from "./pages/empresa/EmpresaFichas";
 import EmpresaPesquisas from "./pages/empresa/EmpresaPesquisas";
+import EmpresaParceriasConstrutoras from "./pages/empresa/EmpresaParceriasConstrutoras";
 
 const queryClient = new QueryClient();
 
@@ -388,8 +389,12 @@ const App = () => (
                     <EmpresaPesquisas />
                   </ProtectedRoute>
                 } />
+                <Route path="/empresa/parcerias-construtoras" element={
+                  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+                    <EmpresaParceriasConstrutoras />
+                  </ProtectedRoute>
+                } />
 
-                {/* Construtora routes */}
                 <Route path="/construtora" element={
                   <ProtectedRoute allowedRoles={['construtora_admin']}>
                     <ConstrutoraDashboard />

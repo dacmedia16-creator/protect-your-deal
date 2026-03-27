@@ -20,7 +20,8 @@ import {
   X,
   UserCircle,
   ClipboardCheck,
-  Loader2
+  Loader2,
+  Handshake,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,10 +35,25 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { imobiliaria, assinatura } = useUserRole();
+  const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
+
+  const { data: pendingCount } = useQuery({
+    queryKey: ['parcerias-pendentes-count', imobiliariaId],
+    queryFn: async () => {
+      if (!imobiliariaId) return 0;
+      const { count, error } = await supabase
+        .from('construtora_imobiliarias')
+        .select('id', { count: 'exact', head: true })
+        .eq('imobiliaria_id', imobiliariaId)
+        .eq('status', 'pendente');
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!imobiliariaId,
+  });
 
   const handleSignOut = async () => {
     if (isLoggingOut) return;
@@ -57,6 +73,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
     { href: '/empresa/fichas', icon: FileText, label: 'Registros de Visita' },
     ...(surveyEnabled ? [{ href: '/empresa/pesquisas', icon: ClipboardCheck, label: 'Pesquisas' }] : []),
     { href: '/empresa/relatorios', icon: FileText, label: 'Relatórios' },
+    { href: '/empresa/parcerias-construtoras', icon: Handshake, label: 'Construtoras' },
     { href: '/empresa/assinatura', icon: CreditCard, label: 'Assinatura' },
     { href: '/empresa/configuracoes', icon: Settings, label: 'Configurações' },
   ];
@@ -157,7 +174,10 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
                   )}
                 >
                   <item.icon className="h-5 w-5" />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.href === '/empresa/parcerias-construtoras' && pendingCount ? (
+                    <Badge variant="destructive" className="h-5 min-w-[20px] px-1 text-[10px]">{pendingCount}</Badge>
+                  ) : null}
                 </Link>
               );
             })}

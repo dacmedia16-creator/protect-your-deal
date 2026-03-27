@@ -164,12 +164,12 @@ export default function ConstutoraImobiliarias() {
       const { error } = await supabase.from('construtora_imobiliarias').insert({
         construtora_id: construtoraId!,
         imobiliaria_id: imobiliariaId,
-        status: 'ativa',
+        status: 'pendente',
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Imobiliária vinculada com sucesso!');
+      toast.success('Convite enviado! A imobiliária precisa aceitar a parceria.');
       invalidateAll();
       setInviteOpen(false);
       setInviteSearch('');
@@ -289,7 +289,9 @@ export default function ConstutoraImobiliarias() {
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
               <SelectItem value="ativa">Ativa</SelectItem>
+              <SelectItem value="pendente">Pendente</SelectItem>
               <SelectItem value="suspensa">Suspensa</SelectItem>
+              <SelectItem value="recusada">Recusada</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -346,10 +348,14 @@ export default function ConstutoraImobiliarias() {
                           className={
                             p.status === 'ativa'
                               ? 'bg-green-500/10 text-green-600 border-green-200'
+                              : p.status === 'pendente'
+                              ? 'bg-yellow-500/10 text-yellow-600 border-yellow-200'
+                              : p.status === 'recusada'
+                              ? 'bg-red-500/10 text-red-600 border-red-200'
                               : 'bg-orange-500/10 text-orange-600 border-orange-200'
                           }
                         >
-                          {p.status === 'ativa' ? 'Ativa' : 'Suspensa'}
+                          {p.status === 'ativa' ? 'Ativa' : p.status === 'pendente' ? 'Pendente' : p.status === 'recusada' ? 'Recusada' : 'Suspensa'}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
