@@ -46,23 +46,11 @@ export default function ConstutoraFichas() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, proprietario_nome, comprador_nome, data_visita, status, user_id, convertido_venda')
-        .eq('construtora_id', construtoraId)
-        .order('created_at', { ascending: false });
+        .rpc('get_fichas_construtora', { p_construtora_id: construtoraId });
 
       if (error) throw error;
 
-      // Fetch corretor names
-      const userIds = [...new Set((data || []).map(f => f.user_id).filter(Boolean))];
-      let corretorMap: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles').select('user_id, nome').in('user_id', userIds);
-        corretorMap = (profiles || []).reduce((acc, p) => { acc[p.user_id] = p.nome; return acc; }, {} as Record<string, string>);
-      }
-
-      setFichas((data || []).map(f => ({
+      setFichas((data || []).map((f: any) => ({
         id: f.id,
         protocolo: f.protocolo,
         imovel_endereco: f.imovel_endereco,
@@ -70,7 +58,7 @@ export default function ConstutoraFichas() {
         comprador_nome: f.comprador_nome,
         data_visita: f.data_visita,
         status: f.status,
-        corretor_nome: f.user_id ? corretorMap[f.user_id] || 'Desconhecido' : undefined,
+        corretor_nome: f.corretor_nome ?? undefined,
         convertido_venda: f.convertido_venda ?? false,
       })));
     } catch (error) {

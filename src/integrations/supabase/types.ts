@@ -2338,6 +2338,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_fichas_construtora: {
+        Args: { p_construtora_id: string }
+        Returns: {
+          comprador_nome: string
+          convertido_venda: boolean
+          corretor_nome: string
+          created_at: string
+          data_visita: string
+          id: string
+          imovel_endereco: string
+          proprietario_nome: string
+          protocolo: string
+          status: string
+          user_id: string
+        }[]
+      }
       get_fichas_empresa: {
         Args: { p_imobiliaria_id: string }
         Returns: {
