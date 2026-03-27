@@ -181,6 +181,13 @@ export default function NovaFicha() {
     }
   }, [user, authLoading, navigate]);
 
+  // Forçar modo comprador para corretores de construtora
+  useEffect(() => {
+    if (isConstrutora) {
+      setModoCriacao('comprador');
+    }
+  }, [isConstrutora]);
+
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 2) return numbers;
