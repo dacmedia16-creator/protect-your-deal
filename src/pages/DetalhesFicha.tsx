@@ -1203,7 +1203,10 @@ export default function DetalhesFicha() {
               <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <div className="flex items-center gap-3">
                   {ficha.proprietario_confirmado_em ? (
-                    <div className="flex items-center gap-2 text-success">
+                    <div 
+                      className="flex items-center gap-2 text-success cursor-pointer hover:underline"
+                      onClick={() => document.getElementById('dados-juridicos')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
                       <CheckCircle className="h-5 w-5" />
                       <span className="text-sm font-medium">
                         {ficha.construtora_id ? 'Construtora (confirmado automaticamente)' : 'Proprietário confirmou'}
@@ -1223,7 +1226,10 @@ export default function DetalhesFicha() {
                 </div>
                 <div className="flex items-center gap-3">
                   {ficha.comprador_confirmado_em ? (
-                    <div className="flex items-center gap-2 text-success">
+                    <div 
+                      className="flex items-center gap-2 text-success cursor-pointer hover:underline"
+                      onClick={() => document.getElementById('dados-juridicos')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
                       <CheckCircle className="h-5 w-5" />
                       <span className="text-sm font-medium">Comprador confirmou</span>
                     </div>
@@ -2393,7 +2399,7 @@ export default function DetalhesFicha() {
 
           {/* Dados Jurídicos - Only when complete or finalized partial */}
           {(ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (confirmacaoProprietario || confirmacaoComprador) && (
-            <Card className="border-primary/20">
+            <Card id="dados-juridicos" className="border-primary/20">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
