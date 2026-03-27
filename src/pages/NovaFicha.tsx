@@ -422,7 +422,7 @@ export default function NovaFicha() {
     );
   }
 
-  const showProprietario = modoCriacao === 'completo' || modoCriacao === 'proprietario';
+  const showProprietario = !isConstrutora && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
   const showComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
 
   return (
@@ -436,7 +436,27 @@ export default function NovaFicha() {
 
       <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Modo de Criação */}
+          {/* Info card para construtora */}
+          {isConstrutora && construtora && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Proprietário: {construtora.nome}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Os dados do proprietário serão preenchidos automaticamente com os dados da construtora. A confirmação do proprietário é dispensada.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Modo de Criação - oculto para construtora */}
+          {!isConstrutora && (
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -479,6 +499,7 @@ export default function NovaFicha() {
               </RadioGroup>
             </CardContent>
           </Card>
+          )}
 
           {/* Dados do Imóvel */}
           <Card>
