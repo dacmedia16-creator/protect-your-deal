@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
@@ -151,15 +151,55 @@ interface ImovelSelecionado {
 
 export default function NovaFicha() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { imobiliariaId, construtoraId, construtora, loading: roleLoading } = useUserRole();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConstrutora = !!construtoraId;
+  const modoConstrutoraParceira = !isConstrutora && !!imobiliariaId && searchParams.get('modo') === 'construtora';
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   const [empreendimentoId, setEmpreendimentoId] = useState<string>('');
+  const [selectedConstrutoraId, setSelectedConstrutoraId] = useState<string>('');
 
-  // Buscar empreendimentos da construtora
+  // Buscar construtoras parceiras (para corretores de imobiliária)
+  const { data: parceriasConstrutoras = [] } = useQuery({
+    queryKey: ['parcerias-construtoras', imobiliariaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('construtora_imobiliarias')
+        .select('construtora_id, construtoras!construtora_imobiliarias_construtora_id_fkey(id, nome, cnpj, telefone)')
+        .eq('imobiliaria_id', imobiliariaId!)
+        .eq('status', 'ativa');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: modoConstrutoraParceira,
+  });
+
+  // Buscar empreendimentos liberados para a imobiliária da construtora parceira selecionada
+  const { data: empreendimentosParceira = [] } = useQuery({
+    queryKey: ['empreendimentos-parceira', selectedConstrutoraId, imobiliariaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('empreendimentos')
+        .select('id, nome, endereco, cidade, estado, tipo')
+        .eq('construtora_id', selectedConstrutoraId)
+        .eq('status', 'ativo')
+        .order('nome');
+      if (error) throw error;
+      // Filter to only those linked to this imobiliaria via empreendimento_imobiliarias
+      const { data: linkedIds } = await supabase
+        .from('empreendimento_imobiliarias')
+        .select('empreendimento_id')
+        .eq('imobiliaria_id', imobiliariaId!);
+      const allowedIds = new Set((linkedIds || []).map(l => l.empreendimento_id));
+      return (data || []).filter(e => allowedIds.has(e.id));
+    },
+    enabled: modoConstrutoraParceira && !!selectedConstrutoraId,
+  });
+
+  // Buscar empreendimentos da construtora nativa
   const { data: empreendimentos = [] } = useQuery({
     queryKey: ['empreendimentos-construtora', construtoraId],
     queryFn: async () => {
@@ -199,12 +239,12 @@ export default function NovaFicha() {
     }
   }, [user, authLoading, navigate]);
 
-  // Forçar modo comprador para corretores de construtora
+  // Forçar modo comprador para corretores de construtora ou modo construtora parceira
   useEffect(() => {
-    if (isConstrutora) {
+    if (isConstrutora || modoConstrutoraParceira) {
       setModoCriacao('comprador');
     }
-  }, [isConstrutora]);
+  }, [isConstrutora, modoConstrutoraParceira]);
 
   const formatPhone = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -241,8 +281,8 @@ export default function NovaFicha() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação para construtora: exigir empreendimento
-    if (isConstrutora && !empreendimentoId) {
+    // Validação para construtora ou modo parceira: exigir empreendimento
+    if ((isConstrutora || modoConstrutoraParceira) && !empreendimentoId) {
       toast({
         variant: 'destructive',
         title: 'Erro de validação',
@@ -251,10 +291,19 @@ export default function NovaFicha() {
       return;
     }
 
-    const fichaSchema = createFichaSchema(isConstrutora ? 'comprador' : modoCriacao);
+    if (modoConstrutoraParceira && !selectedConstrutoraId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro de validação',
+        description: 'Selecione uma construtora parceira',
+      });
+      return;
+    }
+
+    const fichaSchema = createFichaSchema((isConstrutora || modoConstrutoraParceira) ? 'comprador' : modoCriacao);
     const result = fichaSchema.safeParse({
       ...formData,
-      // Para construtora, preencher campos obrigatórios que vêm do empreendimento
+      // Para construtora/parceira, preencher campos obrigatórios que vêm do empreendimento
       imovel_endereco: formData.imovel_endereco || 'auto',
       imovel_tipo: formData.imovel_tipo || 'auto',
     });
@@ -308,15 +357,20 @@ export default function NovaFicha() {
       
       // Para construtora, proprietário é a própria construtora (pré-preenchido e pré-confirmado)
       const isConstrutoraBroker = !!dbConstrutoraId;
+      // Modo parceira: corretor de imobiliária criando ficha via construtora parceira
+      const isParceiraMode = modoConstrutoraParceira && !!selectedConstrutoraId;
+      const selectedParceira = isParceiraMode 
+        ? parceriasConstrutoras.find(p => p.construtora_id === selectedConstrutoraId)
+        : null;
       
       // Preparar dados conforme o modo
-      const incluiProprietario = !isConstrutoraBroker && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
+      const incluiProprietario = !isConstrutoraBroker && !isParceiraMode && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
       const incluiComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
 
       const insertData: any = {
         user_id: user.id,
         imobiliaria_id: dbImobiliariaId || null,
-        construtora_id: dbConstrutoraId || null,
+        construtora_id: isParceiraMode ? selectedConstrutoraId : (dbConstrutoraId || null),
         protocolo,
         imovel_endereco: formData.imovel_endereco,
         imovel_tipo: formData.imovel_tipo,
@@ -330,10 +384,19 @@ export default function NovaFicha() {
       };
 
       if (isConstrutoraBroker && construtora) {
-        // Proprietário = construtora (auto-preenchido e auto-confirmado)
+        // Proprietário = construtora nativa (auto-preenchido e auto-confirmado)
         insertData.proprietario_nome = construtora.nome;
         insertData.proprietario_cpf = construtora.cnpj || null;
         insertData.proprietario_telefone = construtora.telefone?.replace(/\D/g, '') || null;
+        insertData.proprietario_autopreenchimento = false;
+        insertData.proprietario_confirmado_em = new Date().toISOString();
+        insertData.status = 'aguardando_comprador';
+      } else if (isParceiraMode && selectedParceira) {
+        // Proprietário = construtora parceira selecionada
+        const constData = selectedParceira.construtoras as any;
+        insertData.proprietario_nome = constData?.nome || 'Construtora';
+        insertData.proprietario_cpf = constData?.cnpj || null;
+        insertData.proprietario_telefone = constData?.telefone?.replace(/\D/g, '') || null;
         insertData.proprietario_autopreenchimento = false;
         insertData.proprietario_confirmado_em = new Date().toISOString();
         insertData.status = 'aguardando_comprador';
@@ -358,7 +421,7 @@ export default function NovaFicha() {
         const queueItems = [];
 
         // Construtora: proprietário já confirmado, não enviar OTP
-        if (incluiProprietario && !isConstrutoraBroker) {
+        if (incluiProprietario && !isConstrutoraBroker && !isParceiraMode) {
           queueItems.push({
             ficha_id: data.id,
             tipo: 'proprietario',
@@ -463,21 +526,24 @@ export default function NovaFicha() {
     );
   }
 
-  const showProprietario = !isConstrutora && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
+  const showProprietario = !isConstrutora && !modoConstrutoraParceira && (modoCriacao === 'completo' || modoCriacao === 'proprietario');
   const showComprador = modoCriacao === 'completo' || modoCriacao === 'comprador';
+
+  // Lista de empreendimentos para o select (construtora nativa ou parceira)
+  const empreendimentosParaSelect = modoConstrutoraParceira ? empreendimentosParceira : empreendimentos;
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
       <MobileHeader
-        title="Novo Registro de Visita"
-        subtitle="Preencha os dados da visita"
+        title={modoConstrutoraParceira ? "Registro Construtora" : "Novo Registro de Visita"}
+        subtitle={modoConstrutoraParceira ? "Crie fichas para empreendimentos parceiros" : "Preencha os dados da visita"}
         backPath="/fichas"
       />
 
       <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Info card para construtora */}
+          {/* Info card para construtora nativa */}
           {isConstrutora && construtora && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6">
@@ -496,8 +562,97 @@ export default function NovaFicha() {
             </Card>
           )}
 
+          {/* Seleção de construtora parceira */}
+          {modoConstrutoraParceira && (
+            <Card className="border-orange-500/30 bg-orange-500/5">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Construtora Parceira</CardTitle>
+                    <CardDescription>Selecione a construtora e o empreendimento</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="construtora-parceira">Construtora *</Label>
+                  <Select
+                    value={selectedConstrutoraId}
+                    onValueChange={(value) => {
+                      setSelectedConstrutoraId(value);
+                      setEmpreendimentoId('');
+                      setFormData(prev => ({ ...prev, imovel_endereco: '', imovel_tipo: '' }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a construtora" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parceriasConstrutoras.map((p) => {
+                        const constData = p.construtoras as any;
+                        return (
+                          <SelectItem key={p.construtora_id} value={p.construtora_id}>
+                            {constData?.nome || 'Construtora'}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedConstrutoraId && (
+                  <div className="space-y-2">
+                    <Label htmlFor="empreendimento-parceira">Empreendimento *</Label>
+                    <Select
+                      value={empreendimentoId}
+                      onValueChange={(value) => {
+                        setEmpreendimentoId(value);
+                        const emp = empreendimentosParceira.find(e => e.id === value);
+                        if (emp) {
+                          const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
+                          setFormData(prev => ({
+                            ...prev,
+                            imovel_endereco: endereco || emp.nome,
+                            imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
+                          }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={empreendimentosParceira.length === 0 ? "Nenhum empreendimento liberado" : "Selecione o empreendimento"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empreendimentosParceira.map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            <div className="flex flex-col">
+                              <span>{emp.nome}</span>
+                              {emp.endereco && (
+                                <span className="text-xs text-muted-foreground">{emp.endereco}{emp.cidade ? `, ${emp.cidade}` : ''}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {empreendimentoId && (
+                  <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
+                    <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
+                    <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
+                    <p className="mt-2 text-xs">O proprietário será preenchido automaticamente com os dados da construtora.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Modo de Criação - oculto para construtora */}
-          {!isConstrutora && (
+          {!isConstrutora && !modoConstrutoraParceira && (
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -542,7 +697,8 @@ export default function NovaFicha() {
           </Card>
           )}
 
-          {/* Dados do Imóvel */}
+          {/* Dados do Imóvel - oculto para modo construtora parceira (já no card acima) */}
+          {!modoConstrutoraParceira && (
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -635,6 +791,7 @@ export default function NovaFicha() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Dados do Proprietário */}
           {showProprietario && (
