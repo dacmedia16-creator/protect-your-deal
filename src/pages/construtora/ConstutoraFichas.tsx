@@ -73,6 +73,7 @@ export default function ConstutoraFichas() {
         status: f.status,
         corretor_nome: f.corretor_nome ?? undefined,
         corretor_imobiliaria: f.corretor_imobiliaria_nome ?? undefined,
+        corretor_imobiliaria_id: f.corretor_imobiliaria_id ?? undefined,
         convertido_venda: f.convertido_venda ?? false,
       })));
     } catch (error) {
