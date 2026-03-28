@@ -128,6 +128,14 @@ export default function AdminConstrutoras() {
             .eq('feature_key', 'post_visit_survey')
             .maybeSingle();
 
+          const { data: partnerFichas } = await supabase
+            .from('fichas_visita')
+            .select('user_id')
+            .eq('construtora_id', c.id)
+            .not('imobiliaria_id', 'is', null);
+
+          const corretores_parceiros_count = new Set(partnerFichas?.map(f => f.user_id).filter(Boolean)).size;
+
           return {
             ...c,
             empreendimentos_count: empreendimentos_count || 0,
