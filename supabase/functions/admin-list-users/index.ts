@@ -66,36 +66,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("User is super_admin, fetching all users...");
-
-    // Use admin API to list all users with pagination
-    const allUsers: any[] = [];
-    let page = 1;
-    
-    while (true) {
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage: 1000,
-      });
-
-      if (listError) {
-        console.error("Error listing users:", listError);
-        return new Response(
-          JSON.stringify({ error: "Error fetching users" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      allUsers.push(...users);
-      
-      if (users.length < 1000) break;
-      page++;
+    // Parse pagination params
+    let requestBody: { page?: number; perPage?: number } = {};
+    try {
+      requestBody = await req.json();
+    } catch {
+      // No body or invalid JSON — use defaults
     }
 
-    console.log(`Found ${allUsers.length} users (${page} pages)`);
+    const page = requestBody.page || 1;
+    const perPage = Math.min(requestBody.perPage || 100, 500); // Max 500 per page
+
+    console.log(`User is super_admin, fetching users page ${page} (${perPage}/page)...`);
+
+    // Use admin API to list users with pagination
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (listError) {
+      console.error("Error listing users:", listError);
+      return new Response(
+        JSON.stringify({ error: "Error fetching users" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Found ${users.length} users on page ${page}`);
 
     // Return a simplified list with id and email
-    const userList = allUsers.map((user) => ({
+    const userList = users.map((user) => ({
       id: user.id,
       email: user.email,
       created_at: user.created_at,
@@ -103,7 +104,12 @@ Deno.serve(async (req) => {
     }));
 
     return new Response(
-      JSON.stringify({ users: userList }),
+      JSON.stringify({ 
+        users: userList,
+        page,
+        perPage,
+        hasMore: users.length === perPage,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
