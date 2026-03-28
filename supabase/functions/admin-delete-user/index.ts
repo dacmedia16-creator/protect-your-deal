@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
           .update({ user_id: adminRole.user_id })
           .eq('user_id', user_id);
         
-        console.log(`[7/9] Transferred ${transferredCount ?? 0} fichas to admin ${adminRole.user_id}`);
+        console.log(`[7/12] Transferred ${transferredCount ?? 0} fichas to admin ${adminRole.user_id}`);
       } else {
         // If deleting admin or no admin found, keep fichas orphaned with null user_id
         const { count: orphanedCount } = await supabaseAdmin
@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
           .update({ user_id: null })
           .eq('user_id', user_id);
         
-        console.log(`[7/9] Orphaned ${orphanedCount ?? 0} fichas (no admin available)`);
+        console.log(`[7/12] Orphaned ${orphanedCount ?? 0} fichas (no admin available)`);
       }
     } else {
       // Corretor autônomo - keep fichas with null user_id
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
         .update({ user_id: null })
         .eq('user_id', user_id);
       
-      console.log(`[7/9] Orphaned ${orphanedCount ?? 0} fichas (autonomous corretor)`);
+      console.log(`[7/12] Orphaned ${orphanedCount ?? 0} fichas (autonomous corretor)`);
     }
 
     // ====== STEP 8: Reassign corretor_parceiro_id in fichas_visita ======

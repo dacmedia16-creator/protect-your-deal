@@ -170,79 +170,8 @@ async function sendTemplateViaZionTalk(
   }
 }
 
-// Legacy: Send WhatsApp message via Evolution API
-async function sendViaEvolutionAPI(phone: string, message: string): Promise<boolean> {
-  const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL');
-  const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY');
-  const evolutionInstance = Deno.env.get('EVOLUTION_INSTANCE');
 
-  if (!evolutionApiUrl || !evolutionApiKey || !evolutionInstance) {
-    return false;
-  }
 
-  try {
-    const response = await fetch(`${evolutionApiUrl}/message/sendText/${evolutionInstance}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey,
-      },
-      body: JSON.stringify({
-        number: `55${phone.replace(/\D/g, '')}`,
-        text: message,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Evolution API error:', error);
-      return false;
-    }
-
-    console.log('Message sent via Evolution API');
-    return true;
-  } catch (error) {
-    console.error('Evolution API error:', error);
-    return false;
-  }
-}
-
-// Legacy: Send WhatsApp message via Z-API
-async function sendViaZAPI(phone: string, message: string): Promise<boolean> {
-  const zapiInstanceId = Deno.env.get('ZAPI_INSTANCE_ID');
-  const zapiToken = Deno.env.get('ZAPI_TOKEN');
-  const zapiClientToken = Deno.env.get('ZAPI_CLIENT_TOKEN');
-
-  if (!zapiInstanceId || !zapiToken) {
-    return false;
-  }
-
-  try {
-    const response = await fetch(`https://api.z-api.io/instances/${zapiInstanceId}/token/${zapiToken}/send-text`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Client-Token': zapiClientToken || '',
-      },
-      body: JSON.stringify({
-        phone: `55${phone.replace(/\D/g, '')}`,
-        message: message,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('Z-API error:', error);
-      return false;
-    }
-
-    console.log('Message sent via Z-API');
-    return true;
-  } catch (error) {
-    console.error('Z-API error:', error);
-    return false;
-  }
-}
 
 serve(async (req) => {
   // Handle CORS
