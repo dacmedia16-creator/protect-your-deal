@@ -433,6 +433,7 @@ export default function AdminConstrutoras() {
                           </div>
                           <div className="flex gap-3 text-xs text-muted-foreground">
                             <span>{c.empreendimentos_count} empreendimentos</span>
+                            <span>{c.corretores_parceiros_count} corr. parceiros</span>
                             <span>{c.parceiras_count} parceiras</span>
                             <span>{c.corretores_count} corretores</span>
                           </div>
@@ -452,6 +453,7 @@ export default function AdminConstrutoras() {
                         <TableHead>Email</TableHead>
                         <TableHead>Empreend.</TableHead>
                         <TableHead>Parceiras</TableHead>
+                        <TableHead>Corr. Parceiros</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Assinatura</TableHead>
                         <TableHead className="w-10"></TableHead>
@@ -469,6 +471,7 @@ export default function AdminConstrutoras() {
                           <TableCell className="text-sm text-muted-foreground">{c.email}</TableCell>
                           <TableCell>{c.empreendimentos_count}</TableCell>
                           <TableCell>{c.parceiras_count}</TableCell>
+                          <TableCell>{c.corretores_parceiros_count}</TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(entityStatusColors, c.status)}>{c.status}</Badge>
                           </TableCell>
