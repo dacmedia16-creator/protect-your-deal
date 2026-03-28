@@ -146,6 +146,7 @@ export default function AdminConstrutoras() {
             assinatura_plano_id: assData?.plano_id || null,
             assinatura_plano_nome,
             survey_enabled: flagData?.enabled ?? false,
+            corretores_parceiros_count,
           };
         })
       );
