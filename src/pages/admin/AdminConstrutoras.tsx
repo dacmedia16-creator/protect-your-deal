@@ -44,7 +44,6 @@ interface Construtora {
   assinatura_plano_id?: string | null;
   assinatura_plano_nome?: string | null;
   survey_enabled?: boolean;
-  corretores_parceiros_count?: number;
 }
 
 interface Plano {
@@ -128,14 +127,6 @@ export default function AdminConstrutoras() {
             .eq('feature_key', 'post_visit_survey')
             .maybeSingle();
 
-          const { data: partnerFichas } = await supabase
-            .from('fichas_visita')
-            .select('user_id')
-            .eq('construtora_id', c.id)
-            .not('imobiliaria_id', 'is', null);
-
-          const corretores_parceiros_count = new Set(partnerFichas?.map(f => f.user_id).filter(Boolean)).size;
-
           return {
             ...c,
             empreendimentos_count: empreendimentos_count || 0,
@@ -146,7 +137,6 @@ export default function AdminConstrutoras() {
             assinatura_plano_id: assData?.plano_id || null,
             assinatura_plano_nome,
             survey_enabled: flagData?.enabled ?? false,
-            corretores_parceiros_count,
           };
         })
       );
@@ -433,7 +423,6 @@ export default function AdminConstrutoras() {
                           </div>
                           <div className="flex gap-3 text-xs text-muted-foreground">
                             <span>{c.empreendimentos_count} empreendimentos</span>
-                            <span>{c.corretores_parceiros_count} corr. parceiros</span>
                             <span>{c.parceiras_count} parceiras</span>
                             <span>{c.corretores_count} corretores</span>
                           </div>
@@ -453,7 +442,6 @@ export default function AdminConstrutoras() {
                         <TableHead>Email</TableHead>
                         <TableHead>Empreend.</TableHead>
                         <TableHead>Parceiras</TableHead>
-                        <TableHead>Corr. Parceiros</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Assinatura</TableHead>
                         <TableHead className="w-10"></TableHead>
@@ -471,7 +459,6 @@ export default function AdminConstrutoras() {
                           <TableCell className="text-sm text-muted-foreground">{c.email}</TableCell>
                           <TableCell>{c.empreendimentos_count}</TableCell>
                           <TableCell>{c.parceiras_count}</TableCell>
-                          <TableCell>{c.corretores_parceiros_count}</TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(entityStatusColors, c.status)}>{c.status}</Badge>
                           </TableCell>
