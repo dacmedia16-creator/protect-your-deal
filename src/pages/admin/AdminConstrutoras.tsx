@@ -44,6 +44,7 @@ interface Construtora {
   assinatura_plano_id?: string | null;
   assinatura_plano_nome?: string | null;
   survey_enabled?: boolean;
+  corretores_parceiros_count?: number;
 }
 
 interface Plano {
