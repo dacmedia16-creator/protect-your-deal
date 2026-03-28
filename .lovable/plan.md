@@ -1,38 +1,28 @@
 
 
-## Plano: Empreendimento genérico auto-criado + campo de endereço manual
+## Plano: Corrigir seletor de construtoras parceiras
 
-### Objetivo
-Toda construtora criada já vem com um empreendimento genérico chamado "Outro (Endereço Manual)". Quando o corretor seleciona esse empreendimento ao criar uma ficha, em vez de auto-preencher o endereço, aparece um campo de texto para digitar o endereço manualmente.
+### Problema
+O seletor de construtoras não mostra as opções porque a tabela `construtoras` tem RLS que permite leitura **apenas** para `super_admin` e `construtora_admin` da própria construtora. Corretores de imobiliária não conseguem ler os dados da construtora no JOIN, então `p.construtoras` retorna `null`.
 
-### Alterações
+### Solução
 
-#### 1. Edge Functions — Criar empreendimento genérico automaticamente
+Criar uma nova política RLS na tabela `construtoras` que permita imobiliárias parceiras verem as construtoras vinculadas:
 
-Nos dois pontos de criação de construtoras:
-
-**`supabase/functions/registro-construtora/index.ts`** — Após criar a construtora (step 2), inserir:
 ```sql
-INSERT INTO empreendimentos (construtora_id, nome, tipo, status, descricao)
-VALUES (constData.id, 'Outro (Endereço Manual)', 'misto', 'ativo', 'Empreendimento genérico para endereços manuais')
+CREATE POLICY "Imobiliaria parceira pode ver construtora"
+ON public.construtoras
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.construtora_imobiliarias ci
+    WHERE ci.construtora_id = construtoras.id
+    AND ci.imobiliaria_id = get_user_imobiliaria(auth.uid())
+    AND ci.status = 'ativa'
+  )
+);
 ```
 
-**`src/pages/admin/AdminNovaConstrutora.tsx`** — Após o insert da construtora no `onSubmit`, fazer o mesmo insert.
-
-#### 2. Frontend — Campo de endereço manual no NovaFicha
-
-**`src/pages/NovaFicha.tsx`** — Nos dois blocos de seleção de empreendimento (construtora nativa e parceira):
-
-- Detectar se o empreendimento selecionado é o genérico (pelo nome `"Outro (Endereço Manual)"` ou por não ter endereço e ter nome começando com "Outro")
-- Quando selecionado, em vez de mostrar o endereço fixo, exibir campos editáveis de endereço e tipo de imóvel (igual ao modo normal de imobiliária)
-- O `imovel_tipo` também fica editável (Select com as opções padrão: Apartamento, Casa, etc.)
-
-#### 3. Proteção contra exclusão
-
-**`src/pages/construtora/ConstutoraEmpreendimentos.tsx`** — Ocultar botão de excluir para o empreendimento genérico (verificar pelo nome ou adicionar um campo `is_default`).
-
-### Detalhes técnicos
-- Sem migração de schema necessária — usa as colunas existentes da tabela `empreendimentos`
-- Para construtoras já existentes, pode-se rodar um INSERT via ferramenta de dados para criar o empreendimento genérico retroativamente
-- O empreendimento genérico é identificado pelo nome `"Outro (Endereço Manual)"` — abordagem simples sem necessidade de coluna extra
+Apenas uma migração. Nenhuma alteração de código frontend necessária — a query já funciona, só faltava a permissão de leitura.
 
