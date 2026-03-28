@@ -134,6 +134,20 @@ Deno.serve(async (req) => {
 
     console.log("Construtora created:", constData.id);
 
+    // 2b. Create generic empreendimento
+    const { error: empError } = await supabaseAdmin
+      .from("empreendimentos")
+      .insert({
+        construtora_id: constData.id,
+        nome: "Outro (Endereço Manual)",
+        tipo: "misto",
+        status: "ativo",
+        descricao: "Empreendimento genérico para endereços manuais",
+      });
+    if (empError) {
+      console.error("Generic empreendimento error:", empError);
+    }
+
     // 3. Create user_role
     console.log("Creating user role...");
     const { error: roleError } = await supabaseAdmin

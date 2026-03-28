@@ -211,12 +211,14 @@ export default function ConstutoraEmpreendimentos() {
                           <DropdownMenuItem onClick={() => openEditDialog(emp)}>
                             <Pencil className="h-4 w-4 mr-2" /> Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => { setDeleteId(emp.id); setDeleteName(emp.nome); setDeleteDialogOpen(true); }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                          </DropdownMenuItem>
+                          {emp.nome !== 'Outro (Endereço Manual)' && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => { setDeleteId(emp.id); setDeleteName(emp.nome); setDeleteDialogOpen(true); }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

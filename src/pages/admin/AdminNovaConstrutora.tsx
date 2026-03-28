@@ -132,6 +132,17 @@ export default function AdminNovaConstrutora() {
 
       if (constError) throw constError;
 
+      // 1b. Create generic empreendimento
+      if (construtora) {
+        await supabase.from('empreendimentos').insert({
+          construtora_id: construtora.id,
+          nome: 'Outro (Endereço Manual)',
+          tipo: 'misto',
+          status: 'ativo',
+          descricao: 'Empreendimento genérico para endereços manuais',
+        });
+      }
+
       // 2. Create subscription if plan selected
       if (data.plano_id && construtora) {
         const { error: assinError } = await supabase

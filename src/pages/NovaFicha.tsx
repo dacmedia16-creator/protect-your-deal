@@ -612,12 +612,17 @@ export default function NovaFicha() {
                         setEmpreendimentoId(value);
                         const emp = empreendimentosParceira.find(e => e.id === value);
                         if (emp) {
-                          const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
-                          setFormData(prev => ({
-                            ...prev,
-                            imovel_endereco: endereco || emp.nome,
-                            imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
-                          }));
+                          const isGenerico = emp.nome === 'Outro (Endereço Manual)';
+                          if (isGenerico) {
+                            setFormData(prev => ({ ...prev, imovel_endereco: '', imovel_tipo: '' }));
+                          } else {
+                            const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
+                            setFormData(prev => ({
+                              ...prev,
+                              imovel_endereco: endereco || emp.nome,
+                              imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
+                            }));
+                          }
                         }
                       }}
                     >
@@ -640,13 +645,50 @@ export default function NovaFicha() {
                   </div>
                 )}
 
-                {empreendimentoId && (
-                  <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
-                    <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
-                    <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
-                    <p className="mt-2 text-xs">O proprietário será preenchido automaticamente com os dados da construtora.</p>
-                  </div>
-                )}
+                {empreendimentoId && (() => {
+                  const selectedEmp = empreendimentosParceira.find(e => e.id === empreendimentoId);
+                  const isGenerico = selectedEmp?.nome === 'Outro (Endereço Manual)';
+                  if (isGenerico) {
+                    return (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="imovel_endereco_parceira">Endereço completo *</Label>
+                          <Input
+                            id="imovel_endereco_parceira"
+                            placeholder="Rua, número, bairro, cidade"
+                            value={formData.imovel_endereco}
+                            onChange={(e) => setFormData({ ...formData, imovel_endereco: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="imovel_tipo_parceira">Tipo do imóvel *</Label>
+                          <Select
+                            value={formData.imovel_tipo}
+                            onValueChange={(value) => setFormData({ ...formData, imovel_tipo: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {tiposImovel.map((tipo) => (
+                                <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <p className="text-xs text-muted-foreground">O proprietário será preenchido automaticamente com os dados da construtora.</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
+                      <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
+                      <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
+                      <p className="mt-2 text-xs">O proprietário será preenchido automaticamente com os dados da construtora.</p>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           )}
@@ -724,12 +766,17 @@ export default function NovaFicha() {
                         setEmpreendimentoId(value);
                         const emp = empreendimentos.find(e => e.id === value);
                         if (emp) {
-                          const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
-                          setFormData(prev => ({
-                            ...prev,
-                            imovel_endereco: endereco || emp.nome,
-                            imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
-                          }));
+                          const isGenerico = emp.nome === 'Outro (Endereço Manual)';
+                          if (isGenerico) {
+                            setFormData(prev => ({ ...prev, imovel_endereco: '', imovel_tipo: '' }));
+                          } else {
+                            const endereco = [emp.endereco, emp.cidade, emp.estado].filter(Boolean).join(', ');
+                            setFormData(prev => ({
+                              ...prev,
+                              imovel_endereco: endereco || emp.nome,
+                              imovel_tipo: emp.tipo === 'residencial' ? 'Apartamento' : emp.tipo === 'comercial' ? 'Sala Comercial' : 'Outro',
+                            }));
+                          }
                         }
                       }}
                     >
@@ -750,12 +797,48 @@ export default function NovaFicha() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {empreendimentoId && (
-                    <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
-                      <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
-                      <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
-                    </div>
-                  )}
+                  {empreendimentoId && (() => {
+                    const selectedEmp = empreendimentos.find(e => e.id === empreendimentoId);
+                    const isGenerico = selectedEmp?.nome === 'Outro (Endereço Manual)';
+                    if (isGenerico) {
+                      return (
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="imovel_endereco">Endereço completo *</Label>
+                            <Input
+                              id="imovel_endereco"
+                              placeholder="Rua, número, bairro, cidade"
+                              value={formData.imovel_endereco}
+                              onChange={(e) => setFormData({ ...formData, imovel_endereco: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="imovel_tipo">Tipo do imóvel *</Label>
+                            <Select
+                              value={formData.imovel_tipo}
+                              onValueChange={(value) => setFormData({ ...formData, imovel_tipo: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {tiposImovel.map((tipo) => (
+                                  <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/30">
+                        <p><strong>Endereço:</strong> {formData.imovel_endereco}</p>
+                        <p><strong>Tipo:</strong> {formData.imovel_tipo}</p>
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <>
