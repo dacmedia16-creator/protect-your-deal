@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     console.log('Starting deletion process for user:', user_id);
 
     // ====== STEP 1: Clear phone number to free it for reuse ======
-    console.log('[1/7] Clearing phone number from profile...');
+    console.log('[1/12] Clearing phone number from profile...');
     const { error: clearPhoneError, count: phoneCount } = await supabaseAdmin
       .from('profiles')
       .update({ telefone: null })
@@ -108,11 +108,11 @@ Deno.serve(async (req) => {
     if (clearPhoneError) {
       console.warn('Could not clear phone:', clearPhoneError.message);
     } else {
-      console.log('[1/7] Phone number cleared successfully');
+      console.log('[1/12] Phone number cleared successfully');
     }
 
     // ====== STEP 2: Delete from equipes_membros ======
-    console.log('[2/7] Deleting from equipes_membros...');
+    console.log('[2/12] Deleting from equipes_membros...');
     const { error: equipesError, count: equipesCount } = await supabaseAdmin
       .from('equipes_membros')
       .delete()
@@ -121,11 +121,11 @@ Deno.serve(async (req) => {
     if (equipesError) {
       console.warn('Could not delete from equipes_membros:', equipesError.message);
     } else {
-      console.log(`[2/7] Deleted ${equipesCount ?? 0} records from equipes_membros`);
+      console.log(`[2/12] Deleted ${equipesCount ?? 0} records from equipes_membros`);
     }
 
     // ====== STEP 3: Delete from otp_queue ======
-    console.log('[3/7] Deleting from otp_queue...');
+    console.log('[3/12] Deleting from otp_queue...');
     const { error: otpError, count: otpCount } = await supabaseAdmin
       .from('otp_queue')
       .delete()
@@ -134,11 +134,11 @@ Deno.serve(async (req) => {
     if (otpError) {
       console.warn('Could not delete from otp_queue:', otpError.message);
     } else {
-      console.log(`[3/7] Deleted ${otpCount ?? 0} records from otp_queue`);
+      console.log(`[3/12] Deleted ${otpCount ?? 0} records from otp_queue`);
     }
 
     // ====== STEP 4: Delete from afiliados ======
-    console.log('[4/7] Deleting from afiliados...');
+    console.log('[4/12] Deleting from afiliados...');
     const { error: afiliadosError, count: afiliadosCount } = await supabaseAdmin
       .from('afiliados')
       .delete()
@@ -147,11 +147,11 @@ Deno.serve(async (req) => {
     if (afiliadosError) {
       console.warn('Could not delete from afiliados:', afiliadosError.message);
     } else {
-      console.log(`[4/7] Deleted ${afiliadosCount ?? 0} records from afiliados`);
+      console.log(`[4/12] Deleted ${afiliadosCount ?? 0} records from afiliados`);
     }
 
     // ====== STEP 5: Nullify audit_logs (preserve history) ======
-    console.log('[5/7] Nullifying user_id in audit_logs...');
+    console.log('[5/12] Nullifying user_id in audit_logs...');
     const { error: auditError, count: auditCount } = await supabaseAdmin
       .from('audit_logs')
       .update({ user_id: null })
@@ -160,11 +160,11 @@ Deno.serve(async (req) => {
     if (auditError) {
       console.warn('Could not update audit_logs:', auditError.message);
     } else {
-      console.log(`[5/7] Updated ${auditCount ?? 0} records in audit_logs`);
+      console.log(`[5/12] Updated ${auditCount ?? 0} records in audit_logs`);
     }
 
     // ====== STEP 6: Delete templates_mensagem ======
-    console.log('[6/9] Deleting from templates_mensagem...');
+    console.log('[6/12] Deleting from templates_mensagem...');
     const { error: templatesError, count: templatesCount } = await supabaseAdmin
       .from('templates_mensagem')
       .delete()
@@ -173,11 +173,11 @@ Deno.serve(async (req) => {
     if (templatesError) {
       console.warn('Could not delete from templates_mensagem:', templatesError.message);
     } else {
-      console.log(`[6/9] Deleted ${templatesCount ?? 0} records from templates_mensagem`);
+      console.log(`[6/12] Deleted ${templatesCount ?? 0} records from templates_mensagem`);
     }
 
     // ====== STEP 7: Reassign fichas_visita to imobiliaria admin ======
-    console.log('[7/9] Reassigning fichas_visita...');
+    console.log('[7/12] Reassigning fichas_visita...');
     
     // Get user's imobiliaria_id from profile
     const { data: userProfile } = await supabaseAdmin

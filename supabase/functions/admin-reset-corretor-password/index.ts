@@ -37,7 +37,8 @@ Deno.serve(async (req) => {
       auth: { persistSession: false }
     });
 
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    const jwtToken = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(jwtToken);
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),

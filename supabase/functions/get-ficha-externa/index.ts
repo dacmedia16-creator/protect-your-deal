@@ -57,10 +57,10 @@ serve(async (req) => {
       );
     }
 
-    // Fetch ficha with service role
+    // Fetch ficha with only necessary fields (exclude sensitive PII)
     const { data: ficha, error: fichaError } = await supabase
       .from('fichas_visita')
-      .select('*')
+      .select('id, protocolo, imovel_endereco, imovel_tipo, data_visita, status, observacoes, created_at, updated_at, parte_preenchida_parceiro')
       .eq('id', convite.ficha_id)
       .single();
 
@@ -72,12 +72,40 @@ serve(async (req) => {
       );
     }
 
+    // Build ficha response: include only the data relevant to the "parte_faltante"
+    const fichaResponse: Record<string, any> = { ...ficha };
+
+    // If the partner needs to fill "comprador", show proprietario info (already filled)
+    // If the partner needs to fill "proprietario", show comprador info (already filled)
+    // Only expose the name of the already-filled party (not CPF/phone)
+    if (convite.parte_faltante === 'comprador') {
+      // Partner fills comprador; show proprietario name as context
+      const { data: fullFicha } = await supabase
+        .from('fichas_visita')
+        .select('proprietario_nome')
+        .eq('id', convite.ficha_id)
+        .single();
+      if (fullFicha) {
+        fichaResponse.proprietario_nome = fullFicha.proprietario_nome;
+      }
+    } else if (convite.parte_faltante === 'proprietario') {
+      // Partner fills proprietario; show comprador name as context
+      const { data: fullFicha } = await supabase
+        .from('fichas_visita')
+        .select('comprador_nome')
+        .eq('id', convite.ficha_id)
+        .single();
+      if (fullFicha) {
+        fichaResponse.comprador_nome = fullFicha.comprador_nome;
+      }
+    }
+
     console.log(`[get-ficha-externa] Ficha encontrada: ${ficha.protocolo}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        ficha: ficha,
+        ficha: fichaResponse,
         convite: {
           id: convite.id,
           ficha_id: convite.ficha_id,
