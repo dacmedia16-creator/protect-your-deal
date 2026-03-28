@@ -398,16 +398,6 @@ serve(async (req) => {
       // Default channel: free-text message
       sent = await sendViaZionTalk(telefone, message, channel);
     }
-    
-    // Fallback to Evolution API
-    if (!sent) {
-      sent = await sendViaEvolutionAPI(telefone, message);
-    }
-    
-    // Fallback to Z-API
-    if (!sent) {
-      sent = await sendViaZAPI(telefone, message);
-    }
 
     // Send second message with just the code for easy copying (only for non-meta channels)
     if (sent && channel !== 'meta' && channel !== 'meta2') {
@@ -415,13 +405,7 @@ serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
       
       const codigoMessage = codigo; // Just the 6-digit code
-      const codeSent = await sendViaZionTalk(telefone, codigoMessage, channel);
-      if (!codeSent) {
-        const codeSentEvo = await sendViaEvolutionAPI(telefone, codigoMessage);
-        if (!codeSentEvo) {
-          await sendViaZAPI(telefone, codigoMessage);
-        }
-      }
+      await sendViaZionTalk(telefone, codigoMessage, channel);
     }
 
     // Update ficha status
