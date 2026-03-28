@@ -88,33 +88,56 @@ Deno.serve(async (req) => {
       }
 
       case "backfill_orphan_fichas": {
-        // Find orphan fichas and try to set imobiliaria_id based on the user who created them
+        // Find orphan fichas and batch-update using user_roles data
         const { data: orphanFichas, error: selectError } = await supabaseAdmin
           .from("fichas_visita")
           .select("id, user_id")
-          .is("imobiliaria_id", null);
+          .is("imobiliaria_id", null)
+          .not("user_id", "is", null);
 
         if (selectError) throw selectError;
 
         if (orphanFichas && orphanFichas.length > 0) {
+          // Get all unique user_ids
+          const userIds = [...new Set(orphanFichas.map(f => f.user_id).filter(Boolean))];
+          
+          // Batch fetch all user roles at once
+          const { data: userRoles, error: rolesError } = await supabaseAdmin
+            .from("user_roles")
+            .select("user_id, imobiliaria_id")
+            .in("user_id", userIds)
+            .not("imobiliaria_id", "is", null);
+
+          if (rolesError) throw rolesError;
+
+          // Build a lookup map
+          const roleMap = new Map<string, string>();
+          if (userRoles) {
+            for (const role of userRoles) {
+              roleMap.set(role.user_id, role.imobiliaria_id);
+            }
+          }
+
+          // Group fichas by imobiliaria_id for batch updates
+          const updateGroups = new Map<string, string[]>();
           for (const ficha of orphanFichas) {
-            // Get the imobiliaria_id from the user's role
-            const { data: userRole } = await supabaseAdmin
-              .from("user_roles")
-              .select("imobiliaria_id")
-              .eq("user_id", ficha.user_id)
-              .not("imobiliaria_id", "is", null)
-              .maybeSingle();
+            const imobId = roleMap.get(ficha.user_id);
+            if (imobId) {
+              const group = updateGroups.get(imobId) || [];
+              group.push(ficha.id);
+              updateGroups.set(imobId, group);
+            }
+          }
 
-            if (userRole?.imobiliaria_id) {
-              const { error: updateError } = await supabaseAdmin
-                .from("fichas_visita")
-                .update({ imobiliaria_id: userRole.imobiliaria_id })
-                .eq("id", ficha.id);
+          // Execute batch updates per imobiliaria
+          for (const [imobId, fichaIds] of updateGroups) {
+            const { error: updateError } = await supabaseAdmin
+              .from("fichas_visita")
+              .update({ imobiliaria_id: imobId })
+              .in("id", fichaIds);
 
-              if (!updateError) {
-                affectedCount++;
-              }
+            if (!updateError) {
+              affectedCount += fichaIds.length;
             }
           }
         }
@@ -126,31 +149,44 @@ Deno.serve(async (req) => {
       }
 
       case "sync_profiles": {
-        // Sync profiles.imobiliaria_id with user_roles.imobiliaria_id
-        const { data: profiles, error: selectError } = await supabaseAdmin
+        // Batch sync: fetch all profiles and roles, compare in memory
+        const { data: profiles, error: profilesError } = await supabaseAdmin
           .from("profiles")
           .select("id, user_id, imobiliaria_id");
 
-        if (selectError) throw selectError;
+        if (profilesError) throw profilesError;
 
-        if (profiles && profiles.length > 0) {
+        const { data: allRoles, error: rolesError } = await supabaseAdmin
+          .from("user_roles")
+          .select("user_id, imobiliaria_id");
+
+        if (rolesError) throw rolesError;
+
+        if (profiles && allRoles) {
+          // Build role lookup
+          const roleMap = new Map<string, string | null>();
+          for (const role of allRoles) {
+            roleMap.set(role.user_id, role.imobiliaria_id);
+          }
+
+          // Find mismatches
+          const updates: { id: string; imobiliaria_id: string | null }[] = [];
           for (const profile of profiles) {
-            const { data: userRole } = await supabaseAdmin
-              .from("user_roles")
-              .select("imobiliaria_id")
-              .eq("user_id", profile.user_id)
-              .maybeSingle();
+            const roleImobId = roleMap.get(profile.user_id);
+            if (roleImobId !== undefined && profile.imobiliaria_id !== roleImobId) {
+              updates.push({ id: profile.id, imobiliaria_id: roleImobId });
+            }
+          }
 
-            // Only update if there's a difference
-            if (userRole && profile.imobiliaria_id !== userRole.imobiliaria_id) {
-              const { error: updateError } = await supabaseAdmin
-                .from("profiles")
-                .update({ imobiliaria_id: userRole.imobiliaria_id })
-                .eq("id", profile.id);
+          // Batch update mismatched profiles
+          for (const update of updates) {
+            const { error: updateError } = await supabaseAdmin
+              .from("profiles")
+              .update({ imobiliaria_id: update.imobiliaria_id })
+              .eq("id", update.id);
 
-              if (!updateError) {
-                affectedCount++;
-              }
+            if (!updateError) {
+              affectedCount++;
             }
           }
         }
@@ -162,38 +198,38 @@ Deno.serve(async (req) => {
       }
 
       case "create_missing_profiles": {
-        // Create profiles for users that have a role but no profile
-        const { data: rolesWithoutProfile, error: selectError } = await supabaseAdmin
+        // Fetch all roles and profiles, find missing ones
+        const { data: allRoles, error: rolesError } = await supabaseAdmin
           .from("user_roles")
           .select("user_id, imobiliaria_id");
 
-        if (selectError) throw selectError;
+        if (rolesError) throw rolesError;
 
-        if (rolesWithoutProfile && rolesWithoutProfile.length > 0) {
-          for (const roleEntry of rolesWithoutProfile) {
-            // Check if profile exists
-            const { data: existingProfile } = await supabaseAdmin
-              .from("profiles")
-              .select("id")
-              .eq("user_id", roleEntry.user_id)
-              .maybeSingle();
+        const { data: allProfiles, error: profilesError } = await supabaseAdmin
+          .from("profiles")
+          .select("user_id");
 
-            if (!existingProfile) {
-              // Get user email from auth
-              const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(roleEntry.user_id);
-              
-              if (authUser?.user) {
-                const { error: insertError } = await supabaseAdmin
-                  .from("profiles")
-                  .insert({
-                    user_id: roleEntry.user_id,
-                    nome: authUser.user.email?.split("@")[0] || "Usuário",
-                    imobiliaria_id: roleEntry.imobiliaria_id,
-                  });
+        if (profilesError) throw profilesError;
 
-                if (!insertError) {
-                  affectedCount++;
-                }
+        if (allRoles) {
+          const existingUserIds = new Set((allProfiles || []).map(p => p.user_id));
+          const missingRoles = allRoles.filter(r => !existingUserIds.has(r.user_id));
+
+          for (const roleEntry of missingRoles) {
+            // Get user email from auth (this still requires individual calls)
+            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(roleEntry.user_id);
+            
+            if (authUser?.user) {
+              const { error: insertError } = await supabaseAdmin
+                .from("profiles")
+                .insert({
+                  user_id: roleEntry.user_id,
+                  nome: authUser.user.email?.split("@")[0] || "Usuário",
+                  imobiliaria_id: roleEntry.imobiliaria_id,
+                });
+
+              if (!insertError) {
+                affectedCount++;
               }
             }
           }

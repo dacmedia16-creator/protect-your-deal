@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     // Validate required fields
     if (!email || !password || !nome || !role) {
       return new Response(
-        JSON.stringify({ error: 'email, password, nome, role e imobiliaria_id são obrigatórios' }),
+        JSON.stringify({ error: 'email, password, nome e role são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -92,6 +92,21 @@ Deno.serve(async (req) => {
     if (!['corretor', 'imobiliaria_admin', 'construtora_admin'].includes(role)) {
       return new Response(
         JSON.stringify({ error: 'Role inválido. Use corretor, imobiliaria_admin ou construtora_admin' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate org_id is present for each role
+    if (role === 'construtora_admin' && !construtora_id) {
+      return new Response(
+        JSON.stringify({ error: 'construtora_id é obrigatório para role construtora_admin' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if ((role === 'corretor' || role === 'imobiliaria_admin') && !imobiliaria_id && !construtora_id) {
+      return new Response(
+        JSON.stringify({ error: 'imobiliaria_id ou construtora_id é obrigatório para role corretor/imobiliaria_admin' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
