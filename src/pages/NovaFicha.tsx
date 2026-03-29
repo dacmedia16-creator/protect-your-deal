@@ -1308,7 +1308,7 @@ export default function NovaFicha() {
       />
 
       <main className="container mx-auto px-4 py-4 md:py-8 max-w-3xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
           {/* Progress indicator */}
           {renderProgressIndicator()}
 
@@ -1330,7 +1330,8 @@ export default function NovaFicha() {
 
               {isLastStep ? (
                 <Button 
-                  type="submit" 
+                  type="button" 
+                  onClick={handleSubmit} 
                   disabled={isSubmitting} 
                   className="gap-2 flex-1 md:flex-none h-12 md:h-10"
                 >
