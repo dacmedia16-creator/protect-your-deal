@@ -1,61 +1,17 @@
 
 
-## Plano: Wizard passo a passo para criar registro
+## Correção: Step 1 (Modo) pula automaticamente
 
-Transformar o formulário longo em um Wizard com indicador visual de progresso, navegação por steps, e validação por etapa.
+### Problema
+O `useEffect` na linha 252 escuta `modoCriacao` e faz `setCurrentStep(1)`. Como `modoCriacao` já inicia com `'completo'`, o efeito dispara no mount e pula o step "Modo" antes do usuário interagir.
 
-### Steps dinâmicos por tipo de usuário
+### Solução
 
-```text
-IMOBILIÁRIA (completo):
-  Step 1: Modo de Criação
-  Step 2: Dados do Imóvel
-  Step 3: Proprietário
-  Step 4: Comprador
-  Step 5: Revisão + Data/Obs + WhatsApp
+**`src/pages/NovaFicha.tsx`**:
 
-IMOBILIÁRIA (só proprietário):
-  Step 1: Modo de Criação
-  Step 2: Dados do Imóvel
-  Step 3: Proprietário
-  Step 4: Revisão + Data/Obs + WhatsApp
+1. **Remover o `useEffect` das linhas 252-256** que auto-avança o step quando `modoCriacao` muda.
 
-IMOBILIÁRIA (só comprador):
-  Step 1: Modo de Criação
-  Step 2: Dados do Imóvel
-  Step 3: Comprador
-  Step 4: Revisão + Data/Obs + WhatsApp
+2. **No step "Modo"**: Manter o RadioGroup normalmente — o usuário escolhe o modo e clica "Próximo" para avançar. O wizard não deve avançar automaticamente.
 
-CONSTRUTORA (nativa ou parceira):
-  Step 1: Empreendimento (+ construtora para parceira)
-  Step 2: Comprador
-  Step 3: Revisão + Data/Obs + WhatsApp
-```
-
-### Alterações
-
-**`src/pages/NovaFicha.tsx`** — Refatorar o render:
-
-1. Adicionar estado `currentStep` (number, começa em 0)
-2. Criar array dinâmico `steps` baseado no modo (construtora vs imobiliária, modoCriacao)
-3. Adicionar componente de **indicador de progresso** no topo:
-   - Círculos numerados conectados por linhas
-   - Step atual = primary, concluídos = check verde, futuros = cinza
-   - Labels curtos: "Modo", "Imóvel", "Proprietário", "Comprador", "Confirmar"
-4. Renderizar **apenas o card do step atual** (já existem como Cards separados)
-5. Substituir botões "Cancelar"/"Criar" por:
-   - "Voltar" + "Próximo" (steps intermediários)
-   - "Voltar" + "Criar Registro" (último step)
-6. Validação por step antes de avançar (ex: step Imóvel valida endereço + tipo)
-7. No último step, mostrar um **resumo** dos dados preenchidos antes de confirmar
-
-O indicador visual será inline no componente (sem criar componente separado para manter simplicidade). Usar Tailwind para estilizar os circles/connectors.
-
-### Detalhes técnicos
-
-- Os steps são recalculados via `useMemo` quando `modoCriacao`, `isConstrutora`, ou `modoConstrutoraParceira` mudam
-- `currentStep` reseta para 0 quando `modoCriacao` muda
-- Validação parcial por step usa a mesma lógica Zod existente mas verifica apenas os campos do step atual
-- O `handleSubmit` continua igual, só é chamado no último step
-- Mobile: indicador de progresso mostra apenas números (sem labels) para caber na tela
+Isso é tudo. Uma remoção de 4 linhas resolve o problema.
 
