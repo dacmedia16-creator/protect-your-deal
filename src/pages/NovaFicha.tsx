@@ -377,6 +377,12 @@ export default function NovaFicha() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Bloquear submit se não estiver no último passo
+    if (!isLastStep) {
+      handleNext();
+      return;
+    }
+    
     if ((isConstrutora || modoConstrutoraParceira) && !empreendimentoId) {
       toast({ variant: 'destructive', title: 'Erro de validação', description: 'Selecione um empreendimento' });
       return;
