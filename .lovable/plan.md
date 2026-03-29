@@ -1,27 +1,17 @@
 
 
-## Correção: Último passo envia formulário automaticamente
+## Correção: Formulário ainda envia sozinho no último passo
 
 ### Problema
-Quando o usuário está no penúltimo step e pressiona Enter em qualquer campo de texto (ex: telefone, nome), o navegador dispara o `onSubmit` do `<form>` nativo. Como o formulário inteiro está envolvido em `<form onSubmit={handleSubmit}>`, isso submete diretamente, pulando o step de revisão.
+O botão "Criar Registro" no último step tem `type="submit"`, e o `<form onSubmit={handleSubmit}>` ainda controla o fluxo. Pressionar Enter em qualquer campo do último step (observação, data) dispara o submit nativo do form. A guard `!isLastStep` não ajuda porque **já estamos** no último step.
 
 ### Solução
 
-**`src/pages/NovaFicha.tsx`** — Alterar o `handleSubmit` para bloquear submissão se não estiver no último step:
+**`src/pages/NovaFicha.tsx`** — Duas mudanças:
 
-```typescript
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  // Bloquear submit se não estiver no último passo
-  if (!isLastStep) {
-    handleNext(); // Avançar ao próximo step em vez de submeter
-    return;
-  }
-  
-  // ... restante da lógica existente
-};
-```
+1. **Linha 1311**: Mudar `<form onSubmit={handleSubmit}>` para `<form onSubmit={(e) => e.preventDefault()}>` — o form nunca submete nativamente.
 
-Uma alteração de 4 linhas no início do `handleSubmit`. Isso garante que pressionar Enter em qualquer step intermediário apenas avança para o próximo step, e a submissão real só acontece no step de revisão.
+2. **Linha 1333**: Mudar o botão "Criar Registro" de `type="submit"` para `type="button"` com `onClick={handleSubmit}` — a submissão é 100% controlada pelo clique no botão.
+
+Isso elimina completamente o submit nativo do browser. O Enter em campos de texto não faz mais nada.
 
