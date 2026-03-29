@@ -248,12 +248,6 @@ export default function NovaFicha() {
     }
   }, [isConstrutora, modoConstrutoraParceira]);
 
-  // Reset step when modoCriacao changes (only for imobiliária flow)
-  useEffect(() => {
-    if (!isConstrutora && !modoConstrutoraParceira) {
-      setCurrentStep(1); // Go to step after "modo" when mode changes
-    }
-  }, [modoCriacao]);
 
   // Dynamic steps
   const steps: WizardStep[] = useMemo(() => {
