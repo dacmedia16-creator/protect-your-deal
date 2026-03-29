@@ -1,28 +1,61 @@
 
 
-## Plano: Corrigir seletor de construtoras parceiras
+## Plano: Wizard passo a passo para criar registro
 
-### Problema
-O seletor de construtoras não mostra as opções porque a tabela `construtoras` tem RLS que permite leitura **apenas** para `super_admin` e `construtora_admin` da própria construtora. Corretores de imobiliária não conseguem ler os dados da construtora no JOIN, então `p.construtoras` retorna `null`.
+Transformar o formulário longo em um Wizard com indicador visual de progresso, navegação por steps, e validação por etapa.
 
-### Solução
+### Steps dinâmicos por tipo de usuário
 
-Criar uma nova política RLS na tabela `construtoras` que permita imobiliárias parceiras verem as construtoras vinculadas:
+```text
+IMOBILIÁRIA (completo):
+  Step 1: Modo de Criação
+  Step 2: Dados do Imóvel
+  Step 3: Proprietário
+  Step 4: Comprador
+  Step 5: Revisão + Data/Obs + WhatsApp
 
-```sql
-CREATE POLICY "Imobiliaria parceira pode ver construtora"
-ON public.construtoras
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.construtora_imobiliarias ci
-    WHERE ci.construtora_id = construtoras.id
-    AND ci.imobiliaria_id = get_user_imobiliaria(auth.uid())
-    AND ci.status = 'ativa'
-  )
-);
+IMOBILIÁRIA (só proprietário):
+  Step 1: Modo de Criação
+  Step 2: Dados do Imóvel
+  Step 3: Proprietário
+  Step 4: Revisão + Data/Obs + WhatsApp
+
+IMOBILIÁRIA (só comprador):
+  Step 1: Modo de Criação
+  Step 2: Dados do Imóvel
+  Step 3: Comprador
+  Step 4: Revisão + Data/Obs + WhatsApp
+
+CONSTRUTORA (nativa ou parceira):
+  Step 1: Empreendimento (+ construtora para parceira)
+  Step 2: Comprador
+  Step 3: Revisão + Data/Obs + WhatsApp
 ```
 
-Apenas uma migração. Nenhuma alteração de código frontend necessária — a query já funciona, só faltava a permissão de leitura.
+### Alterações
+
+**`src/pages/NovaFicha.tsx`** — Refatorar o render:
+
+1. Adicionar estado `currentStep` (number, começa em 0)
+2. Criar array dinâmico `steps` baseado no modo (construtora vs imobiliária, modoCriacao)
+3. Adicionar componente de **indicador de progresso** no topo:
+   - Círculos numerados conectados por linhas
+   - Step atual = primary, concluídos = check verde, futuros = cinza
+   - Labels curtos: "Modo", "Imóvel", "Proprietário", "Comprador", "Confirmar"
+4. Renderizar **apenas o card do step atual** (já existem como Cards separados)
+5. Substituir botões "Cancelar"/"Criar" por:
+   - "Voltar" + "Próximo" (steps intermediários)
+   - "Voltar" + "Criar Registro" (último step)
+6. Validação por step antes de avançar (ex: step Imóvel valida endereço + tipo)
+7. No último step, mostrar um **resumo** dos dados preenchidos antes de confirmar
+
+O indicador visual será inline no componente (sem criar componente separado para manter simplicidade). Usar Tailwind para estilizar os circles/connectors.
+
+### Detalhes técnicos
+
+- Os steps são recalculados via `useMemo` quando `modoCriacao`, `isConstrutora`, ou `modoConstrutoraParceira` mudam
+- `currentStep` reseta para 0 quando `modoCriacao` muda
+- Validação parcial por step usa a mesma lógica Zod existente mas verifica apenas os campos do step atual
+- O `handleSubmit` continua igual, só é chamado no último step
+- Mobile: indicador de progresso mostra apenas números (sem labels) para caber na tela
 
