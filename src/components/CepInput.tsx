@@ -129,38 +129,40 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {found && (
-        <div className="grid grid-cols-2 gap-3">
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="cep-numero" className="text-xs">Número</Label>
+              <Input
+                id="cep-numero"
+                placeholder="Ex: 123"
+                value={numero}
+                onChange={handleNumeroChange}
+                disabled={disabled}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cep-complemento" className="text-xs">Complemento</Label>
+              <Input
+                id="cep-complemento"
+                placeholder="Ex: Apto 12, Bloco B"
+                value={complemento}
+                onChange={handleComplementoChange}
+                disabled={disabled}
+              />
+            </div>
+          </div>
           <div className="space-y-1">
-            <Label htmlFor="cep-numero" className="text-xs">Número</Label>
+            <Label htmlFor="cep-condominio" className="text-xs">Condomínio</Label>
             <Input
-              id="cep-numero"
-              placeholder="Ex: 123"
-              value={numero}
-              onChange={handleNumeroChange}
+              id="cep-condominio"
+              placeholder="Ex: Condomínio Jardins, Ed. Central"
+              value={condominio}
+              onChange={handleCondominioChange}
               disabled={disabled}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="cep-complemento" className="text-xs">Complemento</Label>
-            <Input
-              id="cep-complemento"
-              placeholder="Ex: Apto 12, Bloco B"
-              value={complemento}
-              onChange={handleComplementoChange}
-              disabled={disabled}
-            />
-          </div>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="cep-condominio" className="text-xs">Condomínio</Label>
-          <Input
-            id="cep-condominio"
-            placeholder="Ex: Condomínio Jardins, Ed. Central"
-            value={condominio}
-            onChange={handleCondominioChange}
-            disabled={disabled}
-          />
-        </div>
+        </>
       )}
     </div>
   );
