@@ -1,10 +1,15 @@
 
 
-## Plano: Mostrar campo de teste sempre visível no card Meta 2
+## Plano: Botões de teste de conexão na seção Integrações do AdminConfiguracoes
 
-Atualmente o campo de envio de teste no card "ZionTalk Meta 2" só aparece após clicar "Testar Conexão" com sucesso (`meta2Status === 'connected'`). A alteração remove essa condição, tornando o campo sempre visível.
+### Contexto
+A seção "Integrações" em `/admin/configuracoes` mostra status estático ("Conectado") para WhatsApp e ImoView. O plano adiciona botões de teste real que invocam a edge function `send-whatsapp` com `action: 'test-connection'` para cada canal.
 
-### Alteração
+### Alterações em `src/pages/admin/AdminConfiguracoes.tsx`
 
-**`src/pages/Integracoes.tsx`**: Remover a condição `{meta2Status === 'connected' && (...)}` do bloco de teste do Meta 2, exibindo os campos de número e botão de envio sempre, independente do status de conexão.
+1. **Adicionar estados** para loading e resultado do teste por canal:
+   - `testingChannel: Record<string, boolean>` — controla spinner por canal
+   - `channelStatus: Record<string, 'unknown' | 'connected' | 'error'>` — status real após teste
 
+2. **Substituir array estático `integracoes`** por 3 canais WhatsApp individuais + ImoView:
+   - `WhatsApp Padrão` → testa canal
