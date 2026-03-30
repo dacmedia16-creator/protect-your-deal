@@ -1,19 +1,15 @@
 
 
-## Plano: Adicionar campos "Número" e "Complemento" após busca por CEP
+## Plano: Adicionar campo "Condomínio" ao CepInput
 
-### Alterações
+### Alteração
 
 **`src/components/CepInput.tsx`**:
-- Após CEP encontrado com sucesso, exibir dois campos em grid lado a lado:
-  - **Número** (ex: 123) — obrigatório visualmente mas não bloqueante
-  - **Complemento** (ex: Apto 12, Bloco B) — opcional
-- Ao preencher número ou complemento, re-chamar `onAddressFound` com endereço atualizado: `{logradouro}, {número} - {complemento}, {bairro}, {cidade} - {uf}`
-- Os campos só aparecem após busca bem-sucedida do CEP
+- Adicionar um campo "Condomínio" abaixo da grid de Número/Complemento
+- Campo opcional, texto livre (ex: "Condomínio Jardins", "Ed. Central")
+- Incluir o condomínio na construção do endereço via `buildAddress`
+- Formato: `{logradouro}, {número} - {complemento}, {condomínio}, {bairro}, {cidade} - {uf}`
+- Se vazio, não altera o endereço atual
 
-### Comportamento
-1. Usuário digita CEP → endereço preenchido automaticamente
-2. Campos "Número" e "Complemento" aparecem abaixo do CEP
-3. Ao digitar, o endereço final é recalculado e enviado via callback
-4. Ambos opcionais — se vazios, endereço fica como veio da API
+O campo aparece apenas após busca bem-sucedida do CEP, junto com Número e Complemento. Layout: grid 2 colunas para Número/Complemento + campo Condomínio em largura total abaixo.
 
