@@ -378,7 +378,7 @@ const Index = () => {
                 Prove Suas Visitas.{' '}
                 <span className="text-primary">Proteja Sua Comissão.</span>
               </h1>
-               <Link to="/sobre" className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in cursor-pointer hover:underline block">"Criado por um corretor que perdeu R$ 240 mil de comissão." (Clique )
+               <Link to="/nossa-historia" className="text-amber-600 font-semibold text-base md:text-lg mb-6 animate-fade-in cursor-pointer hover:underline block">"Criado por um corretor que perdeu R$ 240 mil de comissão." (Clique )
 
               </Link>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl md:mx-0 mx-auto">
