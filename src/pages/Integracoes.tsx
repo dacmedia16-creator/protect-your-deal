@@ -346,26 +346,24 @@ const Integracoes = () => {
               Testar Conexão
             </Button>
 
-            {meta2Status === 'connected' && (
-              <div className="space-y-3 pt-2 border-t">
-                <Label htmlFor="meta2TestPhone">Enviar template de teste</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="meta2TestPhone"
-                    placeholder="(11) 99999-9999"
-                    value={meta2TestPhone}
-                    onChange={(e) => setMeta2TestPhone(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={() => sendMetaTestMessage('meta2')} disabled={sendingMeta2Test || !meta2TestPhone} size="icon">
-                    {sendingMeta2Test ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Envia o template <strong>visita_prova_2</strong> com dados de teste para o número informado.
-                </p>
+            <div className="space-y-3 pt-2 border-t">
+              <Label htmlFor="meta2TestPhone">Enviar template de teste</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="meta2TestPhone"
+                  placeholder="(11) 99999-9999"
+                  value={meta2TestPhone}
+                  onChange={(e) => setMeta2TestPhone(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={() => sendMetaTestMessage('meta2')} disabled={sendingMeta2Test || !meta2TestPhone} size="icon">
+                  {sendingMeta2Test ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
               </div>
-            )}
+              <p className="text-xs text-muted-foreground">
+                Envia o template <strong>visita_prova_2</strong> com dados de teste para o número informado.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </main>
