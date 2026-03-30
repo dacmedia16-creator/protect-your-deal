@@ -163,6 +163,8 @@ export default function AdminConfiguracoes() {
 
   const [testingChannel, setTestingChannel] = useState<Record<string, boolean>>({});
   const [channelStatus, setChannelStatus] = useState<Record<string, 'unknown' | 'connected' | 'error'>>({});
+  const [testPhone, setTestPhone] = useState<Record<string, string>>({});
+  const [sendingTest, setSendingTest] = useState<Record<string, boolean>>({});
 
   const testWhatsappConnection = async (channel: 'default' | 'meta' | 'meta2') => {
     setTestingChannel(prev => ({ ...prev, [channel]: true }));
