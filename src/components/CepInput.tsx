@@ -22,6 +22,7 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
   const [found, setFound] = useState(false);
   const [numero, setNumero] = useState('');
   const [complemento, setComplemento] = useState('');
+  const [condominio, setCondominio] = useState('');
   const detailsRef = useRef<CepDetails | null>(null);
 
   const formatCep = (value: string) => {
@@ -32,11 +33,11 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
     return digits;
   };
 
-  const buildAddress = useCallback((details: CepDetails, num: string, compl: string) => {
+  const buildAddress = useCallback((details: CepDetails, num: string, compl: string, condo: string) => {
     let logradouro = details.logradouro;
     if (num) logradouro += `, ${num}`;
     if (compl) logradouro += ` - ${compl}`;
-    const parts = [logradouro, details.bairro, details.cidade ? `${details.cidade} - ${details.uf}` : ''].filter(Boolean);
+    const parts = [logradouro, condo, details.bairro, details.cidade ? `${details.cidade} - ${details.uf}` : ''].filter(Boolean);
     return parts.join(', ');
   }, []);
 
@@ -46,6 +47,7 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
     setFound(false);
     setNumero('');
     setComplemento('');
+    setCondominio('');
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       const data = await res.json();
@@ -61,7 +63,7 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
       };
       detailsRef.current = details;
       setFound(true);
-      onAddressFound(buildAddress(details, '', ''), details);
+      onAddressFound(buildAddress(details, '', '', ''), details);
     } catch {
       setError('Erro ao buscar CEP');
     } finally {
@@ -83,7 +85,7 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
     const val = e.target.value;
     setNumero(val);
     if (detailsRef.current) {
-      onAddressFound(buildAddress(detailsRef.current, val, complemento), detailsRef.current);
+      onAddressFound(buildAddress(detailsRef.current, val, complemento, condominio), detailsRef.current);
     }
   };
 
@@ -91,7 +93,15 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
     const val = e.target.value;
     setComplemento(val);
     if (detailsRef.current) {
-      onAddressFound(buildAddress(detailsRef.current, numero, val), detailsRef.current);
+      onAddressFound(buildAddress(detailsRef.current, numero, val, condominio), detailsRef.current);
+    }
+  };
+
+  const handleCondominioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setCondominio(val);
+    if (detailsRef.current) {
+      onAddressFound(buildAddress(detailsRef.current, numero, complemento, val), detailsRef.current);
     }
   };
 
@@ -119,28 +129,40 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {found && (
-        <div className="grid grid-cols-2 gap-3">
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="cep-numero" className="text-xs">Número</Label>
+              <Input
+                id="cep-numero"
+                placeholder="Ex: 123"
+                value={numero}
+                onChange={handleNumeroChange}
+                disabled={disabled}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="cep-complemento" className="text-xs">Complemento</Label>
+              <Input
+                id="cep-complemento"
+                placeholder="Ex: Apto 12, Bloco B"
+                value={complemento}
+                onChange={handleComplementoChange}
+                disabled={disabled}
+              />
+            </div>
+          </div>
           <div className="space-y-1">
-            <Label htmlFor="cep-numero" className="text-xs">Número</Label>
+            <Label htmlFor="cep-condominio" className="text-xs">Condomínio</Label>
             <Input
-              id="cep-numero"
-              placeholder="Ex: 123"
-              value={numero}
-              onChange={handleNumeroChange}
+              id="cep-condominio"
+              placeholder="Ex: Condomínio Jardins, Ed. Central"
+              value={condominio}
+              onChange={handleCondominioChange}
               disabled={disabled}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="cep-complemento" className="text-xs">Complemento</Label>
-            <Input
-              id="cep-complemento"
-              placeholder="Ex: Apto 12, Bloco B"
-              value={complemento}
-              onChange={handleComplementoChange}
-              disabled={disabled}
-            />
-          </div>
-        </div>
+        </>
       )}
     </div>
   );
