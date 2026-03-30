@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
+import { CepInput } from '@/components/CepInput';
 
 const tiposImovel = [
   'Apartamento',
@@ -216,6 +217,17 @@ export default function FormImovel() {
               <CardTitle>Dados do Imóvel</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <CepInput
+                onAddressFound={(endereco, details) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    endereco,
+                    bairro: details?.bairro || prev.bairro,
+                    cidade: details?.cidade || prev.cidade,
+                    estado: details?.uf || prev.estado,
+                  }));
+                }}
+              />
               <div className="space-y-2">
                 <Label htmlFor="endereco">Endereço *</Label>
                 <Input
