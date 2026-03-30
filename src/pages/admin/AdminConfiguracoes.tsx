@@ -215,6 +215,7 @@ export default function AdminConfiguracoes() {
     }
   };
 
+  const whatsappChannels = [
     { key: 'default' as const, nome: 'WhatsApp Padrão', descricao: 'Envio de texto livre via ZionTalk' },
     { key: 'meta' as const, nome: 'ZionTalk Meta (API Oficial)', descricao: 'Templates via API Oficial Meta' },
     { key: 'meta2' as const, nome: 'ZionTalk Meta 2 (API Oficial 2)', descricao: 'Templates via API Oficial Meta 2' },
