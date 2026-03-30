@@ -263,38 +263,53 @@ Deno.serve(async (req) => {
     console.log(`[8/12] Cleared ${partnerCount ?? 0} corretor_parceiro_id references`);
 
     // ====== STEP 9: Clear app_versions published_by ======
-    console.log('[9/12] Clearing app_versions published_by...');
+    console.log('[9/13] Clearing app_versions published_by...');
     const { count: appVersionsCount } = await supabaseAdmin
       .from('app_versions')
       .update({ published_by: null })
       .eq('published_by', targetUserId);
 
-    console.log(`[9/12] Cleared ${appVersionsCount ?? 0} app_versions references`);
+    console.log(`[9/13] Cleared ${appVersionsCount ?? 0} app_versions references`);
 
     // ====== STEP 10: Delete user_sessions ======
-    console.log('[10/12] Deleting user_sessions...');
+    console.log('[10/13] Deleting user_sessions...');
     const { count: sessionsCount } = await supabaseAdmin
       .from('user_sessions')
       .delete()
       .eq('user_id', targetUserId);
 
-    console.log(`[10/12] Deleted ${sessionsCount ?? 0} user_sessions`);
+    console.log(`[10/13] Deleted ${sessionsCount ?? 0} user_sessions`);
 
     // ====== STEP 11: Clear convites.convidado_por ======
-    console.log('[11/12] Clearing convites.convidado_por...');
+    console.log('[11/13] Clearing convites.convidado_por...');
     const { count: convitesCount } = await supabaseAdmin
       .from('convites')
       .update({ convidado_por: null })
       .eq('convidado_por', targetUserId);
 
-    console.log(`[11/12] Cleared ${convitesCount ?? 0} convites references`);
+    console.log(`[11/13] Cleared ${convitesCount ?? 0} convites references`);
 
-    // ====== STEP 12: Delete user from auth.users (cascades to user_roles and profiles) ======
-    console.log('[12/12] Deleting user from auth.users...');
+    // ====== STEP 12: Delete user_feature_flags ======
+    console.log('[12/13] Deleting user_feature_flags...');
+    const { error: featureFlagsError, count: featureFlagsCount } = await supabaseAdmin
+      .from('user_feature_flags')
+      .delete()
+      .eq('user_id', targetUserId);
+
+    if (featureFlagsError) {
+      console.warn('Could not delete user_feature_flags:', featureFlagsError.message);
+    } else {
+      console.log(`[12/13] Deleted ${featureFlagsCount ?? 0} user_feature_flags`);
+    }
+
+    // ====== STEP 13: Delete user from auth.users (cascades to user_roles and profiles) ======
+    console.log('[13/13] Deleting user from auth.users...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
 
     if (deleteError) {
-      console.error('Delete error:', deleteError);
+      console.error('Delete error full:', JSON.stringify(deleteError));
+      console.error('Delete error message:', deleteError.message);
+      console.error('Delete error status:', (deleteError as any).status);
       return new Response(
         JSON.stringify({ error: deleteError.message || 'Erro ao excluir corretor' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -357,14 +357,18 @@ export default function ConstutoraCorretores() {
         headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
       });
       if (error) {
-        // Extract real error message from edge function response
         let msg = 'Erro ao excluir corretor';
         try {
           if (error.context && typeof error.context.json === 'function') {
             const body = await error.context.json();
             if (body?.error) msg = body.error;
+          } else if (error.message) {
+            msg = error.message;
           }
-        } catch { /* fallback to generic */ }
+        } catch {
+          if (error.message) msg = error.message;
+        }
+        console.error('empresa-delete-corretor error:', JSON.stringify(error));
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);
