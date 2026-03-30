@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CepInput } from '@/components/CepInput';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -801,7 +802,8 @@ export default function NovaFicha() {
               const isGenerico = selectedEmp?.nome === 'Outro (Endereço Manual)';
               if (isGenerico) {
                 return (
-                  <div className="space-y-4">
+                    <div className="space-y-4">
+                    <CepInput onAddressFound={(endereco) => setFormData({ ...formData, imovel_endereco: endereco })} />
                     <div className="space-y-2">
                       <Label htmlFor="imovel_endereco_parceira">Endereço completo *</Label>
                       <Input
@@ -903,6 +905,7 @@ export default function NovaFicha() {
               if (isGenerico) {
                 return (
                   <div className="space-y-4">
+                    <CepInput onAddressFound={(endereco) => setFormData({ ...formData, imovel_endereco: endereco })} />
                     <div className="space-y-2">
                       <Label htmlFor="imovel_endereco">Endereço completo *</Label>
                       <Input
@@ -959,6 +962,7 @@ export default function NovaFicha() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        <CepInput onAddressFound={(endereco) => setFormData({ ...formData, imovel_endereco: endereco })} />
         <div className="space-y-2">
           <Label htmlFor="imovel_endereco">Endereço completo *</Label>
           <Input
