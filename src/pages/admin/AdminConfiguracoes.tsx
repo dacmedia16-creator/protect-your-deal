@@ -358,33 +358,58 @@ export default function AdminConfiguracoes() {
                 const status = channelStatus[ch.key] || 'unknown';
                 const isTesting = testingChannel[ch.key] || false;
                 return (
-                  <div key={ch.key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-lg">
-                        <MessageSquare className="h-4 w-4" />
+                  <div key={ch.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-muted rounded-lg">
+                          <MessageSquare className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{ch.nome}</p>
+                          <p className="text-sm text-muted-foreground">{ch.descricao}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{ch.nome}</p>
-                        <p className="text-sm text-muted-foreground">{ch.descricao}</p>
+                      <div className="flex items-center gap-2">
+                        {status !== 'unknown' && (
+                          <Badge variant={status === 'connected' ? 'default' : 'destructive'} className="flex items-center gap-1">
+                            {status === 'connected' ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {status === 'connected' ? 'Conectado' : 'Erro'}
+                          </Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => testWhatsappConnection(ch.key)}
+                          disabled={isTesting}
+                        >
+                          <RefreshCw className={`h-3 w-3 mr-1 ${isTesting ? 'animate-spin' : ''}`} />
+                          Testar
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {status !== 'unknown' && (
-                        <Badge variant={status === 'connected' ? 'default' : 'destructive'} className="flex items-center gap-1">
-                          {status === 'connected' ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                          {status === 'connected' ? 'Conectado' : 'Erro'}
-                        </Badge>
-                      )}
+                    <div className="flex items-center gap-2 ml-11">
+                      <Input
+                        placeholder="(00) 00000-0000"
+                        value={testPhone[ch.key] || ''}
+                        onChange={(e) => setTestPhone(prev => ({ ...prev, [ch.key]: formatPhone(e.target.value) }))}
+                        className="w-40 h-8 text-sm"
+                      />
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        onClick={() => testWhatsappConnection(ch.key)}
-                        disabled={isTesting}
+                        onClick={() => sendTestMessage(ch.key)}
+                        disabled={sendingTest[ch.key] || !testPhone[ch.key]}
+                        className="h-8"
                       >
-                        <RefreshCw className={`h-3 w-3 mr-1 ${isTesting ? 'animate-spin' : ''}`} />
-                        Testar
+                        {sendingTest[ch.key] ? (
+                          <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Send className="h-3 w-3 mr-1" />
+                        )}
+                        Enviar teste
                       </Button>
                     </div>
+                    <Separator />
                   </div>
                 );
               })}
