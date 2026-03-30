@@ -1,10 +1,17 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, MapPin } from 'lucide-react';
 
+interface CepDetails {
+  logradouro: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+}
+
 interface CepInputProps {
-  onAddressFound: (endereco: string, details?: { logradouro: string; bairro: string; cidade: string; uf: string }) => void;
+  onAddressFound: (endereco: string, details?: CepDetails) => void;
   disabled?: boolean;
 }
 
@@ -12,6 +19,10 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
   const [cep, setCep] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [found, setFound] = useState(false);
+  const [numero, setNumero] = useState('');
+  const [complemento, setComplemento] = useState('');
+  const detailsRef = useRef<CepDetails | null>(null);
 
   const formatCep = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -21,9 +32,20 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
     return digits;
   };
 
+  const buildAddress = useCallback((details: CepDetails, num: string, compl: string) => {
+    let logradouro = details.logradouro;
+    if (num) logradouro += `, ${num}`;
+    if (compl) logradouro += ` - ${compl}`;
+    const parts = [logradouro, details.bairro, details.cidade ? `${details.cidade} - ${details.uf}` : ''].filter(Boolean);
+    return parts.join(', ');
+  }, []);
+
   const fetchCep = useCallback(async (cleanCep: string) => {
     setLoading(true);
     setError('');
+    setFound(false);
+    setNumero('');
+    setComplemento('');
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       const data = await res.json();
@@ -31,19 +53,21 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
         setError('CEP não encontrado');
         return;
       }
-      const parts = [data.logradouro, data.bairro, data.localidade ? `${data.localidade} - ${data.uf}` : ''].filter(Boolean);
-      onAddressFound(parts.join(', '), {
+      const details: CepDetails = {
         logradouro: data.logradouro || '',
         bairro: data.bairro || '',
         cidade: data.localidade || '',
         uf: data.uf || '',
-      });
+      };
+      detailsRef.current = details;
+      setFound(true);
+      onAddressFound(buildAddress(details, '', ''), details);
     } catch {
       setError('Erro ao buscar CEP');
     } finally {
       setLoading(false);
     }
-  }, [onAddressFound]);
+  }, [onAddressFound, buildAddress]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCep(e.target.value);
@@ -52,6 +76,22 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
     const digits = formatted.replace(/\D/g, '');
     if (digits.length === 8) {
       fetchCep(digits);
+    }
+  };
+
+  const handleNumeroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setNumero(val);
+    if (detailsRef.current) {
+      onAddressFound(buildAddress(detailsRef.current, val, complemento), detailsRef.current);
+    }
+  };
+
+  const handleComplementoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setComplemento(val);
+    if (detailsRef.current) {
+      onAddressFound(buildAddress(detailsRef.current, numero, val), detailsRef.current);
     }
   };
 
@@ -78,6 +118,30 @@ export function CepInput({ onAddressFound, disabled }: CepInputProps) {
         )}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
+      {found && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="cep-numero" className="text-xs">Número</Label>
+            <Input
+              id="cep-numero"
+              placeholder="Ex: 123"
+              value={numero}
+              onChange={handleNumeroChange}
+              disabled={disabled}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="cep-complemento" className="text-xs">Complemento</Label>
+            <Input
+              id="cep-complemento"
+              placeholder="Ex: Apto 12, Bloco B"
+              value={complemento}
+              onChange={handleComplementoChange}
+              disabled={disabled}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
