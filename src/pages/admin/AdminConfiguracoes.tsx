@@ -200,7 +200,7 @@ export default function AdminConfiguracoes() {
     try {
       const body = channel === 'default'
         ? { action: 'send-text', phone, message: '✅ Mensagem de teste do sistema VisitaProva — canal WhatsApp Padrão funcionando!', channel }
-        : { action: 'send-template', phone, templateName: 'visita_prova_2', templateParams: { nome: 'Teste', imovel: 'Endereço de teste', codigo: '000000', lembrete: 'Esta é uma mensagem de teste do sistema.' }, language: 'pt_BR', channel };
+        : { action: 'send-template', phone, templateName: 'visita_prova_2', templateParams: { nome: 'Teste', imovel: 'Endereço de teste', codigo: '000000', lembrete: 'Esta é uma mensagem de teste do sistema.' }, buttonUrlDynamicParams: ['confirmar/teste-123'], language: 'pt_BR', channel };
       const { data, error } = await supabase.functions.invoke('send-whatsapp', { body });
       if (error) throw error;
       if (data?.success) {
