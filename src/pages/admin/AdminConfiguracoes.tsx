@@ -190,7 +190,31 @@ export default function AdminConfiguracoes() {
     }
   };
 
-  const whatsappChannels = [
+  const sendTestMessage = async (channel: 'default' | 'meta' | 'meta2') => {
+    const phone = unformatPhone(testPhone[channel] || '');
+    if (!isValidPhone(phone)) {
+      toast.error('Informe um número de telefone válido');
+      return;
+    }
+    setSendingTest(prev => ({ ...prev, [channel]: true }));
+    try {
+      const body = channel === 'default'
+        ? { action: 'send-text', phone, message: '✅ Mensagem de teste do sistema VisitaProva — canal WhatsApp Padrão funcionando!', channel }
+        : { action: 'send-template', phone, templateName: 'visita_prova_2', templateParams: { nome: 'Teste', imovel: 'Endereço de teste', codigo: '000000', lembrete: 'Esta é uma mensagem de teste do sistema.' }, language: 'pt_BR', channel };
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', { body });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success(`Mensagem de teste enviada para ${formatPhone(phone)}`);
+      } else {
+        toast.error(data?.error || 'Erro ao enviar mensagem de teste');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao enviar mensagem de teste');
+    } finally {
+      setSendingTest(prev => ({ ...prev, [channel]: false }));
+    }
+  };
+
     { key: 'default' as const, nome: 'WhatsApp Padrão', descricao: 'Envio de texto livre via ZionTalk' },
     { key: 'meta' as const, nome: 'ZionTalk Meta (API Oficial)', descricao: 'Templates via API Oficial Meta' },
     { key: 'meta2' as const, nome: 'ZionTalk Meta 2 (API Oficial 2)', descricao: 'Templates via API Oficial Meta 2' },
