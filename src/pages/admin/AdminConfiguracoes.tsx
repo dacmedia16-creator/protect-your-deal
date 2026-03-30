@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatPhone, unformatPhone, isValidPhone } from "@/lib/phone";
 import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import {
   Bell, 
   Shield, 
   Plug, 
+  Send,
   MessageSquare,
   Gift,
   Database,
@@ -163,6 +165,8 @@ export default function AdminConfiguracoes() {
 
   const [testingChannel, setTestingChannel] = useState<Record<string, boolean>>({});
   const [channelStatus, setChannelStatus] = useState<Record<string, 'unknown' | 'connected' | 'error'>>({});
+  const [testPhone, setTestPhone] = useState<Record<string, string>>({});
+  const [sendingTest, setSendingTest] = useState<Record<string, boolean>>({});
 
   const testWhatsappConnection = async (channel: 'default' | 'meta' | 'meta2') => {
     setTestingChannel(prev => ({ ...prev, [channel]: true }));
@@ -183,6 +187,31 @@ export default function AdminConfiguracoes() {
       toast.error(err?.message || 'Erro ao testar conexão');
     } finally {
       setTestingChannel(prev => ({ ...prev, [channel]: false }));
+    }
+  };
+
+  const sendTestMessage = async (channel: 'default' | 'meta' | 'meta2') => {
+    const phone = unformatPhone(testPhone[channel] || '');
+    if (!isValidPhone(phone)) {
+      toast.error('Informe um número de telefone válido');
+      return;
+    }
+    setSendingTest(prev => ({ ...prev, [channel]: true }));
+    try {
+      const body = channel === 'default'
+        ? { action: 'send-text', phone, message: '✅ Mensagem de teste do sistema VisitaProva — canal WhatsApp Padrão funcionando!', channel }
+        : { action: 'send-template', phone, templateName: 'visita_prova_2', templateParams: { nome: 'Teste', imovel: 'Endereço de teste', codigo: '000000', lembrete: 'Esta é uma mensagem de teste do sistema.' }, language: 'pt_BR', channel };
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', { body });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success(`Mensagem de teste enviada para ${formatPhone(phone)}`);
+      } else {
+        toast.error(data?.error || 'Erro ao enviar mensagem de teste');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao enviar mensagem de teste');
+    } finally {
+      setSendingTest(prev => ({ ...prev, [channel]: false }));
     }
   };
 
@@ -329,33 +358,58 @@ export default function AdminConfiguracoes() {
                 const status = channelStatus[ch.key] || 'unknown';
                 const isTesting = testingChannel[ch.key] || false;
                 return (
-                  <div key={ch.key} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-lg">
-                        <MessageSquare className="h-4 w-4" />
+                  <div key={ch.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-muted rounded-lg">
+                          <MessageSquare className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{ch.nome}</p>
+                          <p className="text-sm text-muted-foreground">{ch.descricao}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{ch.nome}</p>
-                        <p className="text-sm text-muted-foreground">{ch.descricao}</p>
+                      <div className="flex items-center gap-2">
+                        {status !== 'unknown' && (
+                          <Badge variant={status === 'connected' ? 'default' : 'destructive'} className="flex items-center gap-1">
+                            {status === 'connected' ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {status === 'connected' ? 'Conectado' : 'Erro'}
+                          </Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => testWhatsappConnection(ch.key)}
+                          disabled={isTesting}
+                        >
+                          <RefreshCw className={`h-3 w-3 mr-1 ${isTesting ? 'animate-spin' : ''}`} />
+                          Testar
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {status !== 'unknown' && (
-                        <Badge variant={status === 'connected' ? 'default' : 'destructive'} className="flex items-center gap-1">
-                          {status === 'connected' ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                          {status === 'connected' ? 'Conectado' : 'Erro'}
-                        </Badge>
-                      )}
+                    <div className="flex items-center gap-2 ml-11">
+                      <Input
+                        placeholder="(00) 00000-0000"
+                        value={testPhone[ch.key] || ''}
+                        onChange={(e) => setTestPhone(prev => ({ ...prev, [ch.key]: formatPhone(e.target.value) }))}
+                        className="w-40 h-8 text-sm"
+                      />
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        onClick={() => testWhatsappConnection(ch.key)}
-                        disabled={isTesting}
+                        onClick={() => sendTestMessage(ch.key)}
+                        disabled={sendingTest[ch.key] || !testPhone[ch.key]}
+                        className="h-8"
                       >
-                        <RefreshCw className={`h-3 w-3 mr-1 ${isTesting ? 'animate-spin' : ''}`} />
-                        Testar
+                        {sendingTest[ch.key] ? (
+                          <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Send className="h-3 w-3 mr-1" />
+                        )}
+                        Enviar teste
                       </Button>
                     </div>
+                    <Separator />
                   </div>
                 );
               })}
