@@ -1,22 +1,21 @@
 
 
-## Plano: Adicionar campo de número para envio de teste na seção Integrações
+## Plano: Corrigir envio de teste Meta 1 e Meta 2 no AdminConfiguracoes
+
+### Problema
+O envio de teste para canais Meta falha porque falta o parâmetro `buttonUrlDynamicParams` no body da requisição. O template `visita_prova_2` da Meta exige esse parâmetro para o botão CTA "Confirmar Visita".
 
 ### Alteração em `src/pages/admin/AdminConfiguracoes.tsx`
 
-1. **Adicionar estados** para número de teste e loading de envio por canal:
-   - `testPhone: Record<string, string>` — número digitado por canal
-   - `sendingTest: Record<string, boolean>` — loading do envio
+Na função `sendTestMessage`, adicionar `buttonUrlDynamicParams: ['confirmar/teste-123']` ao body dos canais `meta` e `meta2`, alinhando com a implementação funcional da página `/integracoes`.
 
-2. **Criar função `sendTestMessage(channel)`** que invoca `send-whatsapp` com:
-   - `action: 'send-template'` para canais `meta`/`meta2` (template `visita_prova_2`)
-   - `action: 'send-text'` para canal `default` (mensagem de texto livre)
+**De:**
+```typescript
+{ action: 'send-template', phone, templateName: 'visita_prova_2', templateParams: { ... }, language: 'pt_BR', channel }
+```
 
-3. **Expandir cada card de canal WhatsApp** para incluir abaixo do botão "Testar":
-   - Input com máscara de telefone e placeholder `(00) 00000-0000`
-   - Botão "Enviar teste" que chama `sendTestMessage`
-   - Feedback via toast de sucesso/erro
-
-### Resultado
-Cada canal WhatsApp terá um campo de número + botão para enviar mensagem de teste real, direto da página de configurações.
+**Para:**
+```typescript
+{ action: 'send-template', phone, templateName: 'visita_prova_2', templateParams: { ... }, buttonUrlDynamicParams: ['confirmar/teste-123'], language: 'pt_BR', channel }
+```
 
