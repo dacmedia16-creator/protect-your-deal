@@ -161,13 +161,38 @@ export default function AdminConfiguracoes() {
     });
   };
 
+  const [testingChannel, setTestingChannel] = useState<Record<string, boolean>>({});
+  const [channelStatus, setChannelStatus] = useState<Record<string, 'unknown' | 'connected' | 'error'>>({});
+
+  const testWhatsappConnection = async (channel: 'default' | 'meta' | 'meta2') => {
+    setTestingChannel(prev => ({ ...prev, [channel]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: { action: 'test-connection', channel }
+      });
+      if (error) throw error;
+      if (data?.connected) {
+        setChannelStatus(prev => ({ ...prev, [channel]: 'connected' }));
+        toast.success(`${data.message || 'Conexão OK'}`);
+      } else {
+        setChannelStatus(prev => ({ ...prev, [channel]: 'error' }));
+        toast.error(data?.message || 'Falha na conexão');
+      }
+    } catch (err: any) {
+      setChannelStatus(prev => ({ ...prev, [channel]: 'error' }));
+      toast.error(err?.message || 'Erro ao testar conexão');
+    } finally {
+      setTestingChannel(prev => ({ ...prev, [channel]: false }));
+    }
+  };
+
+  const whatsappChannels = [
+    { key: 'default' as const, nome: 'WhatsApp Padrão', descricao: 'Envio de texto livre via ZionTalk' },
+    { key: 'meta' as const, nome: 'ZionTalk Meta (API Oficial)', descricao: 'Templates via API Oficial Meta' },
+    { key: 'meta2' as const, nome: 'ZionTalk Meta 2 (API Oficial 2)', descricao: 'Templates via API Oficial Meta 2' },
+  ];
+
   const integracoes = [
-    {
-      nome: "WhatsApp (ZionTalk)",
-      descricao: "Envio de mensagens via WhatsApp",
-      status: "conectado",
-      icon: MessageSquare,
-    },
     {
       nome: "ImoView",
       descricao: "Integração com sistema ImoView",
@@ -300,6 +325,40 @@ export default function AdminConfiguracoes() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {whatsappChannels.map((ch) => {
+                const status = channelStatus[ch.key] || 'unknown';
+                const isTesting = testingChannel[ch.key] || false;
+                return (
+                  <div key={ch.key} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-muted rounded-lg">
+                        <MessageSquare className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{ch.nome}</p>
+                        <p className="text-sm text-muted-foreground">{ch.descricao}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {status !== 'unknown' && (
+                        <Badge variant={status === 'connected' ? 'default' : 'destructive'} className="flex items-center gap-1">
+                          {status === 'connected' ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                          {status === 'connected' ? 'Conectado' : 'Erro'}
+                        </Badge>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => testWhatsappConnection(ch.key)}
+                        disabled={isTesting}
+                      >
+                        <RefreshCw className={`h-3 w-3 mr-1 ${isTesting ? 'animate-spin' : ''}`} />
+                        Testar
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
               {integracoes.map((integracao) => (
                 <div key={integracao.nome} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -308,21 +367,12 @@ export default function AdminConfiguracoes() {
                     </div>
                     <div>
                       <p className="font-medium">{integracao.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {integracao.descricao}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{integracao.descricao}</p>
                     </div>
                   </div>
-                  <Badge 
-                    variant={integracao.status === "conectado" ? "default" : "secondary"}
-                    className="flex items-center gap-1"
-                  >
-                    {integracao.status === "conectado" ? (
-                      <CheckCircle className="h-3 w-3" />
-                    ) : (
-                      <XCircle className="h-3 w-3" />
-                    )}
-                    {integracao.status === "conectado" ? "Conectado" : "Desconectado"}
+                  <Badge variant="default" className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Conectado
                   </Badge>
                 </div>
               ))}
