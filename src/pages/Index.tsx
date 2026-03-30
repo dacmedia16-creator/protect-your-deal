@@ -647,6 +647,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Depoimentos Section */}
+      <DepoimentosSection />
+
       {/* Pricing Section */}
       <section id="planos" className="py-20">
         <div className="container mx-auto px-4">
@@ -772,8 +775,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Depoimentos Section */}
-      <DepoimentosSection />
+      
 
       {/* FAQ Section */}
       <section id="faq" className="py-20">
