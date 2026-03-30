@@ -1,15 +1,10 @@
 
 
-## Plano: Adicionar campo "Condomínio" ao CepInput
+## Plano: Mostrar campo de teste sempre visível no card Meta 2
+
+Atualmente o campo de envio de teste no card "ZionTalk Meta 2" só aparece após clicar "Testar Conexão" com sucesso (`meta2Status === 'connected'`). A alteração remove essa condição, tornando o campo sempre visível.
 
 ### Alteração
 
-**`src/components/CepInput.tsx`**:
-- Adicionar um campo "Condomínio" abaixo da grid de Número/Complemento
-- Campo opcional, texto livre (ex: "Condomínio Jardins", "Ed. Central")
-- Incluir o condomínio na construção do endereço via `buildAddress`
-- Formato: `{logradouro}, {número} - {complemento}, {condomínio}, {bairro}, {cidade} - {uf}`
-- Se vazio, não altera o endereço atual
-
-O campo aparece apenas após busca bem-sucedida do CEP, junto com Número e Complemento. Layout: grid 2 colunas para Número/Complemento + campo Condomínio em largura total abaixo.
+**`src/pages/Integracoes.tsx`**: Remover a condição `{meta2Status === 'connected' && (...)}` do bloco de teste do Meta 2, exibindo os campos de número e botão de envio sempre, independente do status de conexão.
 
