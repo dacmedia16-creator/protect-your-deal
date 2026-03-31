@@ -652,6 +652,7 @@ export default function Dashboard() {
           )}
 
           <Card 
+            data-tour="ver-registros"
             className="cursor-pointer active:bg-muted/50 transition-colors"
             onClick={() => navigate('/fichas')}
           >
