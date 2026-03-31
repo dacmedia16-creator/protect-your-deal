@@ -697,6 +697,9 @@ export default function Dashboard() {
       {/* PWA Install FAB */}
       <PWAInstallFAB />
 
+      {/* Onboarding Tour */}
+      <OnboardingTour steps={ONBOARDING_STEPS} />
+
       {/* Debug Banner - clique 5x no título para mostrar */}
       {showDebug && (
         <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-card border rounded-lg shadow-lg p-4 z-50 animate-fade-in">
