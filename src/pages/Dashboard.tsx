@@ -42,6 +42,40 @@ import { PWAInstallFAB } from '@/components/PWAInstallFAB';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { PlanUsageCard } from '@/components/PlanUsageCard';
+import { OnboardingTour } from '@/components/OnboardingTour';
+
+const ONBOARDING_STEPS = [
+  {
+    target: 'welcome',
+    title: 'Bem-vindo ao VisitaProva! 🎉',
+    description: 'Este é seu painel principal. Aqui você acompanha tudo sobre seus registros de visita e clientes.',
+  },
+  {
+    target: 'stats',
+    title: 'Seus Números',
+    description: 'Acompanhe o total de registros, quantos foram confirmados e quantos estão pendentes de confirmação.',
+  },
+  {
+    target: 'novo-registro',
+    title: 'Novo Registro de Visita',
+    description: 'Crie fichas de visita com confirmação via WhatsApp. É rápido e seguro!',
+  },
+  {
+    target: 'ver-registros',
+    title: 'Seus Registros',
+    description: 'Consulte, filtre e gerencie todas as suas fichas de visita em um só lugar.',
+  },
+  {
+    target: 'indicacoes',
+    title: 'Indique e Ganhe 💰',
+    description: 'Indique corretores e imobiliárias para o VisitaProva e ganhe comissão por cada indicação!',
+  },
+  {
+    target: 'nav-menu',
+    title: 'Navegação',
+    description: 'Use o menu inferior para navegar entre as seções: Início, Registros, Convites e Perfil.',
+  },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
