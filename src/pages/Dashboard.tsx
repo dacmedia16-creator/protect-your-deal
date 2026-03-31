@@ -619,6 +619,7 @@ export default function Dashboard() {
           <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
           
           <Card 
+            data-tour="novo-registro"
             className="cursor-pointer active:bg-muted/50 transition-colors"
             onClick={() => navigate('/fichas/nova')}
           >
