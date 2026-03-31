@@ -42,6 +42,40 @@ import { PWAInstallFAB } from '@/components/PWAInstallFAB';
 import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { PlanUsageCard } from '@/components/PlanUsageCard';
+import { OnboardingTour } from '@/components/OnboardingTour';
+
+const ONBOARDING_STEPS = [
+  {
+    target: 'welcome',
+    title: 'Bem-vindo ao VisitaProva! 🎉',
+    description: 'Este é seu painel principal. Aqui você acompanha tudo sobre seus registros de visita e clientes.',
+  },
+  {
+    target: 'stats',
+    title: 'Seus Números',
+    description: 'Acompanhe o total de registros, quantos foram confirmados e quantos estão pendentes de confirmação.',
+  },
+  {
+    target: 'novo-registro',
+    title: 'Novo Registro de Visita',
+    description: 'Crie fichas de visita com confirmação via WhatsApp. É rápido e seguro!',
+  },
+  {
+    target: 'ver-registros',
+    title: 'Seus Registros',
+    description: 'Consulte, filtre e gerencie todas as suas fichas de visita em um só lugar.',
+  },
+  {
+    target: 'indicacoes',
+    title: 'Indique e Ganhe 💰',
+    description: 'Indique corretores e imobiliárias para o VisitaProva e ganhe comissão por cada indicação!',
+  },
+  {
+    target: 'nav-menu',
+    title: 'Navegação',
+    description: 'Use o menu inferior para navegar entre as seções: Início, Registros, Convites e Perfil.',
+  },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -349,7 +383,7 @@ export default function Dashboard() {
       )}
 
         {/* Welcome Section */}
-        <div className="mb-4 md:mb-8">
+        <div data-tour="welcome" className="mb-4 md:mb-8">
           <h1 
             className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2 cursor-default"
             onClick={() => {
@@ -370,7 +404,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - 3 cols on desktop */}
-        <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
             className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group"
             onClick={() => navigate('/fichas')}
@@ -479,6 +513,7 @@ export default function Dashboard() {
 
         {/* Card de Indicações */}
         <Card 
+          data-tour="indicacoes"
           className={`animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
           onClick={() => navigate('/minhas-indicacoes')}
         >
@@ -584,6 +619,7 @@ export default function Dashboard() {
           <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
           
           <Card 
+            data-tour="novo-registro"
             className="cursor-pointer active:bg-muted/50 transition-colors"
             onClick={() => navigate('/fichas/nova')}
           >
@@ -616,6 +652,7 @@ export default function Dashboard() {
           )}
 
           <Card 
+            data-tour="ver-registros"
             className="cursor-pointer active:bg-muted/50 transition-colors"
             onClick={() => navigate('/fichas')}
           >
@@ -659,6 +696,9 @@ export default function Dashboard() {
       
       {/* PWA Install FAB */}
       <PWAInstallFAB />
+
+      {/* Onboarding Tour */}
+      <OnboardingTour steps={ONBOARDING_STEPS} />
 
       {/* Debug Banner - clique 5x no título para mostrar */}
       {showDebug && (
