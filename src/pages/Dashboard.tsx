@@ -404,7 +404,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - 3 cols on desktop */}
-        <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+        <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
             className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group"
             onClick={() => navigate('/fichas')}
