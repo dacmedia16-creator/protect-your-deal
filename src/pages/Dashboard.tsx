@@ -383,7 +383,7 @@ export default function Dashboard() {
       )}
 
         {/* Welcome Section */}
-        <div className="mb-4 md:mb-8">
+        <div data-tour="welcome" className="mb-4 md:mb-8">
           <h1 
             className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2 cursor-default"
             onClick={() => {
