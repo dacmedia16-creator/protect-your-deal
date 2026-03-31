@@ -365,8 +365,7 @@ async function processImage(imageData: string, targetWidth: number, targetHeight
 
   // Logo overlay
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const logoUrl = `${SUPABASE_URL}/storage/v1/object/public/logos-imobiliarias/vp-logo.png`;
+    const logoUrl = `https://protect-your-deal.lovable.app/logo-icon.svg`;
     const logoResp = await fetch(logoUrl);
     if (logoResp.ok) {
       const logoBuffer = await logoResp.arrayBuffer();
