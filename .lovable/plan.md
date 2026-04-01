@@ -1,23 +1,35 @@
 
 
-## Plano: Modernizar EmpresaDashboard com Glassmorphism e Doughnut Chart
+## Plano: Uniformizar EmpresaDashboard com o estilo do Dashboard
+
+O Dashboard do corretor tem um layout mais compacto e moderno (3 colunas, cards menores, pesquisas inline). O EmpresaDashboard será atualizado para seguir o mesmo padrão visual.
 
 ### Alterações em `src/pages/empresa/EmpresaDashboard.tsx`
 
-**1. Glassmorphism em todos os cards** (linhas 249, 271, 291, 330, 362, 412, 438)
-- Substituir classes padrão por: `border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all`
-- Card de trial warning: `border-0 bg-warning/5 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]`
+**1. Stats Grid — layout 3 colunas compacto** (linhas 268-370)
+- Mudar grid de `gap-4 md:grid-cols-2 lg:grid-cols-3` para `grid-cols-3 gap-3 md:gap-6`
+- Corretores e Registros do Mês: usar padding compacto (`p-3 md:p-6`), título `text-xs md:text-sm`, valor `text-xl md:text-2xl`, adicionar `hover:scale-[1.02]` e `ChevronRight`
+- Terceiro card: se surveys habilitado, mostrar card de pesquisas no grid; senão, card de "Total Registros" (total acumulado)
 
-**2. Card de Pesquisas — doughnut chart** (linhas 328-358)
-- Substituir o ícone `ClipboardCheck` e a barra `Progress` por um mini doughnut chart Recharts (`PieChart` + `Pie` com `innerRadius=13, outerRadius=20`, 44x44px)
-- Dados: respondidas (purple `hsl(270,70%,55%)`) vs pendentes (muted)
-- Manter média de satisfação com estrela
+**2. Card de Pesquisas — formato compacto inline** (se surveys habilitado)
+- No grid de 3 colunas, o card de pesquisas fica compacto como os outros stats cards
+- Manter doughnut no header e valor + "de X" no content
+- Remover o card separado de pesquisas que existia antes
 
-**3. Imports**
-- Adicionar `PieChart, Pie, Cell` ao import de `recharts`
-- Remover `ClipboardCheck` do import de lucide-react
+**3. Card de Pesquisas separado (abaixo do grid)** — estilo horizontal
+- Se surveys habilitado e há pesquisas, adicionar também um card horizontal compacto (como o "Parceiro" do Dashboard) com doughnut + texto + status "Concluído!" quando todas respondidas
 
-### Detalhes técnicos
-- Mesmo padrão visual já aplicado no `Dashboard.tsx`
-- Recharts já é dependência do projeto
+**4. Remover botão "Novo Corretor" do header**
+- Mover para Ações Rápidas para ficar mais limpo como o Dashboard
+
+**5. Paddings e espaçamentos**
+- Header: `CardHeader` com `pb-1 md:pb-2 p-3 md:p-6`
+- Content: `p-3 pt-0 md:p-6 md:pt-0`
+- Adicionar `animate-fade-in` e `animationDelay` escalonado nos cards
+
+### Imports adicionais
+- Adicionar `ChevronRight` do lucide-react
+
+### Resultado esperado
+O EmpresaDashboard terá a mesma estética compacta e moderna do Dashboard do corretor, com cards de 3 colunas, sombras suaves, e transições sutis.
 
