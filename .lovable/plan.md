@@ -1,27 +1,13 @@
 
 
-## Plano: Atualizar Logo no Gerador de Imagens de Marketing
+## Plano: Trocar ícone de Pesquisas para FileText
 
-### Problema
-A edge function `generate-marketing-image` busca o logo de `logos-imobiliarias/vp-logo.png` no Storage. Esse arquivo é o logo antigo. O logo atual (`/vp-logo.png`) está apenas no diretório `public/` do frontend, não no bucket do Storage.
+Mudar o ícone de "Pesquisas" de `ClipboardCheck` para `FileText` (mesmo ícone de "Registros") nos menus de navegação.
 
-### Solução
-Há duas abordagens possíveis:
+### Arquivos a editar
 
-**Opção 1 — Upload do logo atual para o Storage (recomendada)**
-- Criar um script que faça upload do `vp-logo.png` atual para o bucket `logos-imobiliarias` no Storage, substituindo o arquivo antigo
-- Isso não requer mudança de código na edge function
-
-**Opção 2 — Usar o logo SVG inline na edge function**
-- Embutir o logo SVG diretamente no código da função, eliminando a dependência do Storage
-- Mais complexo pois requer conversão SVG→raster dentro da função
-
-### Alterações
-
-**`supabase/functions/generate-marketing-image/index.ts`**
-- Atualizar o path do logo no Storage para usar uma URL pública do site ao invés do bucket, apontando para o logo atualizado:
-  - Trocar `${SUPABASE_URL}/storage/v1/object/public/logos-imobiliarias/vp-logo.png` por uma URL que aponte para o logo correto
-  - Alternativa: usar a URL pública do app `https://protect-your-deal.lovable.app/vp-logo.png` como fonte do logo
-
-Isso garante que a edge function sempre use o logo mais recente do site publicado, sem precisar manter uma cópia separada no Storage.
+1. **`src/components/DesktopNav.tsx`** — trocar `ClipboardCheck` por `FileText` no item Pesquisas
+2. **`src/components/MobileNav.tsx`** — trocar `ClipboardCheck` por `FileText` no item Pesquisas (remover import de `ClipboardCheck`)
+3. **`src/components/layouts/ImobiliariaLayout.tsx`** — trocar `ClipboardCheck` por `FileText` no navItem Pesquisas (remover import de `ClipboardCheck`)
+4. **`src/components/layouts/ConstutoraLayout.tsx`** — trocar `ClipboardCheck` por `FileText` no navItem Pesquisas (remover import de `ClipboardCheck`)
 
