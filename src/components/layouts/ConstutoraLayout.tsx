@@ -58,7 +58,7 @@ export function ConstutoraLayout({ children }: ConstutoraLayoutProps) {
     { href: '/construtora/corretores', icon: Users, label: 'Corretores' },
     { href: '/construtora/equipes', icon: UsersRound, label: 'Equipes' },
     { href: '/construtora/fichas', icon: FileText, label: 'Registros de Visita' },
-    { href: '/construtora/pesquisas', icon: ClipboardCheck, label: 'Pesquisas' },
+    { href: '/construtora/pesquisas', icon: FileText, label: 'Pesquisas' },
     { href: '/construtora/relatorios', icon: BarChart3, label: 'Relatórios' },
     { href: '/construtora/assinatura', icon: CreditCard, label: 'Assinatura' },
     { href: '/construtora/configuracoes', icon: Settings, label: 'Configurações' },
