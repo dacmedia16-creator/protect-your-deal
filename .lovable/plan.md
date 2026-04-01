@@ -1,27 +1,32 @@
 
 
-## Plano: Atualizar Logo no Gerador de Imagens de Marketing
+## Plano: Ícones do Dashboard no estilo quadriculado (grid de ícones)
 
-### Problema
-A edge function `generate-marketing-image` busca o logo de `logos-imobiliarias/vp-logo.png` no Storage. Esse arquivo é o logo antigo. O logo atual (`/vp-logo.png`) está apenas no diretório `public/` do frontend, não no bucket do Storage.
+### Objetivo
+Transformar a seção "Ações Rápidas" mobile de uma lista vertical em um **grid de ícones quadrados** como na imagem de referência — ícones centralizados com label abaixo, dispostos em grid 3 ou 4 colunas.
 
-### Solução
-Há duas abordagens possíveis:
+### Alteração em `src/pages/Dashboard.tsx`
 
-**Opção 1 — Upload do logo atual para o Storage (recomendada)**
-- Criar um script que faça upload do `vp-logo.png` atual para o bucket `logos-imobiliarias` no Storage, substituindo o arquivo antigo
-- Isso não requer mudança de código na edge function
+**Seção Mobile Quick Actions (linhas 617-685)**
 
-**Opção 2 — Usar o logo SVG inline na edge function**
-- Embutir o logo SVG diretamente no código da função, eliminando a dependência do Storage
-- Mais complexo pois requer conversão SVG→raster dentro da função
+Substituir o layout atual (lista vertical com cards horizontais) por um grid de ícones quadrados:
 
-### Alterações
+- Layout: `grid grid-cols-4 gap-4` (4 colunas como na imagem)
+- Cada item: ícone dentro de um quadrado arredondado (`h-14 w-14 rounded-xl bg-muted`) centralizado, com label de texto pequeno abaixo
+- Sem descrição secundária (só o nome da ação)
+- Itens: Novo Registro, Fichas de visita, Convites, Indicações, Pesquisas (se habilitado), Ajuda Jurídica, Registro Construtoras (se habilitado)
+- Manter os `data-tour` attributes existentes
+- Manter as mesmas navegações `onClick`
 
-**`supabase/functions/generate-marketing-image/index.ts`**
-- Atualizar o path do logo no Storage para usar uma URL pública do site ao invés do bucket, apontando para o logo atualizado:
-  - Trocar `${SUPABASE_URL}/storage/v1/object/public/logos-imobiliarias/vp-logo.png` por uma URL que aponte para o logo correto
-  - Alternativa: usar a URL pública do app `https://protect-your-deal.lovable.app/vp-logo.png` como fonte do logo
+**Visual de cada item:**
+```text
+┌──────────┐
+│   ┌────┐ │
+│   │ 📄 │ │
+│   └────┘ │
+│  Label   │
+└──────────┘
+```
 
-Isso garante que a edge function sempre use o logo mais recente do site publicado, sem precisar manter uma cópia separada no Storage.
+Cores dos ícones mantidas (gradient-primary para Novo Registro, secondary para Fichas, amber para Jurídico, etc.)
 
