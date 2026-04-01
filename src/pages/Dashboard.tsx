@@ -347,8 +347,8 @@ export default function Dashboard() {
       <DesktopNav />
       
       {/* Mobile Header */}
-      <header className="sm:hidden border-b bg-card safe-area-top">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="sm:hidden bg-gradient-to-r from-primary/5 via-background to-primary/10 border-b border-primary/10 safe-area-top">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {imobiliaria?.logo_url ? (
               <img 
@@ -499,7 +499,7 @@ export default function Dashboard() {
               setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
             }}
           >
-            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+            Bem-vindo, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{profile?.nome?.split(' ')[0] || 'Usuário'}</span>!
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Gerencie seus registros de visita e clientes
@@ -507,56 +507,58 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid - 3 cols on desktop */}
-        <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
-          <Card 
-            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group"
-            onClick={() => navigate('/fichas')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Total Registros
-              </CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 flex items-center justify-between">
-              <div className="text-xl md:text-2xl font-bold">{stats?.totalFichas || 0}</div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </CardContent>
-          </Card>
+        <div data-tour="stats" className="rounded-2xl bg-muted/30 p-3 mb-6 md:mb-8">
+          <div className="grid grid-cols-3 gap-3 md:gap-6">
+            <Card 
+              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group"
+              onClick={() => navigate('/fichas')}
+            >
+              <CardContent className="p-3 md:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="bg-primary/10 rounded-full p-1.5">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                </div>
+                <div className="text-2xl md:text-3xl font-bold text-primary">{stats?.totalFichas || 0}</div>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Total Registros</p>
+              </CardContent>
+            </Card>
 
-          <Card 
-            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group" 
-            style={{ animationDelay: '0.1s' }}
-            onClick={() => navigate('/fichas?status=completo')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Confirmadas
-              </CardTitle>
-              <CheckCircle className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 flex items-center justify-between">
-              <div className="text-xl md:text-2xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-success transition-colors" />
-            </CardContent>
-          </Card>
+            <Card 
+              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group" 
+              style={{ animationDelay: '0.1s' }}
+              onClick={() => navigate('/fichas?status=completo')}
+            >
+              <CardContent className="p-3 md:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="bg-success/10 rounded-full p-1.5">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-success transition-colors" />
+                </div>
+                <div className="text-2xl md:text-3xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Confirmadas</p>
+              </CardContent>
+            </Card>
 
-          <Card 
-            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group" 
-            style={{ animationDelay: '0.2s' }}
-            onClick={() => navigate('/fichas?status=pendente')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Pendentes
-              </CardTitle>
-              <Clock className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 flex items-center justify-between">
-              <div className="text-xl md:text-2xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-warning transition-colors" />
-            </CardContent>
-          </Card>
+            <Card 
+              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group" 
+              style={{ animationDelay: '0.2s' }}
+              onClick={() => navigate('/fichas?status=pendente')}
+            >
+              <CardContent className="p-3 md:p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="bg-warning/10 rounded-full p-1.5">
+                    <Clock className="h-4 w-4 text-warning" />
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-warning transition-colors" />
+                </div>
+                <div className="text-2xl md:text-3xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Pendentes</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Mobile Quick Actions - Compact list */}
