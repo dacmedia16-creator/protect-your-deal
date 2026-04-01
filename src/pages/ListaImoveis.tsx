@@ -38,7 +38,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+
 import { DesktopNav } from '@/components/DesktopNav';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 
@@ -277,11 +277,6 @@ export default function ListaImoveis() {
         )}
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/imoveis/novo')} 
-        label="Novo Imóvel"
-      />
 
       {/* Mobile Navigation */}
       <MobileNav />

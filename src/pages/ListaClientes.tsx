@@ -40,7 +40,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+
 import { DesktopNav } from '@/components/DesktopNav';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 
@@ -314,11 +314,6 @@ export default function ListaClientes() {
         )}
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/clientes/novo')} 
-        label="Novo Cliente"
-      />
 
       {/* Mobile Navigation */}
       <MobileNav />
