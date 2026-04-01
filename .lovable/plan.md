@@ -1,23 +1,32 @@
 
 
-## Plano: Estilizar os 3 cards informativos no mesmo padrão quadriculado
+## Plano: Ícones do Dashboard no estilo quadriculado (grid de ícones)
 
 ### Objetivo
-Transformar os 3 cards (Registros como Parceiro, Pesquisas Respondidas, Indique e Ganhe) para seguirem o mesmo estilo visual dos ícones de ações rápidas — quadrados com ícone centralizado e layout limpo.
+Transformar a seção "Ações Rápidas" mobile de uma lista vertical em um **grid de ícones quadrados** como na imagem de referência — ícones centralizados com label abaixo, dispostos em grid 3 ou 4 colunas.
 
 ### Alteração em `src/pages/Dashboard.tsx`
 
-**Card "Fichas como Parceiro" (linhas 462-482)**
-- Aumentar o ícone container para `h-14 w-14 rounded-xl bg-muted`
-- Ícone `Handshake` maior (`h-6 w-6`)
-- Padding uniforme `p-4`, gap `gap-4`
-- Adicionar chevron `>` à direita como os outros
+**Seção Mobile Quick Actions (linhas 617-685)**
 
-**Card "Pesquisas Pós-Visita" (linhas 484-511)**
-- Manter o estilo atual que já está próximo (ícone `h-12 w-12 rounded-xl`) — ajustar para `h-14 w-14` para uniformizar
+Substituir o layout atual (lista vertical com cards horizontais) por um grid de ícones quadrados:
 
-**Card "Indique e Ganhe" (linhas 517-536)**
-- Já está no estilo correto com ícone `h-12 w-12 rounded-xl` — ajustar para `h-14 w-14` para uniformizar
+- Layout: `grid grid-cols-4 gap-4` (4 colunas como na imagem)
+- Cada item: ícone dentro de um quadrado arredondado (`h-14 w-14 rounded-xl bg-muted`) centralizado, com label de texto pequeno abaixo
+- Sem descrição secundária (só o nome da ação)
+- Itens: Novo Registro, Fichas de visita, Convites, Indicações, Pesquisas (se habilitado), Ajuda Jurídica, Registro Construtoras (se habilitado)
+- Manter os `data-tour` attributes existentes
+- Manter as mesmas navegações `onClick`
 
-Todos os 3 cards terão o mesmo padrão visual: ícone quadrado arredondado à esquerda, texto à direita, chevron no final.
+**Visual de cada item:**
+```text
+┌──────────┐
+│   ┌────┐ │
+│   │ 📄 │ │
+│   └────┘ │
+│  Label   │
+└──────────┘
+```
+
+Cores dos ícones mantidas (gradient-primary para Novo Registro, secondary para Fichas, amber para Jurídico, etc.)
 
