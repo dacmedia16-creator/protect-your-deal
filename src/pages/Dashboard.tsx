@@ -459,7 +459,7 @@ export default function Dashboard() {
         {/* Card de Fichas como Parceiro */}
         {fichasParceiro && fichasParceiro.total > 0 && (
           <Card 
-            className="animate-fade-in cursor-pointer hover:border-primary/30 transition-all border-border mb-4"
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-4"
             style={{ animationDelay: '0.4s' }}
             onClick={() => navigate('/fichas-parceiro')}
           >
