@@ -439,7 +439,7 @@ export default function Dashboard() {
           </Card>
 
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" 
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group" 
             style={{ animationDelay: '0.2s' }}
             onClick={() => navigate('/fichas?status=pendente')}
           >
