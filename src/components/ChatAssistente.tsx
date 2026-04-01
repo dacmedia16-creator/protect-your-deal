@@ -733,7 +733,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
 
   if (!isOpen) {
     return (
-      <div className={cn(buttonPositionClass, "animate-in fade-in-0 slide-in-from-top-2 sm:slide-in-from-bottom-4 duration-500")}>
+      <div className={cn(buttonPositionClass, "animate-in fade-in-0 slide-in-from-bottom-4 duration-500")}>
         <Button
           onClick={() => setIsOpen(true)}
           className={cn(
