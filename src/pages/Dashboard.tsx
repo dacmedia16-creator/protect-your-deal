@@ -22,7 +22,6 @@ import {
   Handshake,
   RefreshCw,
   Bug,
-  
   Scale,
   UsersRound,
   TrendingUp,
@@ -30,6 +29,11 @@ import {
   ChevronRight,
   Share2,
   Building2,
+  User,
+  LogOut,
+  CreditCard,
+  Download,
+  Loader2,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
@@ -45,7 +49,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RoleBadge } from '@/components/RoleBadge';
-import { User, LogOut, CreditCard, Download, Loader2 } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 import { DesktopNav } from '@/components/DesktopNav';
