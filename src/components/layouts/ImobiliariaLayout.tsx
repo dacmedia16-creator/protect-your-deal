@@ -19,7 +19,7 @@ import {
   Menu,
   X,
   UserCircle,
-  ClipboardCheck,
+  
   Loader2,
   Handshake,
 } from 'lucide-react';

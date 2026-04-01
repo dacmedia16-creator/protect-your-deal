@@ -15,7 +15,7 @@ import {
   CreditCard,
   Handshake,
   Download,
-  ClipboardCheck,
+  
   Loader2,
   UsersRound
 } from 'lucide-react';

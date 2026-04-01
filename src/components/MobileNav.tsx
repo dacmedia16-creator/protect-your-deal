@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck, Loader2, UsersRound } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, Loader2, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
