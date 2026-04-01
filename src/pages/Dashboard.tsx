@@ -406,7 +406,7 @@ export default function Dashboard() {
         {/* Stats Grid - 3 cols on desktop */}
         <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group"
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group"
             onClick={() => navigate('/fichas')}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
