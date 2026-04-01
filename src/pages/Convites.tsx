@@ -602,9 +602,21 @@ export default function Convites() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <User className="h-4 w-4" />
-                            <span>Enviado por: <strong className="text-foreground">{corretorNome || 'Corretor'}</strong></span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <User className="h-4 w-4" />
+                              <span>Enviado por: <strong className="text-foreground">{corretorNome || 'Corretor'}</strong></span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
