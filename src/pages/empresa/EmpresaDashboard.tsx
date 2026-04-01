@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, ClipboardCheck, TrendingUp, TrendingDown, Star } from 'lucide-react';
+import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, TrendingUp, TrendingDown, Star } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -18,7 +18,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts';
 
 interface DashboardStats {
   totalCorretores: number;
@@ -246,7 +246,7 @@ export default function EmpresaDashboard() {
 
         {/* Subscription warning */}
         {assinatura?.status === 'trial' && (
-          <Card className="border-warning/50 bg-warning/5">
+          <Card className="border-0 bg-warning/5 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
             <CardContent className="flex items-center gap-4 p-4">
               <AlertCircle className="h-5 w-5 text-warning shrink-0" />
               <div className="flex-1">
@@ -268,7 +268,7 @@ export default function EmpresaDashboard() {
         {/* Stats grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Link to="/empresa/corretores">
-            <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Corretores</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
@@ -288,7 +288,7 @@ export default function EmpresaDashboard() {
           </Link>
 
           <Link to="/empresa/fichas">
-            <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Registros do Mês</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
@@ -327,10 +327,28 @@ export default function EmpresaDashboard() {
 
           {surveyEnabled && (
             <Link to="/empresa/pesquisas">
-              <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+              <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Pesquisas Respondidas</CardTitle>
-                  <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                  {(stats?.totalPesquisas || 0) > 0 ? (
+                    <PieChart width={44} height={44}>
+                      <Pie
+                        data={[
+                          { value: stats?.pesquisasRespondidas || 0 },
+                          { value: stats?.pesquisasPendentes || 0 },
+                        ]}
+                        innerRadius={13}
+                        outerRadius={20}
+                        dataKey="value"
+                        strokeWidth={0}
+                        startAngle={90}
+                        endAngle={-270}
+                      >
+                        <Cell fill="hsl(270, 70%, 55%)" />
+                        <Cell fill="hsl(var(--muted))" />
+                      </Pie>
+                    </PieChart>
+                  ) : null}
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
@@ -339,18 +357,11 @@ export default function EmpresaDashboard() {
                       de {stats?.totalPesquisas || 0}
                     </span>
                   </div>
-                  {/* Média de satisfação */}
                   {stats?.mediaSatisfacao !== undefined && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Star className="h-3 w-3 text-warning fill-warning" />
                       {stats.mediaSatisfacao.toFixed(1)}/5 média geral
                     </p>
-                  )}
-                  {stats?.totalPesquisas && stats.totalPesquisas > 0 && (
-                    <Progress
-                      value={(stats.pesquisasRespondidas / stats.totalPesquisas) * 100}
-                      className="h-1 mt-2"
-                    />
                   )}
                 </CardContent>
               </Card>
@@ -359,7 +370,7 @@ export default function EmpresaDashboard() {
         </div>
 
         {/* Monthly chart */}
-        <Card>
+        <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base font-medium">Registros por Mês</CardTitle>
@@ -409,7 +420,7 @@ export default function EmpresaDashboard() {
 
         {/* Quick actions and subscription info */}
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
             <CardHeader>
               <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>
@@ -435,7 +446,7 @@ export default function EmpresaDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
             <CardHeader>
               <CardTitle>Sua Assinatura</CardTitle>
             </CardHeader>
