@@ -1,26 +1,30 @@
 
 
-## Plano: Remover FloatingActionButton de todas as telas
-
-Remover o botão flutuante "+" (FAB) de todas as 4 páginas onde é usado.
+## Plano: Ajustar posições da Sofia e do botão Perfil no mobile
 
 ### Alterações
 
-**1. `src/pages/Dashboard.tsx`**
-- Remover import do `FloatingActionButton`
-- Remover bloco JSX do `<FloatingActionButton>` (~linhas 702-706)
+**1. `src/components/ChatAssistente.tsx`** — Descer a Sofia no mobile
+- Linha 727: Mudar posição mobile de `top-4` para `bottom-20` (acima da nav bar)
+- Linha 731: Idem para o chat aberto
+- Ajustar tooltip/balão "Posso te ajudar?" para ficar acima do botão
 
-**2. `src/pages/ListaFichas.tsx`**
-- Remover import do `FloatingActionButton`
-- Remover bloco JSX do `<FloatingActionButton>` (~linhas 398-402)
+**2. `src/components/MobileNav.tsx`** — Subir a nav bar (reduzir altura)
+- Linha 88: Reduzir altura da nav de `h-16` para `h-14` para ficar mais compacta
 
-**3. `src/pages/ListaImoveis.tsx`**
-- Remover import do `FloatingActionButton`
-- Remover bloco JSX do `<FloatingActionButton>` (~linhas 280-284)
+### Detalhes técnicos
 
-**4. `src/pages/ListaClientes.tsx`**
-- Remover import do `FloatingActionButton`
-- Remover bloco JSX do `<FloatingActionButton>` (~linhas 317-321)
+**Sofia (ChatAssistente):**
+```
+// De:
+"fixed top-4 right-4 sm:bottom-6 sm:top-auto ..."
+// Para:
+"fixed bottom-20 right-4 sm:bottom-6 ..."
+```
 
-O componente `src/components/FloatingActionButton.tsx` pode ser mantido no projeto (caso volte a ser usado) ou removido — sem impacto funcional.
+**MobileNav:**
+```
+// De: h-16
+// Para: h-14
+```
 
