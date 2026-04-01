@@ -528,7 +528,7 @@ export default function Dashboard() {
         {/* Card de Indicações */}
         <Card 
           data-tour="indicacoes"
-          className={`animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
+          className={`animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
           onClick={() => navigate('/minhas-indicacoes')}
         >
           <CardContent className="p-4 flex items-center gap-4">
