@@ -663,7 +663,7 @@ export default function Dashboard() {
               <span className="text-[11px] text-center font-medium leading-tight">Indicações</span>
             </div>
 
-            {isSurveyEnabled && (
+            {surveyEnabled && (
               <div
                 className="flex flex-col items-center gap-1.5 cursor-pointer"
                 onClick={() => navigate('/pesquisas')}
