@@ -347,8 +347,8 @@ export default function Dashboard() {
       <DesktopNav />
       
       {/* Mobile Header */}
-      <header className="sm:hidden border-b bg-card safe-area-top">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="sm:hidden bg-gradient-to-r from-primary/5 via-background to-primary/10 border-b border-primary/10 safe-area-top">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {imobiliaria?.logo_url ? (
               <img 
