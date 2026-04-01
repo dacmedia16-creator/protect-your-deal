@@ -1,17 +1,25 @@
 
 
-## Plano: Adicionar avatar do Perfil no header do Dashboard
+## Plano: Mover Sofia para a barra de navegação inferior
 
-O Dashboard usa um header customizado (não usa `MobileHeader`), por isso o avatar do perfil não aparece.
+Transformar a Sofia de botão flutuante em item da barra de navegação inferior, ao lado de "Pesquisas".
 
-### Alteração
+### Alterações
 
-**`src/pages/Dashboard.tsx`**
-- No header mobile customizado (linhas 298-317), adicionar o avatar do usuário com o mesmo `DropdownMenu` do `MobileHeader` (Perfil, Registros como Parceiro, Assinatura, Equipe, Instalar, Sair)
-- Importar componentes necessários: `Avatar`, `DropdownMenu`, `useAuth`, `usePWAInstall`, `useEquipeLider`, `RoleBadge`
-- Buscar `profile` (foto_url, nome) via Supabase query já existente no Dashboard
-- Posicionar o avatar no lado direito do header, ao lado do nome da imobiliária
+**1. `src/components/MobileNav.tsx`**
+- Importar `MessageCircle` do lucide-react
+- Adicionar um botão "Sofia" após os navItems existentes (sempre visível, não condicional)
+- Ao clicar, disparar um evento customizado (`window.dispatchEvent(new CustomEvent('toggle-sofia'))`) para abrir/fechar o chat
+- Estilizar igual aos outros itens da nav
+
+**2. `src/components/ChatAssistente.tsx`**
+- Escutar o evento `toggle-sofia` para abrir/fechar o chat
+- **No mobile (logado)**: remover o botão flutuante — a Sofia só abre via nav bar
+- **No desktop e não-logado**: manter o botão flutuante como está
+- Quando aberto via nav, posicionar o chat acima da nav bar (`bottom-16`)
+- Remover o tooltip "Posso te ajudar?" no mobile logado (já que está na nav)
 
 ### Resultado
-O avatar com dropdown do perfil aparecerá no canto superior direito do Dashboard, igual às outras telas.
+- Nav inferior: Início | Registros | Convites/Equipe | Pesquisas | Sofia
+- Desktop: comportamento inalterado (botão flutuante)
 
