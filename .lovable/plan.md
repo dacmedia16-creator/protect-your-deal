@@ -1,16 +1,18 @@
 
 
-## Plano: Aumentar tamanho do avatar do Perfil
+## Plano: Reordenar seções do Dashboard mobile
 
-Aumentar o avatar de `h-8 w-8` (32px) para `h-10 w-10` (40px) nos dois locais onde aparece.
+Mover a seção "Ações Rápidas" para cima, antes dos cards de "Registro Parceiro", "Pesquisas" e "Indique e Ganhe".
 
-### Alterações
+### Alteração
 
-**1. `src/pages/Dashboard.tsx` (linha 372)**
-- `Avatar className="h-8 w-8"` → `Avatar className="h-10 w-10"`
-- `AvatarFallback className="text-xs ..."` → `"text-sm ..."`
+**`src/pages/Dashboard.tsx`**
 
-**2. `src/components/MobileHeader.tsx` (linha 123)**
-- `Avatar className="h-8 w-8"` → `Avatar className="h-10 w-10"`
-- `AvatarFallback className="text-xs ..."` → `"text-sm ..."`
+Reordenar as seções mobile de:
+1. Stats → Fichas Parceiro → Pesquisas → PlanUsage → Indique e Ganhe → **Ações Rápidas**
+
+Para:
+1. Stats → **Ações Rápidas** → Fichas Parceiro → Pesquisas → PlanUsage → Indique e Ganhe
+
+Mover o bloco `sm:hidden space-y-2` (linhas 735-802) para logo após o stats grid (após linha 560), e manter os cards de Parceiro, Pesquisas e Indique e Ganhe abaixo.
 
