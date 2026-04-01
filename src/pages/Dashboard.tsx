@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Share2,
   Building2,
+  Mail,
+  BarChart3,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
