@@ -133,7 +133,6 @@ export default function Dashboard() {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
-      const { signOut } = useAuth();
       await supabase.auth.signOut();
       navigate('/auth');
     } finally {
