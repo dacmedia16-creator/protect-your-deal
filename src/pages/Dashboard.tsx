@@ -294,27 +294,75 @@ export default function Dashboard() {
       {/* Desktop Navigation */}
       <DesktopNav />
       
-      {/* Mobile Header */}
-      <header className="sm:hidden border-b bg-card safe-area-top">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {imobiliaria?.logo_url ? (
-              <img 
-                src={imobiliaria.logo_url} 
-                alt={imobiliaria.nome} 
-                className="h-8 w-8 rounded-lg object-contain"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-                <FileText className="h-4 w-4 text-primary-foreground" />
-              </div>
-            )}
-            <span className="font-display text-lg font-bold truncate max-w-[140px]">
-              {imobiliaria?.nome || 'VisitaProva'}
-            </span>
+      {/* ===== MOBILE: Banking-app style header ===== */}
+      <div className="sm:hidden">
+        <div className="bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(222,47%,11%)] pt-10 pb-20 px-5 rounded-b-[2.5rem] safe-area-top">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              {imobiliaria?.logo_url ? (
+                <img 
+                  src={imobiliaria.logo_url} 
+                  alt={imobiliaria.nome} 
+                  className="h-10 w-10 rounded-xl object-contain bg-white/20 p-1"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+              )}
+              <span className="font-display text-sm font-semibold text-white/80 truncate max-w-[140px]">
+                {imobiliaria?.nome || 'VisitaProva'}
+              </span>
+            </div>
+          </div>
+          <div data-tour="welcome">
+            <p className="text-white/70 text-sm">Olá,</p>
+            <h1 
+              className="font-display text-2xl font-bold text-white cursor-default"
+              onClick={() => {
+                const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
+                sessionStorage.setItem('debug-clicks', String(clicks));
+                if (clicks >= 5) {
+                  setShowDebug(true);
+                  sessionStorage.setItem('debug-clicks', '0');
+                }
+                setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
+              }}
+            >
+              {profile?.nome?.split(' ')[0] || 'Usuário'} 👋
+            </h1>
           </div>
         </div>
-      </header>
+
+        {/* Floating Stats Card */}
+        <div data-tour="stats" className="-mt-14 mx-4 mb-4">
+          <Card className="rounded-2xl shadow-lg border-0">
+            <CardContent className="p-5">
+              <p className="text-xs text-muted-foreground font-medium mb-1">Seus Registros</p>
+              <div className="text-4xl font-bold font-display text-foreground mb-3">
+                {stats?.totalFichas || 0}
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => navigate('/fichas?status=completo')}
+                  className="flex items-center gap-1.5 text-sm text-success hover:underline"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-semibold">{stats?.fichasCompletas || 0}</span>
+                  <span className="text-muted-foreground text-xs">confirmadas</span>
+                </button>
+                <button 
+                  onClick={() => navigate('/fichas?status=pendente')}
+                  className="flex items-center gap-1.5 text-sm text-warning hover:underline"
+                >
+                  <Clock className="h-4 w-4" />
+                  <span className="font-semibold">{stats?.fichasPendentes || 0}</span>
+                  <span className="text-muted-foreground text-xs">pendentes</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
       <main className="container mx-auto px-4 py-4 md:py-8">
         {/* PWA Install Banner */}
