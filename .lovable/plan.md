@@ -1,25 +1,16 @@
 
 
-## Plano: Mover Sofia para a barra de navegação inferior
+## Plano: Aumentar tamanho do avatar do Perfil
 
-Transformar a Sofia de botão flutuante em item da barra de navegação inferior, ao lado de "Pesquisas".
+Aumentar o avatar de `h-8 w-8` (32px) para `h-10 w-10` (40px) nos dois locais onde aparece.
 
 ### Alterações
 
-**1. `src/components/MobileNav.tsx`**
-- Importar `MessageCircle` do lucide-react
-- Adicionar um botão "Sofia" após os navItems existentes (sempre visível, não condicional)
-- Ao clicar, disparar um evento customizado (`window.dispatchEvent(new CustomEvent('toggle-sofia'))`) para abrir/fechar o chat
-- Estilizar igual aos outros itens da nav
+**1. `src/pages/Dashboard.tsx` (linha 372)**
+- `Avatar className="h-8 w-8"` → `Avatar className="h-10 w-10"`
+- `AvatarFallback className="text-xs ..."` → `"text-sm ..."`
 
-**2. `src/components/ChatAssistente.tsx`**
-- Escutar o evento `toggle-sofia` para abrir/fechar o chat
-- **No mobile (logado)**: remover o botão flutuante — a Sofia só abre via nav bar
-- **No desktop e não-logado**: manter o botão flutuante como está
-- Quando aberto via nav, posicionar o chat acima da nav bar (`bottom-16`)
-- Remover o tooltip "Posso te ajudar?" no mobile logado (já que está na nav)
-
-### Resultado
-- Nav inferior: Início | Registros | Convites/Equipe | Pesquisas | Sofia
-- Desktop: comportamento inalterado (botão flutuante)
+**2. `src/components/MobileHeader.tsx` (linha 123)**
+- `Avatar className="h-8 w-8"` → `Avatar className="h-10 w-10"`
+- `AvatarFallback className="text-xs ..."` → `"text-sm ..."`
 
