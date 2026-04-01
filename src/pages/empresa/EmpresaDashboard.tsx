@@ -246,7 +246,7 @@ export default function EmpresaDashboard() {
 
         {/* Subscription warning */}
         {assinatura?.status === 'trial' && (
-          <Card className="border-warning/50 bg-warning/5">
+          <Card className="border-0 bg-warning/5 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
             <CardContent className="flex items-center gap-4 p-4">
               <AlertCircle className="h-5 w-5 text-warning shrink-0" />
               <div className="flex-1">
