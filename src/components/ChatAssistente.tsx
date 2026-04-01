@@ -728,7 +728,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
   const chatPositionClass = userContext.isLoggedIn
-    ? "fixed bottom-20 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
+    ? "fixed bottom-16 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
   if (!isOpen) {
