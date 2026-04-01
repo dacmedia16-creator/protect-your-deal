@@ -12,7 +12,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { PieChart, Pie, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { 
   FileText, 
@@ -22,7 +22,7 @@ import {
   Handshake,
   RefreshCw,
   Bug,
-  ClipboardCheck,
+  
   Scale,
   UsersRound,
   TrendingUp,
@@ -406,7 +406,7 @@ export default function Dashboard() {
         {/* Stats Grid - 3 cols on desktop */}
         <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group"
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group"
             onClick={() => navigate('/fichas')}
           >
             <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
@@ -422,7 +422,7 @@ export default function Dashboard() {
           </Card>
 
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" 
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group" 
             style={{ animationDelay: '0.1s' }}
             onClick={() => navigate('/fichas?status=completo')}
           >
@@ -439,7 +439,7 @@ export default function Dashboard() {
           </Card>
 
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" 
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all group" 
             style={{ animationDelay: '0.2s' }}
             onClick={() => navigate('/fichas?status=pendente')}
           >
@@ -459,7 +459,7 @@ export default function Dashboard() {
         {/* Card de Fichas como Parceiro */}
         {fichasParceiro && fichasParceiro.total > 0 && (
           <Card 
-            className="animate-fade-in cursor-pointer hover:border-primary/30 transition-all border-border mb-4"
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-4"
             style={{ animationDelay: '0.4s' }}
             onClick={() => navigate('/fichas-parceiro')}
           >
@@ -482,13 +482,31 @@ export default function Dashboard() {
         {/* Card de Pesquisas Pós-Visita */}
         {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6"
+            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6"
             style={{ animationDelay: '0.5s' }}
             onClick={() => navigate('/pesquisas')}
           >
             <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
-                <ClipboardCheck className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+              <div className="shrink-0">
+                <PieChart width={44} height={44}>
+                  <Pie
+                    data={[
+                      { value: stats.surveys.respondidas },
+                      { value: stats.surveys.pendentes },
+                    ]}
+                    cx={22}
+                    cy={22}
+                    innerRadius={13}
+                    outerRadius={20}
+                    dataKey="value"
+                    strokeWidth={0}
+                    startAngle={90}
+                    endAngle={-270}
+                  >
+                    <Cell fill="hsl(270, 70%, 55%)" />
+                    <Cell fill="hsl(var(--muted))" />
+                  </Pie>
+                </PieChart>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
@@ -499,10 +517,6 @@ export default function Dashboard() {
                     ? `${stats.surveys.pendentes} aguardando resposta`
                     : 'Todas respondidas'}
                 </p>
-                <Progress 
-                  value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0}
-                  className="h-1 mt-1.5"
-                />
               </div>
             </CardContent>
           </Card>
@@ -514,7 +528,7 @@ export default function Dashboard() {
         {/* Card de Indicações */}
         <Card 
           data-tour="indicacoes"
-          className={`animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
+          className={`animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
           onClick={() => navigate('/minhas-indicacoes')}
         >
           <CardContent className="p-4 flex items-center gap-4">
