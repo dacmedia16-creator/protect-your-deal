@@ -120,9 +120,9 @@ export function MobileHeader({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="shrink-0 sm:hidden">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={profile?.foto_url || undefined} />
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      <AvatarFallback className="text-sm bg-primary/10 text-primary">
                         {profile?.nome?.charAt(0)?.toUpperCase() || <User className="h-3.5 w-3.5" />}
                       </AvatarFallback>
                     </Avatar>
