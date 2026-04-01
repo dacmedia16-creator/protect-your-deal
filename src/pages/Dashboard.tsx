@@ -35,7 +35,7 @@ import {
 // Build timestamp para diagnóstico de cache PWA
 const BUILD_TIMESTAMP = new Date().toISOString();
 import { MobileNav } from '@/components/MobileNav';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+
 import { DesktopNav } from '@/components/DesktopNav';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { PWAInstallFAB } from '@/components/PWAInstallFAB';
