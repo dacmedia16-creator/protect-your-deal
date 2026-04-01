@@ -35,6 +35,18 @@ import {
 // Build timestamp para diagnóstico de cache PWA
 const BUILD_TIMESTAMP = new Date().toISOString();
 import { MobileNav } from '@/components/MobileNav';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { RoleBadge } from '@/components/RoleBadge';
+import { User, LogOut, CreditCard, Download, Loader2 } from 'lucide-react';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 import { DesktopNav } from '@/components/DesktopNav';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
