@@ -288,7 +288,7 @@ export default function EmpresaDashboard() {
           </Link>
 
           <Link to="/empresa/fichas">
-            <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Registros do Mês</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
