@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -43,6 +43,7 @@ import { UpgradeBanner } from '@/components/UpgradeBanner';
 import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { PlanUsageCard } from '@/components/PlanUsageCard';
 import { OnboardingTour } from '@/components/OnboardingTour';
+import { UserAvatar } from '@/components/UserAvatar';
 
 const ONBOARDING_STEPS = [
   {
@@ -76,6 +77,13 @@ const ONBOARDING_STEPS = [
     description: 'Use o menu inferior para navegar entre as seções: Início, Registros, Convites e Perfil.',
   },
 ];
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -122,22 +130,15 @@ export default function Dashboard() {
   // Função para forçar atualização (limpar cache e recarregar)
   const handleForceUpdate = async () => {
     try {
-      // Limpar cache do React Query
       queryClient.clear();
-      
-      // Limpar caches do Service Worker
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
       }
-      
-      // Desregistrar Service Workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map(reg => reg.unregister()));
       }
-      
-      // Recarregar a página
       window.location.reload();
     } catch (error) {
       console.error('Erro ao forçar atualização:', error);
@@ -152,16 +153,14 @@ export default function Dashboard() {
     }
   }, [user, loading, navigate]);
 
-  // Query única para todas as stats do dashboard
-  // Busca fichas onde o usuário é dono OU parceiro (igual ListaFichas)
-  // Query para buscar o perfil do usuário
+  // Query para buscar o perfil do usuário (incluindo foto)
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('profiles')
-        .select('nome')
+        .select('nome, foto_url')
         .eq('user_id', user.id)
         .maybeSingle();
       return data;
@@ -174,7 +173,6 @@ export default function Dashboard() {
     queryFn: async () => {
       if (!user) return null;
       
-      // Buscar fichas (dono + parceiro), clientes e pesquisas em paralelo
       const [fichasResult, clientes, surveysResult] = await Promise.all([
         supabase
           .from('fichas_visita')
@@ -184,7 +182,6 @@ export default function Dashboard() {
           .from('clientes')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id),
-        // Buscar pesquisas apenas se a feature estiver habilitada
         surveyEnabled 
           ? supabase
               .from('surveys')
@@ -195,12 +192,9 @@ export default function Dashboard() {
 
       const todasFichas = fichasResult.data || [];
       const surveysData = surveysResult.data || [];
-      
-      // Separar fichas onde o usuário é parceiro
       const fichasComoParceiro = todasFichas.filter(f => f.corretor_parceiro_id === user.id);
       
       return {
-        // Total = todas (dono + parceiro) - igual ListaFichas
         totalFichas: todasFichas.length,
         fichasCompletas: todasFichas.filter(f => isFichaConfirmada(f.status)).length,
         fichasPendentes: todasFichas.filter(f => isFichaPendente(f.status)).length,
@@ -209,7 +203,6 @@ export default function Dashboard() {
           total: fichasComoParceiro.length,
           pendentes: fichasComoParceiro.filter(f => isFichaPendente(f.status)).length,
         },
-        // Stats de pesquisas (só se feature habilitada)
         surveys: {
           total: surveysData.length,
           respondidas: surveysData.filter(s => s.status === 'responded').length,
@@ -218,7 +211,7 @@ export default function Dashboard() {
       };
     },
     enabled: !!user,
-    staleTime: 30000, // 30 segundos antes de considerar stale
+    staleTime: 30000,
     refetchOnWindowFocus: false,
   });
 
@@ -229,8 +222,6 @@ export default function Dashboard() {
       if (!equipesLideradas.length) return null;
       
       const equipeIds = equipesLideradas.map(e => e.id);
-      
-      // Buscar membros da equipe
       const { data: membrosData } = await supabase
         .from('equipes_membros')
         .select('user_id')
@@ -248,21 +239,13 @@ export default function Dashboard() {
         };
       }
       
-      // Buscar perfis para contar ativos e fichas do mês em paralelo
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       
       const [profilesResult, fichasResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('ativo')
-          .in('user_id', userIds),
-        supabase
-          .from('fichas_visita')
-          .select('id', { count: 'exact', head: true })
-          .in('user_id', userIds)
-          .gte('data_visita', startOfMonth.toISOString()),
+        supabase.from('profiles').select('ativo').in('user_id', userIds),
+        supabase.from('fichas_visita').select('id', { count: 'exact', head: true }).in('user_id', userIds).gte('data_visita', startOfMonth.toISOString()),
       ]);
       
       return {
@@ -274,12 +257,13 @@ export default function Dashboard() {
       };
     },
     enabled: isLider && equipesLideradas.length > 0 && !liderLoading,
-    staleTime: 60000, // 1 minuto
+    staleTime: 60000,
   });
 
-  // Extrair dados para uso no componente
   const stats = dashboardData;
   const fichasParceiro = dashboardData?.fichasParceiro;
+  const greeting = useMemo(() => getGreeting(), []);
+  const firstName = profile?.nome?.split(' ')[0] || 'Usuário';
 
   if (loading) {
     return (
@@ -289,32 +273,102 @@ export default function Dashboard() {
     );
   }
 
+  // Mobile quick action items for the icon grid
+  const mobileActions = [
+    { 
+      label: 'Novo Registro', 
+      icon: Plus, 
+      onClick: () => navigate('/fichas/nova'), 
+      className: 'gradient-primary text-primary-foreground',
+      dataTour: 'novo-registro',
+    },
+    { 
+      label: 'Registros', 
+      icon: FileText, 
+      onClick: () => navigate('/fichas'), 
+      className: 'bg-secondary text-secondary-foreground',
+      dataTour: 'ver-registros',
+    },
+    ...(parceriasConstrutoras.length > 0 ? [{
+      label: 'Construtoras',
+      icon: Building2,
+      onClick: () => navigate('/fichas/nova?modo=construtora'),
+      className: 'bg-orange-500/20 text-orange-600 dark:text-orange-400',
+    }] : []),
+    { 
+      label: 'Convites', 
+      icon: Handshake, 
+      onClick: () => navigate('/convites'), 
+      className: 'bg-secondary text-secondary-foreground',
+    },
+    ...(parceriasConstrutoras.length === 0 ? [{
+      label: 'Ajuda Jurídica',
+      icon: Scale,
+      onClick: () => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank'),
+      className: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
+    }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-20 sm:pb-0">
       {/* Desktop Navigation */}
       <DesktopNav />
       
-      {/* Mobile Header */}
-      <header className="sm:hidden border-b bg-card safe-area-top">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {imobiliaria?.logo_url ? (
-              <img 
-                src={imobiliaria.logo_url} 
-                alt={imobiliaria.nome} 
-                className="h-8 w-8 rounded-lg object-contain"
-              />
-            ) : (
-              <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
-                <FileText className="h-4 w-4 text-primary-foreground" />
-              </div>
-            )}
-            <span className="font-display text-lg font-bold truncate max-w-[140px]">
-              {imobiliaria?.nome || 'VisitaProva'}
-            </span>
+      {/* ===== MOBILE HEADER with Gradient ===== */}
+      <header className="sm:hidden relative bg-gradient-to-br from-primary to-slate-900 dark:from-primary dark:to-slate-950 rounded-b-3xl safe-area-top">
+        <div className="px-5 pt-4 pb-14">
+          {/* Top bar: logo + brand */}
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              {imobiliaria?.logo_url ? (
+                <img 
+                  src={imobiliaria.logo_url} 
+                  alt={imobiliaria.nome} 
+                  className="h-7 w-7 rounded-lg object-contain bg-white/20 p-0.5"
+                />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <FileText className="h-3.5 w-3.5 text-white" />
+                </div>
+              )}
+              <span className="font-display text-sm font-semibold text-white/80 truncate max-w-[140px]">
+                {imobiliaria?.nome || 'VisitaProva'}
+              </span>
+            </div>
+          </div>
+
+          {/* Welcome with avatar */}
+          <div data-tour="welcome" className="flex items-center gap-3">
+            <UserAvatar 
+              name={profile?.nome || undefined} 
+              imageUrl={profile?.foto_url || undefined}
+              role={role || 'corretor'}
+              size="lg"
+              className="ring-2 ring-white/30"
+            />
+            <div>
+              <p className="text-white/70 text-sm">{greeting},</p>
+              <h1 
+                className="font-display text-xl font-bold text-white cursor-default"
+                onClick={() => {
+                  const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
+                  sessionStorage.setItem('debug-clicks', String(clicks));
+                  if (clicks >= 5) {
+                    setShowDebug(true);
+                    sessionStorage.setItem('debug-clicks', '0');
+                  }
+                  setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
+                }}
+              >
+                {firstName}!
+              </h1>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* ===== DESKTOP HEADER (unchanged) ===== */}
+      {/* Desktop welcome is inside main below */}
 
       <main className="container mx-auto px-4 py-4 md:py-8">
         {/* PWA Install Banner */}
@@ -382,8 +436,8 @@ export default function Dashboard() {
         </Card>
       )}
 
-        {/* Welcome Section */}
-        <div data-tour="welcome" className="mb-4 md:mb-8">
+        {/* Welcome Section - Desktop Only */}
+        <div data-tour="welcome" className="mb-4 md:mb-8 hidden sm:block">
           <h1 
             className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2 cursor-default"
             onClick={() => {
@@ -396,15 +450,67 @@ export default function Dashboard() {
               setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
             }}
           >
-            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+            Bem-vindo, {firstName}!
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Gerencie seus registros de visita e clientes
           </p>
         </div>
 
-        {/* Stats Grid - 3 cols on desktop */}
-        <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+        {/* ===== MOBILE: Floating Stats Card ===== */}
+        <div data-tour="stats" className="sm:hidden -mt-10 mb-5">
+          <Card className="shadow-lg rounded-2xl border-0">
+            <CardContent className="p-0">
+              <div className="grid grid-cols-3 divide-x divide-border">
+                {/* Total */}
+                <button 
+                  className="p-3 text-center hover:bg-muted/50 transition-colors rounded-l-2xl"
+                  onClick={() => navigate('/fichas')}
+                >
+                  <FileText className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+                  <p className="text-xl font-bold">{stats?.totalFichas || 0}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Total</p>
+                </button>
+
+                {/* Confirmadas */}
+                <button 
+                  className="p-3 text-center hover:bg-muted/50 transition-colors"
+                  onClick={() => navigate('/fichas?status=completo')}
+                >
+                  <CheckCircle className="h-4 w-4 text-success mx-auto mb-1" />
+                  <p className="text-xl font-bold text-success">{stats?.fichasCompletas || 0}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Confirmadas</p>
+                </button>
+
+                {/* Pendentes - highlighted when > 0 */}
+                <button 
+                  className={`p-3 text-center transition-colors rounded-r-2xl ${
+                    (stats?.fichasPendentes || 0) > 0 
+                      ? 'bg-amber-50 dark:bg-amber-950/30' 
+                      : 'hover:bg-muted/50'
+                  }`}
+                  onClick={() => navigate('/fichas?status=pendente')}
+                >
+                  <Clock className="h-4 w-4 text-warning mx-auto mb-1" />
+                  {(stats?.fichasPendentes || 0) > 0 ? (
+                    <>
+                      <p className="text-xl font-bold text-warning">{stats?.fichasPendentes}</p>
+                      <p className="text-[10px] text-warning font-medium">Pendentes</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-success mt-0.5">Tudo em dia!</p>
+                      <p className="text-[10px] text-muted-foreground">✅</p>
+                    </>
+                  )}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ===== DESKTOP: Stats Grid (unchanged) ===== */}
+        <div data-tour="stats" className="hidden sm:grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card 
             className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group"
             onClick={() => navigate('/fichas')}
@@ -456,6 +562,27 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* ===== MOBILE: Quick Action Icon Grid ===== */}
+        <div className="sm:hidden mb-5">
+          <div className="grid grid-cols-4 gap-2">
+            {mobileActions.map((action, i) => (
+              <button
+                key={i}
+                data-tour={action.dataTour}
+                className="flex flex-col items-center gap-1.5 py-2 active:scale-95 transition-transform"
+                onClick={action.onClick}
+              >
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${action.className}`}>
+                  <action.icon className="h-5 w-5" />
+                </div>
+                <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight">
+                  {action.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Card de Fichas como Parceiro */}
         {fichasParceiro && fichasParceiro.total > 0 && (
           <Card 
@@ -479,14 +606,62 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Card de Pesquisas Pós-Visita */}
+        {/* ===== MOBILE: Horizontal Carousel for secondary cards ===== */}
+        <div className="sm:hidden mb-5 -mx-4">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 pb-2 scrollbar-hide">
+            {/* Card Pesquisas Pós-Visita */}
+            {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
+              <Card 
+                className="min-w-[260px] snap-start cursor-pointer shadow-soft rounded-2xl border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 shrink-0"
+                onClick={() => navigate('/pesquisas')}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-9 w-9 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center">
+                      <ClipboardCheck className="h-4 w-4 text-purple-500 dark:text-purple-400" />
+                    </div>
+                    <p className="text-sm font-semibold text-purple-600 dark:text-purple-400">Pesquisas</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {stats.surveys.respondidas} de {stats.surveys.total} respondidas
+                  </p>
+                  <Progress 
+                    value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0}
+                    className="h-1"
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Card Indique e Ganhe */}
+            <Card 
+              data-tour="indicacoes"
+              className={`min-w-[260px] snap-start cursor-pointer shadow-soft rounded-2xl border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-yellow-500/10 dark:from-amber-500/5 dark:to-yellow-500/5 shrink-0 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
+              onClick={() => navigate('/minhas-indicacoes')}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <Share2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Indique e Ganhe</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Indique corretores e imobiliárias e ganhe comissão por cada indicação
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* ===== DESKTOP: Survey card (unchanged) ===== */}
         {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
           <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6"
+            className="hidden sm:flex animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6"
             style={{ animationDelay: '0.5s' }}
             onClick={() => navigate('/pesquisas')}
           >
-            <CardContent className="p-3 flex items-center gap-3">
+            <CardContent className="p-3 flex items-center gap-3 w-full">
               <div className="h-10 w-10 rounded-lg bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
                 <ClipboardCheck className="h-5 w-5 text-purple-500 dark:text-purple-400" />
               </div>
@@ -508,16 +683,16 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Plan Usage Card - Compact version for Dashboard - hide for linked brokers */}
+        {/* Plan Usage Card - hide for linked brokers */}
         {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
 
-        {/* Card de Indicações */}
+        {/* ===== DESKTOP: Card de Indicações (unchanged) ===== */}
         <Card 
           data-tour="indicacoes"
-          className={`animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
+          className={`hidden sm:flex animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
           onClick={() => navigate('/minhas-indicacoes')}
         >
-          <CardContent className="p-4 flex items-center gap-4">
+          <CardContent className="p-4 flex items-center gap-4 w-full">
             <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
               <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
             </div>
@@ -533,7 +708,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions - vertical on mobile, grid on desktop */}
+        {/* Quick Actions - Desktop only (unchanged) */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <Card 
             className="cursor-pointer hover:shadow-medium transition-shadow group"
@@ -611,85 +786,16 @@ export default function Dashboard() {
               </CardDescription>
             </CardHeader>
           </Card>
-
-        </div>
-
-        {/* Mobile Quick Actions - Compact list */}
-        <div className="sm:hidden space-y-2">
-          <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
-          
-          <Card 
-            data-tour="novo-registro"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas/nova')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
-                <Plus className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Novo Registro de Visita</p>
-                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {parceriasConstrutoras.length > 0 && (
-            <Card 
-              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
-              onClick={() => navigate('/fichas/nova?modo=construtora')}
-            >
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
-                  <Building2 className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">Registro Construtoras</p>
-                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card 
-            data-tour="ver-registros"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ver Registros</p>
-                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                <Scale className="h-5 w-5 text-amber-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ajuda Jurídica</p>
-                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
-              </div>
-            </CardContent>
-          </Card>
-
         </div>
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/fichas/nova')} 
-        label="Novo Registro"
-      />
+      {/* Floating Action Button - Desktop only */}
+      <div className="hidden sm:block">
+        <FloatingActionButton 
+          onClick={() => navigate('/fichas/nova')} 
+          label="Novo Registro"
+        />
+      </div>
 
       {/* Mobile Navigation */}
       <MobileNav />
@@ -700,7 +806,7 @@ export default function Dashboard() {
       {/* Onboarding Tour */}
       <OnboardingTour steps={ONBOARDING_STEPS} />
 
-      {/* Debug Banner - clique 5x no título para mostrar */}
+      {/* Debug Banner */}
       {showDebug && (
         <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-card border rounded-lg shadow-lg p-4 z-50 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
