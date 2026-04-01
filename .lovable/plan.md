@@ -1,13 +1,15 @@
 
 
-## Plano: Trocar ícone de Pesquisas para FileText
+## Plano: Reduzir tamanho do card de Pesquisas no Dashboard
 
-Mudar o ícone de "Pesquisas" de `ClipboardCheck` para `FileText` (mesmo ícone de "Registros") nos menus de navegação.
+### Alteração em `src/pages/Dashboard.tsx` (linhas 484-508)
 
-### Arquivos a editar
-
-1. **`src/components/DesktopNav.tsx`** — trocar `ClipboardCheck` por `FileText` no item Pesquisas
-2. **`src/components/MobileNav.tsx`** — trocar `ClipboardCheck` por `FileText` no item Pesquisas (remover import de `ClipboardCheck`)
-3. **`src/components/layouts/ImobiliariaLayout.tsx`** — trocar `ClipboardCheck` por `FileText` no navItem Pesquisas (remover import de `ClipboardCheck`)
-4. **`src/components/layouts/ConstutoraLayout.tsx`** — trocar `ClipboardCheck` por `FileText` no navItem Pesquisas (remover import de `ClipboardCheck`)
+Diminuir o card de pesquisas pós-visita:
+- Reduzir padding de `p-4` para `p-3`
+- Reduzir ícone de `h-12 w-12` / `h-6 w-6` para `h-10 w-10` / `h-5 w-5`
+- Reduzir `rounded-xl` para `rounded-lg`
+- Reduzir gap de `gap-4` para `gap-3`
+- Reduzir texto principal de `font-semibold` para `text-sm font-medium`
+- Reduzir subtexto de `text-sm` para `text-xs`
+- Reduzir barra de progresso de `h-1.5 mt-2` para `h-1 mt-1.5`
 
