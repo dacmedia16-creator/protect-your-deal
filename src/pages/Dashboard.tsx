@@ -499,7 +499,7 @@ export default function Dashboard() {
               setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
             }}
           >
-            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+            Bem-vindo, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{profile?.nome?.split(' ')[0] || 'Usuário'}</span>!
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Gerencie seus registros de visita e clientes
