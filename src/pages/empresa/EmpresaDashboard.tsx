@@ -268,7 +268,7 @@ export default function EmpresaDashboard() {
         {/* Stats grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Link to="/empresa/corretores">
-            <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Corretores</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
