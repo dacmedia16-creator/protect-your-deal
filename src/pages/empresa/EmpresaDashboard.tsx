@@ -229,24 +229,16 @@ export default function EmpresaDashboard() {
   return (
     <ImobiliariaLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Gerencie sua imobiliária e corretores
-            </p>
-          </div>
-          <Link to="/empresa/corretores">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Corretor
-            </Button>
-          </Link>
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Gerencie sua imobiliária e corretores
+          </p>
         </div>
 
         {/* Subscription warning */}
         {assinatura?.status === 'trial' && (
-          <Card className="border-0 bg-warning/5 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+          <Card className="border-0 bg-warning/5 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] animate-fade-in">
             <CardContent className="flex items-center gap-4 p-4">
               <AlertCircle className="h-5 w-5 text-warning shrink-0" />
               <div className="flex-1">
@@ -265,80 +257,62 @@ export default function EmpresaDashboard() {
           </Card>
         )}
 
-        {/* Stats grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Stats grid — 3 colunas compacto */}
+        <div className="grid grid-cols-3 gap-3 md:gap-6">
           <Link to="/empresa/corretores">
-            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Corretores</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all h-full animate-fade-in">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+                <CardTitle className="text-xs md:text-sm font-medium">Corretores</CardTitle>
+                <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats?.totalCorretores}</div>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{stats?.totalCorretores}</div>
                 {plano && (
-                  <>
-                    <Progress value={corretoresPercent} className="h-1 mt-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      de {plano.max_corretores} disponíveis
-                    </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to="/empresa/fichas">
-            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Registros do Mês</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold">{stats?.fichasMes}</span>
-                  {stats?.taxaConfirmacao !== undefined && stats.taxaConfirmacao > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      ({stats.taxaConfirmacao}% confirmado)
-                    </span>
-                  )}
-                </div>
-                {plano && (
-                  <>
-                    <Progress value={fichasPercent} className="h-1 mt-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      de {plano.max_fichas_mes} permitidos
-                    </p>
-                  </>
-                )}
-                {/* Indicador de crescimento */}
-                {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
-                  <p className={`text-xs mt-1 flex items-center gap-1 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
-                    {stats.crescimentoMoM > 0 ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    )}
-                    {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}% vs mês anterior
+                  <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                    de {plano.max_corretores} disponíveis
                   </p>
                 )}
               </CardContent>
             </Card>
           </Link>
 
-          {surveyEnabled && (
+          <Link to="/empresa/fichas">
+            <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all h-full animate-fade-in" style={{ animationDelay: '50ms' }}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+                <CardTitle className="text-xs md:text-sm font-medium">Registros/Mês</CardTitle>
+                <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                <div className="text-xl md:text-2xl font-bold">{stats?.fichasMes}</div>
+                {plano && (
+                  <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                    de {plano.max_fichas_mes >= 99999 ? '∞' : plano.max_fichas_mes} permitidos
+                  </p>
+                )}
+                {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
+                  <p className={`text-[10px] md:text-xs mt-0.5 flex items-center gap-0.5 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
+                    {stats.crescimentoMoM > 0 ? <TrendingUp className="h-2.5 w-2.5 md:h-3 md:w-3" /> : <TrendingDown className="h-2.5 w-2.5 md:h-3 md:w-3" />}
+                    {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}%
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
+
+          {surveyEnabled ? (
             <Link to="/empresa/pesquisas">
-              <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pesquisas Respondidas</CardTitle>
+              <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all h-full animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+                  <CardTitle className="text-xs md:text-sm font-medium">Pesquisas</CardTitle>
                   {(stats?.totalPesquisas || 0) > 0 ? (
-                    <PieChart width={44} height={44}>
+                    <PieChart width={32} height={32}>
                       <Pie
                         data={[
                           { value: stats?.pesquisasRespondidas || 0 },
                           { value: stats?.pesquisasPendentes || 0 },
                         ]}
-                        innerRadius={13}
-                        outerRadius={20}
+                        innerRadius={9}
+                        outerRadius={14}
                         dataKey="value"
                         strokeWidth={0}
                         startAngle={90}
@@ -348,21 +322,38 @@ export default function EmpresaDashboard() {
                         <Cell fill="hsl(var(--muted))" />
                       </Pie>
                     </PieChart>
-                  ) : null}
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                  )}
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</span>
-                    <span className="text-xs text-muted-foreground">
-                      de {stats?.totalPesquisas || 0}
+                <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl md:text-2xl font-bold">{stats?.pesquisasRespondidas || 0}</span>
+                    <span className="text-[10px] md:text-xs text-muted-foreground">
+                      /{stats?.totalPesquisas || 0}
                     </span>
                   </div>
                   {stats?.mediaSatisfacao !== undefined && (
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Star className="h-3 w-3 text-warning fill-warning" />
-                      {stats.mediaSatisfacao.toFixed(1)}/5 média geral
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 flex items-center gap-0.5">
+                      <Star className="h-2.5 w-2.5 md:h-3 md:w-3 text-warning fill-warning" />
+                      {stats.mediaSatisfacao.toFixed(1)}
                     </p>
                   )}
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Link to="/empresa/fichas">
+              <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] hover:scale-[1.02] transition-all h-full animate-fade-in" style={{ animationDelay: '100ms' }}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 md:pb-2 p-3 md:p-6">
+                  <CardTitle className="text-xs md:text-sm font-medium">Total Registros</CardTitle>
+                  <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+                  <div className="text-xl md:text-2xl font-bold">{stats?.totalFichas}</div>
+                  <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
+                    acumulado
+                  </p>
                 </CardContent>
               </Card>
             </Link>
@@ -370,17 +361,13 @@ export default function EmpresaDashboard() {
         </div>
 
         {/* Monthly chart */}
-        <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
+        <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] animate-fade-in" style={{ animationDelay: '150ms' }}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-base font-medium">Registros por Mês</CardTitle>
               {stats?.crescimentoMoM !== undefined && stats.crescimentoMoM !== 0 && (
                 <span className={`text-xs font-medium flex items-center gap-1 ${stats.crescimentoMoM > 0 ? 'text-success' : 'text-destructive'}`}>
-                  {stats.crescimentoMoM > 0 ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
+                  {stats.crescimentoMoM > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                   {stats.crescimentoMoM > 0 ? '+' : ''}{stats.crescimentoMoM}%
                 </span>
               )}
@@ -390,24 +377,10 @@ export default function EmpresaDashboard() {
             {monthlyData.some(d => d.fichas > 0) ? (
               <ChartContainer config={chartConfig} className="h-[200px]">
                 <BarChart data={monthlyData}>
-                  <XAxis 
-                    dataKey="month" 
-                    tickLine={false} 
-                    axisLine={false}
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    tickLine={false} 
-                    axisLine={false}
-                    fontSize={12}
-                    allowDecimals={false}
-                  />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={12} />
+                  <YAxis tickLine={false} axisLine={false} fontSize={12} allowDecimals={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="fichas" 
-                    fill="hsl(var(--primary))" 
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="fichas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ChartContainer>
             ) : (
@@ -420,14 +393,14 @@ export default function EmpresaDashboard() {
 
         {/* Quick actions and subscription info */}
         <div className="grid gap-6 md:grid-cols-2">
-          <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
+          <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] animate-fade-in" style={{ animationDelay: '200ms' }}>
             <CardHeader>
               <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Link to="/empresa/corretores" className="block">
                 <Button variant="outline" className="w-full justify-between">
-                  Gerenciar corretores
+                  <span className="flex items-center gap-2"><Plus className="h-4 w-4" /> Novo Corretor</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -446,7 +419,7 @@ export default function EmpresaDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
+          <Card className="border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] animate-fade-in" style={{ animationDelay: '250ms' }}>
             <CardHeader>
               <CardTitle>Sua Assinatura</CardTitle>
             </CardHeader>
