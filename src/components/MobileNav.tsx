@@ -27,6 +27,10 @@ export function MobileNav() {
     ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: FileText }] : []),
   ];
 
+  const handleSofiaClick = () => {
+    window.dispatchEvent(new CustomEvent('toggle-sofia'));
+  };
+
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
 
   if (!user) return null;
