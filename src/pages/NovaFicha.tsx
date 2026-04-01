@@ -22,6 +22,13 @@ import { z } from 'zod';
 import { validateCPF, formatCPF } from '@/lib/cpf';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
+import { OnboardingTour } from '@/components/OnboardingTour';
+
+const NOVA_FICHA_TOUR_STEPS = [
+  { target: 'ficha-progress', title: 'Progresso', description: 'Acompanhe seu progresso aqui. Cada etapa será marcada quando concluída.' },
+  { target: 'ficha-modo', title: 'Modo de Criação', description: 'Escolha como criar: todos os dados de uma vez ou começar pelo proprietário/comprador.' },
+  { target: 'ficha-nav-buttons', title: 'Navegação', description: 'Use os botões para navegar entre as etapas. No final, clique em "Criar Registro".' },
+];
 
 
 type ModoCriacao = 'completo' | 'proprietario' | 'comprador';
