@@ -40,7 +40,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+
 import { DesktopNav } from '@/components/DesktopNav';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 
