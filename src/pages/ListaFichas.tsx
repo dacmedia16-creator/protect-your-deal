@@ -34,7 +34,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+
 import { DesktopNav } from '@/components/DesktopNav';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
