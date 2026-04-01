@@ -67,6 +67,18 @@ export function MobileNav() {
             </button>
           );
         })}
+        {/* Sofia button */}
+        <button
+          onClick={handleSofiaClick}
+          className={cn(
+            "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative",
+            "active:bg-muted/50 touch-action-manipulation",
+            "text-muted-foreground"
+          )}
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Sofia</span>
+        </button>
       </div>
     </nav>
   );
