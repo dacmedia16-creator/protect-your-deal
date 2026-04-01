@@ -523,7 +523,7 @@ export default function Dashboard() {
           onClick={() => navigate('/minhas-indicacoes')}
         >
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
+            <div className="h-14 w-14 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
               <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
             </div>
             <div className="flex-1 min-w-0">
