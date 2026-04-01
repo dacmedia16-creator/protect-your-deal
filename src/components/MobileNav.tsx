@@ -41,7 +41,7 @@ export function MobileNav() {
     { path: '/dashboard', label: 'Início', icon: Home },
     { path: '/fichas', label: 'Registros', icon: FileText },
     ...(isLider ? [{ path: '/minha-equipe', label: 'Equipe', icon: UsersRound }] : [{ path: '/convites', label: 'Convites', icon: Handshake }]),
-    ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+    ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: FileText }] : []),
   ];
   
   const handleInstallApp = async () => {
