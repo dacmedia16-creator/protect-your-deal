@@ -486,22 +486,22 @@ export default function Dashboard() {
             style={{ animationDelay: '0.5s' }}
             onClick={() => navigate('/pesquisas')}
           >
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
-                <ClipboardCheck className="h-6 w-6 text-purple-500 dark:text-purple-400" />
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
+                <ClipboardCheck className="h-5 w-5 text-purple-500 dark:text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-purple-600 dark:text-purple-400">
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
                   {stats.surveys.respondidas} de {stats.surveys.total} pesquisas respondidas
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {stats.surveys.pendentes > 0 
                     ? `${stats.surveys.pendentes} aguardando resposta`
                     : 'Todas respondidas'}
                 </p>
                 <Progress 
                   value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0}
-                  className="h-1.5 mt-2"
+                  className="h-1 mt-1.5"
                 />
               </div>
             </CardContent>
