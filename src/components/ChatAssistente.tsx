@@ -756,7 +756,7 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
           <div className={cn(
             "absolute bg-background border rounded-lg shadow-lg p-3 w-48 animate-fade-in",
             userContext.isLoggedIn 
-              ? "top-20 right-0 sm:bottom-16 sm:top-auto sm:left-auto sm:right-0" 
+              ? "bottom-20 right-0 sm:bottom-16 sm:top-auto sm:left-auto sm:right-0" 
               : "bottom-20 right-0"
           )}>
             <p className="text-xs text-muted-foreground">💬 Posso te ajudar?</p>
