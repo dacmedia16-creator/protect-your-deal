@@ -779,7 +779,6 @@ export default function Convites() {
                           )}
                           
                           <Badge variant="outline" className="text-xs">
-                          <Badge variant="outline" className="text-xs">
                             Parceiro preenche: {convite.parte_faltante === 'comprador' ? 'Comprador' : 'Proprietário'}
                           </Badge>
                           
