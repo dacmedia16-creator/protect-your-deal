@@ -610,7 +610,7 @@ export default function NovaFicha() {
 
   // ===== PROGRESS INDICATOR =====
   const renderProgressIndicator = () => (
-    <div className="mb-6">
+    <div className="mb-6" data-tour="ficha-progress">
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
