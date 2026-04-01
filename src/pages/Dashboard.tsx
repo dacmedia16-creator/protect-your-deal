@@ -30,8 +30,6 @@ import {
   ChevronRight,
   Share2,
   Building2,
-  Mail,
-  BarChart3,
 } from 'lucide-react';
 
 // Build timestamp para diagnóstico de cache PWA
@@ -616,87 +614,74 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Mobile Quick Actions - Grid de ícones quadrados */}
-        <div className="sm:hidden">
+        {/* Mobile Quick Actions - Compact list */}
+        <div className="sm:hidden space-y-2">
           <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
           
-          <div className="grid grid-cols-4 gap-3">
-            <div
-              data-tour="novo-registro"
-              className="flex flex-col items-center gap-1.5 cursor-pointer"
-              onClick={() => navigate('/fichas/nova')}
-            >
-              <div className="h-14 w-14 rounded-xl gradient-primary flex items-center justify-center">
-                <Plus className="h-6 w-6 text-primary-foreground" />
+          <Card 
+            data-tour="novo-registro"
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/fichas/nova')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
+                <Plus className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-[11px] text-center font-medium leading-tight">Novo Registro</span>
-            </div>
-
-            <div
-              data-tour="ver-registros"
-              className="flex flex-col items-center gap-1.5 cursor-pointer"
-              onClick={() => navigate('/fichas')}
-            >
-              <div className="h-14 w-14 rounded-xl bg-secondary flex items-center justify-center">
-                <FileText className="h-6 w-6 text-secondary-foreground" />
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Novo Registro de Visita</p>
+                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
               </div>
-              <span className="text-[11px] text-center font-medium leading-tight">Registros</span>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div
-              className="flex flex-col items-center gap-1.5 cursor-pointer"
-              onClick={() => navigate('/convites')}
+          {parceriasConstrutoras.length > 0 && (
+            <Card 
+              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
+              onClick={() => navigate('/fichas/nova?modo=construtora')}
             >
-              <div className="h-14 w-14 rounded-xl bg-blue-500/15 flex items-center justify-center">
-                <Mail className="h-6 w-6 text-blue-600" />
-              </div>
-              <span className="text-[11px] text-center font-medium leading-tight">Convites</span>
-            </div>
-
-            <div
-              className="flex flex-col items-center gap-1.5 cursor-pointer"
-              onClick={() => navigate('/indicacoes')}
-            >
-              <div className="h-14 w-14 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                <Users className="h-6 w-6 text-emerald-600" />
-              </div>
-              <span className="text-[11px] text-center font-medium leading-tight">Indicações</span>
-            </div>
-
-            {surveyEnabled && (
-              <div
-                className="flex flex-col items-center gap-1.5 cursor-pointer"
-                onClick={() => navigate('/pesquisas')}
-              >
-                <div className="h-14 w-14 rounded-xl bg-purple-500/15 flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-purple-600" />
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-orange-600" />
                 </div>
-                <span className="text-[11px] text-center font-medium leading-tight">Pesquisas</span>
-              </div>
-            )}
-
-            <div
-              className="flex flex-col items-center gap-1.5 cursor-pointer"
-              onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
-            >
-              <div className="h-14 w-14 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                <Scale className="h-6 w-6 text-amber-600" />
-              </div>
-              <span className="text-[11px] text-center font-medium leading-tight">Ajuda Jurídica</span>
-            </div>
-
-            {parceriasConstrutoras.length > 0 && (
-              <div
-                className="flex flex-col items-center gap-1.5 cursor-pointer"
-                onClick={() => navigate('/fichas/nova?modo=construtora')}
-              >
-                <div className="h-14 w-14 rounded-xl bg-orange-500/15 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-orange-600" />
+                <div className="min-w-0">
+                  <p className="font-medium text-sm">Registro Construtoras</p>
+                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
                 </div>
-                <span className="text-[11px] text-center font-medium leading-tight">Construtoras</span>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card 
+            data-tour="ver-registros"
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/fichas')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-secondary-foreground" />
               </div>
-            )}
-          </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Ver Registros</p>
+                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <Scale className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Ajuda Jurídica</p>
+                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
+              </div>
+            </CardContent>
+          </Card>
+
         </div>
       </main>
 
