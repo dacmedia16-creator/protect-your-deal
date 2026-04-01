@@ -710,19 +710,29 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
   // Determine if we should show typing indicator
   const showTypingIndicator = isTyping && messages[messages.length - 1]?.content === '';
 
+  // Listen for toggle-sofia event from MobileNav
+  useEffect(() => {
+    const handleToggleSofia = () => {
+      setIsOpen(prev => !prev);
+    };
+    window.addEventListener('toggle-sofia', handleToggleSofia);
+    return () => window.removeEventListener('toggle-sofia', handleToggleSofia);
+  }, []);
+
   // Hide on sensitive routes
   const isHiddenRoute = HIDDEN_ROUTES.some(route => location.pathname.startsWith(route));
   
-  // On mobile: only show on dashboard
   // On desktop: show everywhere except hidden routes
-  const MOBILE_VISIBLE_ROUTES = ['/dashboard'];
-  const shouldHide = isMobile 
-    ? !MOBILE_VISIBLE_ROUTES.includes(location.pathname)
+  // On mobile logged-in: don't render FAB (Sofia is in nav bar), but still render chat window
+  const shouldHideCompletely = isMobile 
+    ? isHiddenRoute
     : isHiddenRoute;
     
-  if (shouldHide || roleLoading) return null;
+  if (shouldHideCompletely || roleLoading) return null;
 
-  // Adjust position based on user state - for logged-in users on mobile, position top-right
+  const isLoggedInMobile = isMobile && userContext.isLoggedIn;
+
+  // Adjust position based on user state
   const buttonPositionClass = userContext.isLoggedIn
     ? "fixed bottom-16 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
@@ -731,7 +741,10 @@ Quer saber como funciona ou tirar alguma dúvida? Estou aqui pra ajudar!`;
     ? "fixed bottom-16 right-4 sm:bottom-6 sm:top-auto sm:left-auto sm:right-6 z-[9999]"
     : "fixed bottom-6 right-4 sm:right-6 z-[9999]";
 
+  // On mobile logged-in: hide FAB, Sofia opens only via nav bar
   if (!isOpen) {
+    if (isLoggedInMobile) return null;
+    
     return (
       <div className={cn(buttonPositionClass, "animate-in fade-in-0 slide-in-from-bottom-4 duration-500")}>
         <Button

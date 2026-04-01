@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Handshake, UsersRound } from 'lucide-react';
+import { Home, FileText, Handshake, UsersRound, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -26,6 +26,10 @@ export function MobileNav() {
     ...(isLider ? [{ path: '/minha-equipe', label: 'Equipe', icon: UsersRound }] : [{ path: '/convites', label: 'Convites', icon: Handshake }]),
     ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: FileText }] : []),
   ];
+
+  const handleSofiaClick = () => {
+    window.dispatchEvent(new CustomEvent('toggle-sofia'));
+  };
 
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
 
@@ -63,6 +67,18 @@ export function MobileNav() {
             </button>
           );
         })}
+        {/* Sofia button */}
+        <button
+          onClick={handleSofiaClick}
+          className={cn(
+            "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative",
+            "active:bg-muted/50 touch-action-manipulation",
+            "text-muted-foreground"
+          )}
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px] font-medium">Sofia</span>
+        </button>
       </div>
     </nav>
   );
