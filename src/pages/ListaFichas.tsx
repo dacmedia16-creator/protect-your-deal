@@ -395,11 +395,6 @@ export default function ListaFichas() {
         )}
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/fichas/nova')} 
-        label="Novo Registro"
-      />
       
       {/* PWA Install FAB */}
       <PWAInstallFAB />

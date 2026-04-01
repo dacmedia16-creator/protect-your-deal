@@ -277,11 +277,6 @@ export default function ListaImoveis() {
         )}
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/imoveis/novo')} 
-        label="Novo Imóvel"
-      />
 
       {/* Mobile Navigation */}
       <MobileNav />

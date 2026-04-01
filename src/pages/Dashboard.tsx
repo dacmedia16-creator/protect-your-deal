@@ -699,11 +699,6 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/fichas/nova')} 
-        label="Novo Registro"
-      />
 
       {/* Mobile Navigation */}
       <MobileNav />

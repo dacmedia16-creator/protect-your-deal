@@ -314,11 +314,6 @@ export default function ListaClientes() {
         )}
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/clientes/novo')} 
-        label="Novo Cliente"
-      />
 
       {/* Mobile Navigation */}
       <MobileNav />
