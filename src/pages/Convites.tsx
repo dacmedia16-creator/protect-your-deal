@@ -319,7 +319,7 @@ export default function Convites() {
     }
   };
 
-  // Categorize received invites
+  // Categorize received invites (exclude archived)
   const convitesPendentesRecebidos = convitesRecebidos?.filter(c => 
     c.status === 'pendente' && !isPast(new Date(c.expira_em))
   ) || [];
@@ -332,6 +332,7 @@ export default function Convites() {
   }) || [];
   
   const convitesHistoricoRecebidos = convitesRecebidos?.filter(c => {
+    if (c.status === 'arquivado') return false;
     if (c.status === 'recusado') return true;
     if (c.status === 'pendente' && isPast(new Date(c.expira_em))) return true;
     if (c.status === 'aceito') {
@@ -342,7 +343,7 @@ export default function Convites() {
     return false;
   }) || [];
 
-  // Categorize sent invites
+  // Categorize sent invites (exclude archived)
   const convitesPendentesEnviados = convitesEnviados?.filter(c => 
     c.status === 'pendente' && !isPast(new Date(c.expira_em))
   ) || [];
@@ -350,7 +351,7 @@ export default function Convites() {
   const convitesAceitosEnviados = convitesEnviados?.filter(c => c.status === 'aceito') || [];
   
   const convitesOutrosEnviados = convitesEnviados?.filter(c => 
-    c.status === 'recusado' || (c.status === 'pendente' && isPast(new Date(c.expira_em)))
+    c.status !== 'arquivado' && (c.status === 'recusado' || (c.status === 'pendente' && isPast(new Date(c.expira_em))))
   ) || [];
 
   const isLoading = loadingRecebidos || loadingEnviados;
