@@ -567,7 +567,6 @@ export default function Convites() {
                               <EyeOff className="h-4 w-4" />
                             </Button>
                           </div>
-                          </Button>
                         </CardContent>
                       </Card>
                     );
