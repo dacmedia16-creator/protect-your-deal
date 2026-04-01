@@ -559,6 +559,75 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {/* Mobile Quick Actions - Compact list */}
+        <div className="sm:hidden space-y-2 mb-4">
+          <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
+          
+          <Card 
+            data-tour="novo-registro"
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/fichas/nova')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
+                <Plus className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Novo Registro de Visita</p>
+                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {parceriasConstrutoras.length > 0 && (
+            <Card 
+              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
+              onClick={() => navigate('/fichas/nova?modo=construtora')}
+            >
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-orange-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm">Registro Construtoras</p>
+                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card 
+            data-tour="ver-registros"
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => navigate('/fichas')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <FileText className="h-5 w-5 text-secondary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Ver Registros</p>
+                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors"
+            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+          >
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <Scale className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Ajuda Jurídica</p>
+                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Card de Fichas como Parceiro */}
         {fichasParceiro && fichasParceiro.total > 0 && (
           <Card 
@@ -731,75 +800,7 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Mobile Quick Actions - Compact list */}
-        <div className="sm:hidden space-y-2">
-          <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
-          
-          <Card 
-            data-tour="novo-registro"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas/nova')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
-                <Plus className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Novo Registro de Visita</p>
-                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
-              </div>
-            </CardContent>
-          </Card>
 
-          {parceriasConstrutoras.length > 0 && (
-            <Card 
-              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
-              onClick={() => navigate('/fichas/nova?modo=construtora')}
-            >
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
-                  <Building2 className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">Registro Construtoras</p>
-                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card 
-            data-tour="ver-registros"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ver Registros</p>
-                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                <Scale className="h-5 w-5 text-amber-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ajuda Jurídica</p>
-                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
-              </div>
-            </CardContent>
-          </Card>
-
-        </div>
       </main>
 
 
