@@ -548,12 +548,25 @@ export default function Convites() {
                             Preencher: {convite.parte_faltante === 'comprador' ? 'Comprador' : 'Proprietário'}
                           </Badge>
                           
-                          <Button 
-                            className="w-full" 
-                            size="sm"
-                            onClick={() => navigate(`/convite-parceiro/${convite.token}`)}
-                          >
-                            {state === 'aguardando_dados' ? 'Preencher Dados' : 'Ver Ficha'}
+                          <div className="flex gap-2">
+                            <Button 
+                              className="flex-1" 
+                              size="sm"
+                              onClick={() => navigate(`/convite-parceiro/${convite.token}`)}
+                            >
+                              {state === 'aguardando_dados' ? 'Preencher Dados' : 'Ver Ficha'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          </div>
                           </Button>
                         </CardContent>
                       </Card>
