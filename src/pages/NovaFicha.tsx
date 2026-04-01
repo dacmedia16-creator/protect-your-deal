@@ -1375,6 +1375,7 @@ export default function NovaFicha() {
       </main>
 
       <MobileNav />
+      <OnboardingTour steps={NOVA_FICHA_TOUR_STEPS} storageKey="visitaprova-novaficha-tour-done" />
     </div>
   );
 }
