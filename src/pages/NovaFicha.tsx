@@ -655,7 +655,7 @@ export default function NovaFicha() {
 
   // ===== STEP: MODO =====
   const renderStepModo = () => (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border-primary/30 bg-primary/5" data-tour="ficha-modo">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
