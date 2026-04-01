@@ -327,10 +327,28 @@ export default function EmpresaDashboard() {
 
           {surveyEnabled && (
             <Link to="/empresa/pesquisas">
-              <Card className="cursor-pointer hover:border-primary transition-colors h-full">
+              <Card className="cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Pesquisas Respondidas</CardTitle>
-                  <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+                  {(stats?.totalPesquisas || 0) > 0 ? (
+                    <PieChart width={44} height={44}>
+                      <Pie
+                        data={[
+                          { value: stats?.pesquisasRespondidas || 0 },
+                          { value: stats?.pesquisasPendentes || 0 },
+                        ]}
+                        innerRadius={13}
+                        outerRadius={20}
+                        dataKey="value"
+                        strokeWidth={0}
+                        startAngle={90}
+                        endAngle={-270}
+                      >
+                        <Cell fill="hsl(270, 70%, 55%)" />
+                        <Cell fill="hsl(var(--muted))" />
+                      </Pie>
+                    </PieChart>
+                  ) : null}
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-baseline gap-2">
@@ -339,18 +357,11 @@ export default function EmpresaDashboard() {
                       de {stats?.totalPesquisas || 0}
                     </span>
                   </div>
-                  {/* Média de satisfação */}
                   {stats?.mediaSatisfacao !== undefined && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Star className="h-3 w-3 text-warning fill-warning" />
                       {stats.mediaSatisfacao.toFixed(1)}/5 média geral
                     </p>
-                  )}
-                  {stats?.totalPesquisas && stats.totalPesquisas > 0 && (
-                    <Progress
-                      value={(stats.pesquisasRespondidas / stats.totalPesquisas) * 100}
-                      className="h-1 mt-2"
-                    />
                   )}
                 </CardContent>
               </Card>
