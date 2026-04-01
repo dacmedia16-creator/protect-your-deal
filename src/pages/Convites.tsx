@@ -779,8 +779,22 @@ export default function Convites() {
                           )}
                           
                           <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs">
                             Parceiro preenche: {convite.parte_faltante === 'comprador' ? 'Comprador' : 'Proprietário'}
                           </Badge>
+                          
+                          <div className="flex justify-end">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
