@@ -362,6 +362,57 @@ export default function Dashboard() {
               {imobiliaria?.nome || 'VisitaProva'}
             </span>
           </div>
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="shrink-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={headerProfile?.foto_url || undefined} />
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {headerProfile?.nome?.charAt(0)?.toUpperCase() || <User className="h-3.5 w-3.5" />}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="pb-2">
+                  <RoleBadge role={role} variant="compact" />
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/perfil')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/fichas-parceiro')}>
+                  <Handshake className="h-4 w-4 mr-2" />
+                  Registros como Parceiro
+                </DropdownMenuItem>
+                {isCorretorAutonomo && (
+                  <DropdownMenuItem onClick={() => navigate('/minha-assinatura')}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Minha Assinatura
+                  </DropdownMenuItem>
+                )}
+                {isLider && (
+                  <DropdownMenuItem onClick={() => navigate('/minha-equipe')}>
+                    <UsersRound className="h-4 w-4 mr-2" />
+                    Minha Equipe
+                  </DropdownMenuItem>
+                )}
+                {!isInstalled && (
+                  <DropdownMenuItem onClick={handleInstallApp}>
+                    <Download className="h-4 w-4 mr-2" />
+                    {isInstallable ? 'Instalar com 1 clique' : 'Instalar App'}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} disabled={isLoggingOut} className="text-destructive">
+                  {isLoggingOut ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
+                  {isLoggingOut ? 'Saindo...' : 'Sair'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </header>
 
