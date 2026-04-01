@@ -1,18 +1,26 @@
 
 
-## Plano: Corrigir erro ao arquivar convites
+## Plano: Remover FloatingActionButton de todas as telas
 
-### Problema
-A coluna `status` da tabela `convites_parceiro` tem um CHECK constraint que só aceita: `pendente`, `aceito`, `expirado`. O valor `arquivado` é rejeitado pelo banco.
+Remover o botão flutuante "+" (FAB) de todas as 4 páginas onde é usado.
 
-### Solução
-**Migration SQL**: Alterar o CHECK constraint para incluir `'arquivado'`:
+### Alterações
 
-```sql
-ALTER TABLE convites_parceiro DROP CONSTRAINT convites_parceiro_status_check;
-ALTER TABLE convites_parceiro ADD CONSTRAINT convites_parceiro_status_check 
-  CHECK (status = ANY (ARRAY['pendente', 'aceito', 'expirado', 'arquivado']));
-```
+**1. `src/pages/Dashboard.tsx`**
+- Remover import do `FloatingActionButton`
+- Remover bloco JSX do `<FloatingActionButton>` (~linhas 702-706)
 
-Nenhuma alteração de código necessária — o frontend já está implementado corretamente.
+**2. `src/pages/ListaFichas.tsx`**
+- Remover import do `FloatingActionButton`
+- Remover bloco JSX do `<FloatingActionButton>` (~linhas 398-402)
+
+**3. `src/pages/ListaImoveis.tsx`**
+- Remover import do `FloatingActionButton`
+- Remover bloco JSX do `<FloatingActionButton>` (~linhas 280-284)
+
+**4. `src/pages/ListaClientes.tsx`**
+- Remover import do `FloatingActionButton`
+- Remover bloco JSX do `<FloatingActionButton>` (~linhas 317-321)
+
+O componente `src/components/FloatingActionButton.tsx` pode ser mantido no projeto (caso volte a ser usado) ou removido — sem impacto funcional.
 
