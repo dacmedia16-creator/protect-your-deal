@@ -22,7 +22,8 @@ import {
   FileEdit,
   FileText,
   Phone,
-  RefreshCw
+  RefreshCw,
+  EyeOff
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -252,6 +253,23 @@ export default function Convites() {
     onError: () => toast.error('Erro ao recusar o convite'),
   });
 
+  const arquivarMutation = useMutation({
+    mutationFn: async (conviteId: string) => {
+      const { error } = await supabase
+        .from('convites_parceiro')
+        .update({ status: 'arquivado' })
+        .eq('id', conviteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Convite retirado do painel');
+      queryClient.invalidateQueries({ queryKey: ['convites-recebidos'] });
+      queryClient.invalidateQueries({ queryKey: ['convites-enviados'] });
+      queryClient.invalidateQueries({ queryKey: ['convites-pendentes-count'] });
+    },
+    onError: () => toast.error('Erro ao arquivar o convite'),
+  });
+
   const reenviarMutation = useMutation({
     mutationFn: async (convite: ConviteParceiro) => {
       // Update existing invite with new expiration and reset status to pendente
@@ -301,7 +319,7 @@ export default function Convites() {
     }
   };
 
-  // Categorize received invites
+  // Categorize received invites (exclude archived)
   const convitesPendentesRecebidos = convitesRecebidos?.filter(c => 
     c.status === 'pendente' && !isPast(new Date(c.expira_em))
   ) || [];
@@ -314,6 +332,7 @@ export default function Convites() {
   }) || [];
   
   const convitesHistoricoRecebidos = convitesRecebidos?.filter(c => {
+    if (c.status === 'arquivado') return false;
     if (c.status === 'recusado') return true;
     if (c.status === 'pendente' && isPast(new Date(c.expira_em))) return true;
     if (c.status === 'aceito') {
@@ -324,7 +343,7 @@ export default function Convites() {
     return false;
   }) || [];
 
-  // Categorize sent invites
+  // Categorize sent invites (exclude archived)
   const convitesPendentesEnviados = convitesEnviados?.filter(c => 
     c.status === 'pendente' && !isPast(new Date(c.expira_em))
   ) || [];
@@ -332,7 +351,7 @@ export default function Convites() {
   const convitesAceitosEnviados = convitesEnviados?.filter(c => c.status === 'aceito') || [];
   
   const convitesOutrosEnviados = convitesEnviados?.filter(c => 
-    c.status === 'recusado' || (c.status === 'pendente' && isPast(new Date(c.expira_em)))
+    c.status !== 'arquivado' && (c.status === 'recusado' || (c.status === 'pendente' && isPast(new Date(c.expira_em))))
   ) || [];
 
   const isLoading = loadingRecebidos || loadingEnviados;
@@ -529,13 +548,25 @@ export default function Convites() {
                             Preencher: {convite.parte_faltante === 'comprador' ? 'Comprador' : 'Proprietário'}
                           </Badge>
                           
-                          <Button 
-                            className="w-full" 
-                            size="sm"
-                            onClick={() => navigate(`/convite-parceiro/${convite.token}`)}
-                          >
-                            {state === 'aguardando_dados' ? 'Preencher Dados' : 'Ver Ficha'}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              className="flex-1" 
+                              size="sm"
+                              onClick={() => navigate(`/convite-parceiro/${convite.token}`)}
+                            >
+                              {state === 'aguardando_dados' ? 'Preencher Dados' : 'Ver Ficha'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -571,9 +602,21 @@ export default function Convites() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <User className="h-4 w-4" />
-                            <span>Enviado por: <strong className="text-foreground">{corretorNome || 'Corretor'}</strong></span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <User className="h-4 w-4" />
+                              <span>Enviado por: <strong className="text-foreground">{corretorNome || 'Corretor'}</strong></span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -738,6 +781,19 @@ export default function Convites() {
                           <Badge variant="outline" className="text-xs">
                             Parceiro preenche: {convite.parte_faltante === 'comprador' ? 'Comprador' : 'Proprietário'}
                           </Badge>
+                          
+                          <div className="flex justify-end">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
@@ -782,16 +838,28 @@ export default function Convites() {
                             Enviado em: {format(new Date(convite.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                           </div>
                           
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full mt-2"
-                            onClick={() => reenviarMutation.mutate(convite)}
-                            disabled={reenviarMutation.isPending}
-                          >
-                            <RefreshCw className={`h-4 w-4 mr-1 ${reenviarMutation.isPending ? 'animate-spin' : ''}`} />
-                            Reenviar Convite
-                          </Button>
+                          <div className="flex gap-2 mt-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => reenviarMutation.mutate(convite)}
+                              disabled={reenviarMutation.isPending}
+                            >
+                              <RefreshCw className={`h-4 w-4 mr-1 ${reenviarMutation.isPending ? 'animate-spin' : ''}`} />
+                              Reenviar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
