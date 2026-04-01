@@ -838,16 +838,28 @@ export default function Convites() {
                             Enviado em: {format(new Date(convite.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                           </div>
                           
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full mt-2"
-                            onClick={() => reenviarMutation.mutate(convite)}
-                            disabled={reenviarMutation.isPending}
-                          >
-                            <RefreshCw className={`h-4 w-4 mr-1 ${reenviarMutation.isPending ? 'animate-spin' : ''}`} />
-                            Reenviar Convite
-                          </Button>
+                          <div className="flex gap-2 mt-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => reenviarMutation.mutate(convite)}
+                              disabled={reenviarMutation.isPending}
+                            >
+                              <RefreshCw className={`h-4 w-4 mr-1 ${reenviarMutation.isPending ? 'animate-spin' : ''}`} />
+                              Reenviar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => arquivarMutation.mutate(convite.id)}
+                              disabled={arquivarMutation.isPending}
+                              title="Retirar do painel"
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     );
