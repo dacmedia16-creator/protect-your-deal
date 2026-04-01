@@ -364,14 +364,195 @@ export default function Dashboard() {
           </Card>
         </div>
 
-      <main className="container mx-auto px-4 py-4 md:py-8">
-        {/* PWA Install Banner */}
-        <PWAInstallBanner />
+        {/* Mobile content area */}
+        <div className="px-4 space-y-4">
+          <PWAInstallBanner />
+          {!isCorretorVinculado && <UpgradeBanner />}
 
-        {/* Upgrade Banner for free plan users - hide for linked brokers */}
+          {convitesPendentes > 0 && (
+            <Card 
+              className="border-warning/30 bg-warning/5 cursor-pointer hover:shadow-md transition-shadow animate-fade-in"
+              onClick={() => navigate('/convites-recebidos')}
+            >
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-warning/20 flex items-center justify-center shrink-0">
+                  <Handshake className="h-6 w-6 text-warning" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-warning">
+                    {convitesPendentes} {convitesPendentes === 1 ? 'convite pendente' : 'convites pendentes'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Clique para ver e aceitar</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {isLider && teamSummary && (
+            <Card 
+              className="border-cyan-500/30 bg-cyan-500/5 dark:border-cyan-400/30 dark:bg-cyan-400/5 cursor-pointer hover:shadow-md transition-all animate-fade-in"
+              onClick={() => navigate('/minha-equipe')}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${teamSummary.corEquipe}20` }}
+                  >
+                    <UsersRound className="h-6 w-6" style={{ color: teamSummary.corEquipe }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-cyan-700 dark:text-cyan-300">{teamSummary.nomeEquipe}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        {teamSummary.fichasMes} este mês
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Actions Grid (circular icons) */}
+          <div>
+            <h2 className="font-display text-base font-semibold mb-3">Ações Rápidas</h2>
+            <div className={`grid ${parceriasConstrutoras.length > 0 ? 'grid-cols-5' : 'grid-cols-4'} gap-2`}>
+              <button
+                data-tour="novo-registro"
+                onClick={() => navigate('/fichas/nova')}
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl active:bg-muted/50 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full gradient-primary flex items-center justify-center shadow-sm">
+                  <Plus className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <span className="text-[11px] font-medium text-foreground text-center leading-tight">Novo Registro</span>
+              </button>
+
+              <button
+                data-tour="ver-registros"
+                onClick={() => navigate('/fichas')}
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl active:bg-muted/50 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center shadow-sm">
+                  <FileText className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <span className="text-[11px] font-medium text-foreground text-center leading-tight">Registros</span>
+              </button>
+
+              {parceriasConstrutoras.length > 0 && (
+                <button
+                  onClick={() => navigate('/fichas/nova?modo=construtora')}
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl active:bg-muted/50 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center shadow-sm">
+                    <Building2 className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <span className="text-[11px] font-medium text-foreground text-center leading-tight">Construtora</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => navigate('/convites')}
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl active:bg-muted/50 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center shadow-sm">
+                  <Handshake className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <span className="text-[11px] font-medium text-foreground text-center leading-tight">Convites</span>
+              </button>
+
+              <button
+                onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl active:bg-muted/50 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center shadow-sm">
+                  <Scale className="h-5 w-5 text-amber-600" />
+                </div>
+                <span className="text-[11px] font-medium text-foreground text-center leading-tight">Jurídico</span>
+              </button>
+            </div>
+          </div>
+
+          {fichasParceiro && fichasParceiro.total > 0 && (
+            <Card 
+              className="animate-fade-in cursor-pointer hover:border-primary/30 transition-all"
+              onClick={() => navigate('/fichas-parceiro')}
+            >
+              <CardContent className="px-3 py-2 flex items-center gap-3">
+                <Handshake className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    {fichasParceiro.total} {fichasParceiro.total === 1 ? 'registro como parceiro' : 'registros como parceiro'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {fichasParceiro.pendentes > 0 
+                      ? `${fichasParceiro.pendentes} pendente${fichasParceiro.pendentes > 1 ? 's' : ''}`
+                      : 'Todas confirmadas'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
+            <Card 
+              className="animate-fade-in cursor-pointer hover:shadow-md transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5"
+              onClick={() => navigate('/pesquisas')}
+            >
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
+                  <ClipboardCheck className="h-6 w-6 text-purple-500 dark:text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-purple-600 dark:text-purple-400">
+                    {stats.surveys.respondidas}/{stats.surveys.total} pesquisas
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.surveys.pendentes > 0 
+                      ? `${stats.surveys.pendentes} aguardando resposta`
+                      : 'Todas respondidas'}
+                  </p>
+                  <Progress 
+                    value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0}
+                    className="h-1.5 mt-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!isCorretorVinculado && <PlanUsageCard compact className="animate-fade-in" />}
+
+          <Card 
+            data-tour="indicacoes"
+            className={`animate-fade-in cursor-pointer hover:shadow-md transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
+            onClick={() => navigate('/minhas-indicacoes')}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
+                <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-teal-700 dark:text-teal-300">Indique e Ganhe</p>
+                <p className="text-sm text-muted-foreground">Indique e ganhe comissão</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ===== DESKTOP LAYOUT ===== */}
+      <main className="hidden sm:block container mx-auto px-4 py-8">
+        <PWAInstallBanner />
         {!isCorretorVinculado && <UpgradeBanner className="mb-4" />}
 
-        {/* Convites Pendentes Alert */}
         {convitesPendentes > 0 && (
           <Card 
             className="mb-4 border-warning/30 bg-warning/5 cursor-pointer hover:shadow-medium transition-shadow animate-fade-in"
@@ -385,55 +566,47 @@ export default function Dashboard() {
                 <p className="font-semibold text-warning">
                   {convitesPendentes} {convitesPendentes === 1 ? 'convite de parceria pendente' : 'convites de parceria pendentes'}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Clique para ver e aceitar os convites recebidos
-                </p>
+                <p className="text-sm text-muted-foreground">Clique para ver e aceitar os convites recebidos</p>
               </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Card de Resumo da Equipe para Líderes */}
-      {isLider && teamSummary && (
-        <Card 
-          className="mb-4 border-cyan-500/30 bg-cyan-500/5 dark:border-cyan-400/30 dark:bg-cyan-400/5 cursor-pointer hover:shadow-medium transition-all animate-fade-in"
-          onClick={() => navigate('/minha-equipe')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div 
-                className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${teamSummary.corEquipe}20` }}
-              >
-                <UsersRound className="h-6 w-6" style={{ color: teamSummary.corEquipe }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-cyan-700 dark:text-cyan-300">
-                  {teamSummary.nomeEquipe}
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    {teamSummary.fichasMes} registros este mês
-                  </span>
+        {isLider && teamSummary && (
+          <Card 
+            className="mb-4 border-cyan-500/30 bg-cyan-500/5 dark:border-cyan-400/30 dark:bg-cyan-400/5 cursor-pointer hover:shadow-medium transition-all animate-fade-in"
+            onClick={() => navigate('/minha-equipe')}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div 
+                  className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: `${teamSummary.corEquipe}20` }}
+                >
+                  <UsersRound className="h-6 w-6" style={{ color: teamSummary.corEquipe }} />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-cyan-700 dark:text-cyan-300">{teamSummary.nomeEquipe}</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" />
+                      {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      {teamSummary.fichasMes} registros este mês
+                    </span>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-cyan-600 dark:text-cyan-400 border-cyan-500/30 shrink-0">Líder</Badge>
               </div>
-              <Badge variant="outline" className="text-cyan-600 dark:text-cyan-400 border-cyan-500/30 shrink-0 hidden sm:flex">
-                Líder
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Welcome Section */}
-        <div data-tour="welcome" className="mb-4 md:mb-8">
+        <div data-tour="welcome" className="mb-8">
           <h1 
-            className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2 cursor-default"
+            className="font-display text-3xl font-bold mb-2 cursor-default"
             onClick={() => {
               const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
               sessionStorage.setItem('debug-clicks', String(clicks));
@@ -446,71 +619,46 @@ export default function Dashboard() {
           >
             Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Gerencie seus registros de visita e clientes
-          </p>
+          <p className="text-base text-muted-foreground">Gerencie seus registros de visita e clientes</p>
         </div>
 
-        {/* Stats Grid - 3 cols on desktop */}
-        <div data-tour="stats" className="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
-          <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group"
-            onClick={() => navigate('/fichas')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Total Registros
-              </CardTitle>
+        <div data-tour="stats" className="grid grid-cols-3 gap-6 mb-8">
+          <Card className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" onClick={() => navigate('/fichas')}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Registros</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 flex items-center justify-between">
-              <div className="text-xl md:text-2xl font-bold">{stats?.totalFichas || 0}</div>
+            <CardContent className="p-6 pt-0 flex items-center justify-between">
+              <div className="text-2xl font-bold">{stats?.totalFichas || 0}</div>
               <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
             </CardContent>
           </Card>
 
-          <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" 
-            style={{ animationDelay: '0.1s' }}
-            onClick={() => navigate('/fichas?status=completo')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Confirmadas
-              </CardTitle>
+          <Card className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" style={{ animationDelay: '0.1s' }} onClick={() => navigate('/fichas?status=completo')}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Confirmadas</CardTitle>
               <CheckCircle className="h-4 w-4 text-success" />
             </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 flex items-center justify-between">
-              <div className="text-xl md:text-2xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
+            <CardContent className="p-6 pt-0 flex items-center justify-between">
+              <div className="text-2xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
               <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-success transition-colors" />
             </CardContent>
           </Card>
 
-          <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" 
-            style={{ animationDelay: '0.2s' }}
-            onClick={() => navigate('/fichas?status=pendente')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-1 md:pb-2 p-3 md:p-6">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Pendentes
-              </CardTitle>
+          <Card className="animate-fade-in cursor-pointer hover:shadow-medium hover:scale-[1.02] transition-all group" style={{ animationDelay: '0.2s' }} onClick={() => navigate('/fichas?status=pendente')}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 p-6">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Pendentes</CardTitle>
               <Clock className="h-4 w-4 text-warning" />
             </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0 flex items-center justify-between">
-              <div className="text-xl md:text-2xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
+            <CardContent className="p-6 pt-0 flex items-center justify-between">
+              <div className="text-2xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
               <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-warning transition-colors" />
             </CardContent>
           </Card>
         </div>
 
-        {/* Card de Fichas como Parceiro */}
         {fichasParceiro && fichasParceiro.total > 0 && (
-          <Card 
-            className="animate-fade-in cursor-pointer hover:border-primary/30 transition-all border-border mb-4"
-            style={{ animationDelay: '0.4s' }}
-            onClick={() => navigate('/fichas-parceiro')}
-          >
+          <Card className="animate-fade-in cursor-pointer hover:border-primary/30 transition-all border-border mb-4" onClick={() => navigate('/fichas-parceiro')}>
             <CardContent className="px-3 py-2 flex items-center gap-3">
               <Handshake className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
@@ -527,13 +675,8 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Card de Pesquisas Pós-Visita */}
         {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
-          <Card 
-            className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6"
-            style={{ animationDelay: '0.5s' }}
-            onClick={() => navigate('/pesquisas')}
-          >
+          <Card className="animate-fade-in cursor-pointer hover:shadow-medium transition-all border-purple-500/20 bg-purple-500/5 dark:border-purple-400/20 dark:bg-purple-400/5 mb-6" onClick={() => navigate('/pesquisas')}>
             <CardContent className="p-4 flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
                 <ClipboardCheck className="h-6 w-6 text-purple-500 dark:text-purple-400" />
@@ -543,23 +686,16 @@ export default function Dashboard() {
                   {stats.surveys.respondidas} de {stats.surveys.total} pesquisas respondidas
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {stats.surveys.pendentes > 0 
-                    ? `${stats.surveys.pendentes} aguardando resposta`
-                    : 'Todas respondidas'}
+                  {stats.surveys.pendentes > 0 ? `${stats.surveys.pendentes} aguardando resposta` : 'Todas respondidas'}
                 </p>
-                <Progress 
-                  value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0}
-                  className="h-1.5 mt-2"
-                />
+                <Progress value={stats.surveys.total > 0 ? (stats.surveys.respondidas / stats.surveys.total) * 100 : 0} className="h-1.5 mt-2" />
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Plan Usage Card - Compact version for Dashboard - hide for linked brokers */}
         {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
 
-        {/* Card de Indicações */}
         <Card 
           data-tour="indicacoes"
           className={`animate-fade-in cursor-pointer hover:shadow-medium transition-all border-teal-500/20 bg-teal-500/5 dark:border-teal-400/20 dark:bg-teal-400/5 mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
@@ -570,185 +706,73 @@ export default function Dashboard() {
               <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-teal-700 dark:text-teal-300">
-                Indique e Ganhe
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Indique corretores e imobiliárias e ganhe comissão
-              </p>
+              <p className="font-semibold text-teal-700 dark:text-teal-300">Indique e Ganhe</p>
+              <p className="text-sm text-muted-foreground">Indique corretores e imobiliárias e ganhe comissão</p>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
           </CardContent>
         </Card>
 
-        {/* Quick Actions - vertical on mobile, grid on desktop */}
-        <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Card 
-            className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => navigate('/fichas/nova')}
-          >
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Card data-tour="novo-registro" className="cursor-pointer hover:shadow-medium transition-shadow group" onClick={() => navigate('/fichas/nova')}>
             <CardHeader>
               <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Plus className="h-6 w-6 text-primary-foreground" />
               </div>
               <CardTitle>Novo Registro de Visita</CardTitle>
-              <CardDescription>
-                Crie um novo registro e envie para confirmação
-              </CardDescription>
+              <CardDescription>Crie um novo registro e envie para confirmação</CardDescription>
             </CardHeader>
           </Card>
 
           {parceriasConstrutoras.length > 0 && (
-            <Card 
-              className="cursor-pointer hover:shadow-medium transition-shadow group border-orange-500/20"
-              onClick={() => navigate('/fichas/nova?modo=construtora')}
-            >
+            <Card className="cursor-pointer hover:shadow-medium transition-shadow group border-orange-500/20" onClick={() => navigate('/fichas/nova?modo=construtora')}>
               <CardHeader>
                 <div className="h-12 w-12 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Building2 className="h-6 w-6 text-orange-600" />
                 </div>
                 <CardTitle>Registro Construtoras</CardTitle>
-                <CardDescription>
-                  Crie fichas para empreendimentos de construtoras parceiras
-                </CardDescription>
+                <CardDescription>Crie fichas para empreendimentos de construtoras parceiras</CardDescription>
               </CardHeader>
             </Card>
           )}
 
-          <Card 
-            className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => navigate('/fichas')}
-          >
+          <Card data-tour="ver-registros" className="cursor-pointer hover:shadow-medium transition-shadow group" onClick={() => navigate('/fichas')}>
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <FileText className="h-6 w-6 text-secondary-foreground" />
               </div>
               <CardTitle>Ver Registros</CardTitle>
-              <CardDescription>
-                Visualize e gerencie seus registros
-              </CardDescription>
+              <CardDescription>Visualize e gerencie seus registros</CardDescription>
             </CardHeader>
           </Card>
 
-          <Card 
-            className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => navigate('/convites')}
-          >
+          <Card className="cursor-pointer hover:shadow-medium transition-shadow group" onClick={() => navigate('/convites')}>
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Handshake className="h-6 w-6 text-secondary-foreground" />
               </div>
               <CardTitle>Convites</CardTitle>
-              <CardDescription>
-                Gerencie convites de parceria
-              </CardDescription>
+              <CardDescription>Gerencie convites de parceria</CardDescription>
             </CardHeader>
           </Card>
 
-          <Card 
-            className="cursor-pointer hover:shadow-medium transition-shadow group"
-            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
-          >
+          <Card className="cursor-pointer hover:shadow-medium transition-shadow group" onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}>
             <CardHeader>
               <div className="h-12 w-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Scale className="h-6 w-6 text-amber-600" />
               </div>
               <CardTitle>Ajuda Jurídica</CardTitle>
-              <CardDescription>
-                Consulte um advogado especializado
-              </CardDescription>
+              <CardDescription>Consulte um advogado especializado</CardDescription>
             </CardHeader>
           </Card>
-
-        </div>
-
-        {/* Mobile Quick Actions - Compact list */}
-        <div className="sm:hidden space-y-2">
-          <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
-          
-          <Card 
-            data-tour="novo-registro"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas/nova')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
-                <Plus className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Novo Registro de Visita</p>
-                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {parceriasConstrutoras.length > 0 && (
-            <Card 
-              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
-              onClick={() => navigate('/fichas/nova?modo=construtora')}
-            >
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
-                  <Building2 className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">Registro Construtoras</p>
-                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card 
-            data-tour="ver-registros"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ver Registros</p>
-                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                <Scale className="h-5 w-5 text-amber-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ajuda Jurídica</p>
-                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
-              </div>
-            </CardContent>
-          </Card>
-
         </div>
       </main>
 
-      {/* Floating Action Button for mobile */}
-      <FloatingActionButton 
-        onClick={() => navigate('/fichas/nova')} 
-        label="Novo Registro"
-      />
-
-      {/* Mobile Navigation */}
+      <FloatingActionButton onClick={() => navigate('/fichas/nova')} label="Novo Registro" />
       <MobileNav />
-      
-      {/* PWA Install FAB */}
       <PWAInstallFAB />
-
-      {/* Onboarding Tour */}
       <OnboardingTour steps={ONBOARDING_STEPS} />
 
-      {/* Debug Banner - clique 5x no título para mostrar */}
       {showDebug && (
         <div className="fixed bottom-20 sm:bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 bg-card border rounded-lg shadow-lg p-4 z-50 animate-fade-in">
           <div className="flex items-center justify-between mb-3">
@@ -763,12 +787,7 @@ export default function Dashboard() {
             <p><strong>Role:</strong> {role || 'carregando...'}</p>
             <p><strong>Fichas:</strong> {stats?.totalFichas || 0} (parceiro: {fichasParceiro?.total || 0})</p>
           </div>
-          <Button 
-            onClick={handleForceUpdate} 
-            size="sm" 
-            className="w-full"
-            variant="destructive"
-          >
+          <Button onClick={handleForceUpdate} size="sm" className="w-full" variant="destructive">
             <RefreshCw className="h-4 w-4 mr-2" />
             Forçar Atualização
           </Button>
