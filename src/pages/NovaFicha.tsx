@@ -1327,7 +1327,7 @@ export default function NovaFicha() {
           {renderCurrentStep()}
 
           {/* Navigation buttons */}
-          <div className="sticky bottom-20 md:static bg-background pt-4 pb-2 md:py-0 -mx-4 px-4 md:mx-0 border-t md:border-0">
+          <div className="sticky bottom-20 md:static bg-background pt-4 pb-2 md:py-0 -mx-4 px-4 md:mx-0 border-t md:border-0" data-tour="ficha-nav-buttons">
             <div className="flex gap-3 md:gap-4 justify-between">
               <Button 
                 type="button" 
