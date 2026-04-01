@@ -465,18 +465,21 @@ export default function Dashboard() {
             style={{ animationDelay: '0.4s' }}
             onClick={() => navigate('/fichas-parceiro')}
           >
-            <CardContent className="px-3 py-2 flex items-center gap-3">
-              <Handshake className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-14 w-14 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
+                <Handshake className="h-6 w-6 text-primary" />
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">
+                <p className="font-semibold text-foreground">
                   {fichasParceiro.total} {fichasParceiro.total === 1 ? 'registro como parceiro' : 'registros como parceiro'}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {fichasParceiro.pendentes > 0 
                     ? `${fichasParceiro.pendentes} pendente${fichasParceiro.pendentes > 1 ? 's' : ''} de confirmação`
                     : 'Todas confirmadas'}
                 </p>
               </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
             </CardContent>
           </Card>
         )}
@@ -489,7 +492,7 @@ export default function Dashboard() {
             onClick={() => navigate('/pesquisas')}
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
+              <div className="h-14 w-14 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
                 <ClipboardCheck className="h-6 w-6 text-purple-500 dark:text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -520,7 +523,7 @@ export default function Dashboard() {
           onClick={() => navigate('/minhas-indicacoes')}
         >
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
+            <div className="h-14 w-14 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
               <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
             </div>
             <div className="flex-1 min-w-0">
