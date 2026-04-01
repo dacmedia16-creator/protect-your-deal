@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, TrendingUp, TrendingDown, Star } from 'lucide-react';
+import { Users, FileText, Plus, ArrowRight, Loader2, AlertCircle, TrendingUp, TrendingDown, Star, ChevronRight } from 'lucide-react';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
