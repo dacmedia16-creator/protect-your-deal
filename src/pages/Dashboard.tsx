@@ -492,7 +492,7 @@ export default function Dashboard() {
             onClick={() => navigate('/pesquisas')}
           >
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
+              <div className="h-14 w-14 rounded-xl bg-purple-500/20 dark:bg-purple-400/20 flex items-center justify-center shrink-0">
                 <ClipboardCheck className="h-6 w-6 text-purple-500 dark:text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
