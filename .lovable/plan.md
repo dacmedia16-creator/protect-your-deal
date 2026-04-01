@@ -1,27 +1,35 @@
 
 
-## Plano: Atualizar Logo no Gerador de Imagens de Marketing
+## Plano: Redesign do Dashboard do Corretor (estilo app bancário)
 
-### Problema
-A edge function `generate-marketing-image` busca o logo de `logos-imobiliarias/vp-logo.png` no Storage. Esse arquivo é o logo antigo. O logo atual (`/vp-logo.png`) está apenas no diretório `public/` do frontend, não no bucket do Storage.
+Inspirado na imagem de referência (app com header azul escuro, ícones de ações rápidas em grid, saldo destacado, e cards arredondados), vamos modernizar o layout mobile do Dashboard.
 
-### Solução
-Há duas abordagens possíveis:
+### Alterações em `src/pages/Dashboard.tsx`
 
-**Opção 1 — Upload do logo atual para o Storage (recomendada)**
-- Criar um script que faça upload do `vp-logo.png` atual para o bucket `logos-imobiliarias` no Storage, substituindo o arquivo antigo
-- Isso não requer mudança de código na edge function
+**1. Novo Header Mobile com gradiente azul escuro**
+- Substituir o header atual por um header com fundo gradiente azul escuro (primary → slate-900)
+- Nome do usuário e saudação em branco sobre o fundo escuro
+- Logo da imobiliária no canto superior
 
-**Opção 2 — Usar o logo SVG inline na edge function**
-- Embutir o logo SVG diretamente no código da função, eliminando a dependência do Storage
-- Mais complexo pois requer conversão SVG→raster dentro da função
+**2. Card de destaque com estatísticas principais**
+- Card flutuante (com margin-top negativo, sobrepondo o header) mostrando o total de registros como número grande central
+- Abaixo, 3 mini-indicadores inline: Total | Confirmadas | Pendentes
+- Visual similar ao "saldo" do app da foto
 
-### Alterações
+**3. Grid de ações rápidas (ícones circulares)**
+- Substituir a lista vertical de ações por um grid 4 colunas com ícones circulares + label abaixo
+- Itens: Novo Registro, Ver Registros, Convites, Ajuda Jurídica (+ Construtoras se aplicável)
+- Estilo: ícone dentro de círculo colorido, texto pequeno abaixo
 
-**`supabase/functions/generate-marketing-image/index.ts`**
-- Atualizar o path do logo no Storage para usar uma URL pública do site ao invés do bucket, apontando para o logo atualizado:
-  - Trocar `${SUPABASE_URL}/storage/v1/object/public/logos-imobiliarias/vp-logo.png` por uma URL que aponte para o logo correto
-  - Alternativa: usar a URL pública do app `https://protect-your-deal.lovable.app/vp-logo.png` como fonte do logo
+**4. Cards inferiores mantidos mas com visual refinado**
+- Manter cards de parceiro, pesquisas, indicações, equipe
+- Adicionar bordas mais suaves e espaçamento melhorado
 
-Isso garante que a edge function sempre use o logo mais recente do site publicado, sem precisar manter uma cópia separada no Storage.
+**5. Desktop mantém layout atual** (mudanças focadas no mobile `sm:hidden`)
+
+### Detalhes técnicos
+- Todas as mudanças em `src/pages/Dashboard.tsx`
+- Pode precisar de pequenos ajustes em `src/index.css` para o gradiente do header
+- Nenhuma mudança de lógica/dados, apenas visual
+- Mantém todos os `data-tour` attributes para o onboarding
 
