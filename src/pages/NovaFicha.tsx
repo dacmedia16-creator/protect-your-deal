@@ -22,6 +22,13 @@ import { z } from 'zod';
 import { validateCPF, formatCPF } from '@/lib/cpf';
 import { MobileHeader } from '@/components/MobileHeader';
 import { MobileNav } from '@/components/MobileNav';
+import { OnboardingTour } from '@/components/OnboardingTour';
+
+const NOVA_FICHA_TOUR_STEPS = [
+  { target: 'ficha-progress', title: 'Progresso', description: 'Acompanhe seu progresso aqui. Cada etapa será marcada quando concluída.' },
+  { target: 'ficha-modo', title: 'Modo de Criação', description: 'Escolha como criar: todos os dados de uma vez ou começar pelo proprietário/comprador.' },
+  { target: 'ficha-nav-buttons', title: 'Navegação', description: 'Use os botões para navegar entre as etapas. No final, clique em "Criar Registro".' },
+];
 
 
 type ModoCriacao = 'completo' | 'proprietario' | 'comprador';
@@ -603,7 +610,7 @@ export default function NovaFicha() {
 
   // ===== PROGRESS INDICATOR =====
   const renderProgressIndicator = () => (
-    <div className="mb-6">
+    <div className="mb-6" data-tour="ficha-progress">
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
@@ -648,7 +655,7 @@ export default function NovaFicha() {
 
   // ===== STEP: MODO =====
   const renderStepModo = () => (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border-primary/30 bg-primary/5" data-tour="ficha-modo">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center">
@@ -1320,7 +1327,7 @@ export default function NovaFicha() {
           {renderCurrentStep()}
 
           {/* Navigation buttons */}
-          <div className="sticky bottom-20 md:static bg-background pt-4 pb-2 md:py-0 -mx-4 px-4 md:mx-0 border-t md:border-0">
+          <div className="sticky bottom-20 md:static bg-background pt-4 pb-2 md:py-0 -mx-4 px-4 md:mx-0 border-t md:border-0" data-tour="ficha-nav-buttons">
             <div className="flex gap-3 md:gap-4 justify-between">
               <Button 
                 type="button" 
@@ -1368,6 +1375,7 @@ export default function NovaFicha() {
       </main>
 
       <MobileNav />
+      <OnboardingTour steps={NOVA_FICHA_TOUR_STEPS} storageKey="visitaprova-novaficha-tour-done" />
     </div>
   );
 }
