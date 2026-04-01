@@ -1,35 +1,39 @@
 
 
-## Plano: Uniformizar EmpresaDashboard com o estilo do Dashboard
+## Plano: Opção de retirar convites do painel (sem excluir a ficha)
 
-O Dashboard do corretor tem um layout mais compacto e moderno (3 colunas, cards menores, pesquisas inline). O EmpresaDashboard será atualizado para seguir o mesmo padrão visual.
+Adicionar um botão para "ocultar" convites do painel, mudando o status para `arquivado`. A ficha permanece intacta no sistema.
 
-### Alterações em `src/pages/empresa/EmpresaDashboard.tsx`
+### Alterações
 
-**1. Stats Grid — layout 3 colunas compacto** (linhas 268-370)
-- Mudar grid de `gap-4 md:grid-cols-2 lg:grid-cols-3` para `grid-cols-3 gap-3 md:gap-6`
-- Corretores e Registros do Mês: usar padding compacto (`p-3 md:p-6`), título `text-xs md:text-sm`, valor `text-xl md:text-2xl`, adicionar `hover:scale-[1.02]` e `ChevronRight`
-- Terceiro card: se surveys habilitado, mostrar card de pesquisas no grid; senão, card de "Total Registros" (total acumulado)
+**1. `src/pages/Convites.tsx`**
 
-**2. Card de Pesquisas — formato compacto inline** (se surveys habilitado)
-- No grid de 3 colunas, o card de pesquisas fica compacto como os outros stats cards
-- Manter doughnut no header e valor + "de X" no content
-- Remover o card separado de pesquisas que existia antes
+- **Nova mutation `arquivarMutation`**: Atualiza `convites_parceiro.status` para `'arquivado'` e invalida as queries de convites
+- **Botão nos cards**: Adicionar ícone `EyeOff` (lucide) nos cards de convites (recebidos em andamento, histórico, enviados) com tooltip "Retirar do painel"
+- **Filtros**: Adicionar `c.status !== 'arquivado'` nos filtros de categorização (linhas 305-336) para não exibir convites arquivados
+- **Import**: Adicionar `EyeOff` do lucide-react
 
-**3. Card de Pesquisas separado (abaixo do grid)** — estilo horizontal
-- Se surveys habilitado e há pesquisas, adicionar também um card horizontal compacto (como o "Parceiro" do Dashboard) com doughnut + texto + status "Concluído!" quando todas respondidas
+**2. Lógica da mutation**
+```typescript
+const arquivarMutation = useMutation({
+  mutationFn: async (conviteId: string) => {
+    await supabase
+      .from('convites_parceiro')
+      .update({ status: 'arquivado' })
+      .eq('id', conviteId);
+  },
+  onSuccess: () => {
+    toast.success('Convite retirado do painel');
+    queryClient.invalidateQueries({ queryKey: ['convites-recebidos'] });
+    queryClient.invalidateQueries({ queryKey: ['convites-enviados'] });
+    queryClient.invalidateQueries({ queryKey: ['convites-pendentes-count'] });
+  },
+});
+```
 
-**4. Remover botão "Novo Corretor" do header**
-- Mover para Ações Rápidas para ficar mais limpo como o Dashboard
-
-**5. Paddings e espaçamentos**
-- Header: `CardHeader` com `pb-1 md:pb-2 p-3 md:p-6`
-- Content: `p-3 pt-0 md:p-6 md:pt-0`
-- Adicionar `animate-fade-in` e `animationDelay` escalonado nos cards
-
-### Imports adicionais
-- Adicionar `ChevronRight` do lucide-react
-
-### Resultado esperado
-O EmpresaDashboard terá a mesma estética compacta e moderna do Dashboard do corretor, com cards de 3 colunas, sombras suaves, e transições sutis.
+**3. Onde aparece o botão**
+- Cards de convites **em andamento** (recebidos aceitos)
+- Cards do **histórico** (recebidos completos/recusados/expirados)
+- Cards de convites **enviados** (aceitos e outros)
+- **Não** nos pendentes recebidos (ainda precisam de ação)
 
