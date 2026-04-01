@@ -22,7 +22,7 @@ import {
   Handshake,
   RefreshCw,
   Bug,
-  ClipboardCheck,
+  
   Scale,
   UsersRound,
   TrendingUp,
