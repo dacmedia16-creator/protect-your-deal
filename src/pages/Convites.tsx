@@ -253,6 +253,23 @@ export default function Convites() {
     onError: () => toast.error('Erro ao recusar o convite'),
   });
 
+  const arquivarMutation = useMutation({
+    mutationFn: async (conviteId: string) => {
+      const { error } = await supabase
+        .from('convites_parceiro')
+        .update({ status: 'arquivado' })
+        .eq('id', conviteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Convite retirado do painel');
+      queryClient.invalidateQueries({ queryKey: ['convites-recebidos'] });
+      queryClient.invalidateQueries({ queryKey: ['convites-enviados'] });
+      queryClient.invalidateQueries({ queryKey: ['convites-pendentes-count'] });
+    },
+    onError: () => toast.error('Erro ao arquivar o convite'),
+  });
+
   const reenviarMutation = useMutation({
     mutationFn: async (convite: ConviteParceiro) => {
       // Update existing invite with new expiration and reset status to pendente
