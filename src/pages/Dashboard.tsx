@@ -113,6 +113,44 @@ export default function Dashboard() {
   });
   const [showDebug, setShowDebug] = useState(false);
   const [showIndicaPulse, setShowIndicaPulse] = useState(true);
+  const { isInstalled, isIOS, isInstallable, install } = usePWAInstall();
+  const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
+  const [headerProfile, setHeaderProfile] = useState<{ nome: string; foto_url: string | null } | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('nome, foto_url')
+        .eq('user_id', user.id)
+        .single()
+        .then(({ data }) => setHeaderProfile(data));
+    }
+  }, [user]);
+
+  const handleSignOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      const { signOut } = useAuth();
+      await supabase.auth.signOut();
+      navigate('/auth');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      navigate('/instalar');
+    } else {
+      const success = await install();
+      if (!success) {
+        navigate('/instalar');
+      }
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setShowIndicaPulse(false), 30000);
