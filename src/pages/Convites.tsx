@@ -22,7 +22,8 @@ import {
   FileEdit,
   FileText,
   Phone,
-  RefreshCw
+  RefreshCw,
+  EyeOff
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
