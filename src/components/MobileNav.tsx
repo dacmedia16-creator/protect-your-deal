@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, ClipboardCheck, Loader2, UsersRound } from 'lucide-react';
+import { Home, FileText, Users, User, LogOut, CreditCard, Handshake, Download, Loader2, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -41,7 +41,7 @@ export function MobileNav() {
     { path: '/dashboard', label: 'Início', icon: Home },
     { path: '/fichas', label: 'Registros', icon: FileText },
     ...(isLider ? [{ path: '/minha-equipe', label: 'Equipe', icon: UsersRound }] : [{ path: '/convites', label: 'Convites', icon: Handshake }]),
-    ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+    ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: FileText }] : []),
   ];
   
   const handleInstallApp = async () => {

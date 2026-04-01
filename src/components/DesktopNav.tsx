@@ -15,7 +15,7 @@ import {
   CreditCard,
   Handshake,
   Download,
-  ClipboardCheck,
+  
   Loader2,
   UsersRound
 } from 'lucide-react';
@@ -55,7 +55,7 @@ export function DesktopNav() {
     { to: '/fichas', label: 'Registros', icon: FileText },
     { to: '/convites', label: 'Convites', icon: Handshake },
     ...(isLider ? [{ to: '/minha-equipe', label: 'Minha Equipe', icon: UsersRound }] : []),
-    ...(surveyEnabled ? [{ to: '/pesquisas', label: 'Pesquisas', icon: ClipboardCheck }] : []),
+    ...(surveyEnabled ? [{ to: '/pesquisas', label: 'Pesquisas', icon: FileText }] : []),
   ];
   
   const handleInstallApp = async () => {
