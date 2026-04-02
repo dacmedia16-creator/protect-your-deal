@@ -185,6 +185,7 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             action: "send",
+            from_email: "noreply@visitaprova.com.br",
             to: afiliado.email,
             subject: "Seu acesso ao painel de afiliados foi criado",
             html: emailHtml,
