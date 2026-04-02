@@ -462,7 +462,7 @@ export default function AdminPlanos() {
                   {plano.valor_anual && plano.valor_mensal > 0 && (
                     <div className="text-sm text-muted-foreground">
                       Anual: <span className="font-medium text-foreground">R$ {plano.valor_anual.toFixed(2).replace('.', ',')}/ano</span>
-                      <span className="ml-1">(12x de R$ {(plano.valor_anual / 12).toFixed(2).replace('.', ',')}/mês)</span>
+                      <span className="ml-1">(R$ {(plano.valor_anual / 12).toFixed(2).replace('.', ',')}/mês)</span>
                       <Badge variant="outline" className="ml-2 text-xs">
                         -{Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
                       </Badge>
