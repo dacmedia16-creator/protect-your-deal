@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { FileCheck, Users, Loader2, Building2, Check, Ticket, X } from 'lucide-react';
+import { FileCheck, Users, Loader2, Building2, Check, Ticket, X, Eye, EyeOff } from 'lucide-react';
 import { LogoIcon } from '@/components/LogoIcon';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
