@@ -396,7 +396,9 @@ const Index = () => {
             </div>
             {/* Mockup Column */}
             <div className="flex justify-center md:justify-end">
-              <MobileAppMockup />
+              <Suspense fallback={<div className="w-[240px] h-[480px] bg-muted/20 rounded-[2.5rem] animate-pulse" />}>
+                <MobileAppMockup />
+              </Suspense>
             </div>
           </div>
         </div>
