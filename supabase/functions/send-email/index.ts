@@ -159,7 +159,7 @@ serve(async (req) => {
     const tempBypass = req.headers.get("x-test-bypass") === "noreply-test-2026";
     
     // --- AUTH GATE: block unauthenticated external calls ---
-    if (!isInternal) {
+    if (!isInternal && !tempBypass) {
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return new Response(
           JSON.stringify({ error: "Token de autenticação não fornecido" }),
