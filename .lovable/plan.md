@@ -1,24 +1,32 @@
 
 
-## Plano: Corrigir contagem do badge "Pendentes" no sidebar
+## Plano: Otimizar performance do sistema
 
 ### Problema
-A query do badge no `SuperAdminLayout.tsx` só filtra `imobiliaria_id IS NULL`, mas não filtra `construtora_id IS NULL`. Isso inclui usuários já vinculados a construtoras na contagem. Além disso, não exclui corretores autônomos (que têm assinatura individual), gerando divergência com a página real.
+O app carrega todos os ~100 componentes de página de uma vez no bundle inicial (sem code splitting). Isso significa que ao abrir a landing page, o navegador baixa e processa código de todas as páginas admin, empresa, construtora, etc. Além disso, o `ChatAssistente` (959 linhas) é carregado globalmente mesmo em páginas públicas.
 
-### Alteração
+### Alterações
 
-**`src/components/layouts/SuperAdminLayout.tsx`** — query `sidebar-usuarios-pendentes` (linhas ~170-177)
+**1. `src/App.tsx` — Lazy loading de todas as rotas**
+- Converter todos os imports de páginas para `React.lazy(() => import(...))`
+- Envolver `<Routes>` com `<Suspense fallback={<LoadingSpinner />}>`
+- Isso reduz drasticamente o bundle inicial, carregando cada página sob demanda
 
-Adicionar `.is('construtora_id', null)` à query:
+**2. `src/App.tsx` — Lazy load do ChatAssistente**
+- O componente `ChatAssistente` tem 959 linhas e é carregado em todas as páginas
+- Convertê-lo para `React.lazy` com `Suspense` para que só seja carregado quando necessário
 
-```typescript
-const { count } = await supabase
-  .from('user_roles')
-  .select('*', { count: 'exact', head: true })
-  .is('imobiliaria_id', null)
-  .is('construtora_id', null)
-  .neq('role', 'super_admin');
-```
+**3. `src/pages/Index.tsx` — Lazy load dos Mockups**
+- `MobileAppMockup` e `SofiaMockup` são componentes visuais pesados usados só na landing
+- Convertê-los para `React.lazy` para que sejam carregados sob demanda enquanto o usuário rola a página
 
-Isso alinha a contagem do badge com a lógica da página `AdminUsuariosPendentes`.
+**4. `src/pages/Index.tsx` — Evitar bloqueio de renderização por auth**
+- Atualmente a landing page mostra spinner enquanto `useAuth` carrega, mesmo para visitantes não-logados
+- Renderizar o conteúdo principal imediatamente e mostrar o botão correto (Dashboard vs Entrar) quando auth resolver, sem bloquear a página inteira
+
+### Resultado esperado
+- Bundle inicial significativamente menor (carrega só o código da página atual)
+- Landing page renderiza instantaneamente sem esperar auth
+- Navegação para outras páginas carrega o código sob demanda
+- Componentes pesados (mockups, chat) carregados apenas quando necessários
 
