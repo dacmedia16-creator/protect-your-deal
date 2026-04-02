@@ -249,8 +249,8 @@ const Index = () => {
           
           <div className="flex items-center gap-3">
             {/* Desktop buttons */}
-            {user ?
-            <Button asChild className="hidden sm:inline-flex">
+            {authReady && user ?
+              <Button asChild className="hidden sm:inline-flex">
                 <Link to={getRedirectPathByRole(role)}>Meu Dashboard</Link>
               </Button> :
 
