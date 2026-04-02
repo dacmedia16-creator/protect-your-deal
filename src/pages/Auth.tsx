@@ -45,6 +45,7 @@ export default function Auth() {
   const { role, loading: roleLoading, error: roleError, refetch: refetchRole } = useUserRole();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ email: '', password: '', nome: '', telefone: '', cpf: '' });
