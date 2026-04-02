@@ -74,6 +74,14 @@ function getCredentials(fromEmail?: string): SMTPCredentials {
     }
   }
 
+  if (emailLower.includes("noreply")) {
+    const user = Deno.env.get("ZOHO_NOREPLY_USER");
+    const pass = Deno.env.get("ZOHO_NOREPLY_PASSWORD");
+    if (user && pass) {
+      return { user, pass, displayName: "VisitaProva" };
+    }
+  }
+
   // Fallback to default noreply
   return { user: defaultUser, pass: defaultPass, displayName: "VisitaProva" };
 }
