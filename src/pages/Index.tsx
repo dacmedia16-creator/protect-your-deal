@@ -729,10 +729,13 @@ const Index = () => {
                         <span className="text-lg">Sob consulta</span> :
                         pricingCiclo === 'anual' && plano.valor_anual ?
                         <>
-                              R$ {plano.valor_anual.toFixed(2).replace('.', ',')}
-                              <span className="text-sm font-normal text-muted-foreground">/ano</span>
+                              R$ {(plano.valor_anual / 12).toFixed(2).replace('.', ',')}
+                              <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                              <div className="text-sm font-normal text-muted-foreground mt-1 line-through">
+                                R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}/mês
+                              </div>
                               <div className="text-sm font-normal text-muted-foreground mt-1">
-                                R$ {(plano.valor_anual / 12).toFixed(2).replace('.', ',')}/mês
+                                Total: R$ {plano.valor_anual.toFixed(2).replace('.', ',')}/ano
                               </div>
                               <div className="text-sm font-normal text-emerald-600 mt-1">
                                 Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
