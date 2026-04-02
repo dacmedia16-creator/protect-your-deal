@@ -1,18 +1,33 @@
 
 
-## Plano: Enviar email de teste simulando boas-vindas de afiliado
+## Plano: Configurar noreply@visitaprova.com.br como remetente
 
-### O que será feito
+### Problema
+A função `getCredentials` no `send-email/index.ts` não tem tratamento para "noreply". Quando `from_email` contém "noreply", nenhum dos blocos (`suporte`, `contato`, `denis`) é ativado, caindo no fallback `ZOHO_SMTP_USER` que está configurado como `denis@visitaprova.com.br`.
 
-Chamar a edge function `send-email` diretamente via `curl_edge_functions` para enviar um email de teste para `dacmedia16@gmail.com` com o mesmo HTML que um novo afiliado receberia (com email e senha temporária fictícia).
+### Alterações
 
-### Detalhes
+**1. Adicionar secrets para noreply**
+- `ZOHO_NOREPLY_USER` → `noreply@visitaprova.com.br`
+- `ZOHO_NOREPLY_PASSWORD` → senha do App Password Zoho para noreply
 
-- **Remetente:** `noreply@visitaprova.com.br`
-- **Destinatário:** `dacmedia16@gmail.com`
-- **Assunto:** "Seu acesso ao painel de afiliados foi criado"
-- **Conteúdo:** HTML idêntico ao template de novo usuário, com dados fictícios (nome "Afiliado Teste", senha "abc123XY!")
-- **Método:** Chamada direta à edge function `send-email` com `action: "send"`
+**2. `supabase/functions/send-email/index.ts`**
+Adicionar bloco para "noreply" na função `getCredentials`, antes do fallback:
 
-Nenhum arquivo será alterado — apenas um disparo de teste.
+```typescript
+if (emailLower.includes("noreply")) {
+  const user = Deno.env.get("ZOHO_NOREPLY_USER");
+  const pass = Deno.env.get("ZOHO_NOREPLY_PASSWORD");
+  if (user && pass) {
+    return { user, pass, displayName: "VisitaProva" };
+  }
+}
+```
+
+Inserido após o check de "denis" (linha ~75) e antes do return final.
+
+**3. Redeploy** da edge function `send-email`.
+
+### Resultado
+Quando qualquer parte do sistema enviar email com `from_email: "noreply@visitaprova.com.br"`, as credenciais corretas serão usadas e o remetente aparecerá como `noreply@visitaprova.com.br`.
 
