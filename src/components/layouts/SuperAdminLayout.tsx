@@ -172,6 +172,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         .from('user_roles')
         .select('*', { count: 'exact', head: true })
         .is('imobiliaria_id', null)
+        .is('construtora_id', null)
         .neq('role', 'super_admin');
       return count || 0;
     },
