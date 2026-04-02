@@ -332,7 +332,7 @@ const Index = () => {
                   </nav>
                   
                   <div className="flex flex-col gap-3 pt-4 border-t">
-                    {user ?
+                    {authReady && user ?
                     <Button asChild className="w-full">
                         <Link to={getRedirectPathByRole(role)} onClick={() => setMobileMenuOpen(false)}>
                           Meu Dashboard
