@@ -1,19 +1,15 @@
 
 
-## Plano: Enviar email de teste via noreply@visitaprova.com.br
+## Plano: Adicionar botão de mostrar/ocultar senha no login
 
-### O que será feito
+### Alteração
 
-Disparar um email de teste para `dacmedia16@gmail.com` usando a edge function `send-email` com `from_email: "noreply@visitaprova.com.br"` para validar que o bloco de credenciais noreply está funcionando corretamente após a configuração dos secrets.
+**`src/pages/Auth.tsx`**
 
-### Detalhes
+1. Adicionar estado `showPassword` no componente
+2. Importar ícones `Eye` e `EyeOff` de lucide-react
+3. Substituir o `<Input>` de senha (linhas 591-598) por um campo com botão de toggle, usando `type={showPassword ? 'text' : 'password'}` e um botão com ícone de olho posicionado à direita do input (mesmo padrão usado em `RedefinirSenha.tsx`)
 
-- **Método:** `curl_edge_functions` chamando `send-email` com service role key
-- **Remetente:** `noreply@visitaprova.com.br`
-- **Destinatário:** `dacmedia16@gmail.com`
-- **Assunto:** "Teste - Remetente Noreply"
-- **Conteúdo:** HTML simples confirmando que o envio pelo noreply está operacional
-- **Validação:** Verificar no response se `from` retorna `noreply@visitaprova.com.br` (e não denis)
-
-Nenhum arquivo será alterado — apenas um disparo de teste.
+### Resultado
+O campo de senha na tela de login terá um ícone de olho para mostrar/ocultar a senha digitada.
 
