@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { SEOHead } from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,9 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { LogoIcon } from '@/components/LogoIcon';
 import { WhatsAppFAB } from '@/components/WhatsAppFAB';
 import { DepoimentosSection } from '@/components/DepoimentosSection';
-import MobileAppMockup from '@/components/mockups/MobileAppMockup';
-import SofiaMockup from '@/components/mockups/SofiaMockup';
 import AnimatedSection from '@/components/AnimatedSection';
+
+const MobileAppMockup = lazy(() => import('@/components/mockups/MobileAppMockup'));
+const SofiaMockup = lazy(() => import('@/components/mockups/SofiaMockup'));
 import {
   FileCheck,
   MessageSquare,
@@ -80,13 +81,7 @@ const Index = () => {
     fetchPlanos();
   }, []);
 
-  if (loading || user && roleLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>);
-
-  }
+  const authReady = !loading && !(user && roleLoading);
 
   // Proposta de Valor - 4 benefícios diretos
   const valuePropositions = [
@@ -254,8 +249,8 @@ const Index = () => {
           
           <div className="flex items-center gap-3">
             {/* Desktop buttons */}
-            {user ?
-            <Button asChild className="hidden sm:inline-flex">
+            {authReady && user ?
+              <Button asChild className="hidden sm:inline-flex">
                 <Link to={getRedirectPathByRole(role)}>Meu Dashboard</Link>
               </Button> :
 
@@ -337,7 +332,7 @@ const Index = () => {
                   </nav>
                   
                   <div className="flex flex-col gap-3 pt-4 border-t">
-                    {user ?
+                    {authReady && user ?
                     <Button asChild className="w-full">
                         <Link to={getRedirectPathByRole(role)} onClick={() => setMobileMenuOpen(false)}>
                           Meu Dashboard
@@ -401,7 +396,9 @@ const Index = () => {
             </div>
             {/* Mockup Column */}
             <div className="flex justify-center md:justify-end">
-              <MobileAppMockup />
+              <Suspense fallback={<div className="w-[240px] h-[480px] bg-muted/20 rounded-[2.5rem] animate-pulse" />}>
+                <MobileAppMockup />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -639,7 +636,9 @@ const Index = () => {
               {/* Mockup */}
               <div className="flex justify-center md:justify-end">
                 <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 shadow-xl">
-                  <SofiaMockup />
+                  <Suspense fallback={<div className="h-[300px] bg-muted/20 rounded-lg animate-pulse" />}>
+                    <SofiaMockup />
+                  </Suspense>
                 </div>
               </div>
             </div>

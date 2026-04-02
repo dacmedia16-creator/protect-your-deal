@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,131 +11,138 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SmartRedirect } from "@/components/SmartRedirect";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
-import { ChatAssistente } from "@/components/ChatAssistente";
 import { VersionCheckWithOverlay } from "@/components/VersionCheckWithOverlay";
 
-// Public pages
-import Index from "./pages/Index";
-import AppLanding from "./pages/AppLanding";
-import Auth from "./pages/Auth";
-import ConfirmarVisita from "./pages/ConfirmarVisita";
-import VerificarComprovante from "./pages/VerificarComprovante";
-import NotFound from "./pages/NotFound";
-import AssinaturaSuspensa from "./pages/AssinaturaSuspensa";
-import SemPermissao from "./pages/SemPermissao";
-import ContaDesativada from "./pages/ContaDesativada";
-import InstalarApp from "./pages/InstalarApp";
-import Funcionalidades from "./pages/Funcionalidades";
-import ComoFunciona from "./pages/ComoFunciona";
-import Tutoriais from "./pages/Tutoriais";
-// Tour pages
-import TourAudio from "./pages/TourAudio";
-import TourAudioLanding from "./pages/TourAudioLanding";
-import Afiliados from "./pages/Afiliados";
-import ParaImobiliarias from "./pages/ParaImobiliarias";
-import SobreNos from "./pages/SobreNos";
-import NossaHistoria from "./pages/NossaHistoria";
+// Lazy-loaded ChatAssistente
+const ChatAssistente = lazy(() => import("@/components/ChatAssistente").then(m => ({ default: m.ChatAssistente })));
 
+// Public pages
+const Index = lazy(() => import("./pages/Index"));
+const AppLanding = lazy(() => import("./pages/AppLanding"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ConfirmarVisita = lazy(() => import("./pages/ConfirmarVisita"));
+const VerificarComprovante = lazy(() => import("./pages/VerificarComprovante"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AssinaturaSuspensa = lazy(() => import("./pages/AssinaturaSuspensa"));
+const SemPermissao = lazy(() => import("./pages/SemPermissao"));
+const ContaDesativada = lazy(() => import("./pages/ContaDesativada"));
+const InstalarApp = lazy(() => import("./pages/InstalarApp"));
+const Funcionalidades = lazy(() => import("./pages/Funcionalidades"));
+const ComoFunciona = lazy(() => import("./pages/ComoFunciona"));
+const Tutoriais = lazy(() => import("./pages/Tutoriais"));
+const TourAudio = lazy(() => import("./pages/TourAudio"));
+const TourAudioLanding = lazy(() => import("./pages/TourAudioLanding"));
+const Afiliados = lazy(() => import("./pages/Afiliados"));
+const ParaImobiliarias = lazy(() => import("./pages/ParaImobiliarias"));
+const SobreNos = lazy(() => import("./pages/SobreNos"));
+const NossaHistoria = lazy(() => import("./pages/NossaHistoria"));
 
 // Auth pages
-import RegistroImobiliaria from "./pages/auth/RegistroImobiliaria";
-import RegistroCorretorAutonomo from "./pages/auth/RegistroCorretorAutonomo";
-import RegistroTipo from "./pages/auth/RegistroTipo";
-import RegistroVinculado from "./pages/auth/RegistroVinculado";
-import AceitarConvite from "./pages/auth/AceitarConvite";
-import CadastroConcluido from "./pages/auth/CadastroConcluido";
-import SelecionarEquipe from "./pages/auth/SelecionarEquipe";
-import RecuperarSenha from "./pages/auth/RecuperarSenha";
-import RedefinirSenha from "./pages/auth/RedefinirSenha";
-import ConviteParceiro from "./pages/ConviteParceiro";
-import ConviteParceiroExterno from "./pages/ConviteParceiroExterno";
-import TermosDeUso from "./pages/TermosDeUso";
-import AceitarTermos from "./pages/AceitarTermos";
-import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
-import SurveyPublic from "./pages/SurveyPublic";
+const RegistroImobiliaria = lazy(() => import("./pages/auth/RegistroImobiliaria"));
+const RegistroCorretorAutonomo = lazy(() => import("./pages/auth/RegistroCorretorAutonomo"));
+const RegistroTipo = lazy(() => import("./pages/auth/RegistroTipo"));
+const RegistroVinculado = lazy(() => import("./pages/auth/RegistroVinculado"));
+const AceitarConvite = lazy(() => import("./pages/auth/AceitarConvite"));
+const CadastroConcluido = lazy(() => import("./pages/auth/CadastroConcluido"));
+const SelecionarEquipe = lazy(() => import("./pages/auth/SelecionarEquipe"));
+const RecuperarSenha = lazy(() => import("./pages/auth/RecuperarSenha"));
+const RedefinirSenha = lazy(() => import("./pages/auth/RedefinirSenha"));
+const ConviteParceiro = lazy(() => import("./pages/ConviteParceiro"));
+const ConviteParceiroExterno = lazy(() => import("./pages/ConviteParceiroExterno"));
+const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
+const AceitarTermos = lazy(() => import("./pages/AceitarTermos"));
+const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
+const SurveyPublic = lazy(() => import("./pages/SurveyPublic"));
+const RegistroConstrutora = lazy(() => import("./pages/auth/RegistroConstrutora"));
 
 // Corretor pages
-import Dashboard from "./pages/Dashboard";
-import NovaFicha from "./pages/NovaFicha";
-import DetalhesFicha from "./pages/DetalhesFicha";
-import ListaFichas from "./pages/ListaFichas";
-import ListaClientes from "./pages/ListaClientes";
-import FormCliente from "./pages/FormCliente";
-import DetalhesCliente from "./pages/DetalhesCliente";
-import ListaImoveis from "./pages/ListaImoveis";
-import FormImovel from "./pages/FormImovel";
-import DetalhesImovel from "./pages/DetalhesImovel";
-import Integracoes from "./pages/Integracoes";
-import TemplatesMensagem from "./pages/TemplatesMensagem";
-import ConfiguracoesEmail from "./pages/ConfiguracoesEmail";
-import HistoricoEmails from "./pages/HistoricoEmails";
-import Perfil from "./pages/Perfil";
-import Relatorios from "./pages/Relatorios";
-import CorretorAssinatura from "./pages/CorretorAssinatura";
-import Convites from "./pages/Convites";
-import FichasParceiro from "./pages/FichasParceiro";
-import Pesquisas from "./pages/Pesquisas";
-import MinhaEquipe from "./pages/equipe/MinhaEquipe";
-import MinhasIndicacoes from "./pages/MinhasIndicacoes";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const NovaFicha = lazy(() => import("./pages/NovaFicha"));
+const DetalhesFicha = lazy(() => import("./pages/DetalhesFicha"));
+const ListaFichas = lazy(() => import("./pages/ListaFichas"));
+const ListaClientes = lazy(() => import("./pages/ListaClientes"));
+const FormCliente = lazy(() => import("./pages/FormCliente"));
+const DetalhesCliente = lazy(() => import("./pages/DetalhesCliente"));
+const ListaImoveis = lazy(() => import("./pages/ListaImoveis"));
+const FormImovel = lazy(() => import("./pages/FormImovel"));
+const DetalhesImovel = lazy(() => import("./pages/DetalhesImovel"));
+const Integracoes = lazy(() => import("./pages/Integracoes"));
+const TemplatesMensagem = lazy(() => import("./pages/TemplatesMensagem"));
+const ConfiguracoesEmail = lazy(() => import("./pages/ConfiguracoesEmail"));
+const HistoricoEmails = lazy(() => import("./pages/HistoricoEmails"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
+const CorretorAssinatura = lazy(() => import("./pages/CorretorAssinatura"));
+const Convites = lazy(() => import("./pages/Convites"));
+const FichasParceiro = lazy(() => import("./pages/FichasParceiro"));
+const Pesquisas = lazy(() => import("./pages/Pesquisas"));
+const MinhaEquipe = lazy(() => import("./pages/equipe/MinhaEquipe"));
+const MinhasIndicacoes = lazy(() => import("./pages/MinhasIndicacoes"));
 
 // Admin pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminImobiliarias from "./pages/admin/AdminImobiliarias";
-import AdminNovaImobiliaria from "./pages/admin/AdminNovaImobiliaria";
-import AdminDetalhesImobiliaria from "./pages/admin/AdminDetalhesImobiliaria";
-import AdminPlanos from "./pages/admin/AdminPlanos";
-import AdminUsuarios from "./pages/admin/AdminUsuarios";
-import AdminUsuariosPendentes from "./pages/admin/AdminUsuariosPendentes";
-import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
-import AdminDiagnostico from "./pages/admin/AdminDiagnostico";
-import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
-import AdminConvites from "./pages/admin/AdminConvites";
-import AdminCorretoresAutonomos from "./pages/admin/AdminCorretoresAutonomos";
-import AdminDetalhesCorretorAutonomo from "./pages/admin/AdminDetalhesCorretorAutonomo";
-import AdminFichas from "./pages/admin/AdminFichas";
-import AdminRelatoriosFinanceiros from "./pages/admin/AdminRelatoriosFinanceiros";
-import AdminBackups from "./pages/admin/AdminBackups";
-import AdminMarketingImages from "./pages/admin/AdminMarketingImages";
-import AdminDepoimentos from "./pages/admin/AdminDepoimentos";
-import AdminAfiliados from "./pages/admin/AdminAfiliados";
-import AdminCupons from "./pages/admin/AdminCupons";
-import AdminComissoes from "./pages/admin/AdminComissoes";
-import AdminIndicacoes from "./pages/admin/AdminIndicacoes";
-import AdminSessoes from "./pages/admin/AdminSessoes";
-import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
-import AdminConstrutoras from "./pages/admin/AdminConstrutoras";
-import AdminDetalhesConstrutora from "./pages/admin/AdminDetalhesConstrutora";
-import AdminNovaConstrutora from "./pages/admin/AdminNovaConstrutora";
-import RegistroConstrutora from "./pages/auth/RegistroConstrutora";
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminImobiliarias = lazy(() => import("./pages/admin/AdminImobiliarias"));
+const AdminNovaImobiliaria = lazy(() => import("./pages/admin/AdminNovaImobiliaria"));
+const AdminDetalhesImobiliaria = lazy(() => import("./pages/admin/AdminDetalhesImobiliaria"));
+const AdminPlanos = lazy(() => import("./pages/admin/AdminPlanos"));
+const AdminUsuarios = lazy(() => import("./pages/admin/AdminUsuarios"));
+const AdminUsuariosPendentes = lazy(() => import("./pages/admin/AdminUsuariosPendentes"));
+const AdminConfiguracoes = lazy(() => import("./pages/admin/AdminConfiguracoes"));
+const AdminDiagnostico = lazy(() => import("./pages/admin/AdminDiagnostico"));
+const AdminAssinaturas = lazy(() => import("./pages/admin/AdminAssinaturas"));
+const AdminConvites = lazy(() => import("./pages/admin/AdminConvites"));
+const AdminCorretoresAutonomos = lazy(() => import("./pages/admin/AdminCorretoresAutonomos"));
+const AdminDetalhesCorretorAutonomo = lazy(() => import("./pages/admin/AdminDetalhesCorretorAutonomo"));
+const AdminFichas = lazy(() => import("./pages/admin/AdminFichas"));
+const AdminRelatoriosFinanceiros = lazy(() => import("./pages/admin/AdminRelatoriosFinanceiros"));
+const AdminBackups = lazy(() => import("./pages/admin/AdminBackups"));
+const AdminMarketingImages = lazy(() => import("./pages/admin/AdminMarketingImages"));
+const AdminDepoimentos = lazy(() => import("./pages/admin/AdminDepoimentos"));
+const AdminAfiliados = lazy(() => import("./pages/admin/AdminAfiliados"));
+const AdminCupons = lazy(() => import("./pages/admin/AdminCupons"));
+const AdminComissoes = lazy(() => import("./pages/admin/AdminComissoes"));
+const AdminIndicacoes = lazy(() => import("./pages/admin/AdminIndicacoes"));
+const AdminSessoes = lazy(() => import("./pages/admin/AdminSessoes"));
+const AdminWhatsApp = lazy(() => import("./pages/admin/AdminWhatsApp"));
+const AdminConstrutoras = lazy(() => import("./pages/admin/AdminConstrutoras"));
+const AdminDetalhesConstrutora = lazy(() => import("./pages/admin/AdminDetalhesConstrutora"));
+const AdminNovaConstrutora = lazy(() => import("./pages/admin/AdminNovaConstrutora"));
+
 // Afiliado pages
-import AfiliadoDashboard from "./pages/afiliado/AfiliadoDashboard";
-import AfiliadoComissoes from "./pages/afiliado/AfiliadoComissoes";
-import AfiliadoPerfil from "./pages/afiliado/AfiliadoPerfil";
+const AfiliadoDashboard = lazy(() => import("./pages/afiliado/AfiliadoDashboard"));
+const AfiliadoComissoes = lazy(() => import("./pages/afiliado/AfiliadoComissoes"));
+const AfiliadoPerfil = lazy(() => import("./pages/afiliado/AfiliadoPerfil"));
 
 // Construtora pages
-import ConstrutoraDashboard from "./pages/construtora/ConstrutoraDashboard";
-import ConstutoraEmpreendimentos from "./pages/construtora/ConstutoraEmpreendimentos";
-import ConstutoraImobiliarias from "./pages/construtora/ConstutoraImobiliarias";
-import ConstutoraCorretores from "./pages/construtora/ConstutoraCorretores";
-import ConstutoraFichas from "./pages/construtora/ConstutoraFichas";
-import ConstutoraRelatorios from "./pages/construtora/ConstutoraRelatorios";
-import ConstutoraConfiguracoes from "./pages/construtora/ConstutoraConfiguracoes";
-import ConstutoraAssinatura from "./pages/construtora/ConstutoraAssinatura";
-import ConstutoraEquipes from "./pages/construtora/ConstutoraEquipes";
-import ConstutoraDetalhesCorretor from "./pages/construtora/ConstutoraDetalhesCorretor";
-import ConstutoraPesquisas from "./pages/construtora/ConstutoraPesquisas";
+const ConstrutoraDashboard = lazy(() => import("./pages/construtora/ConstrutoraDashboard"));
+const ConstutoraEmpreendimentos = lazy(() => import("./pages/construtora/ConstutoraEmpreendimentos"));
+const ConstutoraImobiliarias = lazy(() => import("./pages/construtora/ConstutoraImobiliarias"));
+const ConstutoraCorretores = lazy(() => import("./pages/construtora/ConstutoraCorretores"));
+const ConstutoraFichas = lazy(() => import("./pages/construtora/ConstutoraFichas"));
+const ConstutoraRelatorios = lazy(() => import("./pages/construtora/ConstutoraRelatorios"));
+const ConstutoraConfiguracoes = lazy(() => import("./pages/construtora/ConstutoraConfiguracoes"));
+const ConstutoraAssinatura = lazy(() => import("./pages/construtora/ConstutoraAssinatura"));
+const ConstutoraEquipes = lazy(() => import("./pages/construtora/ConstutoraEquipes"));
+const ConstutoraDetalhesCorretor = lazy(() => import("./pages/construtora/ConstutoraDetalhesCorretor"));
+const ConstutoraPesquisas = lazy(() => import("./pages/construtora/ConstutoraPesquisas"));
 
 // Empresa (Imobiliaria Admin) pages
-import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
-import EmpresaCorretores from "./pages/empresa/EmpresaCorretores";
-import EmpresaDetalhesCorretor from "./pages/empresa/EmpresaDetalhesCorretor";
-import EmpresaEquipes from "./pages/empresa/EmpresaEquipes";
-import EmpresaAssinatura from "./pages/empresa/EmpresaAssinatura";
-import EmpresaRelatorios from "./pages/empresa/EmpresaRelatorios";
-import EmpresaConfiguracoes from "./pages/empresa/EmpresaConfiguracoes";
-import EmpresaFichas from "./pages/empresa/EmpresaFichas";
-import EmpresaPesquisas from "./pages/empresa/EmpresaPesquisas";
-import EmpresaParceriasConstrutoras from "./pages/empresa/EmpresaParceriasConstrutoras";
+const EmpresaDashboard = lazy(() => import("./pages/empresa/EmpresaDashboard"));
+const EmpresaCorretores = lazy(() => import("./pages/empresa/EmpresaCorretores"));
+const EmpresaDetalhesCorretor = lazy(() => import("./pages/empresa/EmpresaDetalhesCorretor"));
+const EmpresaEquipes = lazy(() => import("./pages/empresa/EmpresaEquipes"));
+const EmpresaAssinatura = lazy(() => import("./pages/empresa/EmpresaAssinatura"));
+const EmpresaRelatorios = lazy(() => import("./pages/empresa/EmpresaRelatorios"));
+const EmpresaConfiguracoes = lazy(() => import("./pages/empresa/EmpresaConfiguracoes"));
+const EmpresaFichas = lazy(() => import("./pages/empresa/EmpresaFichas"));
+const EmpresaPesquisas = lazy(() => import("./pages/empresa/EmpresaPesquisas"));
+const EmpresaParceriasConstrutoras = lazy(() => import("./pages/empresa/EmpresaParceriasConstrutoras"));
+
+const LoadingSpinner = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -150,8 +158,11 @@ const App = () => (
               <PWAUpdatePrompt />
               <VersionCheckWithOverlay />
               <PWAInstallModal />
-              <ChatAssistente />
-              <Routes>
+              <Suspense fallback={null}>
+                <ChatAssistente />
+              </Suspense>
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
               {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/redirect" element={<SmartRedirect />} />
@@ -586,6 +597,7 @@ const App = () => (
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </UserRoleProvider>
