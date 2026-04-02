@@ -164,17 +164,31 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
     refetchInterval: 60000,
   });
 
-  // Buscar contagem de usuários pendentes (sem imobiliária)
+  // Buscar contagem de usuários pendentes (sem organização e sem assinatura autônoma)
   const { data: usuariosPendentesCount } = useQuery({
     queryKey: ['sidebar-usuarios-pendentes'],
     queryFn: async () => {
-      const { count } = await supabase
+      const { data: roles } = await supabase
         .from('user_roles')
-        .select('*', { count: 'exact', head: true })
+        .select('user_id')
         .is('imobiliaria_id', null)
         .is('construtora_id', null)
         .neq('role', 'super_admin');
-      return count || 0;
+
+      if (!roles || roles.length === 0) return 0;
+
+      const userIds = roles.map(r => r.user_id);
+
+      const { data: assinaturas } = await supabase
+        .from('assinaturas')
+        .select('user_id')
+        .in('user_id', userIds)
+        .is('imobiliaria_id', null)
+        .is('construtora_id', null);
+
+      const autonomos = new Set(assinaturas?.map(a => a.user_id) || []);
+
+      return userIds.filter(id => !autonomos.has(id)).length;
     },
     refetchInterval: 60000,
   });
