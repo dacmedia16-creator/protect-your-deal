@@ -1,18 +1,18 @@
 
 
-## Plano: Usar remetente noreply@visitaprova.com.br nos emails de afiliados
+## Plano: Enviar email de teste simulando boas-vindas de afiliado
 
-### Alteração
+### O que será feito
 
-**`supabase/functions/admin-criar-acesso-afiliado/index.ts`**
+Chamar a edge function `send-email` diretamente via `curl_edge_functions` para enviar um email de teste para `dacmedia16@gmail.com` com o mesmo HTML que um novo afiliado receberia (com email e senha temporária fictícia).
 
-Adicionar o campo `from_email: "noreply@visitaprova.com.br"` no body da chamada `send-email`, tanto para novos usuários (email com senha temporária) quanto para usuários existentes (email de ativação). A edge function `send-email` já suporta o parâmetro `from_email` para selecionar o remetente.
+### Detalhes
 
-Nas duas chamadas `fetch` existentes para `send-email`, adicionar:
-```json
-"from_email": "noreply@visitaprova.com.br"
-```
+- **Remetente:** `noreply@visitaprova.com.br`
+- **Destinatário:** `dacmedia16@gmail.com`
+- **Assunto:** "Seu acesso ao painel de afiliados foi criado"
+- **Conteúdo:** HTML idêntico ao template de novo usuário, com dados fictícios (nome "Afiliado Teste", senha "abc123XY!")
+- **Método:** Chamada direta à edge function `send-email` com `action: "send"`
 
-### Resultado
-Todos os emails enviados a afiliados (criação de acesso e ativação) virão do remetente **noreply@visitaprova.com.br** (VisitaProva).
+Nenhum arquivo será alterado — apenas um disparo de teste.
 
