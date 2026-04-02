@@ -1,33 +1,19 @@
 
 
-## Plano: Configurar noreply@visitaprova.com.br como remetente
+## Plano: Enviar email de teste via noreply@visitaprova.com.br
 
-### Problema
-A função `getCredentials` no `send-email/index.ts` não tem tratamento para "noreply". Quando `from_email` contém "noreply", nenhum dos blocos (`suporte`, `contato`, `denis`) é ativado, caindo no fallback `ZOHO_SMTP_USER` que está configurado como `denis@visitaprova.com.br`.
+### O que será feito
 
-### Alterações
+Disparar um email de teste para `dacmedia16@gmail.com` usando a edge function `send-email` com `from_email: "noreply@visitaprova.com.br"` para validar que o bloco de credenciais noreply está funcionando corretamente após a configuração dos secrets.
 
-**1. Adicionar secrets para noreply**
-- `ZOHO_NOREPLY_USER` → `noreply@visitaprova.com.br`
-- `ZOHO_NOREPLY_PASSWORD` → senha do App Password Zoho para noreply
+### Detalhes
 
-**2. `supabase/functions/send-email/index.ts`**
-Adicionar bloco para "noreply" na função `getCredentials`, antes do fallback:
+- **Método:** `curl_edge_functions` chamando `send-email` com service role key
+- **Remetente:** `noreply@visitaprova.com.br`
+- **Destinatário:** `dacmedia16@gmail.com`
+- **Assunto:** "Teste - Remetente Noreply"
+- **Conteúdo:** HTML simples confirmando que o envio pelo noreply está operacional
+- **Validação:** Verificar no response se `from` retorna `noreply@visitaprova.com.br` (e não denis)
 
-```typescript
-if (emailLower.includes("noreply")) {
-  const user = Deno.env.get("ZOHO_NOREPLY_USER");
-  const pass = Deno.env.get("ZOHO_NOREPLY_PASSWORD");
-  if (user && pass) {
-    return { user, pass, displayName: "VisitaProva" };
-  }
-}
-```
-
-Inserido após o check de "denis" (linha ~75) e antes do return final.
-
-**3. Redeploy** da edge function `send-email`.
-
-### Resultado
-Quando qualquer parte do sistema enviar email com `from_email: "noreply@visitaprova.com.br"`, as credenciais corretas serão usadas e o remetente aparecerá como `noreply@visitaprova.com.br`.
+Nenhum arquivo será alterado — apenas um disparo de teste.
 
