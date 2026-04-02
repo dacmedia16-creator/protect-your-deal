@@ -636,7 +636,9 @@ const Index = () => {
               {/* Mockup */}
               <div className="flex justify-center md:justify-end">
                 <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 shadow-xl">
-                  <SofiaMockup />
+                  <Suspense fallback={<div className="h-[300px] bg-muted/20 rounded-lg animate-pulse" />}>
+                    <SofiaMockup />
+                  </Suspense>
                 </div>
               </div>
             </div>
