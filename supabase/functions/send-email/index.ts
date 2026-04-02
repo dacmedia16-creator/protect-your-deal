@@ -126,40 +126,11 @@ serve(async (req) => {
   }
 
   try {
-    const body: SendEmailRequest = await req.json();
     const authHeader = req.headers.get("Authorization");
     const isInternal = isInternalCall(authHeader);
 
-    // Allow test-connection without auth for diagnostics
-    if (body.action === 'test-connection') {
-      console.log("Testing SMTP connection for:", body.from_email || "default");
-      const credentials = getCredentials(body.from_email);
-      if (!credentials.pass) {
-        return new Response(
-          JSON.stringify({ connected: false, message: "Credenciais SMTP não configuradas" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      try {
-        const transporter = createTransporter(credentials);
-        await transporter.verify();
-        return new Response(
-          JSON.stringify({ connected: true, message: `Conexão OK para ${credentials.user}`, email: credentials.user }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } catch (e: any) {
-        return new Response(
-          JSON.stringify({ connected: false, message: e.message }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
-    // TEMP: bypass auth for testing noreply sender
-    const tempBypass = req.headers.get("x-test-bypass") === "noreply-test-2026";
-    
     // --- AUTH GATE: block unauthenticated external calls ---
-    if (!isInternal && !tempBypass) {
+    if (!isInternal) {
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return new Response(
           JSON.stringify({ error: "Token de autenticação não fornecido" }),
