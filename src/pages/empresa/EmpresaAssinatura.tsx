@@ -342,9 +342,6 @@ export default function EmpresaAssinatura() {
                           <div className="text-sm font-normal text-muted-foreground mt-1 line-through">
                             R$ {plano.valor_mensal.toFixed(2).replace('.', ',')}/mês
                           </div>
-                          <div className="text-sm font-normal text-muted-foreground mt-1">
-                            Total: R$ {plano.valor_anual.toFixed(2).replace('.', ',')}/ano
-                          </div>
                           <div className="text-sm font-normal text-emerald-600 mt-1">
                             Economia de {Math.round((1 - plano.valor_anual / (plano.valor_mensal * 12)) * 100)}%
                           </div>
