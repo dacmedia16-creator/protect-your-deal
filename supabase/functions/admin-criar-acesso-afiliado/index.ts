@@ -130,6 +130,36 @@ Deno.serve(async (req) => {
       console.error("Erro ao gerar link de recuperação:", resetError);
     }
 
+    // Enviar email com credenciais
+    try {
+      const emailHtml = `
+        <h2>Bem-vindo ao painel de afiliados!</h2>
+        <p>Olá ${afiliado.nome},</p>
+        <p>Seu acesso ao painel de afiliados foi criado com sucesso.</p>
+        <p><strong>Email:</strong> ${afiliado.email}</p>
+        <p><strong>Senha temporária:</strong> ${tempPassword}</p>
+        <p>Acesse o painel e altere sua senha no primeiro login.</p>
+        <p><a href="${req.headers.get("origin")}/auth">Acessar o painel</a></p>
+      `;
+
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          action: "send",
+          to: afiliado.email,
+          subject: "Seu acesso ao painel de afiliados foi criado",
+          html: emailHtml,
+        }),
+      });
+      console.log("Email de credenciais enviado para:", afiliado.email);
+    } catch (emailError) {
+      console.error("Erro ao enviar email de credenciais:", emailError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
