@@ -95,18 +95,39 @@ Deno.serve(async (req) => {
       },
     });
 
+    let userId: string;
+    let isExistingUser = false;
+
     if (createError) {
-      console.error("Erro ao criar usuário:", createError);
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Se email já existe, buscar usuário existente
+      if (createError.message?.includes("already been registered")) {
+        console.log("Email já registrado, buscando usuário existente:", afiliado.email);
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = listData?.users?.find(u => u.email === afiliado.email);
+        if (!existingUser) {
+          return new Response(JSON.stringify({ error: "Usuário com este email não foi encontrado" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        userId = existingUser.id;
+        isExistingUser = true;
+        console.log("Usuário existente encontrado:", userId);
+      } else {
+        console.error("Erro ao criar usuário:", createError);
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else {
+      userId = newUser.user.id;
     }
 
     // Atualizar afiliado com user_id
     const { error: updateError } = await supabaseAdmin
       .from("afiliados")
-      .update({ user_id: newUser.user.id })
+      .update({ user_id: userId })
       .eq("id", afiliado_id);
 
     if (updateError) {
@@ -117,47 +138,61 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Enviar email de redefinição de senha
-    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email: afiliado.email,
-      options: {
-        redirectTo: `${req.headers.get("origin")}/auth/redefinir-senha`,
-      },
-    });
-
-    if (resetError) {
-      console.error("Erro ao gerar link de recuperação:", resetError);
-    }
-
-    // Enviar email com credenciais
+    // Enviar email com credenciais ou notificação
     try {
-      const emailHtml = `
-        <h2>Bem-vindo ao painel de afiliados!</h2>
-        <p>Olá ${afiliado.nome},</p>
-        <p>Seu acesso ao painel de afiliados foi criado com sucesso.</p>
-        <p><strong>Email:</strong> ${afiliado.email}</p>
-        <p><strong>Senha temporária:</strong> ${tempPassword}</p>
-        <p>Acesse o painel e altere sua senha no primeiro login.</p>
-        <p><a href="${req.headers.get("origin")}/auth">Acessar o painel</a></p>
-      `;
+      if (isExistingUser) {
+        // Usuário já existente - enviar email informando ativação do painel
+        const emailHtml = `
+          <h2>Seu acesso ao painel de afiliados foi ativado!</h2>
+          <p>Olá ${afiliado.nome},</p>
+          <p>Seu acesso ao painel de afiliados foi ativado com sucesso.</p>
+          <p>Use seu email e senha atuais para acessar o painel.</p>
+          <p><a href="${req.headers.get("origin")}/auth">Acessar o painel</a></p>
+        `;
 
-      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          action: "send",
-          to: afiliado.email,
-          subject: "Seu acesso ao painel de afiliados foi criado",
-          html: emailHtml,
-        }),
-      });
-      console.log("Email de credenciais enviado para:", afiliado.email);
+        await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            action: "send",
+            to: afiliado.email,
+            subject: "Seu acesso ao painel de afiliados foi ativado",
+            html: emailHtml,
+          }),
+        });
+        console.log("Email de ativação enviado para:", afiliado.email);
+      } else {
+        // Novo usuário - enviar email com credenciais
+        const emailHtml = `
+          <h2>Bem-vindo ao painel de afiliados!</h2>
+          <p>Olá ${afiliado.nome},</p>
+          <p>Seu acesso ao painel de afiliados foi criado com sucesso.</p>
+          <p><strong>Email:</strong> ${afiliado.email}</p>
+          <p><strong>Senha temporária:</strong> ${tempPassword}</p>
+          <p>Acesse o painel e altere sua senha no primeiro login.</p>
+          <p><a href="${req.headers.get("origin")}/auth">Acessar o painel</a></p>
+        `;
+
+        await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            action: "send",
+            to: afiliado.email,
+            subject: "Seu acesso ao painel de afiliados foi criado",
+            html: emailHtml,
+          }),
+        });
+        console.log("Email de credenciais enviado para:", afiliado.email);
+      }
     } catch (emailError) {
-      console.error("Erro ao enviar email de credenciais:", emailError);
+      console.error("Erro ao enviar email:", emailError);
     }
 
     return new Response(
