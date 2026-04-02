@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { SEOHead } from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,9 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { LogoIcon } from '@/components/LogoIcon';
 import { WhatsAppFAB } from '@/components/WhatsAppFAB';
 import { DepoimentosSection } from '@/components/DepoimentosSection';
-import MobileAppMockup from '@/components/mockups/MobileAppMockup';
-import SofiaMockup from '@/components/mockups/SofiaMockup';
 import AnimatedSection from '@/components/AnimatedSection';
+
+const MobileAppMockup = lazy(() => import('@/components/mockups/MobileAppMockup'));
+const SofiaMockup = lazy(() => import('@/components/mockups/SofiaMockup'));
 import {
   FileCheck,
   MessageSquare,
