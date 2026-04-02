@@ -5,32 +5,17 @@ import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { UserPlus, Loader2, AlertCircle, CheckCircle2, Trash2 } from 'lucide-react';
+import { UserPlus, Loader2, AlertCircle, CheckCircle2, Trash2, Building2, Building } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatPhone } from '@/lib/phone';
 import { format } from 'date-fns';
@@ -40,29 +25,28 @@ interface PendingUser {
   user_id: string;
   role: string;
   created_at: string;
-  profile: {
-    nome: string;
-    telefone: string | null;
-  } | null;
+  profile: { nome: string; telefone: string | null } | null;
   email: string | null;
 }
 
+type OrgType = 'imobiliaria' | 'construtora';
+
 export default function AdminUsuariosPendentes() {
   const queryClient = useQueryClient();
-  const [selectedImobiliarias, setSelectedImobiliarias] = useState<Record<string, string>>({});
+  const [selectedOrgs, setSelectedOrgs] = useState<Record<string, string>>({});
+  const [selectedTypes, setSelectedTypes] = useState<Record<string, OrgType>>({});
   const [userToDelete, setUserToDelete] = useState<PendingUser | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [linkingUserId, setLinkingUserId] = useState<string | null>(null);
 
-  // Fetch pending users (corretores without imobiliaria_id, excluding autonomous brokers)
   const { data: pendingUsers, isLoading: loadingUsers } = useQuery({
     queryKey: ['pending-users'],
     queryFn: async () => {
-      // First get user_roles without imobiliaria_id
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role, created_at')
         .is('imobiliaria_id', null)
+        .is('construtora_id', null)
         .neq('role', 'super_admin');
 
       if (rolesError) throw rolesError;
@@ -70,26 +54,22 @@ export default function AdminUsuariosPendentes() {
 
       const userIds = roles.map(r => r.user_id);
 
-      // Get autonomous brokers (those with individual subscriptions)
       const { data: assinaturasAutonomas } = await supabase
         .from('assinaturas')
         .select('user_id')
         .in('user_id', userIds)
-        .is('imobiliaria_id', null);
+        .is('imobiliaria_id', null)
+        .is('construtora_id', null);
 
-      // IDs of users with autonomous subscriptions (not pending)
       const autonomosComAssinatura = new Set(
         assinaturasAutonomas?.map(a => a.user_id) || []
       );
 
-      // Filter only truly pending users (no autonomous subscription)
       const rolesPendentes = roles.filter(r => !autonomosComAssinatura.has(r.user_id));
-
       if (rolesPendentes.length === 0) return [];
 
       const pendingUserIds = rolesPendentes.map(r => r.user_id);
 
-      // Get profiles for these users
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, telefone')
@@ -97,30 +77,25 @@ export default function AdminUsuariosPendentes() {
 
       if (profilesError) throw profilesError;
 
-      // Get emails using admin function
       const { data: usersData, error: usersError } = await supabase.functions.invoke('admin-list-users');
-      
       if (usersError) throw usersError;
 
       const users = usersData?.users || [];
 
-      // Combine data
       return rolesPendentes.map(role => {
         const profile = profiles?.find(p => p.user_id === role.user_id);
         const authUser = users.find((u: any) => u.id === role.user_id);
-        
         return {
           user_id: role.user_id,
           role: role.role,
           created_at: role.created_at,
           profile: profile || null,
-          email: authUser?.email || null
+          email: authUser?.email || null,
         } as PendingUser;
       });
-    }
+    },
   });
 
-  // Fetch imobiliarias
   const { data: imobiliarias, isLoading: loadingImobiliarias } = useQuery({
     queryKey: ['imobiliarias-list'],
     queryFn: async () => {
@@ -129,50 +104,53 @@ export default function AdminUsuariosPendentes() {
         .select('id, nome')
         .eq('status', 'ativo')
         .order('nome');
-      
       if (error) throw error;
       return data;
-    }
+    },
   });
 
-  // Mutation to link user to imobiliaria
-  const linkUserMutation = useMutation({
-    mutationFn: async ({ userId, imobiliariaId }: { userId: string; imobiliariaId: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-vincular-usuario', {
-        body: { user_id: userId, imobiliaria_id: imobiliariaId }
-      });
+  const { data: construtoras, isLoading: loadingConstrutoras } = useQuery({
+    queryKey: ['construtoras-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('construtoras')
+        .select('id, nome')
+        .eq('status', 'ativo')
+        .order('nome');
+      if (error) throw error;
+      return data;
+    },
+  });
 
+  const linkUserMutation = useMutation({
+    mutationFn: async ({ userId, orgId, orgType }: { userId: string; orgId: string; orgType: OrgType }) => {
+      const body = orgType === 'construtora'
+        ? { user_id: userId, construtora_id: orgId }
+        : { user_id: userId, imobiliaria_id: orgId };
+
+      const { data, error } = await supabase.functions.invoke('admin-vincular-usuario', { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      
       return data;
     },
     onSuccess: (_, variables) => {
       toast.success('Usuário vinculado com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['pending-users'] });
-      setSelectedImobiliarias(prev => {
-        const updated = { ...prev };
-        delete updated[variables.userId];
-        return updated;
-      });
+      setSelectedOrgs(prev => { const u = { ...prev }; delete u[variables.userId]; return u; });
+      setSelectedTypes(prev => { const u = { ...prev }; delete u[variables.userId]; return u; });
       setLinkingUserId(null);
     },
     onError: (error: Error) => {
       toast.error(`Erro ao vincular usuário: ${error.message}`);
       setLinkingUserId(null);
-    }
+    },
   });
 
-  // Mutation to delete user
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
-        body: { user_id: userId }
-      });
-
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', { body: { user_id: userId } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      
       return data;
     },
     onSuccess: () => {
@@ -184,42 +162,38 @@ export default function AdminUsuariosPendentes() {
     onError: (error: Error) => {
       toast.error(`Erro ao excluir usuário: ${error.message}`);
       setIsDeleting(false);
-    }
+    },
   });
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!userToDelete) return;
     setIsDeleting(true);
     deleteUserMutation.mutate(userToDelete.user_id);
   };
 
   const handleLink = (userId: string) => {
-    const imobiliariaId = selectedImobiliarias[userId];
-    if (!imobiliariaId) {
-      toast.error('Selecione uma imobiliária');
+    const orgId = selectedOrgs[userId];
+    const orgType = selectedTypes[userId] || 'imobiliaria';
+    if (!orgId) {
+      toast.error('Selecione uma organização');
       return;
     }
-    
     setLinkingUserId(userId);
-    linkUserMutation.mutate({ userId, imobiliariaId });
+    linkUserMutation.mutate({ userId, orgId, orgType });
   };
 
-  const isLoading = loadingUsers || loadingImobiliarias;
+  const getOrgType = (userId: string): OrgType => selectedTypes[userId] || 'imobiliaria';
+
+  const isLoading = loadingUsers || loadingImobiliarias || loadingConstrutoras;
 
   return (
     <SuperAdminLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">
-            Usuários Pendentes
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Usuários que precisam ser vinculados a uma imobiliária
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Usuários Pendentes</h1>
+          <p className="text-muted-foreground mt-1">Usuários que precisam ser vinculados a uma organização</p>
         </div>
 
-        {/* Info Card */}
         <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
@@ -229,28 +203,19 @@ export default function AdminUsuariosPendentes() {
           </CardHeader>
           <CardContent className="text-amber-700 dark:text-amber-300 text-sm">
             <p>
-              Usuários pendentes são corretores que deveriam estar vinculados a uma imobiliária, 
-              mas ainda não foram associados. <strong>Corretores autônomos não aparecem aqui</strong>, 
-              pois operam de forma independente com seu próprio plano.
+              Usuários pendentes são aqueles que deveriam estar vinculados a uma imobiliária ou construtora,
+              mas ainda não foram associados. <strong>Corretores autônomos não aparecem aqui</strong>.
             </p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Um corretor aceitou um convite mas houve falha no vínculo</li>
-              <li>Houve um problema durante o registro vinculado</li>
-              <li>O usuário foi migrado de um sistema legado</li>
-            </ul>
           </CardContent>
         </Card>
 
-        {/* Users Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
               Usuários Aguardando Vínculo
             </CardTitle>
-            <CardDescription>
-              {pendingUsers?.length || 0} usuário(s) pendente(s)
-            </CardDescription>
+            <CardDescription>{pendingUsers?.length || 0} usuário(s) pendente(s)</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -258,23 +223,13 @@ export default function AdminUsuariosPendentes() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead><Skeleton className="h-4 w-16" /></TableHead>
-                      <TableHead><Skeleton className="h-4 w-24" /></TableHead>
-                      <TableHead><Skeleton className="h-4 w-20" /></TableHead>
-                      <TableHead><Skeleton className="h-4 w-24" /></TableHead>
-                      <TableHead><Skeleton className="h-4 w-28" /></TableHead>
-                      <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                      {[1,2,3,4,5,6,7].map(i => <TableHead key={i}><Skeleton className="h-4 w-20" /></TableHead>)}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {[1, 2, 3, 4, 5].map((i) => (
+                    {[1,2,3].map(i => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                        <TableCell><Skeleton className="h-10 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-9 w-24" /></TableCell>
+                        {[1,2,3,4,5,6,7].map(j => <TableCell key={j}><Skeleton className="h-4 w-24" /></TableCell>)}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -284,12 +239,10 @@ export default function AdminUsuariosPendentes() {
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
                 <p className="text-lg font-medium">Nenhum usuário pendente</p>
-                <p className="text-muted-foreground text-sm mt-1">
-                  Todos os corretores vinculados estão associados a uma imobiliária
-                </p>
+                <p className="text-muted-foreground text-sm mt-1">Todos os usuários estão associados a uma organização</p>
               </div>
             ) : (
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -297,74 +250,79 @@ export default function AdminUsuariosPendentes() {
                       <TableHead>Email</TableHead>
                       <TableHead>Telefone</TableHead>
                       <TableHead>Criado em</TableHead>
-                      <TableHead>Imobiliária</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Organização</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pendingUsers.map((user) => (
-                      <TableRow key={user.user_id}>
-                        <TableCell className="font-medium">
-                          {user.profile?.nome || 'Sem nome'}
-                        </TableCell>
-                        <TableCell>
-                          {user.email || 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          {user.profile?.telefone ? formatPhone(user.profile.telefone) : 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(user.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell className="min-w-[200px]">
-                          <Select
-                            value={selectedImobiliarias[user.user_id] || ''}
-                            onValueChange={(value) => 
-                              setSelectedImobiliarias(prev => ({ ...prev, [user.user_id]: value }))
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {imobiliarias?.map((imob) => (
-                                <SelectItem key={imob.id} value={imob.id}>
-                                  {imob.nome}
+                    {pendingUsers.map((user) => {
+                      const orgType = getOrgType(user.user_id);
+                      const orgList = orgType === 'construtora' ? construtoras : imobiliarias;
+
+                      return (
+                        <TableRow key={user.user_id}>
+                          <TableCell className="font-medium">{user.profile?.nome || 'Sem nome'}</TableCell>
+                          <TableCell>{user.email || 'N/A'}</TableCell>
+                          <TableCell>{user.profile?.telefone ? formatPhone(user.profile.telefone) : 'N/A'}</TableCell>
+                          <TableCell>{format(new Date(user.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</TableCell>
+                          <TableCell className="min-w-[140px]">
+                            <Select
+                              value={orgType}
+                              onValueChange={(value: OrgType) => {
+                                setSelectedTypes(prev => ({ ...prev, [user.user_id]: value }));
+                                setSelectedOrgs(prev => { const u = { ...prev }; delete u[user.user_id]; return u; });
+                              }}
+                            >
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="imobiliaria">
+                                  <span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" /> Imobiliária</span>
                                 </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleLink(user.user_id)}
-                              disabled={!selectedImobiliarias[user.user_id] || linkingUserId === user.user_id}
+                                <SelectItem value="construtora">
+                                  <span className="flex items-center gap-1.5"><Building className="h-3.5 w-3.5" /> Construtora</span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="min-w-[200px]">
+                            <Select
+                              value={selectedOrgs[user.user_id] || ''}
+                              onValueChange={(value) => setSelectedOrgs(prev => ({ ...prev, [user.user_id]: value }))}
                             >
-                              {linkingUserId === user.user_id ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Vinculando...
-                                </>
-                              ) : (
-                                <>
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Vincular
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => setUserToDelete(user)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {orgList?.map((org) => (
+                                  <SelectItem key={org.id} value={org.id}>{org.nome}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleLink(user.user_id)}
+                                disabled={!selectedOrgs[user.user_id] || linkingUserId === user.user_id}
+                              >
+                                {linkingUserId === user.user_id ? (
+                                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Vinculando...</>
+                                ) : (
+                                  <><UserPlus className="h-4 w-4 mr-2" />Vincular</>
+                                )}
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => setUserToDelete(user)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -373,24 +331,13 @@ export default function AdminUsuariosPendentes() {
         </Card>
       </div>
 
-      {/* Dialog de confirmação de exclusão */}
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>
-                Tem certeza que deseja excluir o usuário <strong>{userToDelete?.profile?.nome || userToDelete?.email || 'Sem nome'}</strong>?
-              </p>
-              <p className="text-destructive font-medium">
-                Esta ação é irreversível e irá:
-              </p>
-              <ul className="list-disc list-inside text-sm">
-                <li>Remover a conta de autenticação</li>
-                <li>Excluir o perfil do usuário</li>
-                <li>Liberar o telefone para reutilização</li>
-                <li>Preservar fichas de visita (se houver)</li>
-              </ul>
+              <p>Tem certeza que deseja excluir o usuário <strong>{userToDelete?.profile?.nome || userToDelete?.email || 'Sem nome'}</strong>?</p>
+              <p className="text-destructive font-medium">Esta ação é irreversível.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -400,17 +347,7 @@ export default function AdminUsuariosPendentes() {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </>
-              )}
+              {isDeleting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

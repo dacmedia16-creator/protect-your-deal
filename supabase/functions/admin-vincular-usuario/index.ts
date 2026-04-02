@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,7 +14,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Create client for user authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -24,12 +22,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get current user using token directly
     const token = authHeader.replace('Bearer ', '');
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
-      console.error('User auth error:', userError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -45,34 +41,36 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (roleError || !roleData) {
-      console.error('Role check error:', roleError);
       return new Response(
         JSON.stringify({ error: 'Only super admins can perform this action' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Parse request body
-    const { user_id, imobiliaria_id, backfill_fichas } = await req.json();
+    const { user_id, imobiliaria_id, construtora_id, backfill_fichas } = await req.json();
     const backfillFichas = Boolean(backfill_fichas);
 
-    if (!user_id || !imobiliaria_id) {
+    if (!user_id || (!imobiliaria_id && !construtora_id)) {
       return new Response(
-        JSON.stringify({ error: 'user_id and imobiliaria_id are required' }),
+        JSON.stringify({ error: 'user_id and either imobiliaria_id or construtora_id are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(
-      `Vinculando usuário ${user_id} à imobiliária ${imobiliaria_id} | backfill_fichas=${backfillFichas}`
-    );
+    const isConstrutora = !!construtora_id;
+    const orgId = isConstrutora ? construtora_id : imobiliaria_id;
+    const orgType = isConstrutora ? 'construtora' : 'imobiliária';
 
-    // supabaseAdmin already created above
+    console.log(`Vinculando usuário ${user_id} à ${orgType} ${orgId} | backfill_fichas=${backfillFichas}`);
 
-    // Update user_roles table
+    // Update user_roles
+    const roleUpdate: Record<string, unknown> = isConstrutora
+      ? { construtora_id, role: 'construtora_admin' }
+      : { imobiliaria_id };
+
     const { error: updateRoleError } = await supabaseAdmin
       .from('user_roles')
-      .update({ imobiliaria_id })
+      .update(roleUpdate)
       .eq('user_id', user_id);
 
     if (updateRoleError) {
@@ -83,10 +81,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update profiles table
+    // Update profiles
+    const profileUpdate: Record<string, unknown> = isConstrutora
+      ? { construtora_id }
+      : { imobiliaria_id };
+
     const { error: updateProfileError } = await supabaseAdmin
       .from('profiles')
-      .update({ imobiliaria_id })
+      .update(profileUpdate)
       .eq('user_id', user_id);
 
     if (updateProfileError) {
@@ -97,37 +99,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Delete any individual subscription the user may have (orphan subscriptions)
-    // When a broker is linked to an imobiliaria, they should use the imobiliaria's subscription
+    // Delete orphan individual subscriptions
     let deletedSubscriptions = 0;
     const { data: individualSubs, error: findSubError } = await supabaseAdmin
       .from('assinaturas')
       .select('id')
       .eq('user_id', user_id)
-      .is('imobiliaria_id', null);
+      .is('imobiliaria_id', null)
+      .is('construtora_id', null);
 
     if (!findSubError && individualSubs && individualSubs.length > 0) {
-      console.log(`Found ${individualSubs.length} individual subscription(s) to delete for user ${user_id}`);
-      
+      console.log(`Found ${individualSubs.length} individual subscription(s) to delete`);
       const { error: deleteSubError } = await supabaseAdmin
         .from('assinaturas')
         .delete()
         .eq('user_id', user_id)
-        .is('imobiliaria_id', null);
+        .is('imobiliaria_id', null)
+        .is('construtora_id', null);
 
-      if (deleteSubError) {
-        console.error('Error deleting individual subscriptions:', deleteSubError);
-        // Non-critical, continue with the process
-      } else {
+      if (!deleteSubError) {
         deletedSubscriptions = individualSubs.length;
-        console.log(`Deleted ${deletedSubscriptions} individual subscription(s)`);
       }
     }
 
+    // Backfill fichas (only for imobiliarias)
     let fichasBackfilled = 0;
-    if (backfillFichas) {
-      console.log(`Backfill: atualizando fichas_visita sem imobiliaria_id para o usuário ${user_id}`);
-
+    if (backfillFichas && !isConstrutora) {
       const { data: updatedFichas, error: backfillError } = await supabaseAdmin
         .from('fichas_visita')
         .update({ imobiliaria_id })
@@ -142,18 +139,16 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
       fichasBackfilled = updatedFichas?.length ?? 0;
-      console.log(`Backfill concluído: ${fichasBackfilled} ficha(s) atualizada(s).`);
     }
 
-    console.log(`Usuário ${user_id} vinculado com sucesso à imobiliária ${imobiliaria_id}`);
+    console.log(`Usuário ${user_id} vinculado com sucesso à ${orgType} ${orgId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'User linked to imobiliaria successfully',
-        backfill: { enabled: backfillFichas, updated: fichasBackfilled },
+        message: `User linked to ${orgType} successfully`,
+        backfill: { enabled: backfillFichas && !isConstrutora, updated: fichasBackfilled },
         subscriptions_deleted: deletedSubscriptions,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
