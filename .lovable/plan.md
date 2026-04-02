@@ -1,55 +1,55 @@
 
 
-## Plano: Enviar email com credenciais ao criar acesso de afiliado
+## Plano: Corrigir erro "email_exists" ao criar acesso de afiliado
 
-Atualmente a edge function `admin-criar-acesso-afiliado` gera uma senha temporária, cria o usuário, e tenta gerar um link de recuperação — mas nunca envia um email real com as credenciais.
+### Problema
+Os logs mostram que a edge function `admin-criar-acesso-afiliado` falha com `AuthApiError: A user with this email address has already been registered`. Isso acontece quando o email do afiliado já existe na tabela `auth.users` (ex: já foi cadastrado em outro contexto).
 
-### Alteração
+### Solução
 
 **`supabase/functions/admin-criar-acesso-afiliado/index.ts`**
 
-Após criar o usuário e vincular o `user_id`, invocar a edge function `send-email` (já existente no projeto, usa Zoho SMTP) para enviar um email ao afiliado com:
-- Email de login
-- Senha temporária
-- Link para acessar o painel
+Quando `createUser` retornar erro `email_exists`, buscar o usuário existente por email via `supabaseAdmin.auth.admin.listUsers()` e usar esse `user.id` para vincular ao afiliado. Gerar link de recuperação de senha em vez de enviar senha temporária.
 
-O envio será feito internamente (com `SUPABASE_SERVICE_ROLE_KEY` no header Authorization) chamando `send-email` via fetch, seguindo o mesmo padrão usado em `registro-imobiliaria` e `registro-corretor-autonomo`.
+Fluxo atualizado:
+1. Tentar criar usuário normalmente
+2. Se erro `email_exists`:
+   - Buscar usuário existente pelo email
+   - Usar o `id` desse usuário para vincular ao afiliado
+   - Enviar email de recuperação de senha (em vez de senha temporária)
+3. Se criou com sucesso: fluxo atual (envia email com senha temporária)
 
-Código a adicionar (após a atualização do `user_id`, antes do return de sucesso):
+Trecho a alterar (linhas 88-104):
 
 ```typescript
-// Enviar email com credenciais
-try {
-  const emailHtml = `
-    <h2>Bem-vindo ao painel de afiliados!</h2>
-    <p>Olá ${afiliado.nome},</p>
-    <p>Seu acesso ao painel de afiliados foi criado com sucesso.</p>
-    <p><strong>Email:</strong> ${afiliado.email}</p>
-    <p><strong>Senha temporária:</strong> ${tempPassword}</p>
-    <p>Acesse o painel e altere sua senha no primeiro login.</p>
-    <p><a href="${req.headers.get("origin")}/auth">Acessar o painel</a></p>
-  `;
+// Tentar criar usuário
+const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+  email: afiliado.email,
+  password: tempPassword,
+  email_confirm: true,
+  user_metadata: { nome: afiliado.nome },
+});
 
-  await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${supabaseServiceKey}`,
-    },
-    body: JSON.stringify({
-      action: "send",
-      to: afiliado.email,
-      subject: "Seu acesso ao painel de afiliados foi criado",
-      html: emailHtml,
-    }),
-  });
-} catch (emailError) {
-  console.error("Erro ao enviar email:", emailError);
+let userId: string;
+let isExistingUser = false;
+
+if (createError) {
+  // Se email já existe, buscar usuário existente
+  if (createError.message?.includes("already been registered")) {
+    const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = listData?.users?.find(u => u.email === afiliado.email);
+    if (!existingUser) {
+      return new Response(JSON.stringify({ error: "Usuário não encontrado" }), { status: 400, ... });
+    }
+    userId = existingUser.id;
+    isExistingUser = true;
+  } else {
+    return new Response(JSON.stringify({ error: createError.message }), { status: 400, ... });
+  }
+} else {
+  userId = newUser.user.id;
 }
 ```
 
-O envio é não-bloqueante (try/catch) — se falhar, o acesso foi criado com sucesso e a resposta já retorna a senha no front-end.
-
-### Resultado
-O afiliado receberá um email com email + senha temporária + link de acesso assim que o admin criar o acesso pelo painel.
+No envio de email: se `isExistingUser`, enviar mensagem informando que o acesso ao painel de afiliados foi ativado (sem senha temporária, pois já tem conta).
 
