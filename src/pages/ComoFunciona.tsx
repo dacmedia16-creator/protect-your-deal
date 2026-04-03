@@ -76,9 +76,6 @@ const ComoFunciona = () => {
         </AnimatedSection>
 
         {/* Video Demo */}
-        <AnimatedSection delay={150} className="max-w-xl mx-auto mb-16">
-          <LazyVideo src="/videos/demo.mp4" poster={videoThumbnail} muted />
-        </AnimatedSection>
 
         {/* Steps */}
         <div className="max-w-5xl mx-auto mb-16">
