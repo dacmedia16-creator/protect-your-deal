@@ -106,6 +106,7 @@ export default function ConstutoraAssinatura() {
       });
     } finally {
       setSubscribing(null);
+      setSubscribingType(null);
     }
   }
 
