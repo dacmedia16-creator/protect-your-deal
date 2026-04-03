@@ -261,6 +261,15 @@ export default function CorretorAssinatura() {
                     Próxima cobrança: {new Date(assinatura.proxima_cobranca).toLocaleDateString('pt-BR')}
                   </p>
                 )}
+
+                {assinatura.status === 'ativa' && assinatura.asaas_subscription_id && (
+                  <div className="pt-4 border-t border-border">
+                    <CancelarAssinaturaDialog
+                      assinaturaId={assinatura.id}
+                      onCancelled={() => refetch()}
+                    />
+                  </div>
+                )}
               </CardContent>
             )}
           </Card>
