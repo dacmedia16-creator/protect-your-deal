@@ -180,6 +180,15 @@ export default function ConstutoraAssinatura() {
                   </div>
                 </div>
               )}
+
+              {assinatura.status === 'ativa' && assinatura.asaas_subscription_id && (
+                <div className="pt-4 border-t border-border">
+                  <CancelarAssinaturaDialog
+                    assinaturaId={assinatura.id}
+                    onCancelled={() => window.location.reload()}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
