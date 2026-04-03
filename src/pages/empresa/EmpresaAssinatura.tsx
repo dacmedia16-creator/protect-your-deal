@@ -102,7 +102,7 @@ export default function EmpresaAssinatura() {
     fetchData();
   }, [imobiliariaId]);
 
-  async function handleSubscribe(planoId: string) {
+  async function handleSubscribe(planoId: string, billingType: BillingType = 'PIX') {
     if (!imobiliariaId) {
       toast.error('Erro: dados da empresa não carregados. Tente recarregar a página.');
       console.error('[EmpresaAssinatura] imobiliariaId is null');
