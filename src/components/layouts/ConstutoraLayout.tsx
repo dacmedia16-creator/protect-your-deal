@@ -36,7 +36,7 @@ export function ConstutoraLayout({ children }: ConstutoraLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { construtora, assinatura } = useUserRole();
+  const { construtora, assinatura, trialDaysLeft } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
