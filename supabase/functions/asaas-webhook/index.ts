@@ -526,7 +526,7 @@ serve(async (req) => {
           }
 
           if (userPhone) {
-            const planoNome = (assinatura as any).planos?.nome || 'Plano';
+            const planoNome = (assinatura as any).plano?.nome || 'Plano';
             const valorFormatado = formatCurrency(value || 0);
             let message = '';
 
