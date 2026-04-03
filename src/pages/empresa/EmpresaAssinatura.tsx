@@ -146,6 +146,7 @@ export default function EmpresaAssinatura() {
       });
     } finally {
       setSubscribing(null);
+      setSubscribingType(null);
     }
   }
 
