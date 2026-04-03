@@ -33,10 +33,16 @@ export default function AssinaturaSuspensa() {
           <div className="mx-auto h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <CardTitle className="text-2xl font-heading">Assinatura Suspensa</CardTitle>
+          <CardTitle className="text-2xl font-heading">
+            {isExpiredTrial ? 'Período de Teste Expirado' : 'Assinatura Suspensa'}
+          </CardTitle>
           <CardDescription className="text-base">
-            {imobiliaria ? (
+            {isExpiredTrial ? (
+              'Seu período de teste de 7 dias expirou. Assine um plano para continuar usando o sistema.'
+            ) : imobiliaria ? (
               <>A assinatura da imobiliária <strong>{imobiliaria.nome}</strong> está inativa.</>
+            ) : construtora ? (
+              <>A assinatura da construtora <strong>{construtora.nome}</strong> está inativa.</>
             ) : (
               'Sua assinatura está inativa ou foi cancelada.'
             )}

@@ -136,7 +136,11 @@ export default function ConstrutoraDashboard() {
               <AlertCircle className="h-5 w-5 text-warning shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-warning">Período de teste ativo</p>
-                <p className="text-sm text-muted-foreground">Seu período de teste termina em breve. Assine um plano para continuar.</p>
+                <p className="text-sm text-muted-foreground">
+                  {trialDaysLeft !== null
+                    ? `Seu período de teste termina em ${trialDaysLeft} dia${trialDaysLeft !== 1 ? 's' : ''}. Assine um plano para continuar.`
+                    : 'Seu período de teste termina em breve. Assine um plano para continuar.'}
+                </p>
               </div>
               <Link to="/construtora/assinatura">
                 <Button variant="outline" size="sm">Ver planos <ArrowRight className="h-4 w-4 ml-2" /></Button>

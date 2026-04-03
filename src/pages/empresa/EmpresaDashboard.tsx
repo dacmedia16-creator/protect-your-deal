@@ -244,7 +244,9 @@ export default function EmpresaDashboard() {
               <div className="flex-1">
                 <p className="font-medium text-warning">Período de teste ativo</p>
                 <p className="text-sm text-muted-foreground">
-                  Seu período de teste termina em breve. Assine um plano para continuar usando.
+                  {trialDaysLeft !== null
+                    ? `Seu período de teste termina em ${trialDaysLeft} dia${trialDaysLeft !== 1 ? 's' : ''}. Assine um plano para continuar usando.`
+                    : 'Seu período de teste termina em breve. Assine um plano para continuar usando.'}
                 </p>
               </div>
               <Link to="/empresa/assinatura">
