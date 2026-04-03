@@ -252,7 +252,6 @@ export default function ConstutoraAssinatura() {
           </div>
         </div>
 
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
       </div>
     </ConstutoraLayout>
   );
