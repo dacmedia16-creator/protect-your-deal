@@ -12,21 +12,6 @@ import {
   Scale
 } from 'lucide-react';
 
-const LazyVideo = ({ src, poster, muted }: { src: string; poster?: string; muted?: boolean }) => {
-  const { ref, isVisible } = useScrollAnimation({ rootMargin: '200px', triggerOnce: true });
-  return (
-    <div ref={ref} className="aspect-video w-full">
-      {isVisible ? (
-        <video src={src} poster={poster} controls playsInline muted={muted} preload="metadata" className="w-full h-full rounded-xl shadow-lg border border-border" />
-      ) : (
-        <Skeleton className="w-full h-full rounded-xl flex items-center justify-center">
-          <PlayCircle className="h-12 w-12 text-muted-foreground/40" />
-        </Skeleton>
-      )}
-    </div>
-  );
-};
-
 const ComoFunciona = () => {
   const steps = [
     {
