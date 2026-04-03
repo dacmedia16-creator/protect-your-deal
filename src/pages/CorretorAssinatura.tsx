@@ -335,16 +335,11 @@ export default function CorretorAssinatura() {
                         </li>
                       </ul>
 
-                      {isCurrentPlan ? (
-                        <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
-                      ) : (
-                        <PaymentButtons
-                          onSelect={(bt) => handleSubscribe(plano.id, bt)}
-                          disabled={isCurrentPlan}
-                          loading={isSubscribing}
-                          loadingType={subscribingType}
-                        />
-                      )}
+                      <PaymentButtons
+                        onSelect={(bt) => handleSubscribe(plano.id, bt)}
+                        loading={isSubscribing}
+                        loadingType={subscribingType}
+                      />
                     </CardContent>
                   </Card>
                 );

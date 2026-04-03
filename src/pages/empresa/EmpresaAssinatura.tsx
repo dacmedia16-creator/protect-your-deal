@@ -374,15 +374,7 @@ export default function EmpresaAssinatura() {
                       </li>
                     </ul>
 
-                    {isCurrentPlan ? (
-                      <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
-                    ) : isFreePlan ? (
-                      <PaymentButtons
-                        onSelect={(bt) => handleSubscribe(plano.id, bt)}
-                        loading={isSubscribing}
-                        loadingType={subscribingType}
-                      />
-                    ) : plano.valor_mensal > 0 ? (
+                    {plano.valor_mensal > 0 || isFreePlan ? (
                       <PaymentButtons
                         onSelect={(bt) => handleSubscribe(plano.id, bt)}
                         loading={isSubscribing}

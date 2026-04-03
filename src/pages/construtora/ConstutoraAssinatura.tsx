@@ -236,9 +236,7 @@ export default function ConstutoraAssinatura() {
                       <li className="flex items-center gap-2"><Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />{plano.max_corretores === 999 ? 'Corretores ilimitados' : `Até ${plano.max_corretores} corretores`}</li>
                       <li className="flex items-center gap-2"><Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />{plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}</li>
                     </ul>
-                    {isCurrentPlan ? (
-                      <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
-                    ) : plano.valor_mensal > 0 || isFreePlan ? (
+                    {plano.valor_mensal > 0 || isFreePlan ? (
                       <PaymentButtons
                         onSelect={(bt) => handleSubscribe(plano.id, bt)}
                         loading={isSubscribing}
