@@ -43,6 +43,7 @@ export default function ConstutoraAssinatura() {
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
+  const [billingType, setBillingType] = useState<BillingType>('UNDEFINED');
 
   useEffect(() => {
     async function fetchData() {
