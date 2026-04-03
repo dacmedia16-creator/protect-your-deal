@@ -12,6 +12,7 @@ interface UserRoleContextType {
   construtora: Construtora | null;
   assinatura: Assinatura | null;
   ativo: boolean | null;
+  trialDaysLeft: number | null;
   loading: boolean;
   error: boolean;
   refetch: () => Promise<void>;
