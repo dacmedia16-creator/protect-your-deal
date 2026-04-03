@@ -26,6 +26,8 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
+import type { BillingType } from '@/components/PaymentMethodSelector';
 
 interface Plano {
   id: string;
@@ -52,6 +54,7 @@ export default function EmpresaAssinatura() {
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
+  const [billingType, setBillingType] = useState<BillingType>('UNDEFINED');
 
   useEffect(() => {
     async function fetchData() {
@@ -110,7 +113,7 @@ export default function EmpresaAssinatura() {
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
-        body: { planoId, imobiliariaId, ciclo },
+        body: { planoId, imobiliariaId, ciclo, billingType },
       });
 
       if (error) throw error;
@@ -416,32 +419,7 @@ export default function EmpresaAssinatura() {
           </div>
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-          <p className="font-medium mb-3">Formas de pagamento aceitas:</p>
-          <div className="flex flex-wrap gap-4">
-            <span className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
-              <QrCode className="h-5 w-5 text-primary" />
-              <div>
-                <span className="font-medium text-foreground">PIX</span>
-                <p className="text-xs">Confirmação instantânea</p>
-              </div>
-            </span>
-            <span className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
-              <CreditCard className="h-5 w-5 text-primary" />
-              <div>
-                <span className="font-medium text-foreground">Cartão</span>
-                <p className="text-xs">Recorrência automática</p>
-              </div>
-            </span>
-            <span className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 border">
-              <Receipt className="h-5 w-5 text-primary" />
-              <div>
-                <span className="font-medium text-foreground">Boleto</span>
-                <p className="text-xs">Até 3 dias úteis</p>
-              </div>
-            </span>
-          </div>
-        </div>
+          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
 
         <p className="text-sm text-center text-muted-foreground">
           Precisa de um plano personalizado?{' '}
