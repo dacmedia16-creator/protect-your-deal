@@ -147,7 +147,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
             {assinatura && (
               <Badge className={cn("text-xs", getStatusColor(subscriptionStatusColors, assinatura.status))}>
                 {assinatura.status === 'ativa' && 'Ativa'}
-                {assinatura.status === 'trial' && 'Período de Teste'}
+                {assinatura.status === 'trial' && `Teste (${trialDaysLeft ?? '?'}d)`}
                 {assinatura.status === 'pendente' && 'Pendente'}
                 {assinatura.status === 'suspensa' && 'Suspensa'}
                 {assinatura.status === 'cancelada' && 'Cancelada'}
