@@ -289,8 +289,7 @@ export default function CorretorAssinatura() {
               </div>
             )}
           </div>
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos
               .filter(plano => plano.max_corretores === 1) // Mostrar apenas planos individuais
               .map((plano) => {
