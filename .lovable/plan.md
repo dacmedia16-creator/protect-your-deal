@@ -1,56 +1,41 @@
 
 
-## Plano: Limite de 7 dias no período de teste
+## Diagnóstico: Botões de pagamento não clicáveis
 
-### Contexto
-Hoje, assinaturas com status `trial` são criadas sem `data_fim` e nunca expiram automaticamente. O sistema trata `trial` igual a `ativa`, dando acesso ilimitado.
+### Causa provável
 
-### Alterações
+Existem duas possibilidades principais:
 
-#### 1. Definir `data_fim` ao criar trial (Edge Functions)
+1. **Conta desativada (`ativo = false`)**: No `ProtectedRoute.tsx` (linha 77-85), quando `ativo === false`, toda a página é renderizada com `pointer-events-none`, `opacity-50` e `blur`, bloqueando todos os cliques. Se o perfil do usuário tem `ativo = false`, nenhum botão da página funciona.
 
-**`supabase/functions/registro-imobiliaria/index.ts`** e **`supabase/functions/registro-construtora/index.ts`**:
-- Adicionar `data_fim` = data atual + 7 dias ao criar assinatura trial
+2. **`imobiliariaId` é `null`**: Na função `handleSubscribe` (linha 102-103), se `imobiliariaId` não existir, a função retorna silenciosamente sem fazer nada — o botão "clica" mas nada acontece.
+
+Os logs da edge function `asaas-payment-link` estão completamente vazios, o que confirma que a função nunca está sendo chamada.
+
+### Verificação necessária
+
+Preciso verificar no banco de dados:
+- Se o perfil do usuário tem `ativo = true`
+- Se o `user_roles` tem `imobiliaria_id` preenchido
+
+### Correções
+
+**`src/pages/empresa/EmpresaAssinatura.tsx`**:
+- Adicionar feedback visual quando `imobiliariaId` estiver ausente (toast de erro ao invés de retorno silencioso)
+- Adicionar log de debug para identificar o problema
 
 ```typescript
-data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+async function handleSubscribe(planoId: string) {
+    if (!imobiliariaId) {
+      toast.error('Erro: dados da empresa não carregados. Tente recarregar a página.');
+      return;
+    }
+    // ... resto
+}
 ```
 
-#### 2. Verificar expiração do trial no frontend
+**`src/pages/construtora/ConstutoraAssinatura.tsx`** (mesma correção):
+- Adicionar toast de erro quando `construtoraId` estiver ausente
 
-**`src/hooks/useUserRole.tsx`**:
-- Após carregar a assinatura, verificar se é `trial` com `data_fim` passada
-- Se expirado, mudar o status local para `suspensa` (sem alterar o banco — isso será feito pelo cron)
-- Expor novo campo `trialDaysLeft: number | null` no contexto
-
-#### 3. Bloquear acesso quando trial expirar
-
-**`src/components/ProtectedRoute.tsx`**:
-- Na verificação de `requireSubscription`, tratar trial expirado como `suspensa`
-- Redirecionar para `/assinatura-suspensa`
-
-#### 4. Mostrar dias restantes nos dashboards/sidebars
-
-**`src/pages/empresa/EmpresaDashboard.tsx`**, **`src/pages/construtora/ConstrutoraDashboard.tsx`**, **`src/components/layouts/ImobiliariaLayout.tsx`**, **`src/components/layouts/ConstutoraLayout.tsx`**:
-- Onde exibe "Período de Teste", mostrar "Período de Teste (X dias restantes)"
-
-#### 5. Atualizar página de assinatura suspensa
-
-**`src/pages/AssinaturaSuspensa.tsx`**:
-- Detectar se era trial expirado e mostrar mensagem específica: "Seu período de teste de 7 dias expirou"
-
-#### 6. Migração: definir `data_fim` para trials existentes
-
-Migração SQL para preencher `data_fim` em assinaturas trial existentes que não têm `data_fim`:
-```sql
-UPDATE assinaturas 
-SET data_fim = (data_inicio + INTERVAL '7 days')::date
-WHERE status = 'trial' AND data_fim IS NULL;
-```
-
-### Resultado
-- Novos trials terão 7 dias de acesso
-- Trials existentes receberão `data_fim` retroativa
-- Usuários verão quantos dias restam
-- Ao expirar, são redirecionados para a página de assinatura suspensa com CTA para contratar um plano
+Isso vai pelo menos dar feedback ao usuário sobre o que está acontecendo, em vez de falhar silenciosamente.
 
