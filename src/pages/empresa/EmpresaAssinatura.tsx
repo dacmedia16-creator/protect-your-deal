@@ -141,7 +141,7 @@ export default function EmpresaAssinatura() {
         duration: 10000,
         action: {
           label: 'Tentar novamente',
-          onClick: () => handleSubscribe(planoId),
+          onClick: () => handleSubscribe(planoId, billingType),
         },
       });
     } finally {
