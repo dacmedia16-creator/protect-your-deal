@@ -35,7 +35,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
+  const { imobiliaria, assinatura, imobiliariaId, trialDaysLeft } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
@@ -147,7 +147,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
             {assinatura && (
               <Badge className={cn("text-xs", getStatusColor(subscriptionStatusColors, assinatura.status))}>
                 {assinatura.status === 'ativa' && 'Ativa'}
-                {assinatura.status === 'trial' && 'Período de Teste'}
+                {assinatura.status === 'trial' && `Teste (${trialDaysLeft ?? '?'}d)`}
                 {assinatura.status === 'pendente' && 'Pendente'}
                 {assinatura.status === 'suspensa' && 'Suspensa'}
                 {assinatura.status === 'cancelada' && 'Cancelada'}

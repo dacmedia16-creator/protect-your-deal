@@ -1,0 +1,1 @@
+UPDATE assinaturas SET data_fim = (data_inicio + INTERVAL '7 days')::date WHERE status = 'trial' AND data_fim IS NULL;

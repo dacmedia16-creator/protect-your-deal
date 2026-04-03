@@ -9,8 +9,11 @@ import { useUserRole } from '@/hooks/useUserRole';
 export default function AssinaturaSuspensa() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const { role, imobiliaria } = useUserRole();
+  const { role, imobiliaria, assinatura, construtora } = useUserRole();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Detect if this is an expired trial
+  const isExpiredTrial = assinatura?.data_fim && new Date(assinatura.data_fim + 'T23:59:59') < new Date();
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -30,10 +33,16 @@ export default function AssinaturaSuspensa() {
           <div className="mx-auto h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <CardTitle className="text-2xl font-heading">Assinatura Suspensa</CardTitle>
+          <CardTitle className="text-2xl font-heading">
+            {isExpiredTrial ? 'Período de Teste Expirado' : 'Assinatura Suspensa'}
+          </CardTitle>
           <CardDescription className="text-base">
-            {imobiliaria ? (
+            {isExpiredTrial ? (
+              'Seu período de teste de 7 dias expirou. Assine um plano para continuar usando o sistema.'
+            ) : imobiliaria ? (
               <>A assinatura da imobiliária <strong>{imobiliaria.nome}</strong> está inativa.</>
+            ) : construtora ? (
+              <>A assinatura da construtora <strong>{construtora.nome}</strong> está inativa.</>
             ) : (
               'Sua assinatura está inativa ou foi cancelada.'
             )}
@@ -49,6 +58,14 @@ export default function AssinaturaSuspensa() {
             {role === 'imobiliaria_admin' && (
               <Button asChild className="w-full">
                 <Link to="/empresa/assinatura">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Gerenciar Assinatura
+                </Link>
+              </Button>
+            )}
+            {role === 'construtora_admin' && (
+              <Button asChild className="w-full">
+                <Link to="/construtora/assinatura">
                   <CreditCard className="h-4 w-4 mr-2" />
                   Gerenciar Assinatura
                 </Link>
