@@ -1,49 +1,39 @@
 
 
-## Plano: Alinhar badge de pendentes com lógica da página
+## Plano: Ocultar overlay de atualização para visitantes não-logados
 
 ### Problema
-O badge no sidebar conta todos os `user_roles` sem organização, incluindo corretores autônomos que possuem assinatura individual. A página `AdminUsuariosPendentes` exclui esses autônomos, causando divergência (badge mostra 6, página mostra 0).
+O overlay de "Nova versão disponível" aparece para todos os visitantes, incluindo quem não está logado na landing page pública. O countdown chega a valores negativos (-78) porque continua decrementando sem parar. Visitantes não-logados não precisam ver esse aviso.
 
-### Alteração
+### Alterações
 
-**`src/components/layouts/SuperAdminLayout.tsx`** — linhas 167-180
+**`src/components/VersionCheckWithOverlay.tsx`**
 
-Atualizar a query para excluir usuários que possuem assinatura individual (mesma lógica da página):
+1. Importar `useAuth` e verificar sessão antes de iniciar qualquer check de versão
+2. Se não há usuário logado, retornar `null` sem executar nenhuma lógica
+3. Corrigir o countdown para parar em 0 (prevenir valores negativos)
 
 ```typescript
-// Buscar contagem de usuários pendentes (sem imobiliária e sem assinatura autônoma)
-const { data: usuariosPendentesCount } = useQuery({
-  queryKey: ['sidebar-usuarios-pendentes'],
-  queryFn: async () => {
-    // 1. Buscar roles sem organização
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .is('imobiliaria_id', null)
-      .is('construtora_id', null)
-      .neq('role', 'super_admin');
+// Adicionar import
+import { useAuth } from '@/hooks/useAuth';
 
-    if (!roles || roles.length === 0) return 0;
+// Dentro do componente, após o check de dev environment:
+const { user } = useAuth();
 
-    const userIds = roles.map(r => r.user_id);
+// Se não está logado, não verificar versão
+if (!user) return null;
+```
 
-    // 2. Buscar quais desses têm assinatura individual (autônomos)
-    const { data: assinaturas } = await supabase
-      .from('assinaturas')
-      .select('user_id')
-      .in('user_id', userIds)
-      .is('imobiliaria_id', null)
-      .is('construtora_id', null);
-
-    const autonomos = new Set(assinaturas?.map(a => a.user_id) || []);
-
-    // 3. Retornar apenas os que NÃO são autônomos com assinatura
-    return userIds.filter(id => !autonomos.has(id)).length;
-  },
-  refetchInterval: 60000,
+4. No intervalo de countdown, impedir que vá abaixo de 0:
+```typescript
+setCountdown(prev => {
+  if (prev <= 0) return 0;
+  return prev - 1;
 });
 ```
 
-Isso replica exatamente a lógica de filtragem da página `AdminUsuariosPendentes`, garantindo que o badge mostre o mesmo número que a lista real.
+### Resultado
+- Visitantes na landing page não verão o overlay de atualização
+- Apenas usuários logados receberão notificação de nova versão
+- Countdown não vai mais para valores negativos
 
