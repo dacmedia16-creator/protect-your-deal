@@ -588,7 +588,7 @@ serve(async (req) => {
                   status: event === 'PAYMENT_RECEIVED' ? 'ativa' : 'pendente',
                   data_inicio: new Date().toISOString().split('T')[0],
                 })
-                .select('*, planos(nome)')
+                .select('*, plano:planos!assinaturas_plano_id_fkey(nome)')
                 .single();
 
               if (insertError) {
