@@ -419,7 +419,7 @@ export default function EmpresaAssinatura() {
           </div>
         </div>
 
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
+          
 
         <p className="text-sm text-center text-muted-foreground">
           Precisa de um plano personalizado?{' '}
