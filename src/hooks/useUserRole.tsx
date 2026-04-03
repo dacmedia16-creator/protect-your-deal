@@ -207,10 +207,18 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
         }
 
         if (assResult.data) {
-          setAssinatura({
+          const assinData = {
             ...assResult.data,
             plano: Array.isArray(assResult.data.plano) ? assResult.data.plano[0] : assResult.data.plano
-          });
+          };
+          // Check if trial has expired based on data_fim
+          if (assinData.status === 'trial' && assinData.data_fim) {
+            const endDate = new Date(assinData.data_fim + 'T23:59:59');
+            if (endDate < new Date()) {
+              assinData.status = 'suspensa';
+            }
+          }
+          setAssinatura(assinData);
         } else {
           setAssinatura(null);
         }

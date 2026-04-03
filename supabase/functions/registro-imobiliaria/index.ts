@@ -214,6 +214,7 @@ Deno.serve(async (req) => {
           plano_id: plano_id,
           status: "trial",
           data_inicio: new Date().toISOString().split("T")[0],
+          data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
           // Novos campos para comissões recorrentes
           afiliado_id: afiliadoId,
           cupom_id: cupomData?.cupom_id || null,
