@@ -122,7 +122,7 @@ export default function CorretorAssinatura() {
           duration: 3000,
         });
         // Usar location.href ao invés de window.open para funcionar em mobile
-        window.location.href = data.paymentLinkUrl;
+        window.open(data.paymentLinkUrl, '_blank');
       } else if (data?.error) {
         throw new Error(data.error);
       } else {

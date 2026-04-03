@@ -91,7 +91,7 @@ export default function ConstutoraAssinatura() {
       if (error) throw error;
       if (data?.paymentLinkUrl) {
         toast.success('Redirecionando para pagamento...');
-        window.location.href = data.paymentLinkUrl;
+        window.open(data.paymentLinkUrl, '_blank');
       } else {
         throw new Error(data?.error || 'Link não gerado');
       }
