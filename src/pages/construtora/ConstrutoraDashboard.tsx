@@ -30,7 +30,7 @@ interface MonthlyData { month: string; fichas: number; }
 
 export default function ConstrutoraDashboard() {
   useDocumentTitle('Dashboard | Construtora');
-  const { construtora, assinatura, construtoraId } = useUserRole();
+  const { construtora, assinatura, construtoraId, trialDaysLeft } = useUserRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
