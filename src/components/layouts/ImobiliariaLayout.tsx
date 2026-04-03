@@ -35,7 +35,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
+  const { imobiliaria, assinatura, imobiliariaId, trialDaysLeft } = useUserRole();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');

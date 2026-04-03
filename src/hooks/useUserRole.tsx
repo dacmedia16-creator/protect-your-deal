@@ -265,13 +265,20 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
   // 3. We're actively fetching
   const isLoading = authLoading || (user && fetchedForUserId !== user.id) || internalLoading;
 
+  // Calculate trial days left
+  const trialDaysLeft = (() => {
+    if (!assinatura || assinatura.status !== 'trial' || !assinatura.data_fim) return null;
+    const endDate = new Date(assinatura.data_fim + 'T23:59:59');
+    const now = new Date();
+    const diffMs = endDate.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  })();
+
   useEffect(() => {
     if (!authLoading) {
-      // Only fetch if we haven't fetched for this user yet
       if (user && fetchedForUserId !== user.id) {
         fetchUserRole();
       } else if (!user && fetchedForUserId !== null) {
-        // User logged out, reset state
         fetchUserRole();
       }
     }
@@ -286,6 +293,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
       construtora,
       assinatura, 
       ativo,
+      trialDaysLeft,
       loading: isLoading,
       error: fetchError,
       refetch: () => fetchUserRole(false),
