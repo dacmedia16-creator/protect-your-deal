@@ -165,7 +165,7 @@ serve(async (req) => {
         console.log('Subscription not found by asaas_subscription_id, trying externalReference as UUID:', externalReference);
         const { data: fallbackAssinatura, error: fallbackError } = await supabase
           .from('assinaturas')
-          .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
+          .select('*, plano:planos!assinaturas_plano_id_fkey(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
           .eq('id', externalReference)
           .maybeSingle();
 
