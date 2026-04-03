@@ -653,7 +653,7 @@ serve(async (req) => {
 
       const { data: assinatura } = await supabase
         .from('assinaturas')
-        .select('*, planos(nome)')
+        .select('*, plano:planos!assinaturas_plano_id_fkey(nome)')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
