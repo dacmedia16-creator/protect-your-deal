@@ -274,6 +274,8 @@ export function VersionCheckWithOverlay() {
     };
   }, [checkAndUpdate]);
 
+  if (isInactive) return null;
+
   return (
     <UpdateCountdownOverlay
       isOpen={showOverlay}
