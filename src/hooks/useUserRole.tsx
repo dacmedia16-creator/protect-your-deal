@@ -52,6 +52,7 @@ interface Assinatura {
   data_inicio: string;
   data_fim: string | null;
   proxima_cobranca: string | null;
+  asaas_subscription_id: string | null;
   plano: {
     id: string;
     nome: string;
@@ -132,6 +133,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
           data_inicio,
           data_fim,
           proxima_cobranca,
+          asaas_subscription_id,
           plano:planos!assinaturas_plano_id_fkey (
             id,
             nome,

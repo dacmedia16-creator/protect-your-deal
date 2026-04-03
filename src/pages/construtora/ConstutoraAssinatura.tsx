@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PaymentButtons } from '@/components/PaymentButtons';
 import type { BillingType } from '@/components/PaymentButtons';
+import { CancelarAssinaturaDialog } from '@/components/CancelarAssinaturaDialog';
 
 interface Plano {
   id: string;
@@ -178,6 +179,15 @@ export default function ConstutoraAssinatura() {
                       <Progress value={(usage.fichasMes / currentPlano.max_fichas_mes) * 100} className="h-2" />
                     </div>
                   </div>
+                </div>
+              )}
+
+              {assinatura.status === 'ativa' && assinatura.asaas_subscription_id && (
+                <div className="pt-4 border-t border-border">
+                  <CancelarAssinaturaDialog
+                    assinaturaId={assinatura.id}
+                    onCancelled={() => window.location.reload()}
+                  />
                 </div>
               )}
             </CardContent>

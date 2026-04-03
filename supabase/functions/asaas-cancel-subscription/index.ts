@@ -71,6 +71,18 @@ serve(async (req) => {
       isAdmin = !!roleData;
     }
 
+    if (assinatura.construtora_id) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('construtora_id', assinatura.construtora_id)
+        .eq('role', 'construtora_admin')
+        .maybeSingle();
+      
+      if (roleData) isAdmin = true;
+    }
+
     if (!isOwner && !isAdmin) {
       throw new Error('Sem permissão para cancelar esta assinatura');
     }

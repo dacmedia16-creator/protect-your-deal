@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobileNav } from '@/components/MobileNav';
+import { CancelarAssinaturaDialog } from '@/components/CancelarAssinaturaDialog';
 import { PaymentButtons } from '@/components/PaymentButtons';
 import type { BillingType } from '@/components/PaymentButtons';
 import { DesktopNav } from '@/components/DesktopNav';
@@ -260,6 +261,15 @@ export default function CorretorAssinatura() {
                   <p className="text-sm text-muted-foreground">
                     Próxima cobrança: {new Date(assinatura.proxima_cobranca).toLocaleDateString('pt-BR')}
                   </p>
+                )}
+
+                {assinatura.status === 'ativa' && assinatura.asaas_subscription_id && (
+                  <div className="pt-4 border-t border-border">
+                    <CancelarAssinaturaDialog
+                      assinaturaId={assinatura.id}
+                      onCancelled={() => refetch()}
+                    />
+                  </div>
                 )}
               </CardContent>
             )}
