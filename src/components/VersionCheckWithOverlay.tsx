@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { UpdateCountdownOverlay } from './UpdateCountdownOverlay';
 
 const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
@@ -18,15 +19,11 @@ interface VersionCheckResult {
  */
 function isServerVersionNewer(serverVersion: string, localVersion: string): boolean {
   try {
-    // Formato: "2026-01-23 17:58"
     const serverDate = new Date(serverVersion.replace(' ', 'T'));
     const localDate = new Date(localVersion.replace(' ', 'T'));
-    
-    // Só precisa atualizar se a versão do servidor for MAIS NOVA
     return serverDate.getTime() > localDate.getTime();
   } catch (err) {
     console.warn('Erro ao comparar versões:', err);
-    // Em caso de erro, assume que não precisa atualizar
     return false;
   }
 }
@@ -35,16 +32,16 @@ function isServerVersionNewer(serverVersion: string, localVersion: string): bool
  * Componente que verifica atualizações e exibe overlay com countdown.
  */
 export function VersionCheckWithOverlay() {
+  const { user } = useAuth();
+
   // Não verificar versão em ambiente de desenvolvimento/preview
   const isDevEnvironment = import.meta.env.DEV || 
     window.location.hostname.includes('lovableproject.com') ||
     window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview') ||
     window.location.hostname.includes('localhost');
 
-  // Retornar null imediatamente em ambiente de desenvolvimento
-  if (isDevEnvironment) {
-    return null;
-  }
+  // Deve estar inativo se em dev ou não logado
+  const isInactive = isDevEnvironment || !user;
 
   const [showOverlay, setShowOverlay] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
@@ -205,6 +202,7 @@ export function VersionCheckWithOverlay() {
     
     const intervalId = setInterval(() => {
       setCountdown(prev => {
+        if (prev <= 0) return 0;
         const next = prev - 1;
         console.log(`⏱️ Countdown: ${next}`);
         return next;
@@ -275,6 +273,8 @@ export function VersionCheckWithOverlay() {
       window.removeEventListener('focus', handleFocus);
     };
   }, [checkAndUpdate]);
+
+  if (isInactive) return null;
 
   return (
     <UpdateCountdownOverlay
