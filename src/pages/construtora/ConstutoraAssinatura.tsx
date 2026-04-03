@@ -84,7 +84,7 @@ export default function ConstutoraAssinatura() {
     setSubscribing(planoId);
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
-        body: { planoId, construtoraId, ciclo },
+        body: { planoId, construtoraId, ciclo, billingType },
       });
       if (error) throw error;
       if (data?.paymentLinkUrl) {
