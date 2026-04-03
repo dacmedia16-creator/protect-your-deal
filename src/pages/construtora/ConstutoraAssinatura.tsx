@@ -75,7 +75,7 @@ export default function ConstutoraAssinatura() {
     fetchData();
   }, [construtoraId]);
 
-  async function handleSubscribe(planoId: string) {
+  async function handleSubscribe(planoId: string, billingType: BillingType = 'PIX') {
     if (!construtoraId) {
       toast.error('Erro: dados da construtora não carregados. Tente recarregar a página.');
       console.error('[ConstutoraAssinatura] construtoraId is null');
