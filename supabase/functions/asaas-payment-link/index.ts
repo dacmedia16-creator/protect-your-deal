@@ -58,7 +58,9 @@ serve(async (req) => {
     // Criar ou atualizar registro de assinatura pendente
     const assinaturaQuery = imobiliariaId 
       ? { imobiliaria_id: imobiliariaId }
-      : { user_id: user.id };
+      : construtoraId
+        ? { construtora_id: construtoraId }
+        : { user_id: user.id };
 
     let assinaturaId: string;
 
