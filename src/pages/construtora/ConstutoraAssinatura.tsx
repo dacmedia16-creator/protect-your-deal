@@ -198,7 +198,8 @@ export default function ConstutoraAssinatura() {
               </div>
             )}
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
             {planos.map((plano) => {
               const isCurrentPlan = currentPlano?.id === plano.id;
               const isSubscribing = subscribing === plano.id;
@@ -252,7 +253,6 @@ export default function ConstutoraAssinatura() {
           </div>
         </div>
 
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
       </div>
     </ConstutoraLayout>
   );
