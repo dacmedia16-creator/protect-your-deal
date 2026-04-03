@@ -137,12 +137,12 @@ serve(async (req) => {
         description: `Plano ${plano.nome} - VisitaProva. Assinatura ${cicloLabel} com renovação automática.`,
         endDate: expirationDate.toISOString().split('T')[0],
         value: valor,
-        billingType: 'UNDEFINED',
+        billingType: ['PIX', 'BOLETO', 'CREDIT_CARD'].includes(billingType) ? billingType : 'UNDEFINED',
         chargeType: 'RECURRENT',
         subscriptionCycle,
         dueDateLimitDays: 3,
         notificationEnabled: true,
-        externalReference: assinaturaId, // UUID de 36 caracteres
+        externalReference: assinaturaId,
       }),
     });
 
