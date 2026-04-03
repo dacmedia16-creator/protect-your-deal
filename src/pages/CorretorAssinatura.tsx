@@ -142,6 +142,7 @@ export default function CorretorAssinatura() {
       });
     } finally {
       setSubscribing(null);
+      setSubscribingType(null);
     }
   };
 
