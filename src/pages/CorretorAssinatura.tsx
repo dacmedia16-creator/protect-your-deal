@@ -366,7 +366,6 @@ export default function CorretorAssinatura() {
             </Card>
           )}
 
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
         </div>
       </main>
 
