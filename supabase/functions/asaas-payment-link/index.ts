@@ -38,7 +38,7 @@ serve(async (req) => {
       throw new Error('Usuário não autenticado');
     }
 
-    const { planoId, imobiliariaId, ciclo = 'mensal' } = await req.json();
+    const { planoId, imobiliariaId, construtoraId, ciclo = 'mensal', billingType = 'UNDEFINED' } = await req.json();
 
     if (!planoId) {
       throw new Error('planoId é obrigatório');
