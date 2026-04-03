@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import AnimatedSection from '@/components/AnimatedSection';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import videoThumbnail from '@/assets/video-thumbnail.jpg';
 import { LogoIcon } from '@/components/LogoIcon';
 import { 
   ArrowLeft, 
@@ -12,8 +9,7 @@ import {
   Send, 
   CheckCircle2, 
   Download,
-  Scale,
-  PlayCircle
+  Scale
 } from 'lucide-react';
 
 const LazyVideo = ({ src, poster, muted }: { src: string; poster?: string; muted?: boolean }) => {
