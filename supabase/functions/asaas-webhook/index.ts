@@ -681,7 +681,7 @@ serve(async (req) => {
               userName = profile?.nome?.split(' ')[0] || '';
             }
 
-            const planoNome = (assinatura as any).planos?.nome || 'Plano';
+            const planoNome = (assinatura as any).plano?.nome || 'Plano';
             notificationMessage = `📋 *Assinatura Encerrada*\n\n` +
               `Olá${userName ? `, ${userName}` : ''}!\n\n` +
               `Sua assinatura do plano *${planoNome}* foi encerrada.\n\n` +
