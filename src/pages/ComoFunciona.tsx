@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom';
 import { SEOHead } from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import AnimatedSection from '@/components/AnimatedSection';
-import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import videoThumbnail from '@/assets/video-thumbnail.jpg';
 import { LogoIcon } from '@/components/LogoIcon';
 import { 
   ArrowLeft, 
@@ -12,24 +9,8 @@ import {
   Send, 
   CheckCircle2, 
   Download,
-  Scale,
-  PlayCircle
+  Scale
 } from 'lucide-react';
-
-const LazyVideo = ({ src, poster, muted }: { src: string; poster?: string; muted?: boolean }) => {
-  const { ref, isVisible } = useScrollAnimation({ rootMargin: '200px', triggerOnce: true });
-  return (
-    <div ref={ref} className="aspect-video w-full">
-      {isVisible ? (
-        <video src={src} poster={poster} controls playsInline muted={muted} preload="metadata" className="w-full h-full rounded-xl shadow-lg border border-border" />
-      ) : (
-        <Skeleton className="w-full h-full rounded-xl flex items-center justify-center">
-          <PlayCircle className="h-12 w-12 text-muted-foreground/40" />
-        </Skeleton>
-      )}
-    </div>
-  );
-};
 
 const ComoFunciona = () => {
   const steps = [
@@ -95,9 +76,6 @@ const ComoFunciona = () => {
         </AnimatedSection>
 
         {/* Video Demo */}
-        <AnimatedSection delay={150} className="max-w-xl mx-auto mb-16">
-          <LazyVideo src="/videos/demo.mp4" poster={videoThumbnail} muted />
-        </AnimatedSection>
 
         {/* Steps */}
         <div className="max-w-5xl mx-auto mb-16">
