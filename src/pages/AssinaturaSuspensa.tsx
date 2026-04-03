@@ -63,6 +63,14 @@ export default function AssinaturaSuspensa() {
                 </Link>
               </Button>
             )}
+            {role === 'construtora_admin' && (
+              <Button asChild className="w-full">
+                <Link to="/construtora/assinatura">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Gerenciar Assinatura
+                </Link>
+              </Button>
+            )}
             
             <Button variant="outline" className="w-full" asChild>
               <a href="mailto:suporte@visitaprova.com.br">
