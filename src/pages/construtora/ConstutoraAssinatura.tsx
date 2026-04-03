@@ -73,7 +73,11 @@ export default function ConstutoraAssinatura() {
   }, [construtoraId]);
 
   async function handleSubscribe(planoId: string) {
-    if (!construtoraId) return;
+    if (!construtoraId) {
+      toast.error('Erro: dados da construtora não carregados. Tente recarregar a página.');
+      console.error('[ConstutoraAssinatura] construtoraId is null');
+      return;
+    }
     setSubscribing(planoId);
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
