@@ -269,6 +269,15 @@ export default function EmpresaAssinatura() {
                   </div>
                 </div>
               )}
+
+              {assinatura.status === 'ativa' && assinatura.asaas_subscription_id && (
+                <div className="pt-4 border-t border-border">
+                  <CancelarAssinaturaDialog
+                    assinaturaId={assinatura.id}
+                    onCancelled={() => refetch()}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
