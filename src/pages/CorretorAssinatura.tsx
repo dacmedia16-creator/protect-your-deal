@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobileNav } from '@/components/MobileNav';
-import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
+import { PaymentButtons } from '@/components/PaymentButtons';
+import type { BillingType } from '@/components/PaymentButtons';
 import { DesktopNav } from '@/components/DesktopNav';
 import { 
   CreditCard, 
