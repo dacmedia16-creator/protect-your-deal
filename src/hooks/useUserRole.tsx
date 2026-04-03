@@ -52,6 +52,7 @@ interface Assinatura {
   data_inicio: string;
   data_fim: string | null;
   proxima_cobranca: string | null;
+  asaas_subscription_id: string | null;
   plano: {
     id: string;
     nome: string;
