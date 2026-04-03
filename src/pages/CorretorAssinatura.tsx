@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobileNav } from '@/components/MobileNav';
-import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
+import { PaymentButtons } from '@/components/PaymentButtons';
+import type { BillingType } from '@/components/PaymentButtons';
 import { DesktopNav } from '@/components/DesktopNav';
 import { 
   CreditCard, 
@@ -53,8 +54,8 @@ export default function CorretorAssinatura() {
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
+  const [subscribingType, setSubscribingType] = useState<BillingType | null>(null);
   const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
-  const [billingType, setBillingType] = useState<import('@/components/PaymentMethodSelector').BillingType>('UNDEFINED');
 
   // Redirecionar se não for corretor autônomo
   useEffect(() => {
@@ -102,9 +103,10 @@ export default function CorretorAssinatura() {
     fetchData();
   }, [user]);
 
-  const handleSubscribe = async (planoId: string) => {
+  const handleSubscribe = async (planoId: string, billingType: BillingType) => {
     if (!user) return;
     setSubscribing(planoId);
+    setSubscribingType(billingType);
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
@@ -135,11 +137,12 @@ export default function CorretorAssinatura() {
         duration: 10000,
         action: {
           label: 'Tentar novamente',
-          onClick: () => handleSubscribe(planoId),
+          onClick: () => handleSubscribe(planoId, billingType),
         },
       });
     } finally {
       setSubscribing(null);
+      setSubscribingType(null);
     }
   };
 
@@ -286,8 +289,7 @@ export default function CorretorAssinatura() {
               </div>
             )}
           </div>
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos
               .filter(plano => plano.max_corretores === 1) // Mostrar apenas planos individuais
               .map((plano) => {
@@ -333,26 +335,16 @@ export default function CorretorAssinatura() {
                         </li>
                       </ul>
 
-                      <Button 
-                        className="w-full"
-                        variant={isCurrentPlan ? 'outline' : 'default'}
-                        disabled={isCurrentPlan || isSubscribing}
-                        onClick={() => handleSubscribe(plano.id)}
-                      >
-                        {isSubscribing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Gerando link...
-                          </>
-                        ) : isCurrentPlan ? (
-                          'Plano Atual'
-                        ) : (
-                          <>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Assinar Plano
-                          </>
-                        )}
-                      </Button>
+                      {isCurrentPlan ? (
+                        <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                      ) : (
+                        <PaymentButtons
+                          onSelect={(bt) => handleSubscribe(plano.id, bt)}
+                          disabled={isCurrentPlan}
+                          loading={isSubscribing}
+                          loadingType={subscribingType}
+                        />
+                      )}
                     </CardContent>
                   </Card>
                 );

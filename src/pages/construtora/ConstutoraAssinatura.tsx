@@ -16,8 +16,8 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
-import type { BillingType } from '@/components/PaymentMethodSelector';
+import { PaymentButtons } from '@/components/PaymentButtons';
+import type { BillingType } from '@/components/PaymentButtons';
 
 interface Plano {
   id: string;
@@ -43,7 +43,7 @@ export default function ConstutoraAssinatura() {
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [ciclo, setCiclo] = useState<'mensal' | 'anual'>('mensal');
-  const [billingType, setBillingType] = useState<BillingType>('UNDEFINED');
+  const [subscribingType, setSubscribingType] = useState<BillingType | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -75,13 +75,14 @@ export default function ConstutoraAssinatura() {
     fetchData();
   }, [construtoraId]);
 
-  async function handleSubscribe(planoId: string) {
+  async function handleSubscribe(planoId: string, billingType: BillingType = 'PIX') {
     if (!construtoraId) {
       toast.error('Erro: dados da construtora não carregados. Tente recarregar a página.');
       console.error('[ConstutoraAssinatura] construtoraId is null');
       return;
     }
     setSubscribing(planoId);
+    setSubscribingType(billingType);
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
         body: { planoId, construtoraId, ciclo, billingType },
@@ -100,11 +101,12 @@ export default function ConstutoraAssinatura() {
         duration: 10000,
         action: {
           label: 'Tentar novamente',
-          onClick: () => handleSubscribe(planoId),
+          onClick: () => handleSubscribe(planoId, billingType),
         },
       });
     } finally {
       setSubscribing(null);
+      setSubscribingType(null);
     }
   }
 
@@ -198,8 +200,7 @@ export default function ConstutoraAssinatura() {
               </div>
             )}
           </div>
-          <PaymentMethodSelector value={billingType} onChange={setBillingType} />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {planos.map((plano) => {
               const isCurrentPlan = currentPlano?.id === plano.id;
               const isSubscribing = subscribing === plano.id;
@@ -235,16 +236,18 @@ export default function ConstutoraAssinatura() {
                       <li className="flex items-center gap-2"><Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />{plano.max_corretores === 999 ? 'Corretores ilimitados' : `Até ${plano.max_corretores} corretores`}</li>
                       <li className="flex items-center gap-2"><Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />{plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}</li>
                     </ul>
-                    {plano.valor_mensal > 0 ? (
-                      <Button className="w-full" variant={isCurrentPlan ? 'outline' : 'default'} disabled={isCurrentPlan || isSubscribing} onClick={() => handleSubscribe(plano.id)}>
-                        {isSubscribing ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Gerando link...</> : isCurrentPlan ? 'Plano Atual' : <><ExternalLink className="h-4 w-4 mr-2" />Assinar Plano</>}
-                      </Button>
-                    ) : isFreePlan ? (
-                      <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" disabled={isCurrentPlan} onClick={() => !isCurrentPlan && handleSubscribe(plano.id)}>
-                        {isCurrentPlan ? 'Plano Atual' : 'Começar Grátis'}
-                      </Button>
+                    {isCurrentPlan ? (
+                      <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                    ) : plano.valor_mensal > 0 || isFreePlan ? (
+                      <PaymentButtons
+                        onSelect={(bt) => handleSubscribe(plano.id, bt)}
+                        loading={isSubscribing}
+                        loadingType={subscribingType}
+                      />
                     ) : (
-                      <Button className="w-full" variant="outline" asChild><a href="mailto:contato@visitaprova.com.br">Entrar em Contato</a></Button>
+                      <Button className="w-full" variant="outline" asChild>
+                        <a href="mailto:contato@visitaprova.com.br">Entrar em Contato</a>
+                      </Button>
                     )}
                   </CardContent>
                 </Card>
