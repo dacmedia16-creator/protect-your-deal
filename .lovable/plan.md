@@ -1,23 +1,49 @@
 
 
-## Corrigir fluxo de pagamento: seletor acima dos planos
+## Pagamento direto ao clicar na forma de pagamento
 
 ### Problema
-O `PaymentMethodSelector` está renderizado **abaixo** dos cards de plano. O usuário seleciona PIX/Cartão/Boleto mas não percebe que precisa clicar "Assinar Plano" no card acima. A experiência fica confusa.
+Atualmente, clicar em "Cartão", "PIX" ou "Boleto" apenas seleciona o método (muda o state). O usuário espera que ao clicar, já abra o checkout do Asaas diretamente.
 
 ### Solução
-Mover o `PaymentMethodSelector` para **acima** dos cards de plano nas 3 páginas de assinatura, para que o fluxo seja natural: primeiro escolhe o método, depois clica no plano.
+Mover os botões de forma de pagamento para **dentro de cada card de plano**, substituindo o botão "Assinar Plano". Cada plano terá 3 botões (PIX, Cartão, Boleto) que ao clicar chamam `handleSubscribe(planoId, billingType)` imediatamente, redirecionando para o Asaas.
 
 ### Alterações
 
-**3 arquivos**: `EmpresaAssinatura.tsx`, `ConstutoraAssinatura.tsx`, `CorretorAssinatura.tsx`
+#### 1. Remover o componente `PaymentMethodSelector` das 3 páginas
+Não será mais necessário o seletor separado no topo da página.
 
-- Mover o `<PaymentMethodSelector>` de depois dos cards para **antes** dos cards de plano (logo abaixo do toggle mensal/anual)
-- Isso garante que o usuário veja e selecione o método de pagamento primeiro, e depois clique "Assinar Plano" no card desejado
+#### 2. Substituir o botão "Assinar Plano" em cada card por 3 botões de pagamento
+Em `EmpresaAssinatura.tsx`, `ConstutoraAssinatura.tsx` e `CorretorAssinatura.tsx`:
 
-### Fluxo corrigido
-1. Usuário vê o seletor de forma de pagamento (PIX, Cartão, Boleto, Todas)
-2. Seleciona o método desejado
-3. Clica "Assinar Plano" no card do plano
-4. É redirecionado ao Asaas com o método pré-selecionado
+- Onde hoje existe um `<Button>Assinar Plano</Button>`, colocar 3 botões lado a lado:
+  - **PIX** (ícone QrCode) → chama `handleSubscribe(plano.id, 'PIX')`
+  - **Cartão** (ícone CreditCard) → chama `handleSubscribe(plano.id, 'CREDIT_CARD')`
+  - **Boleto** (ícone Receipt) → chama `handleSubscribe(plano.id, 'BOLETO')`
+- Atualizar `handleSubscribe` para receber `billingType` como parâmetro (remover o state `billingType`)
+- Remover o state e import do `PaymentMethodSelector`
+
+#### 3. Layout dos botões dentro do card
+
+```text
+┌─────────────────────────┐
+│  Plano Profissional     │
+│  R$ 79,90/mês           │
+│  20 registros/mês       │
+│                         │
+│  ┌─────┐ ┌─────┐ ┌────┐│
+│  │ PIX │ │Cart.│ │Bol.││
+│  └─────┘ └─────┘ └────┘│
+└─────────────────────────┘
+```
+
+Cada botão mostra o ícone + nome curto, e ao clicar já redireciona para o Asaas com o método pré-selecionado.
+
+#### 4. Edge Function
+Sem alterações — já aceita `billingType` corretamente.
+
+### Fluxo do usuário (após a mudança)
+1. Usuário vê os planos com 3 botões de pagamento em cada card
+2. Clica em "Cartão" no plano desejado
+3. É redirecionado imediatamente para o checkout do Asaas com cartão pré-selecionado
 
