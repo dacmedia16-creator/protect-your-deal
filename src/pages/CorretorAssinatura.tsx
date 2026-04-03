@@ -335,26 +335,16 @@ export default function CorretorAssinatura() {
                         </li>
                       </ul>
 
-                      <Button 
-                        className="w-full"
-                        variant={isCurrentPlan ? 'outline' : 'default'}
-                        disabled={isCurrentPlan || isSubscribing}
-                        onClick={() => handleSubscribe(plano.id)}
-                      >
-                        {isSubscribing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Gerando link...
-                          </>
-                        ) : isCurrentPlan ? (
-                          'Plano Atual'
-                        ) : (
-                          <>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Assinar Plano
-                          </>
-                        )}
-                      </Button>
+                      {isCurrentPlan ? (
+                        <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                      ) : (
+                        <PaymentButtons
+                          onSelect={(bt) => handleSubscribe(plano.id, bt)}
+                          disabled={isCurrentPlan}
+                          loading={isSubscribing}
+                          loadingType={subscribingType}
+                        />
+                      )}
                     </CardContent>
                   </Card>
                 );
