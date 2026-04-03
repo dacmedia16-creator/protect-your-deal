@@ -110,6 +110,7 @@ export default function EmpresaAssinatura() {
     }
     
     setSubscribing(planoId);
+    setSubscribingType(billingType);
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
