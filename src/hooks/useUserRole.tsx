@@ -220,6 +220,13 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
               assinData.status = 'suspensa';
             }
           }
+          // Cancelled subscription: allow access until data_fim, then block
+          if (assinData.status === 'cancelada' && assinData.data_fim) {
+            const endDate = new Date(assinData.data_fim + 'T23:59:59');
+            if (endDate < new Date()) {
+              assinData.status = 'suspensa';
+            }
+          }
           setAssinatura(assinData);
         } else {
           setAssinatura(null);
