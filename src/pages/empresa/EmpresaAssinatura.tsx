@@ -374,44 +374,23 @@ export default function EmpresaAssinatura() {
                       </li>
                     </ul>
 
-                    {isFreePlan ? (
-                      <Button 
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" 
-                        disabled={isCurrentPlan}
-                        onClick={() => !isCurrentPlan && handleSubscribe(plano.id)}
-                      >
-                        {isCurrentPlan ? 'Plano Atual' : 'Começar Grátis'}
-                      </Button>
+                    {isCurrentPlan ? (
+                      <Button className="w-full" variant="outline" disabled>Plano Atual</Button>
+                    ) : isFreePlan ? (
+                      <PaymentButtons
+                        onSelect={(bt) => handleSubscribe(plano.id, bt)}
+                        loading={isSubscribing}
+                        loadingType={subscribingType}
+                      />
                     ) : plano.valor_mensal > 0 ? (
-                      <Button 
-                        className="w-full" 
-                        variant={isCurrentPlan ? 'outline' : 'default'}
-                        disabled={isCurrentPlan || isSubscribing}
-                        onClick={() => handleSubscribe(plano.id)}
-                      >
-                        {isSubscribing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Gerando link...
-                          </>
-                        ) : isCurrentPlan ? (
-                          'Plano Atual'
-                        ) : (
-                          <>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Assinar Plano
-                          </>
-                        )}
-                      </Button>
+                      <PaymentButtons
+                        onSelect={(bt) => handleSubscribe(plano.id, bt)}
+                        loading={isSubscribing}
+                        loadingType={subscribingType}
+                      />
                     ) : (
-                      <Button 
-                        className="w-full" 
-                        variant="outline"
-                        asChild
-                      >
-                        <a href="mailto:contato@visitaprova.com.br">
-                          Entrar em Contato
-                        </a>
+                      <Button className="w-full" variant="outline" asChild>
+                        <a href="mailto:contato@visitaprova.com.br">Entrar em Contato</a>
                       </Button>
                     )}
                   </CardContent>
