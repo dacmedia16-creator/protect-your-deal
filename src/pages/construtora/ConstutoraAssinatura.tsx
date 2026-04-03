@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PaymentButtons } from '@/components/PaymentButtons';
 import type { BillingType } from '@/components/PaymentButtons';
+import { CancelarAssinaturaDialog } from '@/components/CancelarAssinaturaDialog';
 
 interface Plano {
   id: string;
