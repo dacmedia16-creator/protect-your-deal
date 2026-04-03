@@ -98,8 +98,9 @@ serve(async (req) => {
         .from('assinaturas')
         .insert({
           plano_id: planoId,
-          user_id: imobiliariaId ? null : user.id,
+          user_id: imobiliariaId || construtoraId ? null : user.id,
           imobiliaria_id: imobiliariaId || null,
+          construtora_id: construtoraId || null,
           status: 'pendente',
           ciclo: ciclo,
           data_inicio: new Date().toISOString().split('T')[0],
