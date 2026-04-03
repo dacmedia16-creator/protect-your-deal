@@ -100,7 +100,11 @@ export default function EmpresaAssinatura() {
   }, [imobiliariaId]);
 
   async function handleSubscribe(planoId: string) {
-    if (!imobiliariaId) return;
+    if (!imobiliariaId) {
+      toast.error('Erro: dados da empresa não carregados. Tente recarregar a página.');
+      console.error('[EmpresaAssinatura] imobiliariaId is null');
+      return;
+    }
     
     setSubscribing(planoId);
 
