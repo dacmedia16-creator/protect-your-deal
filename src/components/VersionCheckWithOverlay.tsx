@@ -202,6 +202,7 @@ export function VersionCheckWithOverlay() {
     
     const intervalId = setInterval(() => {
       setCountdown(prev => {
+        if (prev <= 0) return 0;
         const next = prev - 1;
         console.log(`⏱️ Countdown: ${next}`);
         return next;
