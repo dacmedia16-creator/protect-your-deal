@@ -58,7 +58,9 @@ serve(async (req) => {
     // Criar ou atualizar registro de assinatura pendente
     const assinaturaQuery = imobiliariaId 
       ? { imobiliaria_id: imobiliariaId }
-      : { user_id: user.id };
+      : construtoraId
+        ? { construtora_id: construtoraId }
+        : { user_id: user.id };
 
     let assinaturaId: string;
 
@@ -96,8 +98,9 @@ serve(async (req) => {
         .from('assinaturas')
         .insert({
           plano_id: planoId,
-          user_id: imobiliariaId ? null : user.id,
+          user_id: imobiliariaId || construtoraId ? null : user.id,
           imobiliaria_id: imobiliariaId || null,
+          construtora_id: construtoraId || null,
           status: 'pendente',
           ciclo: ciclo,
           data_inicio: new Date().toISOString().split('T')[0],

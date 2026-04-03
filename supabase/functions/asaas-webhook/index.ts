@@ -153,7 +153,7 @@ serve(async (req) => {
       if (subscriptionId) {
         const result = await supabase
           .from('assinaturas')
-          .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
+          .select('*, plano:planos!assinaturas_plano_id_fkey(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
           .eq('asaas_subscription_id', subscriptionId)
           .maybeSingle();
         assinatura = result.data;
@@ -165,7 +165,7 @@ serve(async (req) => {
         console.log('Subscription not found by asaas_subscription_id, trying externalReference as UUID:', externalReference);
         const { data: fallbackAssinatura, error: fallbackError } = await supabase
           .from('assinaturas')
-          .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
+          .select('*, plano:planos!assinaturas_plano_id_fkey(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
           .eq('id', externalReference)
           .maybeSingle();
 
@@ -526,7 +526,7 @@ serve(async (req) => {
           }
 
           if (userPhone) {
-            const planoNome = (assinatura as any).planos?.nome || 'Plano';
+            const planoNome = (assinatura as any).plano?.nome || 'Plano';
             const valorFormatado = formatCurrency(value || 0);
             let message = '';
 
@@ -588,7 +588,7 @@ serve(async (req) => {
                   status: event === 'PAYMENT_RECEIVED' ? 'ativa' : 'pendente',
                   data_inicio: new Date().toISOString().split('T')[0],
                 })
-                .select('*, planos(nome)')
+                .select('*, plano:planos!assinaturas_plano_id_fkey(nome)')
                 .single();
 
               if (insertError) {
@@ -624,7 +624,7 @@ serve(async (req) => {
                   }
 
                   if (userPhone) {
-                    const planoNome = (newAssinatura as any).planos?.nome || 'Plano';
+                    const planoNome = (newAssinatura as any).plano?.nome || 'Plano';
                     const valorFormatado = formatCurrency(value || 0);
 
                     const message = `🎉 *Bem-vindo ao VisitaProva!*\n\n` +
@@ -653,7 +653,7 @@ serve(async (req) => {
 
       const { data: assinatura } = await supabase
         .from('assinaturas')
-        .select('*, planos(nome)')
+        .select('*, plano:planos!assinaturas_plano_id_fkey(nome)')
         .eq('asaas_subscription_id', subscriptionId)
         .maybeSingle();
 
@@ -681,7 +681,7 @@ serve(async (req) => {
               userName = profile?.nome?.split(' ')[0] || '';
             }
 
-            const planoNome = (assinatura as any).planos?.nome || 'Plano';
+            const planoNome = (assinatura as any).plano?.nome || 'Plano';
             notificationMessage = `📋 *Assinatura Encerrada*\n\n` +
               `Olá${userName ? `, ${userName}` : ''}!\n\n` +
               `Sua assinatura do plano *${planoNome}* foi encerrada.\n\n` +
@@ -755,6 +755,31 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('Error in asaas-webhook:', error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    
+    // Log error to webhook_logs if we have a logId
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      // Try to find the most recent unprocessed log
+      const { data: recentLog } = await supabase
+        .from('webhook_logs')
+        .select('id')
+        .eq('processed', false)
+        .eq('source', 'asaas')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (recentLog) {
+        await supabase
+          .from('webhook_logs')
+          .update({ error_message: message, processed: false })
+          .eq('id', recentLog.id);
+      }
+    } catch (_) { /* ignore logging errors */ }
+    
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

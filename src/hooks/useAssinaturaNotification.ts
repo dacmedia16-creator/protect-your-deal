@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function useAssinaturaNotification() {
   const { user } = useAuth();
-  const { imobiliariaId, refetch } = useUserRole();
+  const { imobiliariaId, construtoraId, refetch } = useUserRole();
   const { playNotificationSound } = useNotificationSound();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -16,10 +16,12 @@ export function useAssinaturaNotification() {
   useEffect(() => {
     if (!user) return;
 
-    // Filtro dinâmico: corretor autônomo (user_id) ou imobiliária
+    // Filtro dinâmico: imobiliária, construtora ou corretor autônomo (user_id)
     const filter = imobiliariaId 
       ? `imobiliaria_id=eq.${imobiliariaId}` 
-      : `user_id=eq.${user.id}`;
+      : construtoraId
+        ? `construtora_id=eq.${construtoraId}`
+        : `user_id=eq.${user.id}`;
 
     const channel = supabase
       .channel('assinatura-status-changes')
@@ -65,5 +67,5 @@ export function useAssinaturaNotification() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, imobiliariaId, playNotificationSound, toast, refetch, queryClient]);
+  }, [user, imobiliariaId, construtoraId, playNotificationSound, toast, refetch, queryClient]);
 }
