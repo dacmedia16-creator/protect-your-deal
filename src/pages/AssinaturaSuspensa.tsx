@@ -9,8 +9,11 @@ import { useUserRole } from '@/hooks/useUserRole';
 export default function AssinaturaSuspensa() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const { role, imobiliaria } = useUserRole();
+  const { role, imobiliaria, assinatura, construtora } = useUserRole();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Detect if this is an expired trial
+  const isExpiredTrial = assinatura?.data_fim && new Date(assinatura.data_fim + 'T23:59:59') < new Date();
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
