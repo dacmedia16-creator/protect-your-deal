@@ -39,7 +39,7 @@ interface MonthlyData {
 }
 
 export default function EmpresaDashboard() {
-  const { imobiliaria, assinatura, imobiliariaId } = useUserRole();
+  const { imobiliaria, assinatura, imobiliariaId, trialDaysLeft } = useUserRole();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
