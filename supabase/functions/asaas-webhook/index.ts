@@ -755,6 +755,31 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('Error in asaas-webhook:', error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    
+    // Log error to webhook_logs if we have a logId
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      // Try to find the most recent unprocessed log
+      const { data: recentLog } = await supabase
+        .from('webhook_logs')
+        .select('id')
+        .eq('processed', false)
+        .eq('source', 'asaas')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (recentLog) {
+        await supabase
+          .from('webhook_logs')
+          .update({ error_message: message, processed: false })
+          .eq('id', recentLog.id);
+      }
+    } catch (_) { /* ignore logging errors */ }
+    
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
