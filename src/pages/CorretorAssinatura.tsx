@@ -102,9 +102,10 @@ export default function CorretorAssinatura() {
     fetchData();
   }, [user]);
 
-  const handleSubscribe = async (planoId: string) => {
+  const handleSubscribe = async (planoId: string, billingType: BillingType) => {
     if (!user) return;
     setSubscribing(planoId);
+    setSubscribingType(billingType);
 
     try {
       const { data, error } = await supabase.functions.invoke('asaas-payment-link', {
