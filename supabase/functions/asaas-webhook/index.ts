@@ -147,11 +147,49 @@ serve(async (req) => {
       const { subscription: subscriptionId, status, externalReference, value } = payment;
 
       // Buscar assinatura pelo asaas_subscription_id - incluindo campos de afiliado e plano pendente
-      const { data: assinatura, error: assinaturaError } = await supabase
-        .from('assinaturas')
-        .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
-        .eq('asaas_subscription_id', subscriptionId)
-        .maybeSingle();
+      let assinatura: any = null;
+      let assinaturaError: any = null;
+
+      if (subscriptionId) {
+        const result = await supabase
+          .from('assinaturas')
+          .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
+          .eq('asaas_subscription_id', subscriptionId)
+          .maybeSingle();
+        assinatura = result.data;
+        assinaturaError = result.error;
+      }
+
+      // Fallback: buscar pelo externalReference como UUID direto (Payment Link flow)
+      if (!assinatura && externalReference) {
+        console.log('Subscription not found by asaas_subscription_id, trying externalReference as UUID:', externalReference);
+        const { data: fallbackAssinatura, error: fallbackError } = await supabase
+          .from('assinaturas')
+          .select('*, planos(nome), afiliado_id, cupom_id, comissao_percentual, plano_pendente_id, ciclo')
+          .eq('id', externalReference)
+          .maybeSingle();
+
+        if (fallbackError) {
+          console.error('Error in fallback lookup by externalReference:', fallbackError);
+        } else if (fallbackAssinatura) {
+          assinatura = fallbackAssinatura;
+          console.log('Found subscription via externalReference fallback:', assinatura.id);
+
+          // Salvar o asaas_subscription_id para futuras cobranças recorrentes
+          if (subscriptionId) {
+            const { error: linkError } = await supabase
+              .from('assinaturas')
+              .update({ asaas_subscription_id: subscriptionId, updated_at: new Date().toISOString() })
+              .eq('id', assinatura.id);
+
+            if (linkError) {
+              console.error('Error linking asaas_subscription_id:', linkError);
+            } else {
+              console.log(`Linked asaas_subscription_id ${subscriptionId} to subscription ${assinatura.id}`);
+            }
+          }
+        }
+      }
 
       if (assinaturaError) {
         console.error('Error fetching assinatura:', assinaturaError);
