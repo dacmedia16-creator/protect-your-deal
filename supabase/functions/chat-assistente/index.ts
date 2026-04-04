@@ -766,7 +766,13 @@ serve(async (req) => {
       });
     }
 
-    console.log("Streaming response from AI gateway");
+    console.log("Streaming response from AI gateway", isAuthenticated ? "(authenticated)" : "(anonymous)");
+
+    // Track estimated token usage for anonymous users
+    if (!isAuthenticated) {
+      // Rough estimate: ~500 tokens per request (prompt + response)
+      trackTokens(clientIp, 500);
+    }
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
