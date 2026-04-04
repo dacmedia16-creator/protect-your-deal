@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { useNavigate } from "react-router-dom";
 import { Mail, Send, Loader2, CheckCircle, XCircle, RefreshCw, Eye, Edit, Save, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
