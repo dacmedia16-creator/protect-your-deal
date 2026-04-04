@@ -1,125 +1,124 @@
 
 
-# Plano de Validação Pós-Hardening — VisitaProva
+# Refinamento Operacional — Plano Pós-Release VisitaProva
 
 ---
 
-## Estado confirmado no código e banco
+## 1. Ordem final de execução
 
-| Item | Status |
-|---|---|
-| `trg_audit_fichas_visita` (UPDATE) | Ativo no banco |
-| `trg_audit_fichas_visita_delete` (DELETE) | Ativo no banco |
-| RLS policy "Authenticated users can log VIEW actions" | Ativa em `audit_logs` |
-| `master-login` com `logAudit` (IMPERSONATE/IMPERSONATE_FAILED) | Implementado |
-| `_shared/auth.ts` com `requireAuth`, `requireRole`, `requireServiceRole` | Criado |
-| Capacitor sem `server.url` | Confirmado — apenas `webDir: 'dist'` |
-| SW com guard de iframe/preview | Confirmado em `main.tsx` |
-| `.env` no `.gitignore` | **AINDA FALTANDO** — bloqueante |
+```text
+IMEDIATO (regra de processo, sem batch)
+  Gate: toda nova Edge Function usa _shared/auth.ts
+  Gate: toda nova tabela tem RLS + trigger de audit
 
----
+BATCH 1 — Validação estrutural
+  1.1  Script SQL de teste RLS multi-tenant
+  1.2  Migrar admin-list-users para _shared/auth.ts
 
-## 1. Checklist de validação manual — Fluxos críticos
+BATCH 2 — Rastreabilidade + padronização
+  2.1  Log persistente de envios WhatsApp em send-whatsapp
+  2.2  Migrar 3 funções admin para _shared/auth.ts
+       (admin-get-corretores-emails, admin-reset-password, admin-delete-user)
+  2.3  Query de monitoramento semanal documentada
 
-- [ ] **Criar ficha**: Logado como corretor → criar ficha → verificar que `ficha_usage_log` registra a criação
-- [ ] **Visualizar ficha**: Abrir `DetalhesFicha` → verificar que `audit_logs` contém registro com `action='VIEW'` (confirma que a policy RLS funciona)
-- [ ] **Editar campo crítico**: Alterar `proprietario_nome` ou `imovel_endereco` → verificar `audit_logs` com `action='UPDATE'` e old/new values
-- [ ] **Deletar ficha pendente**: Excluir ficha com status `pendente` → verificar `audit_logs` com `action='DELETE'` e dados completos em `old_data`
-- [ ] **Enviar OTP**: Disparar OTP → verificar que o fluxo completo funciona (send → verify → status update)
-- [ ] **Impersonação**: Usar master-login via admin → verificar `audit_logs` com `action='IMPERSONATE'`, IP e email alvo
-- [ ] **Impersonação falha**: Tentar master-login com senha errada → verificar `audit_logs` com `action='IMPERSONATE_FAILED'`
-- [ ] **Login normal**: Login/logout padrão continua funcionando sem regressão
+BATCH 3 — Defesa em profundidade
+  3.1  CORS restritivo nas funções com verify_jwt = true
+  3.2  Migrar funções restantes (admin-create-user, admin-update-user, etc.)
+  3.3  Documentar processo de build Capacitor
+```
 
 ---
 
-## 2. Checklist de validação técnica — Banco, RLS, triggers, Edge Functions
+## 2. Conteúdo de cada batch
 
-### Banco e triggers
-- [ ] Query `SELECT tgname FROM pg_trigger WHERE tgrelid = 'fichas_visita'::regclass` retorna `trg_audit_fichas_visita` e `trg_audit_fichas_visita_delete`
-- [ ] Ambos triggers usam `SECURITY DEFINER` (bypassam RLS para inserir em `audit_logs`)
-- [ ] `audit_logs` não tem policies de UPDATE ou DELETE (imutabilidade confirmada)
+### Batch 1 — Validação estrutural
 
-### RLS
-- [ ] Policy de INSERT em `audit_logs` restringe `action='VIEW'` + `user_id=auth.uid()` + `table_name='fichas_visita'` — nenhuma outra action pode ser inserida pelo frontend
-- [ ] Corretor só vê suas fichas (SELECT em `fichas_visita` filtrado por `user_id`)
-- [ ] Admin imobiliária vê fichas da sua imobiliária apenas
-- [ ] Super admin vê tudo
+| Item | Detalhe |
+|------|---------|
+| 1.1 Script RLS | SQL que simula 3 contextos (corretor_A/imob_1, corretor_B/imob_2, admin_1/imob_1) via `SET LOCAL ROLE authenticated` + `request.jwt.claims`. Testa SELECT em `fichas_visita`, `clientes`, `imoveis`, `surveys`. Testa INSERT em `audit_logs` com `action='VIEW'` (deve funcionar) e `action='UPDATE'` (deve falhar). Tudo em transação com ROLLBACK. |
+| 1.2 Migrar `admin-list-users` | Substituir linhas 14-66 (auth manual + role check) por `const result = await requireRole(req, 'super_admin'); if (result instanceof Response) return result;`. Primeira prova de conceito do helper. |
 
-### Edge Functions
-- [ ] `master-login` responde 429 após 5 requests rápidos do mesmo IP
-- [ ] `master-login` retorna 401 com senha incorreta e registra `IMPERSONATE_FAILED`
-- [ ] `chat-assistente` respeita rate limit de 5 req/min para anônimos
-- [ ] `_shared/auth.ts` não é chamado por nenhuma função existente ainda (não há regressão por refatoração)
+### Batch 2 — Rastreabilidade + padronização
 
----
+| Item | Detalhe |
+|------|---------|
+| 2.1 WhatsApp logs | Criar tabela `whatsapp_logs` (phone, template, status, error, ficha_id, user_id, created_at) com RLS: INSERT para service_role, SELECT para super_admin + imobiliaria_admin. Inserir registro em `send-whatsapp` após cada envio (sucesso ou falha). |
+| 2.2 Migrar 3 funções | Mesmo padrão do 1.2: substituir bloco de auth manual por `requireRole`. Funções simples com padrão idêntico ao `admin-list-users`. |
+| 2.3 Monitoramento | Documentar queries: `SELECT * FROM audit_logs WHERE action IN ('IMPERSONATE','DELETE') ORDER BY created_at DESC LIMIT 20` e equivalente para `webhook_logs` com `processed = false`. |
 
-## 3. Regressões possíveis introduzidas
+### Batch 3 — Defesa em profundidade
 
-| Mudança | Risco de regressão | O que testar |
-|---|---|---|
-| Policy INSERT em `audit_logs` para VIEW | Baixo — adição, não modificação | Confirmar que triggers (UPDATE/DELETE) ainda funcionam via `SECURITY DEFINER` |
-| Trigger DELETE em `fichas_visita` | Médio — se trigger falhar, DELETE da ficha também falha | Testar exclusão de ficha pendente por corretor |
-| `master-login` com logAudit | Baixo — log é posterior ao fluxo | Testar que impersonação completa funciona e retorna magic link |
-| Remoção de `server.url` do Capacitor | **Alto para builds nativos** — app mobile deixa de carregar se não houver build local | Testar build web (não afetado); builds nativos exigem `npm run build && npx cap sync` |
-| SW guard de iframe | Baixo | Testar que PWA continua instalável fora de iframe |
+| Item | Detalhe |
+|------|---------|
+| 3.1 CORS | Criar helper `getAllowedOrigin(req)` no `_shared/auth.ts`. Domínios: `visitaprova.com.br`, `protect-your-deal.lovable.app`, `*.lovable.app`. Aplicar em funções com `verify_jwt = true`. Funções públicas mantêm `*`. |
+| 3.2 Migrações restantes | `admin-create-user`, `admin-update-user`, `admin-promote-corretor`, `admin-update-corretor`, `send-email`, `create-survey`. 1 por vez. |
+| 3.3 Capacitor | Documentar `npm run build → npx cap sync → build nativo`. Não criar pipeline agora. |
 
 ---
 
-## 4. O que testar no app web
+## 3. O que começa imediatamente como regra de processo
 
-- [ ] Login/logout funciona normalmente
-- [ ] Navegação entre todas as áreas (corretor, empresa, admin, construtora, afiliado)
-- [ ] Criação de ficha → OTP → confirmação → PDF
-- [ ] Abrir ficha existente (confirma VIEW log)
-- [ ] Deletar ficha pendente (confirma DELETE log)
-- [ ] Chat Sofia responde corretamente para usuários logados
-- [ ] PWA install banner aparece fora de iframe
-- [ ] ConfiguracoesEmail renderiza preview de template sem XSS (DOMPurify ativo)
+Antes de qualquer batch, dois gates entram em vigor:
 
----
+- **Gate 1**: toda nova Edge Function DEVE importar de `_shared/auth.ts`. Sem exceção.
+- **Gate 2**: toda nova tabela com dados sensíveis DEVE ter RLS ativado + trigger de audit.
+- **Gate 3**: toda nova função autenticada DEVE usar CORS restritivo (após Batch 3 estar pronto, usar `getAllowedOrigin`).
 
-## 5. O que testar no app mobile/Capacitor
-
-- [ ] **Build nativo exige processo manual agora**: `npm run build` → `npx cap sync` → build Android/iOS
-- [ ] Sem `server.url`, o app carrega do `dist` local — verificar se assets e rotas funcionam
-- [ ] `allowMixedContent` e `cleartext` removidos — confirmar que o app só aceita HTTPS
-- [ ] Se não houver pipeline de CI/CD, documentar processo de build manual para a equipe
+Esses gates não exigem código — são regras de processo para qualquer mudança futura.
 
 ---
 
-## 6. Pré-requisitos para considerar release seguro
+## 4. Critério de pronto para cada batch
 
-| Item | Status | Bloqueante? |
-|---|---|---|
-| `.env` adicionado ao `.gitignore` | **PENDENTE** | **Sim** |
-| VIEW log funcional (RLS corrigida) | Implementado | Verificar manualmente |
-| Trigger UPDATE em fichas_visita | Ativo | Verificar manualmente |
-| Trigger DELETE em fichas_visita | Ativo | Verificar manualmente |
-| master-login com audit trail | Implementado | Verificar manualmente |
-| Build web sem erros TypeScript | Verificar | Sim |
-| Nenhum secret hardcoded | OK | — |
+| Batch | Critério |
+|-------|----------|
+| 1 | Script RLS executa com PASS em todas assertions (isolamento confirmado entre 3 tenants). `admin-list-users` usa `requireRole` e retorna lista de usuários corretamente. |
+| 2 | Envio de WhatsApp gera registro em `whatsapp_logs` consultável. 4 funções admin total usando `_shared/auth.ts`. Queries de monitoramento documentadas no `plan.md`. |
+| 3 | Funções com `verify_jwt = true` rejeitam `Origin` desconhecido (testar com `curl -H "Origin: https://evil.com"`). 80%+ das funções admin migradas. Processo Capacitor documentado. |
 
 ---
 
-## 7. Riscos médios/futuros que permanecem
+## 5. O que testar após cada batch
 
-| Risco | Severidade | Justificativa para aceitar temporariamente |
-|---|---|---|
-| CORS `*` em todas Edge Functions | Médio | Auth é a barreira real; CORS é defesa em profundidade |
-| `_shared/auth.ts` não adotado em funções existentes | Médio | Cada função já tem auth individual; padronização é gradual |
-| Sem teste automatizado de RLS multi-tenant | Médio | RLS funciona via policies; teste formaliza mas não corrige |
-| Ofuscação de `master:` é trivial | Baixo | O risco real (impersonação) está protegido por secret server-side + audit log |
-| Capacitor sem pipeline de CI/CD | Médio | App web não é afetado; builds nativos são manuais |
-| `chat-assistente` rate limit por IP é contornável via proxy | Baixo | Token budget por hora limita custo real |
-| WhatsApp sends sem log persistente | Médio | Logs existem apenas em console efêmero das Edge Functions |
-| Sem monitoramento de falhas em webhooks/OTPs | Médio | `webhook_logs` e `confirmacoes_otp` registram dados, mas sem alertas |
+### Após Batch 1
+- [ ] Script RLS reporta PASS para isolamento em `fichas_visita`, `clientes`, `imoveis`
+- [ ] `admin-list-users` continua retornando usuários para super_admin
+- [ ] `admin-list-users` retorna 403 para não-admin
+- [ ] Nenhuma regressão nos fluxos existentes (login, criação de ficha, OTP)
+
+### Após Batch 2
+- [ ] Enviar WhatsApp via admin → registro aparece em `whatsapp_logs`
+- [ ] OTP via `send-whatsapp` (chamada interna) → registro aparece em `whatsapp_logs`
+- [ ] Funções migradas continuam funcionando (testar cada uma)
+- [ ] Query de monitoramento retorna dados de `audit_logs` e `webhook_logs`
+
+### Após Batch 3
+- [ ] `curl` com `Origin: https://evil.com` para função admin → rejeitado
+- [ ] `curl` com `Origin: https://visitaprova.com.br` → aceito
+- [ ] Funções públicas (verify-otp, webhooks) continuam acessíveis de qualquer origem
+- [ ] Preview do Lovable continua funcionando (origin `*.lovable.app` permitido)
 
 ---
 
-## Ação imediata recomendada
+## 6. O que NÃO fazer cedo demais
 
-1. **Adicionar `.env` ao `.gitignore`** — único bloqueante técnico restante
-2. **Executar checklist de validação manual** (seção 1) no preview
-3. **Confirmar build web limpo** (`tsc --noEmit`)
-4. Após essas 3 etapas, o release pode ser considerado seguro para os padrões atuais
+| Ação prematura | Por quê esperar |
+|----------------|-----------------|
+| Migrar `master-login` para `_shared/auth.ts` | Tem lógica de auth diferente (secret, não JWT). Avaliar só após Batch 2 confirmar que o helper funciona em produção. |
+| Pipeline de CI/CD para Capacitor | Não há volume de builds nativos que justifique. Documentar processo manual primeiro. |
+| Testes E2E automatizados | Exigem infraestrutura (Playwright + CI). Valor real só após pipeline existir. |
+| Refatorar `send-whatsapp` para usar `_shared/auth.ts` | Tem lógica de service_role bypass que difere do padrão. Migrar só no Batch 3, após confirmar helper em funções simples. |
+| Alertas automáticos de monitoramento | Queries manuais semanais são suficientes para o volume atual. Automatizar quando houver incidentes reais. |
+
+---
+
+## 7. Como evitar criar dívida nova
+
+| Regra | Enforcement |
+|-------|-------------|
+| Toda nova Edge Function usa `_shared/auth.ts` | Revisar import na primeira linha antes de considerar pronto |
+| Toda nova tabela tem RLS | Verificar via `SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename NOT IN (SELECT tablename FROM pg_tables WHERE rowsecurity=true)` |
+| Não duplicar padrão de auth manual | Se uma função precisa de auth, importar `requireAuth`/`requireRole` — nunca copiar o bloco de 30 linhas |
+| Não criar tabela sem trigger de audit se contém PII | Regra de design: CPF, telefone, email = trigger obrigatório |
+| Documentar decisões de segurança | Qualquer `verify_jwt = false` deve ter justificativa em `docs/edge-functions-security.md` |
 
