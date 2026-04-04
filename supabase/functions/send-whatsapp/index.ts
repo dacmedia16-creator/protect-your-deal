@@ -39,12 +39,45 @@ function getChannelLabel(channel?: 'default' | 'meta' | 'meta2'): string {
   return channel === 'meta' ? 'ZionTalk Meta (API Oficial)' : 'ZionTalk';
 }
 
+function createServiceClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+}
+
+async function logWhatsApp(params: {
+  telefone: string;
+  canal: string;
+  tipo: string;
+  status: 'success' | 'failed';
+  error_message?: string;
+  ficha_id?: string;
+  user_id?: string;
+  imobiliaria_id?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const client = createServiceClient();
+    await client.from('whatsapp_logs').insert({
+      telefone: params.telefone,
+      canal: params.canal,
+      tipo: params.tipo,
+      status: params.status,
+      error_message: params.error_message || null,
+      ficha_id: params.ficha_id || null,
+      user_id: params.user_id || null,
+      imobiliaria_id: params.imobiliaria_id || null,
+      metadata: params.metadata || null,
+    });
+  } catch (e) {
+    console.warn('[whatsapp_logs] Failed to log:', e);
+  }
+}
+
 async function getDefaultChannel(): Promise<'default' | 'meta' | 'meta2'> {
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseClient = createServiceClient();
     const { data } = await supabaseClient
       .from('configuracoes_sistema')
       .select('valor')
