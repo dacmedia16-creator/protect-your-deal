@@ -79,9 +79,9 @@ LIMIT 20;
 ## 3. Webhook logs não processados
 
 ```sql
-SELECT id, event_type, status, error_message, created_at
+SELECT id, event_type, processed, error_message, created_at
 FROM webhook_logs
-WHERE status != 'processed'
+WHERE processed = false
   AND created_at > now() - interval '48 hours'
 ORDER BY created_at DESC;
 ```
