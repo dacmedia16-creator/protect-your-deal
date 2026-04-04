@@ -2232,6 +2232,48 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_logs: {
+        Row: {
+          canal: string
+          created_at: string
+          error_message: string | null
+          ficha_id: string | null
+          id: string
+          imobiliaria_id: string | null
+          metadata: Json | null
+          status: string
+          telefone: string
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          canal?: string
+          created_at?: string
+          error_message?: string | null
+          ficha_id?: string | null
+          id?: string
+          imobiliaria_id?: string | null
+          metadata?: Json | null
+          status?: string
+          telefone: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          error_message?: string | null
+          ficha_id?: string | null
+          id?: string
+          imobiliaria_id?: string | null
+          metadata?: Json | null
+          status?: string
+          telefone?: string
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       confirmacoes_otp_view: {
