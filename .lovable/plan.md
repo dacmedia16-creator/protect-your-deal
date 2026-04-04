@@ -1,24 +1,35 @@
 
 
-# Fix: "record_id is of type uuid but expression is of type text"
+# Plan: Replace Delete with Discard for Partner Fichas
 
 ## Problem
-Both audit trigger functions (`audit_fichas_visita_delete` and `audit_fichas_visita_changes`) cast `OLD.id::text` / `NEW.id::text` when inserting into `audit_logs.record_id`, but that column is type `uuid`. Postgres rejects the implicit text→uuid conversion in a `SECURITY DEFINER` context.
+When a ficha belongs to a partner (i.e., `corretor_parceiro_id === user.id`), the delete button still shows. Partners should not be able to delete the ficha (they don't own it). Instead, they should see a "Discard" action that unlinks them from the ficha by setting `corretor_parceiro_id = null`.
 
-## Fix
-One database migration to replace both trigger functions, removing the `::text` cast so `OLD.id` and `NEW.id` (already uuid) are passed directly to the uuid column.
+## Changes
 
-### Migration SQL
-```sql
-CREATE OR REPLACE FUNCTION audit_fichas_visita_delete()
-  -- same body, change OLD.id::text → OLD.id
+### 1. Create `DescartarFichaDialog` component
+New file: `src/components/DescartarFichaDialog.tsx`
+- Similar structure to `DeleteFichaDialog` but with different action and copy
+- Title: "Descartar registro de parceria?"
+- Description: explains that the user will be removed as partner but the ficha will continue existing
+- Action: `UPDATE fichas_visita SET corretor_parceiro_id = null, parte_preenchida_parceiro = null WHERE id = fichaId`
+- Icon: `UserMinus` or `Unlink` instead of `Trash2`
+- Button style: warning/outline instead of destructive
+- Toast: "Parceria descartada" with success message
 
-CREATE OR REPLACE FUNCTION audit_fichas_visita_changes()
-  -- same body, change NEW.id::text → NEW.id
-```
+### 2. Update `ListaFichas.tsx` — conditional render
+In both mobile (line ~294) and desktop (line ~357) layouts:
+- If `isParceiro` (i.e., `ficha.corretor_parceiro_id === user?.id`), render `<DescartarFichaDialog>` instead of `<DeleteFichaDialog>`
+- Otherwise, keep `<DeleteFichaDialog>` as-is
 
-## Impact
-- Fixes the delete error shown in the screenshot
-- Fixes the same latent bug in the UPDATE trigger
-- No schema change, no new tables, no frontend changes
+### 3. Update `FichasParceiro.tsx` — add discard action
+This page only shows partner fichas. Add a `<DescartarFichaDialog>` button to each card so partners can unlink themselves.
+
+### 4. No database migration needed
+The `corretor_parceiro_id` column already accepts null. The existing RLS policies for `fichas_visita` UPDATE should allow the partner to update their own linked fichas.
+
+## Files touched
+- `src/components/DescartarFichaDialog.tsx` (new)
+- `src/pages/ListaFichas.tsx` (conditional render)
+- `src/pages/FichasParceiro.tsx` (add discard button)
 
