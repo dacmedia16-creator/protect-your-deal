@@ -193,6 +193,24 @@ export default function DetalhesFicha() {
     enabled: !!user && !!id,
   });
 
+  // Log de visualização da ficha para auditoria
+  useEffect(() => {
+    if (ficha?.id && user?.id) {
+      supabase
+        .from('audit_logs')
+        .insert({
+          action: 'VIEW',
+          table_name: 'fichas_visita',
+          record_id: ficha.id,
+          user_id: user.id,
+          imobiliaria_id: ficha.imobiliaria_id,
+        })
+        .then(({ error }) => {
+          if (error) console.warn('Audit view log failed:', error.message);
+        });
+    }
+  }, [ficha?.id, user?.id]);
+
   // Buscar feature flag de pesquisa baseada na imobiliaria_id da FICHA (não do usuário logado)
   const { data: surveyFeatureData } = useQuery({
     queryKey: ['ficha-survey-feature', ficha?.imobiliaria_id],

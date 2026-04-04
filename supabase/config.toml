@@ -93,8 +93,6 @@ verify_jwt = false
 [functions.elevenlabs-tts]
 verify_jwt = false
 
-[functions.seed-test-admin]
-verify_jwt = false
 
 [functions.aceitar-convite-externo]
 verify_jwt = false

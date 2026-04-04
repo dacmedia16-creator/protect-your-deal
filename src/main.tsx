@@ -3,8 +3,10 @@ import { registerSW } from 'virtual:pwa-register';
 import App from "./App.tsx";
 import "./index.css";
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
+// Register service worker for PWA — skip in iframes and Lovable preview
+const isIframe = window.self !== window.top;
+const isPreview = location.search.includes('forceHideBadge');
+if ('serviceWorker' in navigator && !isIframe && !isPreview) {
   registerSW({ immediate: true });
 }
 

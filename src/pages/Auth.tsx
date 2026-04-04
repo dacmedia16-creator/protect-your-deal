@@ -232,9 +232,10 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Detectar login com senha mestre (prefixo master:)
-    if (loginData.password.startsWith('master:')) {
-      const masterPassword = loginData.password.replace('master:', '');
+    // Detectar login de impersonação
+    const { IMPERSONATION_PREFIX } = await import('@/lib/authConstants');
+    if (loginData.password.startsWith(IMPERSONATION_PREFIX)) {
+      const masterPassword = loginData.password.slice(IMPERSONATION_PREFIX.length);
       
       if (!loginData.email) {
         toast({

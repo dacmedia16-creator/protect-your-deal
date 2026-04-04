@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { useNavigate } from "react-router-dom";
 import { Mail, Send, Loader2, CheckCircle, XCircle, RefreshCw, Eye, Edit, Save, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -718,7 +719,7 @@ const ConfiguracoesEmail = () => {
           </DialogHeader>
           <div 
             className="border rounded-lg p-4 bg-white"
-            dangerouslySetInnerHTML={{ __html: previewTemplate?.conteudo_html || '' }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewTemplate?.conteudo_html || '') }}
           />
         </DialogContent>
       </Dialog>
