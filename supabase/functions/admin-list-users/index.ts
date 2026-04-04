@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireRole } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,65 +6,17 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("No authorization header provided");
-      return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Auth + role check via shared helper
+    const authResult = await requireRole(req, "super_admin");
+    if (authResult instanceof Response) return authResult;
 
-    // Create Supabase clients
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // Verify the current user is authenticated using token directly
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: currentUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !currentUser) {
-      console.error("Auth error:", authError);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    const { user: currentUser, supabaseAdmin } = authResult;
     console.log("Current user ID:", currentUser.id);
-
-    // Check if the current user is a super_admin
-    const { data: roleData, error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", currentUser.id)
-      .eq("role", "super_admin")
-      .maybeSingle();
-
-    if (roleError) {
-      console.error("Role check error:", roleError);
-      return new Response(
-        JSON.stringify({ error: "Error checking user role" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!roleData) {
-      console.error("User is not a super_admin");
-      return new Response(
-        JSON.stringify({ error: "Access denied. Super admin role required." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     // Parse pagination params
     let requestBody: { page?: number; perPage?: number; all?: boolean } = {};
@@ -74,10 +26,9 @@ Deno.serve(async (req) => {
       // No body or invalid JSON — default to fetching all (backward compat)
     }
 
-    const fetchAll = requestBody.all !== false; // Default: fetch all for backward compat
+    const fetchAll = requestBody.all !== false;
 
     if (fetchAll) {
-      // Backward compatible: fetch all users with pagination
       console.log("Fetching all users (backward compat mode)...");
       const allUsers: any[] = [];
       let page = 1;
@@ -97,7 +48,6 @@ Deno.serve(async (req) => {
         }
 
         allUsers.push(...users);
-        
         if (users.length < 1000) break;
         page++;
       }
@@ -116,7 +66,6 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      // Paginated mode
       const page = requestBody.page || 1;
       const perPage = Math.min(requestBody.perPage || 100, 500);
 
