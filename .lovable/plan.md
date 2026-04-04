@@ -1,114 +1,237 @@
 
 
-# Plano de Execução Validado — VisitaProva
+# Sprint 5 — Plano Operacional de Execução
 
 ---
 
-## Classificação dos Achados
+## SPRINT 5A — Prova e Autorização
 
-### CONFIRMADO no código
+### Ordem exata de execução
 
-| # | Achado | Evidência |
-|---|--------|-----------|
-| 1 | `.env` fora do `.gitignore` | `.gitignore` não contém `.env` (22 linhas, nenhuma menção) |
-| 2 | `send-email` com `verify_jwt = false` | config.toml confirma. **PORÉM** o código JÁ TEM auth gate interno (linhas 132-169): valida Bearer token + verifica role `super_admin` ou `imobiliaria_admin`. Chamadas internas usam SERVICE_ROLE_KEY. **O risco da auditoria original estava ERRADO — esta função já está protegida.** |
-| 3 | `chat-assistente` sem auth, apenas rate-limit por IP | Confirmado: 20 req/min por IP, sem Bearer. Qualquer pessoa pode consumir tokens de IA. |
-| 4 | `seed-test-admin` no config.toml sem arquivo | Confirmado: diretório vazio, entrada fantasma no config.toml |
-| 5 | `dangerouslySetInnerHTML` sem sanitização | `ConfiguracoesEmail.tsx` linha 721: `dangerouslySetInnerHTML={{ __html: previewTemplate?.conteudo_html }}` — sem DOMPurify |
-| 6 | `master:` prefix exposto no Auth.tsx | Linha 236: `loginData.password.startsWith('master:')` visível no código-fonte |
-| 7 | Capacitor `allowMixedContent: true` + `cleartext: true` | `capacitor.config.ts` confirma ambos |
-| 8 | Capacitor aponta para URL do Lovable | `server.url` aponta para `lovableproject.com` |
-| 9 | SW registrado sem guard de iframe | `main.tsx` linha 7-8: `registerSW({ immediate: true })` incondicional |
-| 10 | App.tsx com 609 linhas e ~100 rotas | Confirmado |
-| 11 | PDF já salva hash SHA-256 no banco | **generate-pdf já implementa `documento_hash` e `documento_gerado_em`** (linhas 937-944). O achado da auditoria original estava ERRADO. |
-| 12 | `gerar-codigo-indicacao` sem auth | **ERRADO** — a função TEM auth interna (linhas 21-37): valida Bearer token + getUser. Está protegida. |
+```text
+5A.1  Corrigir RLS de audit_logs (VIEW log)
+  │
+  ├──► 5A.2  Verificar trigger trg_audit_fichas_visita
+  │
+  ├──► 5A.3  Adicionar trigger DELETE em fichas_visita
+  │
+  └──► 5A.4  Adicionar log de auditoria ao master-login
+         │
+         └──► 5A.5  Criar helper _shared/auth.ts
+                │
+                └──► 5A.6  Script de teste RLS multi-tenant
+```
 
-### PARCIALMENTE CONFIRMADO
+### Dependências
 
-| # | Achado | Status |
-|---|--------|--------|
-| 13 | Triggers automáticos de audit em `fichas_visita` | O `db-triggers` retorna vazio, mas existem triggers via functions (handle_new_user, log_ficha_usage, normalize_*). Não há trigger de audit para alterações em fichas após confirmação OTP. |
-| 14 | Duplicação Empresa/Construtora | Provável (estrutura de páginas idêntica), mas requer leitura dos componentes para quantificar |
-
-### CORRIGIDO PELA AUDITORIA ANTERIOR (não precisa de ação)
-
-| # | Item | Motivo |
-|---|------|--------|
-| A | `send-email` sem auth | JÁ TEM auth gate interno robusto (Bearer + role check + service_role bypass) |
-| B | Hash SHA-256 do PDF | JÁ IMPLEMENTADO em `generate-pdf` |
-| C | `gerar-codigo-indicacao` sem auth | JÁ TEM auth interna |
+- **5A.2, 5A.3 e 5A.4** dependem de 5A.1 (a policy de INSERT precisa existir para que os triggers e o master-login possam inserir via service_role — e para validar que o INSERT do frontend funciona)
+- **5A.5** depende de 5A.4 (master-login é o primeiro consumidor do helper)
+- **5A.6** é independente tecnicamente, mas deve rodar por último para validar tudo junto
 
 ---
 
-## Funções com `verify_jwt = false` — Análise de Justificativa
+### 5A.1 — Corrigir RLS de `audit_logs` para VIEW log
 
-| Função | Deve continuar pública? | Proteção substituta |
-|--------|------------------------|---------------------|
-| `verify-otp` | Sim | Token único + código OTP + CPF + limite de tentativas |
-| `get-otp-info` | Sim | Apenas leitura de status por token público |
-| `asaas-webhook` | Sim | Timing-safe token comparison no header |
-| `get-ficha-externa` | Sim | Token único + filtragem PII |
-| `submit-survey-response` | Sim | Token único de survey |
-| `get-survey-by-token` | Sim | Token único |
-| `verify-comprovante` | Sim | Leitura pública por protocolo (sem PII) |
-| `verify-pdf-integrity` | Sim | Verificação de hash (sem dados sensíveis) |
-| `registro-imobiliaria` | Sim | Registro público (cria conta) |
-| `registro-corretor-autonomo` | Sim | Registro público (cria conta) |
-| `master-login` | Sim | Rate-limit por IP + secret server-side |
-| `app-version` | Sim | Leitura pública de versão |
-| `chat-assistente` | **Não** | Rate-limit por IP é insuficiente — abuso de tokens de IA |
-| `send-email` | Sim (tem auth interna) | Bearer + role check + service_role bypass |
-| `create-survey` | Sim (tem auth interna) | Bearer token validation |
-| `gerar-codigo-indicacao` | Sim (tem auth interna) | Bearer + getUser |
-| `seed-test-admin` | **Remover** | Sem arquivo, entrada fantasma |
+**Problema**: `DetalhesFicha.tsx:199` insere via client SDK com role `authenticated`, mas a única policy INSERT é para `service_role`. O INSERT falha silenciosamente (o `console.warn` engole o erro). A trilha de visualização NÃO FUNCIONA.
+
+**Solução**: Migration SQL — adicionar policy INSERT para `authenticated` restrita a:
+- `action` = 'VIEW'
+- `user_id` = `auth.uid()`
+- `table_name` IN ('fichas_visita')
+
+Isso impede que o frontend insira ações arbitrárias (UPDATE, DELETE, IMPERSONATE) — apenas VIEW.
+
+**Risco de quebra**: Nenhum. Adiciona permissão que não existia. Não afeta policies existentes.
+
+**Critério de pronto**: Logar como corretor → abrir uma ficha → query `SELECT * FROM audit_logs WHERE action = 'VIEW' ORDER BY created_at DESC LIMIT 1` retorna o registro.
+
+**Validação manual**: Abrir ficha no preview, depois verificar no banco se o registro existe.
+
+**Risco jurídico**: Sem essa correção, não há rastro de quem acessou dados sensíveis de clientes (CPF, telefone). Em disputas comerciais, impossível provar que um corretor acessou ou não determinada ficha.
 
 ---
 
-## Plano de Execução em Sprints
+### 5A.2 — Verificar trigger `trg_audit_fichas_visita`
 
-### Sprint 1 — Segurança Imediata (1 dia)
+**Problema**: A migration foi criada, mas `db-triggers` retorna vazio. Pode ser um problema de listagem da ferramenta ou o trigger pode não ter sido aplicado.
 
-| # | Problema | Impacto | Esforço | Arquivo(s) | Solução |
-|---|----------|---------|---------|------------|---------|
-| 1 | `.env` fora do `.gitignore` | Crítico — secrets futuros serão expostos | 1 min | `.gitignore` | Adicionar `.env` e `.env.*` ao `.gitignore` |
-| 2 | `chat-assistente` sem auth | Alto — abuso de tokens de IA sem limite real | 30 min | `supabase/functions/chat-assistente/index.ts` | Adicionar auth opcional: se logado, valida Bearer; se visitante, manter rate-limit mas reduzir para 5 req/min. Adicionar controle de tokens consumidos por IP. |
-| 3 | `seed-test-admin` fantasma no config.toml | Alto — potencial vetor se deploy antigo existir | 2 min | `supabase/config.toml` | Remover bloco `[functions.seed-test-admin]` |
-| 4 | `dangerouslySetInnerHTML` sem sanitização | Alto — XSS se admin inserir HTML malicioso | 15 min | `src/pages/ConfiguracoesEmail.tsx` | Instalar `dompurify`, sanitizar antes de renderizar |
-| 5 | Capacitor `allowMixedContent` + `cleartext` | Médio — MITM em Android | 2 min | `capacitor.config.ts` | Remover `allowMixedContent: true` e `cleartext: true` |
+**Solução**: Executar query de verificação: `SELECT tgname FROM pg_trigger WHERE tgname = 'trg_audit_fichas_visita'`. Se não existir, recriar via migration.
 
-### Sprint 2 — Trilha de Auditoria e Robustez da Prova (2-3 dias)
+**Risco de quebra**: Nenhum (leitura) ou baixo (recriação de trigger existente).
 
-| # | Problema | Impacto | Esforço | Arquivo(s) | Solução |
-|---|----------|---------|---------|------------|---------|
-| 6 | Sem trigger de audit para alterações em `fichas_visita` | Alto — edições pós-OTP ficam invisíveis | 1h | Migration SQL | Criar trigger `AFTER UPDATE` em `fichas_visita` que insere em `audit_logs` com old/new values para campos críticos |
-| 7 | Sem log de visualização de fichas | Médio — sem rastro de acesso | 1h | `src/pages/DetalhesFicha.tsx` + migration | Inserir registro em `audit_logs` ao abrir ficha (action: 'view') |
-| 8 | `surveys` com 8 políticas SELECT sobrepostas | Médio — risco de permissão inesperada no futuro | 30 min | Migration SQL | Consolidar políticas redundantes |
+**Critério de pronto**: Query retorna exatamente 1 row com `trg_audit_fichas_visita`.
 
-### Sprint 3 — Modularização e Limpeza (3-5 dias)
-
-| # | Problema | Impacto | Esforço | Arquivo(s) | Solução |
-|---|----------|---------|---------|------------|---------|
-| 9 | App.tsx com 609 linhas | Médio — manutenção difícil | 2h | `src/App.tsx` + novos `src/routes/*.tsx` | Extrair rotas em `adminRoutes.tsx`, `empresaRoutes.tsx`, `construtoraRoutes.tsx`, `afiliadoRoutes.tsx`, `publicRoutes.tsx`, `corretorRoutes.tsx` |
-| 10 | `master:` prefix exposto | Médio — existência do backdoor é pública | 30 min | `src/pages/Auth.tsx` | Mover detecção para uma constante importada ou ofuscar o prefixo |
-| 11 | SW sem guard de iframe/preview | Médio — cache desnecessário em desenvolvimento | 15 min | `src/main.tsx` | Adicionar check: `!window.frameElement && !location.search.includes('forceHideBadge')` |
-
-### Sprint 4 — Mobile/PWA e Operação (1 semana)
-
-| # | Problema | Impacto | Esforço | Arquivo(s) | Solução |
-|---|----------|---------|---------|------------|---------|
-| 12 | Capacitor aponta para URL Lovable | Alto — dependência total de infra externa | 2h+ | `capacitor.config.ts` | Migrar para `webDir: 'dist'` com build local (requer pipeline de CI/CD) |
-| 13 | CORS `*` em todas as funções | Baixo-Médio | 1h | Todas Edge Functions autenticadas | Restringir `Access-Control-Allow-Origin` para `visitaprova.com.br` e `*.lovable.app` |
-| 14 | Documentar funções `verify_jwt=false` | Baixo | 30 min | `docs/edge-functions-security.md` | Criar documento com justificativa para cada função pública |
+**Validação manual**: Atualizar um campo crítico de uma ficha (ex: `proprietario_nome`) e verificar que `audit_logs` contém o registro com old/new values.
 
 ---
 
-## Resumo de Correções da Auditoria Original
+### 5A.3 — Trigger DELETE em `fichas_visita`
 
-A auditoria original continha **3 erros factuais** que este plano corrige:
+**Problema**: Exclusões de fichas não são registradas. Um corretor pode deletar uma ficha pendente e a prova desaparece sem rastro.
 
-1. **`send-email` foi classificado como CRÍTICO sem auth** → Na verdade JÁ TEM auth gate robusto (Bearer + role + service_role bypass). Não precisa de ação.
-2. **"Sem hash SHA-256 do PDF"** → O `generate-pdf` JÁ salva `documento_hash` e `documento_gerado_em` no banco. Não precisa de ação.
-3. **`gerar-codigo-indicacao` sem auth** → JÁ TEM validação de Bearer + getUser. Não precisa de ação.
+**Solução**: Migration com trigger `AFTER DELETE` em `fichas_visita` que insere em `audit_logs`:
+- action: 'DELETE'
+- old_data: row completa (to_jsonb(OLD))
+- user_id: auth.uid()
+- imobiliaria_id: OLD.imobiliaria_id
 
-Itens removidos do plano por já estarem resolvidos: 3. Itens reais que precisam de ação: 14.
+Usar SECURITY DEFINER para bypassar RLS (o trigger precisa inserir em audit_logs).
+
+**Risco de quebra**: Baixo. Se o trigger falhar, o DELETE também falha (dentro da mesma transação). Testar com ficha de status 'pendente' que o corretor pode deletar.
+
+**Critério de pronto**: Deletar uma ficha pendente → registro em `audit_logs` com action='DELETE' e dados completos da ficha.
+
+**Validação manual**: Criar ficha de teste, deletá-la, verificar audit_logs.
+
+---
+
+### 5A.4 — Log de auditoria no `master-login`
+
+**Problema**: `master-login/index.ts` gera magic link sem registrar em `audit_logs`. Apenas `console.log` efêmero. Sem rastro persistente de quem acessou qual conta.
+
+**Solução**: Após gerar o link com sucesso (linha 97), inserir em `audit_logs` via supabaseAdmin (service_role):
+- action: 'IMPERSONATE'
+- table_name: 'auth.users'
+- record_id: targetUser.id
+- new_data: { email, ip: clientIp, timestamp }
+- user_id: null (não há sessão autenticada)
+
+Também logar tentativas falhas (senha errada, usuário não encontrado) com action: 'IMPERSONATE_FAILED'.
+
+**Risco de quebra**: Baixo. O INSERT em audit_logs é posterior ao fluxo principal. Se falhar, logar no console e continuar (não bloquear a impersonação).
+
+**Critério de pronto**: Executar impersonação via painel admin → registro em `audit_logs` com action='IMPERSONATE' contendo IP e email alvo.
+
+**Validação manual**: Usar a feature de impersonação no AdminImobiliarias, verificar audit_logs.
+
+**Risco jurídico**: Sem log de impersonação, impossível auditar se um suporte acessou dados de cliente indevidamente. Em caso de incidente, não há prova de quem fez o quê.
+
+---
+
+### 5A.5 — Helper `_shared/auth.ts`
+
+**Problema**: Cada Edge Function reimplementa validação de Bearer/role de formas ligeiramente diferentes. Sem padrão, risco de inconsistência ao criar novas funções.
+
+**Solução**: Criar `supabase/functions/_shared/auth.ts` com:
+- `requireAuth(req)` → retorna `{ user, supabaseAdmin }` ou Response 401
+- `requireRole(req, role)` → retorna `{ user, supabaseAdmin }` ou Response 403
+- `requireServiceRole(req)` → valida header de service_role
+
+Adotar imediatamente em `master-login` (após 5A.4) como prova de conceito. Migração das demais funções é gradual e não bloqueante.
+
+**Risco de quebra**: Médio. Ao refatorar `master-login` para usar o helper, qualquer erro de import ou path quebra a função. Testar no preview antes de considerar pronto.
+
+**Critério de pronto**: `master-login` usa `requireAuth` ou helpers do `_shared/auth.ts`. Impersonação continua funcionando.
+
+**Validação manual**: Testar impersonação após refatoração.
+
+---
+
+### 5A.6 — Script de teste RLS multi-tenant
+
+**Problema**: Isolamento multi-tenant existe via RLS, mas nunca foi validado formalmente. Confia-se que as policies estão corretas sem verificação cruzada.
+
+**Solução**: Script SQL que:
+1. Simula `SET LOCAL ROLE authenticated` com `request.jwt.claims` de diferentes usuários
+2. Verifica que SELECT em `fichas_visita`, `clientes`, `imoveis` retorna APENAS dados do tenant correto
+3. Verifica que INSERT em `audit_logs` com action='VIEW' funciona (confirma 5A.1)
+4. Reporta pass/fail
+
+**Risco de quebra**: Nenhum (read-only + teste em transação com rollback).
+
+**Critério de pronto**: Script executa sem erros e reporta isolamento correto entre tenants.
+
+---
+
+## SPRINT 5B — Endurecimento Operacional
+
+### Ordem exata de execução
+
+```text
+5B.1  .env no .gitignore
+  │
+  ├──► 5B.2  Fix runtime error ChatAssistente.tsx
+  │
+  ├──► 5B.3  CORS restritivo em funções autenticadas
+  │
+  └──► 5B.4  Remover server.url do Capacitor
+```
+
+Todos são independentes entre si. Podem ser executados em qualquer ordem ou em paralelo.
+
+---
+
+### 5B.1 — `.env` no `.gitignore`
+
+**Problema**: `.gitignore` não contém `.env` (verificado: 24 linhas, nenhuma menção). Qualquer secret futuro adicionado ao `.env` será versionado.
+
+**Solução**: Adicionar `.env`, `.env.*`, `.env.local` ao `.gitignore`.
+
+**Risco de quebra**: Nenhum.
+
+**Critério de pronto**: `grep -c '.env' .gitignore` retorna resultado > 0.
+
+---
+
+### 5B.2 — Fix runtime error `ChatAssistente.tsx`
+
+**Problema**: Runtime error ativo no componente. Impacta UX mas não segurança.
+
+**Solução**: Verificar console logs, identificar o erro específico (provavelmente import dinâmico ou referência undefined), corrigir.
+
+**Risco de quebra**: Baixo (componente isolado).
+
+**Critério de pronto**: Console sem erro originado de ChatAssistente.
+
+---
+
+### 5B.3 — CORS restritivo
+
+**Problema**: Todas Edge Functions usam `Access-Control-Allow-Origin: '*'`.
+
+**Solução**: Nas funções com `verify_jwt = true`, restringir origin para domínios conhecidos. Funções públicas mantêm `*`.
+
+**Risco de quebra**: Alto se domínio incorreto. Testar com o domínio publicado (`protect-your-deal.lovable.app`) e domínio de produção (`visitaprova.com.br`).
+
+**Critério de pronto**: Funções admin rejeitam requests de origens desconhecidas. Funções públicas continuam acessíveis.
+
+---
+
+### 5B.4 — Remover `server.url` do Capacitor
+
+**Problema**: `capacitor.config.ts:8` aponta para URL remota do Lovable. App nativo é wrapper de WebView sem autonomia.
+
+**Solução**: Remover bloco `server` inteiro. O `webDir: 'dist'` já está configurado.
+
+**Risco de quebra**: Alto para builds nativos. O app passará a exigir build local (`npm run build` + `npx cap sync`). Sem pipeline de CI/CD, builds manuais.
+
+**Critério de pronto**: `capacitor.config.ts` sem campo `server.url`. Build web continua funcionando normalmente.
+
+---
+
+## Visão final — Pronto para release
+
+### Bloqueantes (devem estar resolvidos)
+
+| Item | Risco se não resolver |
+|---|---|
+| 5A.1 — audit_logs VIEW funcionando | Sem trilha de acesso a dados sensíveis |
+| 5A.4 — master-login com log | Sem trilha de impersonação — risco jurídico |
+| 5B.1 — .env no .gitignore | Exposição de secrets em repo público |
+
+### Riscos aceitos temporariamente
+
+| Item | Justificativa |
+|---|---|
+| 5A.5 — Helper _shared/auth.ts | Padronização gradual; funções existentes já têm auth individual |
+| 5A.6 — Teste RLS automatizado | RLS já funciona; teste formaliza mas não corrige |
+| 5B.3 — CORS restritivo | Defesa em profundidade; auth é a barreira real |
+| 5B.4 — Capacitor sem URL remota | Requer pipeline de CI/CD; app web não é afetado |
+
+### Próximos passos pós-release
+
+1. Migrar Edge Functions existentes para `_shared/auth.ts` (gradual, por função)
+2. Implementar pipeline de build nativo para Capacitor
+3. Adicionar monitoramento de falhas em webhooks e OTPs não confirmados
+4. Testes E2E para fluxo crítico: registro → ficha → OTP → PDF → verificação
 
