@@ -28,6 +28,26 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
+async function logAudit(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  action: string,
+  recordId: string | null,
+  data: Record<string, unknown>
+) {
+  try {
+    await supabaseAdmin.from("audit_logs").insert({
+      action,
+      table_name: "auth.users",
+      record_id: recordId,
+      user_id: null,
+      new_data: data,
+      imobiliaria_id: null,
+    });
+  } catch (err) {
+    console.error("Failed to write audit log:", err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -57,26 +77,38 @@ serve(async (req) => {
       );
     }
 
-    // Validate master password
-    const MASTER_PASSWORD = Deno.env.get("MASTER_PASSWORD");
-    if (!MASTER_PASSWORD || master_password !== MASTER_PASSWORD) {
-      console.log("Master login attempt failed: invalid password");
-      return new Response(
-        JSON.stringify({ error: "Credenciais inválidas" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Create admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Validate master password
+    const MASTER_PASSWORD = Deno.env.get("MASTER_PASSWORD");
+    if (!MASTER_PASSWORD || master_password !== MASTER_PASSWORD) {
+      console.log("Master login attempt failed: invalid password");
+      await logAudit(supabaseAdmin, "IMPERSONATE_FAILED", null, {
+        email,
+        ip: clientIp,
+        reason: "invalid_password",
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ error: "Credenciais inválidas" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Find user by email
     const { data: { user: targetUser }, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
     if (userError || !targetUser) {
       console.log("User not found for email:", email);
+      await logAudit(supabaseAdmin, "IMPERSONATE_FAILED", null, {
+        email,
+        ip: clientIp,
+        reason: "user_not_found",
+        timestamp: new Date().toISOString(),
+      });
       return new Response(
         JSON.stringify({ error: "Usuário não encontrado" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -93,6 +125,13 @@ serve(async (req) => {
       console.error("Error generating link:", linkError);
       throw linkError;
     }
+
+    // Log successful impersonation
+    await logAudit(supabaseAdmin, "IMPERSONATE", targetUser.id, {
+      email: targetUser.email,
+      ip: clientIp,
+      timestamp: new Date().toISOString(),
+    });
 
     console.log(`Master login successful for user: ${email}`);
 
