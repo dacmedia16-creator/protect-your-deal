@@ -323,6 +323,15 @@ serve(async (req) => {
         console.log(`[send-whatsapp] Response Body COMPLETO:`, responseText);
 
         const success = response.status === 201;
+
+        await logWhatsApp({
+          telefone: formattedPhone,
+          canal: channel || 'default',
+          tipo: 'template',
+          status: success ? 'success' : 'failed',
+          error_message: success ? undefined : responseText?.substring(0, 500),
+          metadata: { templateName, language: language || 'pt_BR' },
+        });
         
         return new Response(
           JSON.stringify({
