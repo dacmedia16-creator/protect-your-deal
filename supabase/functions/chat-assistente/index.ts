@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -526,10 +527,16 @@ Página completa de todos os vídeos: /tutoriais
 
 // Simple in-memory rate limiter (resets on cold start, ~60s)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 20; // max requests per window
+const RATE_LIMIT_AUTHENTICATED = 20; // authenticated users: 20 req/min
+const RATE_LIMIT_ANONYMOUS = 5;      // anonymous visitors: 5 req/min
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 
-function isRateLimited(ip: string): boolean {
+// Token consumption tracking per IP (resets on cold start)
+const tokenUsageMap = new Map<string, { tokens: number; resetAt: number }>();
+const MAX_ANONYMOUS_TOKENS_PER_HOUR = 2000;
+const TOKEN_WINDOW_MS = 3600_000; // 1 hour
+
+function isRateLimited(ip: string, limit: number): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
@@ -537,7 +544,26 @@ function isRateLimited(ip: string): boolean {
     return false;
   }
   entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
+  return entry.count > limit;
+}
+
+function isTokenLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = tokenUsageMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    return false;
+  }
+  return entry.tokens >= MAX_ANONYMOUS_TOKENS_PER_HOUR;
+}
+
+function trackTokens(ip: string, estimatedTokens: number) {
+  const now = Date.now();
+  const entry = tokenUsageMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    tokenUsageMap.set(ip, { tokens: estimatedTokens, resetAt: now + TOKEN_WINDOW_MS });
+  } else {
+    entry.tokens += estimatedTokens;
+  }
 }
 
 serve(async (req) => {
@@ -550,9 +576,40 @@ serve(async (req) => {
     // Rate limiting by IP
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
                      req.headers.get('cf-connecting-ip') || 'unknown';
-    if (isRateLimited(clientIp)) {
+
+    // Check authentication (optional - logged users get higher limits)
+    let isAuthenticated = false;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const supabase = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_ANON_KEY')!,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const token = authHeader.replace('Bearer ', '');
+        const { data, error } = await supabase.auth.getClaims(token);
+        if (!error && data?.claims?.sub) {
+          isAuthenticated = true;
+        }
+      } catch {
+        // Auth failed — treat as anonymous
+      }
+    }
+
+    const rateLimit = isAuthenticated ? RATE_LIMIT_AUTHENTICATED : RATE_LIMIT_ANONYMOUS;
+
+    if (isRateLimited(clientIp, rateLimit)) {
       return new Response(
         JSON.stringify({ error: 'Muitas requisições. Aguarde um momento e tente novamente.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Anonymous users: also check hourly token budget
+    if (!isAuthenticated && isTokenLimited(clientIp)) {
+      return new Response(
+        JSON.stringify({ error: 'Limite de uso atingido. Faça login para continuar conversando.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
