@@ -1,65 +1,21 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-}
+import { requireRole, corsHeaders } from "../_shared/auth.ts";
 
 interface RequestBody {
   user_id: string;
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Token de autorização não fornecido' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const result = await requireRole(req, "super_admin");
+    if (result instanceof Response) return result;
 
-    // Create Supabase clients
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    // Verify user is authenticated using token directly
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user: currentUser }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !currentUser) {
-      console.error('Auth error:', userError);
-      return new Response(
-        JSON.stringify({ error: 'Não autorizado' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { user: currentUser, supabaseAdmin } = result;
 
     console.log('Current user ID:', currentUser.id);
-
-    // Verify user is super_admin
-    const { data: roleData, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', currentUser.id)
-      .eq('role', 'super_admin')
-      .maybeSingle();
-
-    if (roleError || !roleData) {
-      console.error('Role check error:', roleError);
-      return new Response(
-        JSON.stringify({ error: 'Acesso negado: apenas super_admin pode excluir usuários' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     console.log('User is super_admin, proceeding...');
 
     // Parse request body
