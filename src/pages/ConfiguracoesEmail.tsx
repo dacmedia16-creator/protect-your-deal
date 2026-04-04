@@ -718,7 +718,7 @@ const ConfiguracoesEmail = () => {
           </DialogHeader>
           <div 
             className="border rounded-lg p-4 bg-white"
-            dangerouslySetInnerHTML={{ __html: previewTemplate?.conteudo_html || '' }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewTemplate?.conteudo_html || '') }}
           />
         </DialogContent>
       </Dialog>
