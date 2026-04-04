@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
+import { DescartarFichaDialog } from '@/components/DescartarFichaDialog';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -186,16 +187,22 @@ export default function FichasParceiro() {
                       </Badge>
                     </div>
                     
-                    <div className="pt-2">
+                    <div className="pt-2 flex gap-2">
                       <Button 
                         variant="outline"
-                        className="w-full" 
+                        className="flex-1" 
                         size="sm"
                         onClick={() => navigate(`/fichas/${ficha.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Ver Detalhes
                       </Button>
+                      <DescartarFichaDialog
+                        fichaId={ficha.id}
+                        protocolo={ficha.protocolo}
+                        onDiscarded={() => window.location.reload()}
+                        variant="icon"
+                      />
                     </div>
                   </CardContent>
                 </Card>

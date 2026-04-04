@@ -37,6 +37,7 @@ import { MobileNav } from '@/components/MobileNav';
 
 import { DesktopNav } from '@/components/DesktopNav';
 import { DeleteFichaDialog } from '@/components/DeleteFichaDialog';
+import { DescartarFichaDialog } from '@/components/DescartarFichaDialog';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { PWAInstallFAB } from '@/components/PWAInstallFAB';
@@ -291,11 +292,19 @@ export default function ListaFichas() {
                       <div className="flex gap-3 text-xs text-muted-foreground pt-1 border-t">
                         <span className="truncate flex-1">Prop: {ficha.proprietario_nome || 'A preencher'}</span>
                         <span className="truncate flex-1">Comp: {ficha.comprador_nome || 'A preencher'}</span>
-                        <DeleteFichaDialog 
-                          fichaId={ficha.id} 
-                          protocolo={ficha.protocolo}
-                          onDeleted={handleFichaDeleted}
-                        />
+                        {isParceiro ? (
+                          <DescartarFichaDialog
+                            fichaId={ficha.id}
+                            protocolo={ficha.protocolo}
+                            onDiscarded={handleFichaDeleted}
+                          />
+                        ) : (
+                          <DeleteFichaDialog 
+                            fichaId={ficha.id} 
+                            protocolo={ficha.protocolo}
+                            onDeleted={handleFichaDeleted}
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -354,11 +363,19 @@ export default function ListaFichas() {
                             <span>Proprietário: {ficha.proprietario_nome || 'A preencher'}</span>
                             <span>Comprador: {ficha.comprador_nome || 'A preencher'}</span>
                             <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
-                              <DeleteFichaDialog 
-                                fichaId={ficha.id} 
-                                protocolo={ficha.protocolo}
-                                onDeleted={handleFichaDeleted}
-                              />
+                              {isParceiro ? (
+                                <DescartarFichaDialog
+                                  fichaId={ficha.id}
+                                  protocolo={ficha.protocolo}
+                                  onDiscarded={handleFichaDeleted}
+                                />
+                              ) : (
+                                <DeleteFichaDialog 
+                                  fichaId={ficha.id} 
+                                  protocolo={ficha.protocolo}
+                                  onDeleted={handleFichaDeleted}
+                                />
+                              )}
                             </div>
                           </div>
                         </div>
