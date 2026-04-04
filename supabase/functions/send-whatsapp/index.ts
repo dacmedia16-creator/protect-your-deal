@@ -246,6 +246,14 @@ serve(async (req) => {
         console.log(`Send message response: ${responseText.substring(0, 500)}`);
 
         const success = response.status === 201;
+
+        await logWhatsApp({
+          telefone: formattedPhone,
+          canal: textChannel || 'default',
+          tipo: 'texto',
+          status: success ? 'success' : 'failed',
+          error_message: success ? undefined : responseText?.substring(0, 500),
+        });
         
         return new Response(
           JSON.stringify({
