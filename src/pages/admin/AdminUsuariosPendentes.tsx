@@ -257,7 +257,7 @@ export default function AdminUsuariosPendentes() {
                       const orgType = getOrgType(user.user_id);
                       const orgList = orgType === 'construtora' ? construtoras : imobiliarias;
 
-                      return (<>
+                      return (
                         <TableRow key={user.user_id}>
                           <TableCell className="font-medium">{user.profile?.nome || 'Sem nome'}</TableCell>
                           <TableCell>{user.email || 'N/A'}</TableCell>
