@@ -246,6 +246,8 @@ export function VersionCheckWithOverlay() {
 
   // Setup checks on mount and visibility changes
   useEffect(() => {
+    if (isInactive) return;
+
     // Initial check after a short delay
     const initialTimeout = setTimeout(checkAndUpdate, 3000);
 
@@ -273,7 +275,7 @@ export function VersionCheckWithOverlay() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [checkAndUpdate]);
+  }, [checkAndUpdate, isInactive]);
 
   if (isInactive) return null;
 
