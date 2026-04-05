@@ -229,6 +229,7 @@ export function VersionCheckWithOverlay() {
    * Verifica e inicia countdown se necessário.
    */
   const checkAndUpdate = useCallback(async () => {
+    if (isInactive) return;
     const result = await checkVersion();
     
     if (result.needsUpdate && !showOverlay) {
