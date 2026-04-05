@@ -1,51 +1,46 @@
 
 
-# Plano: Campo editavel de recursos/beneficios nos planos
+# Plano: Eliminar o "pisca" na navegação do admin/super admin
 
-## Problema
-Os cards de planos (landing page, admin, assinatura) mostram apenas fichas/mes e corretores de forma hardcoded. O admin nao consegue personalizar os itens listados no card de cada plano.
+## Causa raiz
 
-## Solucao
-Adicionar uma coluna `recursos_texto` (text, nullable) na tabela `planos` que armazena uma lista de beneficios customizados, um por linha. O admin edita como texto livre no dialog de edicao. Os cards renderizam cada linha como um item com check.
+Dois fatores combinados causam o flash:
 
-## Etapa 1 — Migration
+1. **Suspense com spinner de tela cheia**: Cada página admin é `lazy()` e envolvida por `<Suspense fallback={<LoadingSpinner />}>` no App.tsx. Ao trocar de rota, o React desmonta a página atual e mostra um spinner de tela inteira até o chunk carregar — isso é o "pisca" principal.
 
-Adicionar coluna `recursos_texto` (text, nullable) na tabela `planos`.
+2. **ProtectedRoute recria o spinner**: O `ProtectedRoute` é instanciado por rota (via função `P()`), então a cada navegação ele re-renderiza. Se `roleLoading` piscar `true` momentaneamente, mostra outro spinner.
 
-```sql
-ALTER TABLE public.planos ADD COLUMN recursos_texto text;
-```
+## Solução
 
-Sem RLS adicional (planos ja tem policies).
+### Etapa 1 — Mover o Suspense para DENTRO do layout
 
-## Etapa 2 — AdminPlanos.tsx
+Em vez de envolver todas as rotas num único `<Suspense>` com spinner de tela cheia, colocar o fallback dentro do `SuperAdminLayout` (e dos outros layouts). Assim o sidebar permanece visível enquanto o conteúdo carrega.
 
-- Adicionar `recursos_texto` ao form e interfaces
-- Novo campo Textarea no dialog: "Recursos/Beneficios (um por linha)"
-- Placeholder: "Ex: PDF basico\nSuporte por email\nSem anuncios"
+**App.tsx**: Trocar o `<Suspense fallback={<LoadingSpinner />}>` que envolve `<Routes>` por `<Suspense fallback={null}>` (ou remover). O fallback real fica dentro de cada layout.
 
-## Etapa 3 — Renderizar nos cards
+**adminRoutes.tsx**: Envolver cada elemento lazy com `<Suspense>` cujo fallback é um skeleton leve (spinner pequeno centralizado na área de conteúdo), não tela cheia.
 
-Em todos os pontos que listam features dos planos, alem dos itens hardcoded (fichas/mes, corretores), renderizar cada linha de `recursos_texto` como item com check:
+Criar um componente `PageLoader` simples que é só um spinner na área de conteúdo (sem `min-h-screen`).
 
-| Arquivo | Onde aparece |
-|---------|-------------|
-| `src/pages/admin/AdminPlanos.tsx` | Cards no painel admin |
-| `src/pages/Index.tsx` | Landing page publica |
-| `src/pages/CorretorAssinatura.tsx` | Tela de assinatura do corretor |
-| `src/pages/empresa/EmpresaAssinatura.tsx` | Tela de assinatura da imobiliaria |
-| `src/pages/auth/RegistroConstrutora.tsx` | Registro de construtora |
+### Etapa 2 — Aplicar o mesmo padrão nos outros layouts
 
-Logica de renderizacao:
-```ts
-{plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
-  <li key={i} className="flex items-center gap-2">
-    <Check className="h-4 w-4 text-primary" />
-    {linha.trim()}
-  </li>
-))}
-```
+Repetir para `ImobiliariaLayout` (empresa), `ConstutoraLayout` (construtora), `AfiliadoLayout` (afiliado).
 
-## Resultado
-O super admin pode escrever livremente os beneficios de cada plano (ex: "PDF basico", "Suporte prioritario", "Integracao WhatsApp") e eles aparecem automaticamente em todos os cards do sistema.
+### Arquivos modificados
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/App.tsx` | Trocar fallback do Suspense externo para `null` |
+| `src/routes/adminRoutes.tsx` | Envolver cada lazy component com `<Suspense fallback={<PageLoader />}>` |
+| `src/routes/empresaRoutes.tsx` | Idem |
+| `src/routes/construtoraRoutes.tsx` | Idem |
+| `src/routes/corretorRoutes.tsx` | Idem |
+| `src/routes/afiliadoRoutes.tsx` | Idem |
+| `src/components/PageLoader.tsx` (novo) | Spinner pequeno centralizado, sem tela cheia |
+
+### Resultado esperado
+
+- O sidebar e header permanecem fixos durante a navegação
+- Apenas a área de conteúdo mostra um loading breve
+- Sem flash de tela branca
 
