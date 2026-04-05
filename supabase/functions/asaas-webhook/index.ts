@@ -116,6 +116,30 @@ serve(async (req) => {
     const webhookData = await req.json();
     console.log('Asaas webhook received:', JSON.stringify(webhookData));
 
+    // === Idempotency check ===
+    // Extract a unique event identifier from the payload
+    const paymentId = webhookData.payment?.id;
+    const eventType = webhookData.event || 'unknown';
+
+    if (paymentId) {
+      const { data: existingLog } = await supabase
+        .from('webhook_logs')
+        .select('id')
+        .eq('source', 'asaas')
+        .eq('event_type', eventType)
+        .filter('payload->payment->>id', 'eq', paymentId)
+        .eq('processed', true)
+        .maybeSingle();
+
+      if (existingLog) {
+        console.log(`Idempotency: event ${eventType} for payment ${paymentId} already processed (log ${existingLog.id}). Returning 200.`);
+        return new Response(
+          JSON.stringify({ success: true, message: 'Already processed' }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Log webhook event to database for traceability
     let logId: string | null = null;
     try {
@@ -123,7 +147,7 @@ serve(async (req) => {
         .from('webhook_logs')
         .insert({
           source: 'asaas',
-          event_type: webhookData.event || 'unknown',
+          event_type: eventType,
           payload: webhookData,
           processed: false
         })
