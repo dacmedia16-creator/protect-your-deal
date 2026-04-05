@@ -40,6 +40,7 @@ interface Plano {
   max_imoveis: number;
   valor_mensal: number;
   valor_anual: number | null;
+  recursos_texto: string | null;
 }
 
 interface UsageStats {
@@ -382,6 +383,12 @@ export default function EmpresaAssinatura() {
                         <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
                         {plano.max_fichas_mes >= 99999 ? 'Registros ilimitados' : `${plano.max_fichas_mes} registros/mês`}
                       </li>
+                      {plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <Check className={`h-4 w-4 ${isFreePlan ? 'text-emerald-500' : 'text-success'}`} />
+                          {linha.trim()}
+                        </li>
+                      ))}
                     </ul>
 
                     {plano.valor_mensal > 0 || isFreePlan ? (

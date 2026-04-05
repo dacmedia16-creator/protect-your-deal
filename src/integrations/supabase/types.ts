@@ -1716,6 +1716,7 @@ export type Database = {
           max_imobiliarias_parceiras: number | null
           max_imoveis: number
           nome: string
+          recursos_texto: string | null
           tipo_cadastro: string | null
           updated_at: string
           valor_anual: number | null
@@ -1735,6 +1736,7 @@ export type Database = {
           max_imobiliarias_parceiras?: number | null
           max_imoveis?: number
           nome: string
+          recursos_texto?: string | null
           tipo_cadastro?: string | null
           updated_at?: string
           valor_anual?: number | null
@@ -1754,6 +1756,7 @@ export type Database = {
           max_imobiliarias_parceiras?: number | null
           max_imoveis?: number
           nome?: string
+          recursos_texto?: string | null
           tipo_cadastro?: string | null
           updated_at?: string
           valor_anual?: number | null

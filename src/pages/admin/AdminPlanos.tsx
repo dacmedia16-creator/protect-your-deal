@@ -44,6 +44,7 @@ interface Plano {
   asaas_plan_id: string | null;
   tipo_cadastro: string | null;
   exibir_no_site: boolean;
+  recursos_texto: string | null;
 }
 
 interface PlanoForm {
@@ -58,6 +59,7 @@ interface PlanoForm {
   ativo: boolean;
   asaas_plan_id: string;
   exibir_no_site: boolean;
+  recursos_texto: string;
 }
 
 const defaultForm: PlanoForm = {
@@ -72,6 +74,7 @@ const defaultForm: PlanoForm = {
   ativo: true,
   asaas_plan_id: '',
   exibir_no_site: true,
+  recursos_texto: '',
 };
 
 export default function AdminPlanos() {
@@ -120,6 +123,7 @@ export default function AdminPlanos() {
       ativo: plano.ativo,
       asaas_plan_id: plano.asaas_plan_id || '',
       exibir_no_site: plano.exibir_no_site,
+      recursos_texto: plano.recursos_texto || '',
     });
     setDialogOpen(true);
   }
@@ -175,6 +179,7 @@ export default function AdminPlanos() {
       const dataToSave = {
         ...form,
         asaas_plan_id: form.asaas_plan_id || null,
+        recursos_texto: form.recursos_texto || null,
       };
 
       if (editingId) {
@@ -377,6 +382,20 @@ export default function AdminPlanos() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="recursos_texto">Recursos / Benefícios (um por linha)</Label>
+                  <Textarea
+                    id="recursos_texto"
+                    value={form.recursos_texto}
+                    onChange={(e) => setForm({ ...form, recursos_texto: e.target.value })}
+                    placeholder={"Ex:\nPDF básico\nSuporte por email\nSem anúncios"}
+                    rows={4}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cada linha será exibida como um item nos cards de plano
+                  </p>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {editingId ? 'Salvar Alterações' : 'Criar Plano'}
@@ -479,6 +498,12 @@ export default function AdminPlanos() {
                       <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                       <span>{plano.max_fichas_mes >= 99999 ? 'Fichas ilimitadas' : `${plano.max_fichas_mes} fichas/mês`}</span>
                     </li>
+                    {plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span>{linha.trim()}</span>
+                      </li>
+                    ))}
                   </ul>
 
                   {/* Asaas ID (mantido para admin) */}

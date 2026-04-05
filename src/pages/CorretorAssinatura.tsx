@@ -40,6 +40,7 @@ interface Plano {
   max_imoveis: number;
   valor_mensal: number;
   valor_anual: number | null;
+  recursos_texto: string | null;
 }
 
 interface UsageStats {
@@ -343,6 +344,12 @@ export default function CorretorAssinatura() {
                           <CheckCircle className="h-4 w-4 text-success" />
                           {plano.max_fichas_mes} registros/mês
                         </li>
+                        {plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-success" />
+                            {linha.trim()}
+                          </li>
+                        ))}
                       </ul>
 
                       <PaymentButtons

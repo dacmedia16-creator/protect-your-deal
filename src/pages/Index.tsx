@@ -53,6 +53,7 @@ interface Plano {
   valor_mensal: number;
   valor_anual: number | null;
   tipo_cadastro: string | null;
+  recursos_texto: string | null;
 }
 
 const Index = () => {
@@ -756,6 +757,12 @@ const Index = () => {
                               {plano.max_corretores === -1 ? 'Corretores ilimitados' : `${plano.max_corretores} corretor(es)`}
                             </li>
                         }
+                          {plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <Check className="h-4 w-4 text-primary" />
+                              {linha.trim()}
+                            </li>
+                          ))}
                         </ul>
 
                         <Button className="w-full" variant={isProfissional ? 'default' : 'outline'} asChild>
