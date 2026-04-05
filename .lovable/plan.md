@@ -1,73 +1,85 @@
 
-# Plano revisado — erro persiste após o ajuste da policy
 
-## Situação já confirmada no banco
-- A policy `Corretor parceiro pode atualizar fichas` já está ativa com `WITH CHECK` explícito permitindo `corretor_parceiro_id = null`.
-- O descarte no app faz apenas este `UPDATE`:
-  - `corretor_parceiro_id = null`
-  - `parte_preenchida_parceiro = null`
-- Não há trigger em `fichas_visita` regravando esses dois campos.
-- Os registros atuais com parceiro apontam para perfis ativos.
+# Plano: Ocultar fichas de parceiro (em vez de descartar)
 
-## Diagnóstico atualizado
-A causa já não parece ser “faltou aplicar a migration”. O erro persistente indica uma destas hipóteses, em ordem de prioridade:
+## Contexto
+O descarte (UPDATE em `fichas_visita`) continua falhando por RLS. A solução alternativa é criar uma tabela de ocultação por usuário, sem tocar na `fichas_visita`.
 
-1. O request que falha não está satisfazendo a policy do parceiro em runtime  
-   (`auth.uid()` no momento do update não bate com o `corretor_parceiro_id` atual da linha)
+## Etapa 1 — Criar tabela `fichas_ocultas`
 
-2. Ainda existe ambiguidade nas policies de `UPDATE` de `fichas_visita`  
-   porque só a policy do parceiro tem `WITH CHECK` explícito; as demais ainda dependem de comportamento implícito
+```sql
+CREATE TABLE public.fichas_ocultas (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  ficha_id uuid NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, ficha_id)
+);
 
-3. O novo estado da linha perde visibilidade logo após o descarte  
-   porque ao zerar `corretor_parceiro_id`, a linha deixa de atender a policy `Corretor parceiro pode ver fichas`
+ALTER TABLE public.fichas_ocultas ENABLE ROW LEVEL SECURITY;
 
-## Policies que precisam ser inspecionadas primeiro
-1. `Corretor parceiro pode atualizar fichas`
-2. `Corretor pode atualizar suas fichas`
-3. `Líder pode atualizar fichas da equipe`
-4. `Super admin pode atualizar fichas`
-5. `Corretor parceiro pode ver fichas`
+CREATE POLICY "Usuário pode ver suas ocultações"
+  ON public.fichas_ocultas FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
 
-## Plano de correção com menor risco
+CREATE POLICY "Usuário pode ocultar fichas"
+  ON public.fichas_ocultas FOR INSERT TO authenticated
+  WITH CHECK (user_id = auth.uid());
 
-### Etapa 1 — validar uma ficha real que falha
-Para a ficha que reproduz o erro, conferir no banco:
-- `id`
-- `user_id`
-- `corretor_parceiro_id`
-- `parte_preenchida_parceiro`
-- `status`
-- parceiro ativo em `profiles`
-- se o usuário autenticado no momento do clique é exatamente o UUID de `corretor_parceiro_id`
+CREATE POLICY "Usuário pode desfazer ocultação"
+  ON public.fichas_ocultas FOR DELETE TO authenticated
+  USING (user_id = auth.uid());
+```
 
-Sem isso, qualquer nova mudança de policy vira tentativa cega.
+Sem UPDATE (não há campo editável). Sem foreign key para `fichas_visita` (evita dependência de cascade).
 
-### Etapa 2 — eliminar ambiguidades de pós-update
-Padronizar **todas** as policies de `UPDATE` de `fichas_visita` com `WITH CHECK` explícito, sem ampliar escopo:
-- corretor próprio
-- parceiro
-- líder
-- super admin
+## Etapa 2 — Alterar `DescartarFichaDialog`
 
-Objetivo: garantir que nenhum caminho de update dependa de `USING` implícito para validar o novo estado.
+Trocar a lógica de UPDATE por INSERT em `fichas_ocultas`:
 
-### Etapa 3 — revisar visibilidade do novo estado
-No descarte, a linha deixa de ser “do parceiro”. Então a revisão deve confirmar se o fluxo do update exige ou não leitura da linha já atualizada. Se exigir, a visibilidade pós-update também precisa ser tratada na modelagem de RLS.
+```ts
+// Antes: supabase.from('fichas_visita').update({...})
+// Depois:
+await supabase.from('fichas_ocultas').insert({
+  user_id: (await supabase.auth.getUser()).data.user!.id,
+  ficha_id: fichaId,
+});
+```
 
-## Critério para confirmar que a causa é policy
-O problema é realmente de policy se, na ficha que falha:
-- `corretor_parceiro_id` antes do update = usuário logado
-- usuário está ativo
-- update continua falhando com erro de RLS
+Renomear o label do botão para "Ocultar" e ajustar textos do dialog.
 
-Se isso não fechar, a falha passa a ser mismatch entre ator e linha, não ausência do `WITH CHECK` já aplicado.
+## Etapa 3 — Filtrar fichas ocultas em todos os pontos
 
-## Resultado esperado após a correção final
-- parceiro consegue descartar a própria parceria
-- parceiro não consegue atribuir outro UUID como parceiro
-- corretor proprietário não é afetado
-- líder e super admin continuam com o comportamento atual
-- `fichas_visita` fica sem policies de `UPDATE` com regra implícita
+### ListaFichas.tsx
+- Após carregar fichas via `useInfiniteList`, buscar `fichas_ocultas` do usuário e filtrar no `useMemo` de `filteredFichas`.
+- Atualizar contadores (`parceiroCount`, `pendingCount`, etc.) para excluir ocultas.
 
-## Diretriz final
-Não vale ampliar mais a policy do parceiro no escuro. O próximo passo certo é validar uma ficha real que falha e, em seguida, fechar explicitamente o `WITH CHECK` de todas as policies de `UPDATE` de `fichas_visita`.
+### FichasParceiro.tsx
+- Buscar `fichas_ocultas` do usuário e filtrar a lista antes de renderizar.
+
+### Dashboard.tsx
+- Na query de `dashboard-stats`, buscar IDs ocultos e excluir do cálculo de `fichasComoParceiro`.
+
+## Etapa 4 — Invalidar queries após ocultar
+
+No `onDiscarded` / callback do dialog, invalidar:
+- `['fichas', user.id]`
+- `['fichas-parceiro', user.id]`
+- `['dashboard-stats', user.id]`
+
+## Arquivos modificados
+
+| Arquivo | Alteração |
+|---------|-----------|
+| Migration SQL | Criar `fichas_ocultas` + RLS |
+| `src/components/DescartarFichaDialog.tsx` | INSERT em `fichas_ocultas` em vez de UPDATE em `fichas_visita` |
+| `src/pages/ListaFichas.tsx` | Query de ocultas + filtro |
+| `src/pages/FichasParceiro.tsx` | Query de ocultas + filtro |
+| `src/pages/Dashboard.tsx` | Query de ocultas + filtro nos stats |
+
+## Riscos
+
+- Nenhum: não toca em `fichas_visita`, não altera policies existentes, não modifica `_shared/auth.ts`.
+- A ficha continua existindo normalmente para o corretor proprietário.
+- Se o parceiro quiser ver novamente, basta deletar a row de `fichas_ocultas` (funcionalidade futura, se necessário).
+
