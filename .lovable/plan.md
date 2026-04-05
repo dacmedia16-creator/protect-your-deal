@@ -1,69 +1,73 @@
 
+# Plano revisado — erro persiste após o ajuste da policy
 
-# Diagnóstico: RLS bloqueando descarte de parceria em `fichas_visita`
+## Situação já confirmada no banco
+- A policy `Corretor parceiro pode atualizar fichas` já está ativa com `WITH CHECK` explícito permitindo `corretor_parceiro_id = null`.
+- O descarte no app faz apenas este `UPDATE`:
+  - `corretor_parceiro_id = null`
+  - `parte_preenchida_parceiro = null`
+- Não há trigger em `fichas_visita` regravando esses dois campos.
+- Os registros atuais com parceiro apontam para perfis ativos.
 
-## 1. Causa raiz
+## Diagnóstico atualizado
+A causa já não parece ser “faltou aplicar a migration”. O erro persistente indica uma destas hipóteses, em ordem de prioridade:
 
-A policy de UPDATE para corretor parceiro usa `corretor_parceiro_id = auth.uid()` como `USING`. Como **não há `WITH CHECK` explícito**, o PostgreSQL reutiliza a expressão `USING` para validar a linha **após** o update. O descarte seta `corretor_parceiro_id = null`, então `null = auth.uid()` retorna `false` e a policy rejeita a nova linha.
+1. O request que falha não está satisfazendo a policy do parceiro em runtime  
+   (`auth.uid()` no momento do update não bate com o `corretor_parceiro_id` atual da linha)
 
-## 2. USING vs WITH CHECK neste caso
+2. Ainda existe ambiguidade nas policies de `UPDATE` de `fichas_visita`  
+   porque só a policy do parceiro tem `WITH CHECK` explícito; as demais ainda dependem de comportamento implícito
 
-- **USING** (OLD row): `corretor_parceiro_id = auth.uid()` → passa, porque o parceiro ainda está vinculado
-- **WITH CHECK** (NEW row, implícito = cópia do USING): `null = auth.uid()` → falha, porque o campo foi anulado
+3. O novo estado da linha perde visibilidade logo após o descarte  
+   porque ao zerar `corretor_parceiro_id`, a linha deixa de atender a policy `Corretor parceiro pode ver fichas`
 
-## 3. Policy a corrigir
+## Policies que precisam ser inspecionadas primeiro
+1. `Corretor parceiro pode atualizar fichas`
+2. `Corretor pode atualizar suas fichas`
+3. `Líder pode atualizar fichas da equipe`
+4. `Super admin pode atualizar fichas`
+5. `Corretor parceiro pode ver fichas`
 
-```
-Policy: "Corretor parceiro pode atualizar fichas"
-Command: UPDATE
-USING: (corretor_parceiro_id = auth.uid()) AND is_user_active(auth.uid())
-WITH CHECK: (implícito = mesmo que USING) ← problema aqui
-```
+## Plano de correção com menor risco
 
-Nenhuma outra policy de UPDATE cobre este caso — as demais exigem `user_id = auth.uid()` ou `is_super_admin`.
+### Etapa 1 — validar uma ficha real que falha
+Para a ficha que reproduz o erro, conferir no banco:
+- `id`
+- `user_id`
+- `corretor_parceiro_id`
+- `parte_preenchida_parceiro`
+- `status`
+- parceiro ativo em `profiles`
+- se o usuário autenticado no momento do clique é exatamente o UUID de `corretor_parceiro_id`
 
-## 4. Campos que mudam e quebram a policy
+Sem isso, qualquer nova mudança de policy vira tentativa cega.
 
-| Campo | Valor antes | Valor depois | Efeito na policy |
-|-------|------------|-------------|-----------------|
-| `corretor_parceiro_id` | `auth.uid()` | `null` | WITH CHECK falha |
-| `parte_preenchida_parceiro` | texto | `null` | Sem efeito direto |
+### Etapa 2 — eliminar ambiguidades de pós-update
+Padronizar **todas** as policies de `UPDATE` de `fichas_visita` com `WITH CHECK` explícito, sem ampliar escopo:
+- corretor próprio
+- parceiro
+- líder
+- super admin
 
-## 5. Correção de menor risco
+Objetivo: garantir que nenhum caminho de update dependa de `USING` implícito para validar o novo estado.
 
-Recriar a policy adicionando um `WITH CHECK` explícito que permita ao parceiro anular seu próprio vínculo:
+### Etapa 3 — revisar visibilidade do novo estado
+No descarte, a linha deixa de ser “do parceiro”. Então a revisão deve confirmar se o fluxo do update exige ou não leitura da linha já atualizada. Se exigir, a visibilidade pós-update também precisa ser tratada na modelagem de RLS.
 
-```sql
-DROP POLICY "Corretor parceiro pode atualizar fichas" ON public.fichas_visita;
+## Critério para confirmar que a causa é policy
+O problema é realmente de policy se, na ficha que falha:
+- `corretor_parceiro_id` antes do update = usuário logado
+- usuário está ativo
+- update continua falhando com erro de RLS
 
-CREATE POLICY "Corretor parceiro pode atualizar fichas"
-ON public.fichas_visita
-FOR UPDATE
-TO authenticated
-USING (
-  (corretor_parceiro_id = auth.uid()) AND is_user_active(auth.uid())
-)
-WITH CHECK (
-  (corretor_parceiro_id IS NULL OR corretor_parceiro_id = auth.uid())
-  AND is_user_active(auth.uid())
-);
-```
+Se isso não fechar, a falha passa a ser mismatch entre ator e linha, não ausência do `WITH CHECK` já aplicado.
 
-Isso permite que a nova linha tenha `corretor_parceiro_id = null` (descarte) ou mantenha o mesmo valor (edições normais do parceiro), sem abrir escopo para o parceiro vincular outro user_id.
+## Resultado esperado após a correção final
+- parceiro consegue descartar a própria parceria
+- parceiro não consegue atribuir outro UUID como parceiro
+- corretor proprietário não é afetado
+- líder e super admin continuam com o comportamento atual
+- `fichas_visita` fica sem policies de `UPDATE` com regra implícita
 
-## 6. Checklist de validação
-
-- [ ] Corretor parceiro consegue descartar parceria sem erro RLS
-- [ ] Corretor parceiro consegue editar campos normalmente (ex: parte do comprador)
-- [ ] Corretor parceiro NÃO consegue alterar `corretor_parceiro_id` para outro UUID
-- [ ] Corretor proprietário (`user_id`) não é afetado
-- [ ] Super admin continua podendo atualizar fichas
-- [ ] Líder de equipe continua podendo atualizar fichas da equipe
-
-## Detalhes técnicos
-
-- **Escopo**: 1 migration SQL (drop + create policy)
-- **Risco**: Baixo — apenas adiciona `WITH CHECK` explícito, sem alterar `USING`
-- **Frontend**: Zero mudanças necessárias — o código do `DescartarFichaDialog` já está correto
-- **Rollback**: Recriar a policy original sem `WITH CHECK`
-
+## Diretriz final
+Não vale ampliar mais a policy do parceiro no escuro. O próximo passo certo é validar uma ficha real que falha e, em seguida, fechar explicitamente o `WITH CHECK` de todas as policies de `UPDATE` de `fichas_visita`.
