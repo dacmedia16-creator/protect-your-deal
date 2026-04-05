@@ -327,7 +327,8 @@ export default function AdminAssinaturas() {
     }
   };
 
-  return (<AnimatedContent className="space-y-6">
+  return (<>
+    <AnimatedContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Assinaturas</h1>
@@ -857,5 +858,6 @@ export default function AdminAssinaturas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>);
+      </Dialog></>
+      </>);
 }

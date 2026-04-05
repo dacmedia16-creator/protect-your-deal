@@ -374,7 +374,8 @@ export default function ConstutoraEquipes() {
         </div>);
   }
 
-  return (<div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold">Equipes</h1>
@@ -598,5 +599,6 @@ export default function ConstutoraEquipes() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>);
+      </Dialog></>
+      </>);
 }

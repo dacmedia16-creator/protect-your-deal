@@ -573,7 +573,8 @@ export default function AdminDetalhesImobiliaria() {
         </div>);
   }
 
-  return (<div className="max-w-4xl mx-auto">
+  return (<>
+    <div className="max-w-4xl mx-auto">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
@@ -1316,5 +1317,6 @@ export default function AdminDetalhesImobiliaria() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>);
+      </Dialog></>
+      </>);
 }

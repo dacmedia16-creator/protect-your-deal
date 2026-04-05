@@ -384,7 +384,8 @@ export default function ConstutoraCorretores() {
         </div>);
   }
 
-  return (<div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         {/* Header + Toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -765,5 +766,6 @@ export default function ConstutoraCorretores() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>);
+      </AlertDialog></>
+      </>);
 }

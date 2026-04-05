@@ -549,7 +549,7 @@ export default function ConstutoraImobiliarias() {
                       (v) => v.empreendimento_id === emp.id && v.imobiliaria_id === linkImobId
                     )
                   : false;
-                return (
+                return (<>
                   <label
                     key={emp.id}
                     className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
@@ -595,5 +595,6 @@ export default function ConstutoraImobiliarias() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>);
+      </AlertDialog></>
+      </>);
 }

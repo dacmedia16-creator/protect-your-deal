@@ -592,7 +592,8 @@ export default function AdminUsuarios() {
     }
   };
 
-  return (<div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         {/* Header - Responsive */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -1459,5 +1460,6 @@ export default function AdminUsuarios() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>);
+      </Dialog></>
+      </>);
 }

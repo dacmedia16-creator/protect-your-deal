@@ -561,7 +561,7 @@ export default function EmpresaPesquisas() {
                   {Object.entries(ratingLabels).map(([key, label]) => {
                     const ratingValue = response[key as keyof SurveyResponse];
                     const numericValue = typeof ratingValue === 'number' ? ratingValue : 0;
-                    return (
+                    return (<>
                       <div key={key} className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">{label}</span>
                         <div className="flex items-center gap-1">
@@ -628,5 +628,6 @@ export default function EmpresaPesquisas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>);
+      </Dialog></>
+      </>);
 }

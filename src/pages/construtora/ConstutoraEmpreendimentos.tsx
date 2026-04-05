@@ -135,7 +135,8 @@ export default function ConstutoraEmpreendimentos() {
     cancelado: 'bg-red-500/10 text-red-600 border-red-500/20',
   };
 
-  return (<div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold">Empreendimentos</h1>
@@ -259,5 +260,6 @@ export default function ConstutoraEmpreendimentos() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>);
+      </AlertDialog></>
+      </>);
 }
