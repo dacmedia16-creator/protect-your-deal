@@ -229,13 +229,14 @@ export function VersionCheckWithOverlay() {
    * Verifica e inicia countdown se necessário.
    */
   const checkAndUpdate = useCallback(async () => {
+    if (isInactive) return;
     const result = await checkVersion();
     
     if (result.needsUpdate && !showOverlay) {
       console.log(`🆕 Nova versão detectada: ${result.serverVersion} (atual: ${result.localVersion})`);
       startCountdown();
     }
-  }, [checkVersion, showOverlay, startCountdown]);
+  }, [checkVersion, showOverlay, startCountdown, isInactive]);
 
   // Handler for "Update Now" button - calls forceUpdate directly
   const handleUpdateNow = useCallback(() => {
@@ -245,6 +246,8 @@ export function VersionCheckWithOverlay() {
 
   // Setup checks on mount and visibility changes
   useEffect(() => {
+    if (isInactive) return;
+
     // Initial check after a short delay
     const initialTimeout = setTimeout(checkAndUpdate, 3000);
 
@@ -272,7 +275,7 @@ export function VersionCheckWithOverlay() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [checkAndUpdate]);
+  }, [checkAndUpdate, isInactive]);
 
   if (isInactive) return null;
 

@@ -245,7 +245,7 @@ export default function ConstutoraPesquisas() {
 
   const hasRespondedSurveys = surveys?.some(s => s.status === 'responded') || false;
 
-  return (<div className="space-y-6">
+  return (<><div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <Link to="/construtora">
@@ -562,7 +562,7 @@ export default function ConstutoraPesquisas() {
                   {Object.entries(ratingLabels).map(([key, label]) => {
                     const ratingValue = response[key as keyof SurveyResponse];
                     const numericValue = typeof ratingValue === 'number' ? ratingValue : 0;
-                    return (<>
+                    return (
                       <div key={key} className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">{label}</span>
                         <div className="flex items-center gap-1">

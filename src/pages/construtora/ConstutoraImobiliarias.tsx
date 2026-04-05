@@ -259,7 +259,7 @@ export default function ConstutoraImobiliarias() {
     return matchSearch && matchStatus;
   });
 
-  return (<div className="space-y-6">
+  return (<><div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -549,7 +549,7 @@ export default function ConstutoraImobiliarias() {
                       (v) => v.empreendimento_id === emp.id && v.imobiliaria_id === linkImobId
                     )
                   : false;
-                return (<>
+                return (
                   <label
                     key={emp.id}
                     className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
