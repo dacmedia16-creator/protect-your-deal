@@ -1,0 +1,1 @@
+ALTER TABLE public.planos ADD COLUMN recursos_texto text;
