@@ -1,97 +1,79 @@
 
 
-# Lote 3 — Plano Operacional Final
+# Validação Pós-Lote 3 — Auth Multi-Role
 
-## 1. Ordem final de execução
-
-```text
-Passo 1 → requireAnyRole em _shared/auth.ts
-Passo 2 → Migrar admin-get-corretores-emails
-Passo 3 → Migrar admin-reset-corretor-password
-Passo 4 → Migrar admin-update-corretor
-Passo 5 → Atualizar docs/edge-functions-security.md
-Passo 6 → grep de validação final
-```
-
-## 2. Critério de pronto para requireAnyRole
-
-O helper está pronto quando:
-- Aceita `roles: string[]` e faz `.in("role", roles)` em `user_roles`
-- Retorna `{ user, supabaseAdmin, role, roleData }` onde `roleData` é o registro completo (`role`, `imobiliaria_id`, `construtora_id`)
-- Retorna `Response 403` se nenhuma role é encontrada
-- Reutiliza `requireAuth` internamente (não duplica auth)
-- `requireRole` existente continua funcionando (não é alterado)
-
-## 3. O que o helper faz e NÃO faz
-
-**Faz:**
-- Autenticação via Bearer token
-- Query em `user_roles` filtrando por `user_id` + `roles[]`
-- Retorna o primeiro match encontrado com dados organizacionais
-- Retorna `supabaseAdmin` pronto para uso
-
-**NÃO faz:**
-- Scoping organizacional (verificar se corretor X pertence à mesma imobiliária)
-- Verificação de líder de equipe (RPC `is_membro_da_minha_equipe`)
-- Lógica de negócio (transferência de fichas, limpeza de telefone)
-- Fallback para roles alternativas (ex: se não é admin, tentar líder)
-
-## 4. Checklist de validação por função
+## 1. Checklist de validação manual
 
 ### admin-get-corretores-emails
-- [ ] Zero `createClient` local
-- [ ] Importa `requireAnyRole` e `corsHeaders` de `_shared/auth.ts`
-- [ ] `requireAnyRole(req, ["imobiliaria_admin", "super_admin"])`
-- [ ] Scoping por `imobiliaria_id` extraído de `roleData` (não de query extra)
-- [ ] `isSuperAdmin` derivado de `role === "super_admin"` do retorno
-- [ ] Resposta vazia para `user_ids = []` mantida
-- [ ] Filtro de `allowedUserIds` por imobiliária mantido para não-super_admin
+- [ ] Super admin consegue buscar emails de corretores de qualquer imobiliária
+- [ ] Admin de imobiliária consegue buscar emails apenas dos seus corretores
+- [ ] Admin de imobiliária NÃO recebe emails de corretores de outra imobiliária
+- [ ] Request com user_ids vazio retorna `{ emails: {} }` sem erro
+- [ ] Corretor comum recebe 403
 
 ### admin-reset-corretor-password
-- [ ] Zero `createClient` local
-- [ ] `requireAnyRole(req, ["super_admin", "imobiliaria_admin", "construtora_admin"])`
-- [ ] Scoping organizacional (imobiliária/construtora) mantido no corpo
-- [ ] Validação de `new_password.length >= 6` mantida
-- [ ] `updateUserById` usa `supabaseAdmin` do helper
+- [ ] Super admin reseta senha de qualquer corretor
+- [ ] Admin de imobiliária reseta senha apenas de corretor da sua imobiliária
+- [ ] Admin de construtora reseta senha apenas de corretor da sua construtora
+- [ ] Admin de imobiliária NÃO consegue resetar senha de corretor de outra org
+- [ ] Senha com menos de 6 caracteres retorna erro 400
+- [ ] Corretor comum recebe 403
 
 ### admin-update-corretor
-- [ ] Zero `createClient` local
-- [ ] `requireAnyRole(req, ["super_admin", "imobiliaria_admin", "construtora_admin"])`
-- [ ] Fallback para `isLiderOfMembro` via RPC continua **fora do helper**, no corpo
-- [ ] Restrição de campos para líder mantida
-- [ ] Lógica de deativação (limpar telefone, transferir fichas, limpar parceiro) intacta
-- [ ] Scoping organizacional mantido no corpo
+- [ ] Super admin edita qualquer campo de qualquer corretor
+- [ ] Admin de imobiliária edita corretor da sua org (nome, telefone, creci, cpf, email, ativo)
+- [ ] Admin de construtora edita corretor da sua org
+- [ ] Líder de equipe consegue apenas ativar/desativar membro da sua equipe
+- [ ] Líder de equipe NÃO consegue editar nome/telefone/creci de membro
+- [ ] Líder de equipe NÃO consegue alterar corretor fora da sua equipe
+- [ ] Desativação limpa telefone e transfere fichas (quando admin faz, não líder)
+- [ ] Corretor comum sem liderança recebe 403
 
-## 5. Regressões mais prováveis
+## 2. Maior atenção: admin-update-corretor
 
-| Função | Risco | Causa |
+Três razões:
+1. **Fluxo híbrido** — é a única função com fallback de `requireAnyRole` → `requireAuth` + RPC. Se o fallback falhar silenciosamente, líderes perdem acesso sem mensagem clara.
+2. **Lógica de negócio densa** — deativação dispara efeitos colaterais (limpar telefone, transferir fichas, limpar parceiro). Qualquer regressão aqui afeta dados de produção.
+3. **4 caminhos de autorização** — super_admin, imobiliária_admin, construtora_admin, líder. Mais caminhos = mais superfície de regressão.
+
+## 3. Regressões mais prováveis no fluxo híbrido
+
+| Cenário | Risco | Sintoma |
 |:---|:---|:---|
-| `admin-get-corretores-emails` | Baixo | Função simples, somente leitura. Risco: `roleData` não incluir `imobiliaria_id` se o select do helper não tiver as colunas certas. |
-| `admin-reset-corretor-password` | Médio | Hoje cria **dois** clients (`supabaseAuth` + `supabaseAdmin`). Se o helper só retornar `supabaseAdmin`, o fluxo de `getUser` muda. Risco: auth funcionar diferente com service-role client vs anon client. |
-| `admin-update-corretor` | Médio-Alto | Tem fallback para líder de equipe que **não é uma role** — é um RPC. Se a migração tratar `requireAnyRole` como gate único e falhar para líderes (que são `corretor`), o líder perde acesso. |
+| Líder recebe 403 direto | Alto | `requireAnyRole` retorna Response e o código não faz fallback corretamente |
+| Líder consegue editar campos além de `ativo` | Médio | Guard de campos não é atingido porque `isLiderOfMembro` não é setado corretamente |
+| Admin de construtora perde acesso | Médio | `construtoraAdminRole` não é extraído do `roleData` corretamente |
+| Deativação por líder transfere fichas indevidamente | Baixo | Flag `isLiderOfMembro` não é usada no guard de transferência |
 
-## 6. Função que exige maior cuidado
+## 4. O que monitorar nos logs (24h)
 
-**`admin-update-corretor`** — por três razões:
+- **Erros 403 inesperados** em `admin-update-corretor` — pode indicar que líderes perderam acesso
+- **Erros 500** em qualquer das 3 funções — indica problema no helper ou no scoping
+- **Ausência de logs** "admin-update-corretor: isLiderOfMembro: true" quando líder tenta ativar/desativar — indica que o fallback não está sendo atingido
+- **Logs de boot/shutdown normais** — confirmar que as funções estão deployando sem crash
 
-1. **Líder de equipe não é uma role admin.** O helper vai retornar 403 para líderes. A função precisa de um fallback explícito: se `requireAnyRole` retorna 403, verificar via RPC se é líder antes de rejeitar.
-2. **261 linhas** com lógica de negócio densa (deativação, transferência de fichas, limpeza de parceiro).
-3. **Mais caminhos de autorização** (super_admin, imobiliária_admin, construtora_admin, líder) do que qualquer outra função do lote.
+## 5. RLS, permissões e escopo organizacional
 
-**Decisão arquitetural:** Para `admin-update-corretor`, o padrão será:
-```text
-1. Tentar requireAnyRole(req, ["super_admin", "imobiliaria_admin", "construtora_admin"])
-2. Se retornar Response (403), fazer fallback manual:
-   a. Chamar requireAuth(req) para obter user + supabaseAdmin
-   b. Verificar is_membro_da_minha_equipe via RPC
-   c. Se não é líder, retornar o 403 original
-```
+- Confirmar que nenhuma das 3 funções faz query direta sem `supabaseAdmin` (service role) — todas devem usar o client retornado pelo helper
+- Verificar que o scoping por `imobiliaria_id` / `construtora_id` continua no corpo de cada função (não foi movido para o helper por design)
+- Confirmar que o `roleData` retornado inclui `imobiliaria_id` e `construtora_id` (o select do helper faz `.select("role, imobiliaria_id, construtora_id")`)
 
-## 7. Regra de rollout
+## 6. Critério de encerramento do Lote 3
 
-1. **Deploy sequencial, não em batch.** Cada função é deployada e testada isoladamente antes de migrar a próxima.
-2. **Passo 1 (helper) é aditivo.** `requireAnyRole` é adicionado sem alterar `requireRole` ou `requireAuth` — zero risco de regressão nas funções do Lote 2.
-3. **Cada deploy é verificável em < 5 minutos** via grep no código + teste funcional no frontend (listar corretores, resetar senha, editar corretor).
-4. **Se qualquer função falhar em produção:** reverter apenas aquela função ao código original (que é autossuficiente com `createClient` local) sem afetar as demais.
-5. **Janela de observação:** 24h entre a migração da função 2 e da função 3. A função 3 (`admin-update-corretor`) só é migrada após confirmar estabilidade das duas anteriores.
+O lote está encerrado quando:
+1. **48h sem erros 500** nas 3 funções migradas
+2. **Zero relatos** de líder de equipe perdendo acesso a ativar/desativar
+3. **Zero relatos** de admin de construtora/imobiliária sem acesso a reset de senha ou edição
+4. **Grep confirmado**: zero `createClient` local nas 3 funções
+5. **Docs atualizados**: `edge-functions-security.md` reflete o estado real
+
+## 7. Próximo lote (sem reabrir Lote 3)
+
+Candidatas naturais para o Lote 4:
+1. **Migrar `admin-create-corretor`** — usa createClient local + auth manual
+2. **Migrar `admin-create-user`** — mesma situação
+3. **Migrar `admin-promote-corretor`** — já usa construtora_admin, encaixa em `requireAnyRole`
+4. **Avaliar `empresa-delete-corretor`** — função longa com auth local e lógica de cleanup
+
+Foco: continuar padronização de auth em funções de escrita (create/promote/delete), sem tocar em funções já migradas nos Lotes 2 e 3.
 
