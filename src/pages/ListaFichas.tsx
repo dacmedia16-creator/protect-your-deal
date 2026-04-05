@@ -41,6 +41,7 @@ import { DescartarFichaDialog } from '@/components/DescartarFichaDialog';
 import { InfiniteScrollTrigger } from '@/components/InfiniteScrollTrigger';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { PWAInstallFAB } from '@/components/PWAInstallFAB';
+import { useFichasOcultas } from '@/hooks/useFichasOcultas';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: typeof Clock }> = {
   pendente: { label: 'Pendente', variant: 'secondary', icon: Clock },
@@ -95,11 +96,13 @@ export default function ListaFichas() {
     enabled: !!user,
   });
 
-  const fichas = useMemo(() => 
-    data?.pages.flatMap(page => page.items) || [], 
-    [data]
-  );
-  const totalCount = data?.pages[0]?.totalCount || 0;
+  const { hiddenIds } = useFichasOcultas();
+
+  const fichas = useMemo(() => {
+    const all = data?.pages.flatMap(page => page.items) || [];
+    return hiddenIds.length > 0 ? all.filter(f => !hiddenIds.includes(f.id)) : all;
+  }, [data, hiddenIds]);
+  const totalCount = (data?.pages[0]?.totalCount || 0) - hiddenIds.length;
 
   const filteredFichas = useMemo(() => fichas.filter(ficha => {
     if (statusFilter) {

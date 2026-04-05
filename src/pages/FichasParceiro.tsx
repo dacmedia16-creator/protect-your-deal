@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +21,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { DesktopNav } from '@/components/DesktopNav';
 import { DescartarFichaDialog } from '@/components/DescartarFichaDialog';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
+import { useFichasOcultas } from '@/hooks/useFichasOcultas';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -45,8 +47,10 @@ export default function FichasParceiro() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const { hiddenIds } = useFichasOcultas();
+
   // Buscar fichas onde o usuário é o corretor parceiro
-  const { data: fichas, isLoading } = useQuery({
+  const { data: fichasRaw, isLoading } = useQuery({
     queryKey: ['fichas-parceiro', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -62,6 +66,11 @@ export default function FichasParceiro() {
     },
     enabled: !!user,
   });
+
+  const fichas = useMemo(() => {
+    if (!fichasRaw) return [];
+    return hiddenIds.length > 0 ? fichasRaw.filter(f => !hiddenIds.includes(f.id)) : fichasRaw;
+  }, [fichasRaw, hiddenIds]);
 
   // Buscar nomes dos corretores de origem
   const corretorIds = [...new Set(fichas?.map(f => f.user_id) || [])];
