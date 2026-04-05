@@ -628,6 +628,6 @@ export default function EmpresaPesquisas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

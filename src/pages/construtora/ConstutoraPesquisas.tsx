@@ -617,6 +617,6 @@ export default function ConstutoraPesquisas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

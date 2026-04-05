@@ -1317,6 +1317,6 @@ export default function AdminDetalhesImobiliaria() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

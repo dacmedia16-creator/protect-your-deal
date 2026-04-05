@@ -766,6 +766,6 @@ export default function ConstutoraCorretores() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog></>
+      </AlertDialog>
       </>);
 }

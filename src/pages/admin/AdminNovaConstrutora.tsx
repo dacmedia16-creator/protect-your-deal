@@ -422,6 +422,6 @@ export default function AdminNovaConstrutora() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

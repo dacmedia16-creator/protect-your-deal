@@ -857,6 +857,6 @@ export default function AdminAssinaturas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

@@ -1018,6 +1018,6 @@ export default function AdminDetalhesCorretorAutonomo() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }
