@@ -1,53 +1,52 @@
 
 
-# Correção: Preview piscando em loop infinito
+# Diagnóstico: Segurança do Supabase Realtime
 
-## Causa Raiz
+## Descoberta Crítica
 
-O componente `VersionCheckWithOverlay` está detectando uma "nova versão" e forçando reload da página a cada 5 segundos. Como a versão nunca muda após o reload, ele entra em loop infinito de reload.
+**O risco identificado pelo scanner de segurança é um falso positivo para este projeto.**
 
-Os build errors mostrados são de builds anteriores (stale) — o código atual compila com zero erros (`tsc --noEmit --skipLibCheck` = 0 errors).
+O Supabase Realtime tem dois mecanismos separados:
 
-## O que está acontecendo
+1. **Postgres Changes** (o que este projeto usa) — filtra eventos automaticamente pelas **políticas RLS existentes da tabela fonte**. Cada cliente só recebe eventos de linhas que suas RLS policies permitem ver via SELECT.
 
-1. `VersionCheckWithOverlay` chama a Edge Function `app-version`
-2. A versão do servidor (`2026-04-05 21:04`) é mais nova que a local (`2026-04-05 20:57`)
-3. Inicia countdown de 5s → força `window.location.reload()`
-4. Após reload, a versão local continua a mesma → repete o ciclo
+2. **Broadcast & Presence** (o que `realtime.messages` RLS controla) — este projeto **não usa** Broadcast nem Presence.
 
-## Bug no `isDevEnvironment`
+### Como funciona o filtro atual
 
-Embora o hostname do preview inclua `lovableproject.com` (que deveria ser detectado), o efeito `checkAndUpdate` na linha 247 **roda antes** do early return na linha 277. O `startCountdown` seta `showOverlay = true`, e mesmo que o componente retorne `null`, o efeito de countdown continua rodando e eventualmente chama `forceUpdate()` que faz `window.location.reload()`.
+Quando um cliente se inscreve em `postgres_changes` na tabela `fichas_visita`:
+- O servidor Realtime captura o evento do WAL
+- Para cada cliente inscrito, executa internamente uma query SELECT com o JWT do cliente
+- Se a RLS policy do cliente permite ver aquela linha, o evento é entregue
+- Se não permite, o evento é descartado silenciosamente
 
-## Correção
+### Prova no código
 
-Mover o guard `isInactive` para DENTRO do `checkAndUpdate` e do `useEffect` que configura os listeners, para que a verificação nem seja executada em ambiente de dev/preview:
+Todos os 5 pontos de uso de Realtime no projeto usam exclusivamente `postgres_changes`:
 
-```tsx
-// No useEffect de setup (linha 247)
-useEffect(() => {
-  if (isInactive) return; // Guard aqui
-  const initialTimeout = setTimeout(checkAndUpdate, 3000);
-  // ...
-}, [checkAndUpdate, isInactive]);
+| Hook/Componente | Canal | Tabela | Filtro adicional |
+|---|---|---|---|
+| `useFichaNotification` | `fichas-confirmadas-notification` | `fichas_visita` | `imobiliaria_id=eq.X` ou `user_id=eq.X` |
+| `useAssinaturaNotification` | `assinatura-status-changes` | `assinaturas` | `imobiliaria_id=eq.X` / `construtora_id=eq.X` / `user_id=eq.X` |
+| `useConvitesPendentes` | `convites-realtime-{userId}` | `convites_parceiro` | `corretor_parceiro_id=eq.X` |
+| `DetalhesFicha` | `ficha-otp-{id}` | `fichas_visita` | `id=eq.X` |
+| `SuperAdminLayout` | `admin-notifications` | `assinaturas`, `user_roles`, `convites` | nenhum (super_admin tem RLS `is_super_admin()`) |
 
-// No checkAndUpdate (linha 231)  
-const checkAndUpdate = useCallback(async () => {
-  if (isInactive) return; // Guard aqui também
-  const result = await checkVersion();
-  // ...
-}, [checkVersion, showOverlay, startCountdown, isInactive]);
-```
+### Análise de segurança por tabela
 
-## Arquivos modificados
+- **`fichas_visita`**: RLS tem 6 policies de SELECT (owner, parceiro, admin imobiliária, construtora, líder equipe, super_admin). Um corretor nunca recebe eventos de fichas de outro tenant.
+- **`assinaturas`**: RLS tem 4 policies de SELECT (imobiliária, construtora, user, super_admin). Isolamento por tenant garantido.
+- **`convites_parceiro`**: RLS tem 3 policies de SELECT (origem, parceiro por ID, parceiro por telefone, super_admin). Isolamento por usuário garantido.
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/components/VersionCheckWithOverlay.tsx` | Adicionar guards `isInactive` nos effects e callbacks |
+## Conclusão
 
-## Resultado esperado
+**Nenhuma mudança é necessária.** Criar RLS em `realtime.messages` e migrar para canais `private: true` não teria efeito nenhum porque o projeto não usa Broadcast nem Presence. As RLS policies existentes nas tabelas fonte JÁ protegem os eventos de `postgres_changes`.
 
-- O preview para de recarregar em loop
-- Em produção, a verificação de versão continua funcionando normalmente
-- Zero impacto na UX
+### Única recomendação menor (opcional)
+
+O canal `admin-notifications` no `SuperAdminLayout` escuta `assinaturas` e `user_roles` sem filtro de coluna. Isso é seguro porque a RLS de `assinaturas` e `user_roles` para super_admin exige `is_super_admin(auth.uid())` — um corretor comum nunca receberia esses eventos. Não é necessário alterar.
+
+## Ação sugerida
+
+Marcar o finding `MISSING_REALTIME_CHANNEL_AUTHORIZATION` como **ignorado/falso positivo** no painel de segurança, documentando que o projeto usa exclusivamente `postgres_changes` (protegido por RLS das tabelas fonte) e não usa Broadcast/Presence.
 
