@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
-import { Route } from "react-router-dom";
+import { Route, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PageLoader } from "@/components/PageLoader";
+import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const AdminImobiliarias = lazy(() => import("@/pages/admin/AdminImobiliarias"));
@@ -33,43 +34,46 @@ const AdminNovaConstrutora = lazy(() => import("@/pages/admin/AdminNovaConstruto
 const ConfiguracoesEmail = lazy(() => import("@/pages/ConfiguracoesEmail"));
 const HistoricoEmails = lazy(() => import("@/pages/HistoricoEmails"));
 
-const R = ['super_admin'] as const;
-const P = (C: React.ComponentType) => (
-  <ProtectedRoute allowedRoles={[...R]}>
-    <Suspense fallback={<PageLoader />}><C /></Suspense>
+const AdminLayoutRoute = () => (
+  <ProtectedRoute allowedRoles={['super_admin']}>
+    <SuperAdminLayout>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </SuperAdminLayout>
   </ProtectedRoute>
 );
 
 export const adminRoutes = (
-  <>
-    <Route path="/admin" element={P(AdminDashboard)} />
-    <Route path="/admin/imobiliarias" element={P(AdminImobiliarias)} />
-    <Route path="/admin/imobiliarias/nova" element={P(AdminNovaImobiliaria)} />
-    <Route path="/admin/imobiliarias/:id" element={P(AdminDetalhesImobiliaria)} />
-    <Route path="/admin/planos" element={P(AdminPlanos)} />
-    <Route path="/admin/usuarios" element={P(AdminUsuarios)} />
-    <Route path="/admin/usuarios-pendentes" element={P(AdminUsuariosPendentes)} />
-    <Route path="/admin/configuracoes" element={P(AdminConfiguracoes)} />
-    <Route path="/admin/diagnostico" element={P(AdminDiagnostico)} />
-    <Route path="/admin/assinaturas" element={P(AdminAssinaturas)} />
-    <Route path="/admin/convites" element={P(AdminConvites)} />
-    <Route path="/admin/autonomos" element={P(AdminCorretoresAutonomos)} />
-    <Route path="/admin/autonomos/:userId" element={P(AdminDetalhesCorretorAutonomo)} />
-    <Route path="/admin/construtoras" element={P(AdminConstrutoras)} />
-    <Route path="/admin/construtoras/nova" element={P(AdminNovaConstrutora)} />
-    <Route path="/admin/construtoras/:id" element={P(AdminDetalhesConstrutora)} />
-    <Route path="/admin/financeiro" element={P(AdminRelatoriosFinanceiros)} />
-    <Route path="/admin/fichas" element={P(AdminFichas)} />
-    <Route path="/admin/backups" element={P(AdminBackups)} />
-    <Route path="/admin/marketing" element={P(AdminMarketingImages)} />
-    <Route path="/admin/depoimentos" element={P(AdminDepoimentos)} />
-    <Route path="/admin/afiliados" element={P(AdminAfiliados)} />
-    <Route path="/admin/cupons" element={P(AdminCupons)} />
-    <Route path="/admin/comissoes" element={P(AdminComissoes)} />
-    <Route path="/admin/indicacoes" element={P(AdminIndicacoes)} />
-    <Route path="/admin/sessoes" element={P(AdminSessoes)} />
-    <Route path="/admin/whatsapp" element={P(AdminWhatsApp)} />
-    <Route path="/admin/email" element={P(ConfiguracoesEmail)} />
-    <Route path="/admin/email/historico" element={P(HistoricoEmails)} />
-  </>
+  <Route path="/admin" element={<AdminLayoutRoute />}>
+    <Route index element={<AdminDashboard />} />
+    <Route path="imobiliarias" element={<AdminImobiliarias />} />
+    <Route path="imobiliarias/nova" element={<AdminNovaImobiliaria />} />
+    <Route path="imobiliarias/:id" element={<AdminDetalhesImobiliaria />} />
+    <Route path="planos" element={<AdminPlanos />} />
+    <Route path="usuarios" element={<AdminUsuarios />} />
+    <Route path="usuarios-pendentes" element={<AdminUsuariosPendentes />} />
+    <Route path="configuracoes" element={<AdminConfiguracoes />} />
+    <Route path="diagnostico" element={<AdminDiagnostico />} />
+    <Route path="assinaturas" element={<AdminAssinaturas />} />
+    <Route path="convites" element={<AdminConvites />} />
+    <Route path="autonomos" element={<AdminCorretoresAutonomos />} />
+    <Route path="autonomos/:userId" element={<AdminDetalhesCorretorAutonomo />} />
+    <Route path="construtoras" element={<AdminConstrutoras />} />
+    <Route path="construtoras/nova" element={<AdminNovaConstrutora />} />
+    <Route path="construtoras/:id" element={<AdminDetalhesConstrutora />} />
+    <Route path="financeiro" element={<AdminRelatoriosFinanceiros />} />
+    <Route path="fichas" element={<AdminFichas />} />
+    <Route path="backups" element={<AdminBackups />} />
+    <Route path="marketing" element={<AdminMarketingImages />} />
+    <Route path="depoimentos" element={<AdminDepoimentos />} />
+    <Route path="afiliados" element={<AdminAfiliados />} />
+    <Route path="cupons" element={<AdminCupons />} />
+    <Route path="comissoes" element={<AdminComissoes />} />
+    <Route path="indicacoes" element={<AdminIndicacoes />} />
+    <Route path="sessoes" element={<AdminSessoes />} />
+    <Route path="whatsapp" element={<AdminWhatsApp />} />
+    <Route path="email" element={<ConfiguracoesEmail />} />
+    <Route path="email/historico" element={<HistoricoEmails />} />
+  </Route>
 );

@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 
 interface ImobiliariaLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
@@ -217,7 +217,7 @@ export function ImobiliariaLayout({ children }: ImobiliariaLayoutProps) {
       {/* Main content */}
       <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen">
         <div className="p-4 lg:p-8">
-          {children}
+          {children || <Outlet />}
         </div>
       </main>
     </div>

@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
-import { Route } from "react-router-dom";
+import { Route, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PageLoader } from "@/components/PageLoader";
+import { ImobiliariaLayout } from "@/components/layouts/ImobiliariaLayout";
 
 const EmpresaDashboard = lazy(() => import("@/pages/empresa/EmpresaDashboard"));
 const EmpresaCorretores = lazy(() => import("@/pages/empresa/EmpresaCorretores"));
@@ -14,24 +15,27 @@ const EmpresaConfiguracoes = lazy(() => import("@/pages/empresa/EmpresaConfigura
 const EmpresaPesquisas = lazy(() => import("@/pages/empresa/EmpresaPesquisas"));
 const EmpresaParceriasConstrutoras = lazy(() => import("@/pages/empresa/EmpresaParceriasConstrutoras"));
 
-const R = ['imobiliaria_admin'] as const;
-const P = (C: React.ComponentType) => (
-  <ProtectedRoute allowedRoles={[...R]}>
-    <Suspense fallback={<PageLoader />}><C /></Suspense>
+const EmpresaLayoutRoute = () => (
+  <ProtectedRoute allowedRoles={['imobiliaria_admin']}>
+    <ImobiliariaLayout>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </ImobiliariaLayout>
   </ProtectedRoute>
 );
 
 export const empresaRoutes = (
-  <>
-    <Route path="/empresa" element={P(EmpresaDashboard)} />
-    <Route path="/empresa/corretores" element={P(EmpresaCorretores)} />
-    <Route path="/empresa/corretores/:userId" element={P(EmpresaDetalhesCorretor)} />
-    <Route path="/empresa/equipes" element={P(EmpresaEquipes)} />
-    <Route path="/empresa/fichas" element={P(EmpresaFichas)} />
-    <Route path="/empresa/relatorios" element={P(EmpresaRelatorios)} />
-    <Route path="/empresa/assinatura" element={P(EmpresaAssinatura)} />
-    <Route path="/empresa/configuracoes" element={P(EmpresaConfiguracoes)} />
-    <Route path="/empresa/pesquisas" element={P(EmpresaPesquisas)} />
-    <Route path="/empresa/parcerias-construtoras" element={P(EmpresaParceriasConstrutoras)} />
-  </>
+  <Route path="/empresa" element={<EmpresaLayoutRoute />}>
+    <Route index element={<EmpresaDashboard />} />
+    <Route path="corretores" element={<EmpresaCorretores />} />
+    <Route path="corretores/:userId" element={<EmpresaDetalhesCorretor />} />
+    <Route path="equipes" element={<EmpresaEquipes />} />
+    <Route path="fichas" element={<EmpresaFichas />} />
+    <Route path="relatorios" element={<EmpresaRelatorios />} />
+    <Route path="assinatura" element={<EmpresaAssinatura />} />
+    <Route path="configuracoes" element={<EmpresaConfiguracoes />} />
+    <Route path="pesquisas" element={<EmpresaPesquisas />} />
+    <Route path="parcerias-construtoras" element={<EmpresaParceriasConstrutoras />} />
+  </Route>
 );

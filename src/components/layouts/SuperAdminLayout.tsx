@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -45,7 +45,7 @@ import {
 import { GlobalSearch } from '@/components/admin/GlobalSearch';
 
 interface SuperAdminLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 interface NavGroup {
@@ -469,7 +469,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       {/* Main content */}
       <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen">
         <div className="p-4 lg:p-8">
-          {children}
+          {children || <Outlet />}
         </div>
       </main>
     </div>
