@@ -1,6 +1,7 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PageLoader } from "@/components/PageLoader";
 
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const NovaFicha = lazy(() => import("@/pages/NovaFicha"));
@@ -25,79 +26,83 @@ const MinhasIndicacoes = lazy(() => import("@/pages/MinhasIndicacoes"));
 
 const CR = ['corretor', 'imobiliaria_admin'] as const;
 
+const S = (C: React.ComponentType) => (
+  <Suspense fallback={<PageLoader />}><C /></Suspense>
+);
+
 export const corretorRoutes = (
   <>
     <Route path="/pesquisas" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><Pesquisas /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(Pesquisas)}</ProtectedRoute>
     } />
     <Route path="/dashboard" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><Dashboard /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(Dashboard)}</ProtectedRoute>
     } />
     <Route path="/fichas" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><ListaFichas /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(ListaFichas)}</ProtectedRoute>
     } />
     <Route path="/fichas/nova" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><NovaFicha /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(NovaFicha)}</ProtectedRoute>
     } />
     <Route path="/fichas/:id" element={
       <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin', 'construtora_admin']}>
-        <DetalhesFicha />
+        {S(DetalhesFicha)}
       </ProtectedRoute>
     } />
     <Route path="/clientes" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><ListaClientes /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(ListaClientes)}</ProtectedRoute>
     } />
     <Route path="/clientes/novo" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><FormCliente /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(FormCliente)}</ProtectedRoute>
     } />
     <Route path="/clientes/:id" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><DetalhesCliente /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(DetalhesCliente)}</ProtectedRoute>
     } />
     <Route path="/clientes/:id/editar" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><FormCliente /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(FormCliente)}</ProtectedRoute>
     } />
     <Route path="/imoveis" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><ListaImoveis /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(ListaImoveis)}</ProtectedRoute>
     } />
     <Route path="/imoveis/novo" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><FormImovel /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(FormImovel)}</ProtectedRoute>
     } />
     <Route path="/imoveis/:id" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><DetalhesImovel /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(DetalhesImovel)}</ProtectedRoute>
     } />
     <Route path="/imoveis/:id/editar" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><FormImovel /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(FormImovel)}</ProtectedRoute>
     } />
     <Route path="/integracoes" element={
-      <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription><Integracoes /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>{S(Integracoes)}</ProtectedRoute>
     } />
     <Route path="/integracoes/templates" element={
-      <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription><TemplatesMensagem /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={['imobiliaria_admin']} requireSubscription>{S(TemplatesMensagem)}</ProtectedRoute>
     } />
     <Route path="/relatorios" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><Relatorios /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(Relatorios)}</ProtectedRoute>
     } />
     <Route path="/perfil" element={
       <ProtectedRoute allowedRoles={['corretor', 'imobiliaria_admin', 'super_admin', 'construtora_admin']}>
-        <Perfil />
+        {S(Perfil)}
       </ProtectedRoute>
     } />
     <Route path="/minha-assinatura" element={
-      <ProtectedRoute allowedRoles={['corretor']}><CorretorAssinatura /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={['corretor']}>{S(CorretorAssinatura)}</ProtectedRoute>
     } />
     <Route path="/convites" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><Convites /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(Convites)}</ProtectedRoute>
     } />
     <Route path="/convites-recebidos" element={<Navigate to="/convites?tab=recebidos" replace />} />
     <Route path="/convites-enviados" element={<Navigate to="/convites?tab=enviados" replace />} />
     <Route path="/fichas-parceiro" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><FichasParceiro /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(FichasParceiro)}</ProtectedRoute>
     } />
     <Route path="/minha-equipe" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><MinhaEquipe /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(MinhaEquipe)}</ProtectedRoute>
     } />
     <Route path="/minhas-indicacoes" element={
-      <ProtectedRoute allowedRoles={[...CR]} requireSubscription><MinhasIndicacoes /></ProtectedRoute>
+      <ProtectedRoute allowedRoles={[...CR]} requireSubscription>{S(MinhasIndicacoes)}</ProtectedRoute>
     } />
   </>
 );

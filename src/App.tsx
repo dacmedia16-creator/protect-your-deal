@@ -43,7 +43,7 @@ const App = () => (
               <Suspense fallback={null}>
                 <ChatAssistente />
               </Suspense>
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={null}>
                 <Routes>
                   {adminRoutes}
                   {empresaRoutes}
