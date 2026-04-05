@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -380,18 +379,12 @@ export default function ConstutoraCorretores() {
   };
 
   if (loading) {
-    return (
-      <ConstutoraLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ConstutoraLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Header + Toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
@@ -772,7 +765,5 @@ export default function ConstutoraCorretores() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-    </ConstutoraLayout>
-  );
+      </AlertDialog>);
 }

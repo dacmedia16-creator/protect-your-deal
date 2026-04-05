@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { entityStatusColors, subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
 import { useNavigate } from 'react-router-dom';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -321,9 +320,7 @@ export default function AdminConstrutoras() {
   }
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <Skeleton className="h-8 w-40 mb-2" />
@@ -351,14 +348,10 @@ export default function AdminConstrutoras() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <AnimatedContent className="space-y-6">
+  return (<AnimatedContent className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Construtoras</h1>
@@ -531,7 +524,5 @@ export default function AdminConstrutoras() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </AnimatedContent>
-    </SuperAdminLayout>
-  );
+      </AnimatedContent>);
 }

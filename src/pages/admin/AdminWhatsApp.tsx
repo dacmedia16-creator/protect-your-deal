@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -193,9 +192,7 @@ export default function AdminWhatsApp() {
   const { isRunning, isPaused, progress: sendProgress, results: sendResults, countdown } = engineState;
   const allFilteredSelected = filteredUsers.length > 0 && selectedIds.size === filteredUsers.length;
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-8 w-8 text-green-600" />
           <div>
@@ -396,7 +393,5 @@ export default function AdminWhatsApp() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

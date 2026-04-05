@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -140,9 +139,7 @@ export default function AdminNovaImobiliaria() {
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="max-w-2xl mx-auto">
+  return (<div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
           onClick={() => navigate('/admin/imobiliarias')}
@@ -359,7 +356,5 @@ export default function AdminNovaImobiliaria() {
             </Form>
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

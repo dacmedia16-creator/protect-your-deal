@@ -175,9 +175,7 @@ export default function AdminIndicacoes() {
     return <Badge variant="outline" className="text-xs gap-1"><Percent className="h-3 w-3" />Percentual</Badge>;
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Indicações</h1>
           <p className="text-muted-foreground">Gerencie as comissões de indicação de corretores</p>
@@ -426,7 +424,5 @@ export default function AdminIndicacoes() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

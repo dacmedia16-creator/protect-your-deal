@@ -207,9 +207,7 @@ export default function AdminCupons() {
     return cupom.usos_atuais >= cupom.max_usos;
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Cupons de Desconto</h1>
@@ -603,7 +601,5 @@ export default function AdminCupons() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

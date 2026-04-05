@@ -512,18 +512,12 @@ export default function AdminDetalhesCorretorAutonomo() {
   };
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <div className="max-w-4xl mx-auto">
+  return (<div className="max-w-4xl mx-auto">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
@@ -1024,7 +1018,5 @@ export default function AdminDetalhesCorretorAutonomo() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </SuperAdminLayout>
-  );
+      </Dialog>);
 }

@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { formatCNPJ } from '@/lib/cnpj';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -353,21 +352,15 @@ export default function AdminDetalhesConstrutora() {
   };
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate('/admin/construtoras')}><ArrowLeft className="h-5 w-5" /></Button>
             <div><div className="h-8 w-48 bg-muted rounded animate-pulse" /><div className="h-4 w-32 bg-muted rounded animate-pulse mt-2" /></div>
           </div>
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin/construtoras')}>
@@ -663,7 +656,5 @@ export default function AdminDetalhesConstrutora() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -608,18 +607,12 @@ export default function EmpresaCorretores() {
   }), [corretores]);
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Unified Header with Toolbar */}
         <div className="space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -1279,7 +1272,5 @@ export default function EmpresaCorretores() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

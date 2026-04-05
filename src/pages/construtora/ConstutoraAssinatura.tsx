@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -118,12 +117,10 @@ export default function ConstutoraAssinatura() {
   };
 
   if (loading) {
-    return <ConstutoraLayout><div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></ConstutoraLayout>;
+    return<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Assinatura</h1>
           <p className="text-muted-foreground">Gerencie seu plano e acompanhe o uso</p>
@@ -264,7 +261,5 @@ export default function ConstutoraAssinatura() {
           </div>
         </div>
 
-      </div>
-    </ConstutoraLayout>
-  );
+      </div>);
 }

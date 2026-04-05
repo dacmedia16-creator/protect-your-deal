@@ -230,9 +230,7 @@ export default function AdminConfiguracoes() {
     },
   ];
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
           <p className="text-muted-foreground">
@@ -781,7 +779,5 @@ export default function AdminConfiguracoes() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

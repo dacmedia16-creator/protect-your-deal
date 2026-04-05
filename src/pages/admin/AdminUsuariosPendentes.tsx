@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -186,9 +185,7 @@ export default function AdminUsuariosPendentes() {
 
   const isLoading = loadingUsers || loadingImobiliarias || loadingConstrutoras;
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">Usuários Pendentes</h1>
           <p className="text-muted-foreground mt-1">Usuários que precisam ser vinculados a uma organização</p>
@@ -351,7 +348,5 @@ export default function AdminUsuariosPendentes() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-    </SuperAdminLayout>
-  );
+      </AlertDialog>);
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -518,9 +517,7 @@ export default function EmpresaRelatorios() {
 
   // Using fichaStatusColors from lib/statusColors
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Relatórios</h1>
@@ -927,7 +924,5 @@ export default function EmpresaRelatorios() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

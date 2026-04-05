@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
@@ -102,13 +101,9 @@ export default function ConstrutoraDashboard() {
   }, [construtoraId]);
 
   if (loading) {
-    return (
-      <ConstutoraLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ConstutoraLayout>
-    );
+        </div>);
   }
 
   const plano = assinatura?.plano;
@@ -117,9 +112,7 @@ export default function ConstrutoraDashboard() {
 
   const chartConfig = { fichas: { label: 'Registros', color: 'hsl(var(--primary))' } };
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
@@ -313,7 +306,5 @@ export default function ConstrutoraDashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </ConstutoraLayout>
-  );
+      </div>);
 }

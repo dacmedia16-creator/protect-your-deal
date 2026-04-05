@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -370,18 +369,12 @@ export default function ConstutoraEquipes() {
   }
 
   if (loading) {
-    return (
-      <ConstutoraLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
+    return (<div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ConstutoraLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold">Equipes</h1>
@@ -605,7 +598,5 @@ export default function ConstutoraEquipes() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </ConstutoraLayout>
-  );
+      </Dialog>);
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
@@ -114,18 +113,12 @@ export default function ConstutoraFichas() {
   };
 
   if (loading) {
-    return (
-      <ConstutoraLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ConstutoraLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Registros de Visita</h1>
           <p className="text-muted-foreground">Visualize todos os registros da construtora</p>
@@ -283,7 +276,5 @@ export default function ConstutoraFichas() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </ConstutoraLayout>
-  );
+      </div>);
 }

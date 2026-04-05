@@ -320,9 +320,7 @@ const ConfiguracoesEmail = () => {
 
   const activeRemetentes = remetentes.filter(r => r.ativo);
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
       
         {/* Header */}
         <div>
@@ -723,9 +721,7 @@ const ConfiguracoesEmail = () => {
           />
         </DialogContent>
       </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 };
 
 export default ConfiguracoesEmail;

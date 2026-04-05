@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Building2, Users, FileText, TrendingUp, AlertCircle, HardHat } from 'lucide-react';
@@ -114,9 +113,7 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           {/* Header skeleton */}
           <div>
             <Skeleton className="h-8 w-32 mb-2" />
@@ -159,14 +156,10 @@ export default function AdminDashboard() {
               </Card>
             ))}
           </div>
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <AnimatedContent className="space-y-6">
+  return (<AnimatedContent className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Visão geral do sistema</p>
@@ -324,7 +317,5 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-      </AnimatedContent>
-    </SuperAdminLayout>
-  );
+      </AnimatedContent>);
 }

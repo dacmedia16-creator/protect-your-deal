@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -198,9 +197,7 @@ export default function AdminSessoes() {
     .reduce((sum, s) => sum + (s.session_duration_seconds || 0), 0) / 
     (sessions?.filter(s => s.session_duration_seconds).length || 1);
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -439,7 +436,5 @@ export default function AdminSessoes() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

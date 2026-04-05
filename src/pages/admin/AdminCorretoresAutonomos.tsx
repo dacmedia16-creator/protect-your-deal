@@ -644,9 +644,7 @@ export default function AdminCorretoresAutonomos() {
     );
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Responsive Header */}
         <AnimatedContent>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1164,7 +1162,5 @@ export default function AdminCorretoresAutonomos() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </SuperAdminLayout>
-  );
+      </Dialog>);
 }

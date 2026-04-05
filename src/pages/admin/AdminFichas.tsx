@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -210,9 +209,7 @@ export default function AdminFichas() {
   // Using fichaStatusColors from lib/statusColors
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           {/* Header skeleton */}
           <div className="space-y-2">
             <Skeleton className="h-8 w-64" />
@@ -252,14 +249,10 @@ export default function AdminFichas() {
               </Card>
             ))}
           </div>
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <AnimatedContent className="space-y-6">
+  return (<AnimatedContent className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Registros de Visita</h1>
           <p className="text-muted-foreground">Visualize todos os registros do sistema</p>
@@ -522,7 +515,5 @@ export default function AdminFichas() {
             ))}
           </Accordion>
         )}
-      </AnimatedContent>
-    </SuperAdminLayout>
-  );
+      </AnimatedContent>);
 }

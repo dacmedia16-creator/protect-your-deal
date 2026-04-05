@@ -147,9 +147,7 @@ export default function AdminConvites() {
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Convites</h1>
@@ -384,7 +382,5 @@ export default function AdminConvites() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

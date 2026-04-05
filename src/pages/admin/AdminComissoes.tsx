@@ -192,9 +192,7 @@ export default function AdminComissoes() {
     toast({ title: "Chave PIX copiada!" });
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Comissões</h1>
@@ -616,7 +614,5 @@ export default function AdminComissoes() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }
