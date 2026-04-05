@@ -10,6 +10,7 @@ import { useEquipeLider } from '@/hooks/useEquipeLider';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useFichasOcultas } from '@/hooks/useFichasOcultas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PieChart, Pie, Cell } from 'recharts';
@@ -99,6 +100,7 @@ export default function Dashboard() {
   const isCorretorVinculado = role === 'corretor' && !!imobiliariaId;
   const queryClient = useQueryClient();
   const { data: convitesPendentes = 0 } = useConvitesPendentes();
+  const { hiddenIds } = useFichasOcultas();
 
   // Query para buscar parcerias ativas com construtoras
   const { data: parceriasConstrutoras = [] } = useQuery({
@@ -222,7 +224,7 @@ export default function Dashboard() {
   });
 
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard-stats', user?.id, surveyEnabled],
+    queryKey: ['dashboard-stats', user?.id, surveyEnabled, hiddenIds],
     queryFn: async () => {
       if (!user) return null;
       
@@ -245,8 +247,11 @@ export default function Dashboard() {
           : Promise.resolve({ data: [] }),
       ]);
 
-      const todasFichas = fichasResult.data || [];
+      const allFichas = fichasResult.data || [];
       const surveysData = surveysResult.data || [];
+      
+      // Filtrar fichas ocultas
+      const todasFichas = hiddenIds.length > 0 ? allFichas.filter(f => !hiddenIds.includes(f.id)) : allFichas;
       
       // Separar fichas onde o usuário é parceiro
       const fichasComoParceiro = todasFichas.filter(f => f.corretor_parceiro_id === user.id);
