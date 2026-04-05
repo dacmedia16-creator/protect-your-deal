@@ -382,6 +382,20 @@ export default function AdminPlanos() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="recursos_texto">Recursos / Benefícios (um por linha)</Label>
+                  <Textarea
+                    id="recursos_texto"
+                    value={form.recursos_texto}
+                    onChange={(e) => setForm({ ...form, recursos_texto: e.target.value })}
+                    placeholder={"Ex:\nPDF básico\nSuporte por email\nSem anúncios"}
+                    rows={4}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cada linha será exibida como um item nos cards de plano
+                  </p>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {editingId ? 'Salvar Alterações' : 'Criar Plano'}

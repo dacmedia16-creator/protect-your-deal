@@ -21,6 +21,7 @@ interface Plano {
   max_corretores: number;
   max_fichas_mes: number;
   valor_mensal: number;
+  recursos_texto: string | null;
 }
 
 const estadosBrasileiros = [
@@ -357,6 +358,12 @@ export default function RegistroConstrutora() {
                               <span>{plano.max_corretores} usuários</span>
                               <span>{plano.max_fichas_mes} registros/mês</span>
                             </div>
+                            {plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
+                              <div key={i} className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                                <Check className="h-3 w-3 text-primary" />
+                                {linha.trim()}
+                              </div>
+                            ))}
                           </div>
                         </label>
                       );
