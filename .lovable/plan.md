@@ -1,85 +1,51 @@
 
 
-# Plano: Ocultar fichas de parceiro (em vez de descartar)
+# Plano: Campo editavel de recursos/beneficios nos planos
 
-## Contexto
-O descarte (UPDATE em `fichas_visita`) continua falhando por RLS. A solução alternativa é criar uma tabela de ocultação por usuário, sem tocar na `fichas_visita`.
+## Problema
+Os cards de planos (landing page, admin, assinatura) mostram apenas fichas/mes e corretores de forma hardcoded. O admin nao consegue personalizar os itens listados no card de cada plano.
 
-## Etapa 1 — Criar tabela `fichas_ocultas`
+## Solucao
+Adicionar uma coluna `recursos_texto` (text, nullable) na tabela `planos` que armazena uma lista de beneficios customizados, um por linha. O admin edita como texto livre no dialog de edicao. Os cards renderizam cada linha como um item com check.
+
+## Etapa 1 — Migration
+
+Adicionar coluna `recursos_texto` (text, nullable) na tabela `planos`.
 
 ```sql
-CREATE TABLE public.fichas_ocultas (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  ficha_id uuid NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, ficha_id)
-);
-
-ALTER TABLE public.fichas_ocultas ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Usuário pode ver suas ocultações"
-  ON public.fichas_ocultas FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
-
-CREATE POLICY "Usuário pode ocultar fichas"
-  ON public.fichas_ocultas FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
-
-CREATE POLICY "Usuário pode desfazer ocultação"
-  ON public.fichas_ocultas FOR DELETE TO authenticated
-  USING (user_id = auth.uid());
+ALTER TABLE public.planos ADD COLUMN recursos_texto text;
 ```
 
-Sem UPDATE (não há campo editável). Sem foreign key para `fichas_visita` (evita dependência de cascade).
+Sem RLS adicional (planos ja tem policies).
 
-## Etapa 2 — Alterar `DescartarFichaDialog`
+## Etapa 2 — AdminPlanos.tsx
 
-Trocar a lógica de UPDATE por INSERT em `fichas_ocultas`:
+- Adicionar `recursos_texto` ao form e interfaces
+- Novo campo Textarea no dialog: "Recursos/Beneficios (um por linha)"
+- Placeholder: "Ex: PDF basico\nSuporte por email\nSem anuncios"
 
+## Etapa 3 — Renderizar nos cards
+
+Em todos os pontos que listam features dos planos, alem dos itens hardcoded (fichas/mes, corretores), renderizar cada linha de `recursos_texto` como item com check:
+
+| Arquivo | Onde aparece |
+|---------|-------------|
+| `src/pages/admin/AdminPlanos.tsx` | Cards no painel admin |
+| `src/pages/Index.tsx` | Landing page publica |
+| `src/pages/CorretorAssinatura.tsx` | Tela de assinatura do corretor |
+| `src/pages/empresa/EmpresaAssinatura.tsx` | Tela de assinatura da imobiliaria |
+| `src/pages/auth/RegistroConstrutora.tsx` | Registro de construtora |
+
+Logica de renderizacao:
 ```ts
-// Antes: supabase.from('fichas_visita').update({...})
-// Depois:
-await supabase.from('fichas_ocultas').insert({
-  user_id: (await supabase.auth.getUser()).data.user!.id,
-  ficha_id: fichaId,
-});
+{plano.recursos_texto?.split('\n').filter(Boolean).map((linha, i) => (
+  <li key={i} className="flex items-center gap-2">
+    <Check className="h-4 w-4 text-primary" />
+    {linha.trim()}
+  </li>
+))}
 ```
 
-Renomear o label do botão para "Ocultar" e ajustar textos do dialog.
-
-## Etapa 3 — Filtrar fichas ocultas em todos os pontos
-
-### ListaFichas.tsx
-- Após carregar fichas via `useInfiniteList`, buscar `fichas_ocultas` do usuário e filtrar no `useMemo` de `filteredFichas`.
-- Atualizar contadores (`parceiroCount`, `pendingCount`, etc.) para excluir ocultas.
-
-### FichasParceiro.tsx
-- Buscar `fichas_ocultas` do usuário e filtrar a lista antes de renderizar.
-
-### Dashboard.tsx
-- Na query de `dashboard-stats`, buscar IDs ocultos e excluir do cálculo de `fichasComoParceiro`.
-
-## Etapa 4 — Invalidar queries após ocultar
-
-No `onDiscarded` / callback do dialog, invalidar:
-- `['fichas', user.id]`
-- `['fichas-parceiro', user.id]`
-- `['dashboard-stats', user.id]`
-
-## Arquivos modificados
-
-| Arquivo | Alteração |
-|---------|-----------|
-| Migration SQL | Criar `fichas_ocultas` + RLS |
-| `src/components/DescartarFichaDialog.tsx` | INSERT em `fichas_ocultas` em vez de UPDATE em `fichas_visita` |
-| `src/pages/ListaFichas.tsx` | Query de ocultas + filtro |
-| `src/pages/FichasParceiro.tsx` | Query de ocultas + filtro |
-| `src/pages/Dashboard.tsx` | Query de ocultas + filtro nos stats |
-
-## Riscos
-
-- Nenhum: não toca em `fichas_visita`, não altera policies existentes, não modifica `_shared/auth.ts`.
-- A ficha continua existindo normalmente para o corretor proprietário.
-- Se o parceiro quiser ver novamente, basta deletar a row de `fichas_ocultas` (funcionalidade futura, se necessário).
+## Resultado
+O super admin pode escrever livremente os beneficios de cada plano (ex: "PDF basico", "Suporte prioritario", "Integracao WhatsApp") e eles aparecem automaticamente em todos os cards do sistema.
 
