@@ -1185,6 +1185,27 @@ export type Database = {
         }
         Relationships: []
       }
+      fichas_ocultas: {
+        Row: {
+          created_at: string
+          ficha_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ficha_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fichas_visita: {
         Row: {
           backup_gerado_em: string | null
