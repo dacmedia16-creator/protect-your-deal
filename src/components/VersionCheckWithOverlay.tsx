@@ -236,7 +236,7 @@ export function VersionCheckWithOverlay() {
       console.log(`🆕 Nova versão detectada: ${result.serverVersion} (atual: ${result.localVersion})`);
       startCountdown();
     }
-  }, [checkVersion, showOverlay, startCountdown]);
+  }, [checkVersion, showOverlay, startCountdown, isInactive]);
 
   // Handler for "Update Now" button - calls forceUpdate directly
   const handleUpdateNow = useCallback(() => {
