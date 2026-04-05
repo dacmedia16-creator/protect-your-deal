@@ -144,7 +144,6 @@ export default function AdminUsuarios() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
 
-
   // Fetch all users with their roles and emails
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ["admin-users"],
@@ -577,7 +576,6 @@ export default function AdminUsuarios() {
       setTogglingUserId(null);
     }
   };
-
 
   // Using getRoleBadgeVariant from lib/statusColors
 
