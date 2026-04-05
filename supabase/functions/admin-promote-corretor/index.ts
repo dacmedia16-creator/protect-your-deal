@@ -1,9 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-};
+import { requireAnyRole, corsHeaders } from "../_shared/auth.ts";
 
 interface PromoteRequest {
   user_id: string;
@@ -11,66 +6,19 @@ interface PromoteRequest {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const authResult = await requireAnyRole(req, ["super_admin", "imobiliaria_admin", "construtora_admin"]);
+    if (authResult instanceof Response) return authResult;
 
-    // Create Supabase clients
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const { user: currentUser, supabaseAdmin, role: callerRole, roleData } = authResult;
 
-    // Verify current user using token directly
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user: currentUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !currentUser) {
-      console.error('Auth error:', authError);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const isSuperAdmin = callerRole === "super_admin";
 
-    console.log('Current user:', currentUser.id);
-
-    // Get current user's role(s)
-    const { data: currentUserRoles, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role, imobiliaria_id, construtora_id')
-      .eq('user_id', currentUser.id);
-
-    if (roleError) {
-      console.error('Role error:', roleError);
-      return new Response(
-        JSON.stringify({ error: 'Error fetching user role' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const isSuperAdmin = currentUserRoles?.some(r => r.role === 'super_admin');
-    const imobAdminRole = currentUserRoles?.find(r => r.role === 'imobiliaria_admin');
-    const constAdminRole = currentUserRoles?.find(r => r.role === 'construtora_admin');
-
-    // Must be super_admin, imobiliaria_admin, or construtora_admin
-    if (!isSuperAdmin && !imobAdminRole && !constAdminRole) {
-      console.error('User is not admin:', currentUserRoles);
-      return new Response(
-        JSON.stringify({ error: 'Acesso negado. Apenas administradores podem promover/rebaixar usuários.' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('Current user:', currentUser.id, 'role:', callerRole);
 
     // Parse request body
     const { user_id, new_role }: PromoteRequest = await req.json();
@@ -130,15 +78,15 @@ Deno.serve(async (req) => {
     }
 
     // imobiliaria_admin can only modify users from their own imobiliaria
-    if (imobAdminRole && !isSuperAdmin) {
-      if (!imobAdminRole.imobiliaria_id) {
+    if (callerRole === 'imobiliaria_admin' && !isSuperAdmin) {
+      if (!roleData.imobiliaria_id) {
         return new Response(
           JSON.stringify({ error: 'Você não está vinculado a uma imobiliária.' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      if (targetRole.imobiliaria_id !== imobAdminRole.imobiliaria_id) {
+      if (targetRole.imobiliaria_id !== roleData.imobiliaria_id) {
         return new Response(
           JSON.stringify({ error: 'Você só pode alterar usuários da sua imobiliária.' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -147,15 +95,15 @@ Deno.serve(async (req) => {
     }
 
     // construtora_admin can only modify users from their own construtora
-    if (constAdminRole && !isSuperAdmin && !imobAdminRole) {
-      if (!constAdminRole.construtora_id) {
+    if (callerRole === 'construtora_admin' && !isSuperAdmin) {
+      if (!roleData.construtora_id) {
         return new Response(
           JSON.stringify({ error: 'Você não está vinculado a uma construtora.' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      if (targetRole.construtora_id !== constAdminRole.construtora_id) {
+      if (targetRole.construtora_id !== roleData.construtora_id) {
         return new Response(
           JSON.stringify({ error: 'Você só pode alterar usuários da sua construtora.' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

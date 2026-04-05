@@ -1,9 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAnyRole, corsHeaders } from "../_shared/auth.ts";
 
 interface CreateCorretorRequest {
   nome: string;
@@ -22,51 +17,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const authResult = await requireAnyRole(req, ["imobiliaria_admin", "super_admin", "construtora_admin"]);
+    if (authResult instanceof Response) return authResult;
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: currentUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !currentUser) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { supabaseAdmin, role: callerRole, roleData } = authResult;
 
     const body: CreateCorretorRequest = await req.json();
     const { nome, email, senha, telefone, creci, cpf, autonomo, construtora } = body;
 
     console.log("Creating corretor:", email, "autonomo:", autonomo, "construtora:", construtora);
-
-    // Check caller role — allow imobiliaria_admin, super_admin, or construtora_admin
-    const { data: roleData, error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .select("role, imobiliaria_id, construtora_id")
-      .eq("user_id", currentUser.id)
-      .in("role", ["imobiliaria_admin", "super_admin", "construtora_admin"])
-      .maybeSingle();
-
-    if (roleError || !roleData) {
-      console.error("Role check failed:", roleError?.message, "roleData:", roleData);
-      return new Response(
-        JSON.stringify({ error: "Acesso negado. Apenas administradores podem criar corretores." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("Role found:", roleData.role, "construtora_id:", roleData.construtora_id, "imobiliaria_id:", roleData.imobiliaria_id);
+    console.log("Caller role:", callerRole, "construtora_id:", roleData.construtora_id, "imobiliaria_id:", roleData.imobiliaria_id);
 
     // Determine linking
     let imobiliariaId: string | null = null;
@@ -74,21 +34,21 @@ Deno.serve(async (req) => {
 
     if (construtora) {
       // Construtora flow
-      if (roleData.role !== "construtora_admin" && roleData.role !== "super_admin") {
+      if (callerRole !== "construtora_admin" && callerRole !== "super_admin") {
         return new Response(
           JSON.stringify({ error: "Apenas administradores de construtora podem criar corretores vinculados à construtora" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       construtoraId = roleData.construtora_id || null;
-      if (!construtoraId && roleData.role !== "super_admin") {
+      if (!construtoraId && callerRole !== "super_admin") {
         return new Response(
           JSON.stringify({ error: "Usuário não está vinculado a uma construtora" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     } else if (autonomo) {
-      if (roleData.role !== "super_admin") {
+      if (callerRole !== "super_admin") {
         return new Response(
           JSON.stringify({ error: "Apenas super admins podem criar corretores autônomos" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -97,7 +57,7 @@ Deno.serve(async (req) => {
     } else {
       // Regular imobiliaria flow
       imobiliariaId = roleData.imobiliaria_id;
-      if (!imobiliariaId && roleData.role !== "super_admin") {
+      if (!imobiliariaId && callerRole !== "super_admin") {
         return new Response(
           JSON.stringify({ error: "Usuário não está vinculado a uma imobiliária" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
