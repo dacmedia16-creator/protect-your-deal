@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -211,9 +210,7 @@ export default function ConstutoraRelatorios() {
     confirmados: { label: 'Confirmados', color: 'hsl(150, 60%, 45%)' },
   };
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-heading font-bold">Relatórios</h1>
@@ -452,7 +449,5 @@ export default function ConstutoraRelatorios() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </ConstutoraLayout>
-  );
+      </div>);
 }

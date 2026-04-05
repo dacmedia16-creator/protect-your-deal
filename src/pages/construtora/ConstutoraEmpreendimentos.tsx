@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -136,9 +135,8 @@ export default function ConstutoraEmpreendimentos() {
     cancelado: 'bg-red-500/10 text-red-600 border-red-500/20',
   };
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-heading font-bold">Empreendimentos</h1>
@@ -262,7 +260,6 @@ export default function ConstutoraEmpreendimentos() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-    </ConstutoraLayout>
-  );
+      </AlertDialog></>
+      </>);
 }

@@ -3,7 +3,6 @@ import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { useNavigate } from 'react-router-dom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -260,9 +259,7 @@ export default function ConstutoraImobiliarias() {
     return matchSearch && matchStatus;
   });
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -552,7 +549,7 @@ export default function ConstutoraImobiliarias() {
                       (v) => v.empreendimento_id === emp.id && v.imobiliaria_id === linkImobId
                     )
                   : false;
-                return (
+                return (<>
                   <label
                     key={emp.id}
                     className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
@@ -598,7 +595,6 @@ export default function ConstutoraImobiliarias() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-    </ConstutoraLayout>
-  );
+      </AlertDialog></>
+      </>);
 }

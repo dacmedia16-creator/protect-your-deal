@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,9 +197,7 @@ const [legenda, setLegenda] = useState<string>('');
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <ImageIcon className="h-6 w-6" />
@@ -539,7 +536,5 @@ const [legenda, setLegenda] = useState<string>('');
             </div>
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

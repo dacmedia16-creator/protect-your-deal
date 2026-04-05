@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { getSubscriptionBadgeVariant } from '@/lib/statusColors';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -327,9 +326,8 @@ export default function AdminAssinaturas() {
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <AnimatedContent className="space-y-6">
+  return (<>
+    <AnimatedContent className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Assinaturas</h1>
@@ -859,7 +857,6 @@ export default function AdminAssinaturas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </SuperAdminLayout>
-  );
+      </Dialog></>
+      </>);
 }

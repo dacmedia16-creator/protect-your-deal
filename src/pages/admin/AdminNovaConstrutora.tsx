@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -201,9 +200,8 @@ export default function AdminNovaConstrutora() {
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="max-w-2xl mx-auto">
+  return (<>
+    <div className="max-w-2xl mx-auto">
         <Button variant="ghost" onClick={() => navigate('/admin/construtoras')} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
@@ -424,7 +422,6 @@ export default function AdminNovaConstrutora() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </SuperAdminLayout>
-  );
+      </Dialog></>
+      </>);
 }

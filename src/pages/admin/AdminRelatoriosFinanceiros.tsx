@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
@@ -202,9 +201,7 @@ export default function AdminRelatoriosFinanceiros() {
   };
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           {/* Header skeleton */}
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded" />
@@ -294,14 +291,10 @@ export default function AdminRelatoriosFinanceiros() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
             <ArrowLeft className="h-5 w-5" />
@@ -636,7 +629,5 @@ export default function AdminRelatoriosFinanceiros() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

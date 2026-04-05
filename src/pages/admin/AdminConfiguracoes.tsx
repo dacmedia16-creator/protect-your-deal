@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { formatPhone, unformatPhone, isValidPhone } from "@/lib/phone";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -230,9 +229,7 @@ export default function AdminConfiguracoes() {
     },
   ];
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
           <p className="text-muted-foreground">
@@ -781,7 +778,5 @@ export default function AdminConfiguracoes() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
@@ -560,18 +559,13 @@ export default function EmpresaEquipes() {
   }
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
+    return (<div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -913,7 +907,6 @@ export default function EmpresaEquipes() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </ImobiliariaLayout>
-  );
+      </Dialog></>
+      </>);
 }

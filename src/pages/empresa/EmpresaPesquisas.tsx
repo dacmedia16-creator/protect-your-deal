@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -247,9 +246,7 @@ export default function EmpresaPesquisas() {
 
   const hasRespondedSurveys = surveys?.some(s => s.status === 'responded') || false;
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <Link to="/empresa">
@@ -564,7 +561,7 @@ export default function EmpresaPesquisas() {
                   {Object.entries(ratingLabels).map(([key, label]) => {
                     const ratingValue = response[key as keyof SurveyResponse];
                     const numericValue = typeof ratingValue === 'number' ? ratingValue : 0;
-                    return (
+                    return (<>
                       <div key={key} className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">{label}</span>
                         <div className="flex items-center gap-1">
@@ -631,7 +628,6 @@ export default function EmpresaPesquisas() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </ImobiliariaLayout>
-  );
+      </Dialog></>
+      </>);
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fichaStatusColors, getStatusColor } from '@/lib/statusColors';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -98,18 +97,12 @@ export default function EmpresaFichas() {
   // Using fichaStatusColors from lib/statusColors
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Registros de Visita</h1>
           <p className="text-muted-foreground">Visualize todos os registros da imobiliária</p>
@@ -280,7 +273,5 @@ export default function EmpresaFichas() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

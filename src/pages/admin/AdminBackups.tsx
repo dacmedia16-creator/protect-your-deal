@@ -5,7 +5,6 @@ import { ptBR } from 'date-fns/locale';
 import { Archive, Download, Eye, Search, HardDrive, FileText, Calendar, Building2, User, Trash2, Loader2, FolderDown } from 'lucide-react';
 import JSZip from 'jszip';
 import { supabase } from '@/integrations/supabase/client';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -331,9 +330,7 @@ export default function AdminBackups() {
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Archive className="h-6 w-6" />
@@ -578,7 +575,5 @@ export default function AdminBackups() {
             ))}
           </Accordion>
         )}
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

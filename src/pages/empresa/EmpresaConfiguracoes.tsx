@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -232,18 +231,12 @@ export default function EmpresaConfiguracoes() {
   };
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Settings className="h-6 w-6 text-primary" />
@@ -658,7 +651,5 @@ export default function EmpresaConfiguracoes() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

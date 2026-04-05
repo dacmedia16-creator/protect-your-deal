@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -144,12 +143,10 @@ export default function ConstutoraConfiguracoes() {
   };
 
   if (loading) {
-    return <ConstutoraLayout><div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></ConstutoraLayout>;
+    return<div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10"><Settings className="h-6 w-6 text-primary" /></div>
           <div>
@@ -309,7 +306,5 @@ export default function ConstutoraConfiguracoes() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </ConstutoraLayout>
-  );
+      </div>);
 }

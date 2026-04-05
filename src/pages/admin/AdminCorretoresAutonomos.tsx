@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -644,9 +643,8 @@ export default function AdminCorretoresAutonomos() {
     );
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         {/* Responsive Header */}
         <AnimatedContent>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1164,7 +1162,6 @@ export default function AdminCorretoresAutonomos() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </SuperAdminLayout>
-  );
+      </Dialog></>
+      </>);
 }

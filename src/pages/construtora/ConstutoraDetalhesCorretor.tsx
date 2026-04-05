@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
-import { ConstutoraLayout } from '@/components/layouts/ConstutoraLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -257,9 +256,7 @@ export default function ConstutoraDetalhesCorretor() {
   };
 
   if (loading) {
-    return (
-      <ConstutoraLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <div className="flex gap-4">
             <Skeleton className="h-24 w-24 rounded-full" />
@@ -268,25 +265,17 @@ export default function ConstutoraDetalhesCorretor() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24" />)}
           </div>
-        </div>
-      </ConstutoraLayout>
-    );
+        </div>);
   }
 
   if (!profile) {
-    return (
-      <ConstutoraLayout>
-        <div className="text-center py-12">
+    return (<div className="text-center py-12">
           <p className="text-muted-foreground">Corretor não encontrado</p>
           <Button variant="link" onClick={() => navigate('/construtora/corretores')}>Voltar</Button>
-        </div>
-      </ConstutoraLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ConstutoraLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/construtora/corretores')}>
             <ArrowLeft className="h-5 w-5" />
@@ -505,7 +494,5 @@ export default function ConstutoraDetalhesCorretor() {
             </TabsContent>
           )}
         </Tabs>
-      </div>
-    </ConstutoraLayout>
-  );
+      </div>);
 }

@@ -15,7 +15,6 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 
 interface EmailTemplate {
   id: string;
@@ -320,9 +319,7 @@ const ConfiguracoesEmail = () => {
 
   const activeRemetentes = remetentes.filter(r => r.ativo);
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
       
         {/* Header */}
         <div>
@@ -723,9 +720,7 @@ const ConfiguracoesEmail = () => {
           />
         </DialogContent>
       </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 };
 
 export default ConfiguracoesEmail;

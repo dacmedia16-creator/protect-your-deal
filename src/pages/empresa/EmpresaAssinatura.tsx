@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { subscriptionStatusColors, getStatusColor } from '@/lib/statusColors';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -165,18 +164,12 @@ export default function EmpresaAssinatura() {
   };
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Assinatura</h1>
           <p className="text-muted-foreground">Gerencie seu plano e acompanhe o uso</p>
@@ -417,7 +410,5 @@ export default function EmpresaAssinatura() {
             Entre em contato
           </a>
         </p>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

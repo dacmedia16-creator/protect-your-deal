@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,9 +174,7 @@ export default function AdminIndicacoes() {
     return <Badge variant="outline" className="text-xs gap-1"><Percent className="h-3 w-3" />Percentual</Badge>;
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Indicações</h1>
           <p className="text-muted-foreground">Gerencie as comissões de indicação de corretores</p>
@@ -426,7 +423,5 @@ export default function AdminIndicacoes() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

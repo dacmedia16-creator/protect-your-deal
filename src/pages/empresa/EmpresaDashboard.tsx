@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFichaNotification } from '@/hooks/useFichaNotification';
 import { useAssinaturaNotification } from '@/hooks/useAssinaturaNotification';
@@ -203,13 +202,9 @@ export default function EmpresaDashboard() {
   }, [imobiliariaId, surveyEnabled]);
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="flex items-center justify-center h-64">
+    return (<div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
   const plano = assinatura?.plano;
@@ -226,9 +221,7 @@ export default function EmpresaDashboard() {
     },
   };
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">
@@ -499,7 +492,5 @@ export default function EmpresaDashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

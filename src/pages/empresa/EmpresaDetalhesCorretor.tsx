@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
-import { ImobiliariaLayout } from '@/components/layouts/ImobiliariaLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
@@ -289,9 +288,7 @@ export default function EmpresaDetalhesCorretor() {
   };
 
   if (loading) {
-    return (
-      <ImobiliariaLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <div className="flex gap-4">
             <Skeleton className="h-24 w-24 rounded-full" />
@@ -305,27 +302,19 @@ export default function EmpresaDetalhesCorretor() {
               <Skeleton key={i} className="h-24" />
             ))}
           </div>
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
   if (!profile) {
-    return (
-      <ImobiliariaLayout>
-        <div className="text-center py-12">
+    return (<div className="text-center py-12">
           <p className="text-muted-foreground">Corretor não encontrado</p>
           <Button variant="link" onClick={() => navigate('/empresa/corretores')}>
             Voltar para lista de corretores
           </Button>
-        </div>
-      </ImobiliariaLayout>
-    );
+        </div>);
   }
 
-  return (
-    <ImobiliariaLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/empresa/corretores')}>
@@ -592,7 +581,5 @@ export default function EmpresaDetalhesCorretor() {
           )}
 
         </Tabs>
-      </div>
-    </ImobiliariaLayout>
-  );
+      </div>);
 }

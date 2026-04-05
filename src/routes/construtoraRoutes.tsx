@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
-import { Route } from "react-router-dom";
+import { Route, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PageLoader } from "@/components/PageLoader";
+import { ConstutoraLayout } from "@/components/layouts/ConstutoraLayout";
 
 const ConstrutoraDashboard = lazy(() => import("@/pages/construtora/ConstrutoraDashboard"));
 const ConstutoraEmpreendimentos = lazy(() => import("@/pages/construtora/ConstutoraEmpreendimentos"));
@@ -15,25 +16,28 @@ const ConstutoraEquipes = lazy(() => import("@/pages/construtora/ConstutoraEquip
 const ConstutoraDetalhesCorretor = lazy(() => import("@/pages/construtora/ConstutoraDetalhesCorretor"));
 const ConstutoraPesquisas = lazy(() => import("@/pages/construtora/ConstutoraPesquisas"));
 
-const R = ['construtora_admin'] as const;
-const P = (C: React.ComponentType) => (
-  <ProtectedRoute allowedRoles={[...R]}>
-    <Suspense fallback={<PageLoader />}><C /></Suspense>
+const ConstutoraLayoutRoute = () => (
+  <ProtectedRoute allowedRoles={['construtora_admin']}>
+    <ConstutoraLayout>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </ConstutoraLayout>
   </ProtectedRoute>
 );
 
 export const construtoraRoutes = (
-  <>
-    <Route path="/construtora" element={P(ConstrutoraDashboard)} />
-    <Route path="/construtora/empreendimentos" element={P(ConstutoraEmpreendimentos)} />
-    <Route path="/construtora/imobiliarias" element={P(ConstutoraImobiliarias)} />
-    <Route path="/construtora/corretores" element={P(ConstutoraCorretores)} />
-    <Route path="/construtora/fichas" element={P(ConstutoraFichas)} />
-    <Route path="/construtora/pesquisas" element={P(ConstutoraPesquisas)} />
-    <Route path="/construtora/relatorios" element={P(ConstutoraRelatorios)} />
-    <Route path="/construtora/configuracoes" element={P(ConstutoraConfiguracoes)} />
-    <Route path="/construtora/assinatura" element={P(ConstutoraAssinatura)} />
-    <Route path="/construtora/equipes" element={P(ConstutoraEquipes)} />
-    <Route path="/construtora/corretores/:userId" element={P(ConstutoraDetalhesCorretor)} />
-  </>
+  <Route path="/construtora" element={<ConstutoraLayoutRoute />}>
+    <Route index element={<ConstrutoraDashboard />} />
+    <Route path="empreendimentos" element={<ConstutoraEmpreendimentos />} />
+    <Route path="imobiliarias" element={<ConstutoraImobiliarias />} />
+    <Route path="corretores" element={<ConstutoraCorretores />} />
+    <Route path="fichas" element={<ConstutoraFichas />} />
+    <Route path="pesquisas" element={<ConstutoraPesquisas />} />
+    <Route path="relatorios" element={<ConstutoraRelatorios />} />
+    <Route path="configuracoes" element={<ConstutoraConfiguracoes />} />
+    <Route path="assinatura" element={<ConstutoraAssinatura />} />
+    <Route path="equipes" element={<ConstutoraEquipes />} />
+    <Route path="corretores/:userId" element={<ConstutoraDetalhesCorretor />} />
+  </Route>
 );

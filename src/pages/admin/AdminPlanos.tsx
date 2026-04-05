@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { SuperAdminLayout } from '@/components/layouts/SuperAdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,9 +209,7 @@ export default function AdminPlanos() {
   }
 
   if (loading) {
-    return (
-      <SuperAdminLayout>
-        <div className="space-y-6">
+    return (<div className="space-y-6">
           {/* Header skeleton */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -252,14 +249,10 @@ export default function AdminPlanos() {
               </Card>
             ))}
           </div>
-        </div>
-      </SuperAdminLayout>
-    );
+        </div>);
   }
 
-  return (
-    <SuperAdminLayout>
-      <AnimatedContent className="space-y-6">
+  return (<AnimatedContent className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold text-foreground">Planos</h1>
@@ -561,7 +554,5 @@ export default function AdminPlanos() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </AnimatedContent>
-    </SuperAdminLayout>
-  );
+      </AnimatedContent>);
 }

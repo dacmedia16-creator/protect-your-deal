@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { APP_URL } from "@/lib/appConfig";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -143,7 +142,6 @@ export default function AdminUsuarios() {
   const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
-
 
   // Fetch all users with their roles and emails
   const { data: users, isLoading, refetch } = useQuery({
@@ -578,7 +576,6 @@ export default function AdminUsuarios() {
     }
   };
 
-
   // Using getRoleBadgeVariant from lib/statusColors
 
   const getRoleLabel = (role: string) => {
@@ -594,9 +591,8 @@ export default function AdminUsuarios() {
     }
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<>
+    <div className="space-y-6">
         {/* Header - Responsive */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -1463,8 +1459,6 @@ export default function AdminUsuarios() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-
-    </SuperAdminLayout>
-  );
+      </Dialog></>
+      </>);
 }

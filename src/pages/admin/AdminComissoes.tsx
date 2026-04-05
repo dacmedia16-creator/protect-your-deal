@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -192,9 +191,7 @@ export default function AdminComissoes() {
     toast({ title: "Chave PIX copiada!" });
   };
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Comissões</h1>
@@ -616,7 +613,5 @@ export default function AdminComissoes() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 }

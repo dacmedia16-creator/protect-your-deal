@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { SuperAdminLayout } from "@/components/layouts/SuperAdminLayout";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -109,9 +108,7 @@ const HistoricoEmails = () => {
     return null;
   }
 
-  return (
-    <SuperAdminLayout>
-      <div className="space-y-6">
+  return (<div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -182,9 +179,7 @@ const HistoricoEmails = () => {
             )}
           </CardContent>
         </Card>
-      </div>
-    </SuperAdminLayout>
-  );
+      </div>);
 };
 
 export default HistoricoEmails;
