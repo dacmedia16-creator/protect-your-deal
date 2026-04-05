@@ -348,6 +348,6 @@ export default function AdminUsuariosPendentes() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog></>
+      </AlertDialog>
       </>);
 }

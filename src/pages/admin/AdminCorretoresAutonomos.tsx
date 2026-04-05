@@ -1162,6 +1162,6 @@ export default function AdminCorretoresAutonomos() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

@@ -260,6 +260,6 @@ export default function ConstutoraEmpreendimentos() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog></>
+      </AlertDialog>
       </>);
 }

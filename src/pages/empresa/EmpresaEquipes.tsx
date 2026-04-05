@@ -907,6 +907,6 @@ export default function EmpresaEquipes() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

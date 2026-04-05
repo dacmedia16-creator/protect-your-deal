@@ -1459,6 +1459,6 @@ export default function AdminUsuarios() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

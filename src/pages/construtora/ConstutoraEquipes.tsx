@@ -599,6 +599,6 @@ export default function ConstutoraEquipes() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog></>
+      </Dialog>
       </>);
 }

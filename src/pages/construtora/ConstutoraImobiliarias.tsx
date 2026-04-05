@@ -595,6 +595,6 @@ export default function ConstutoraImobiliarias() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog></>
+      </AlertDialog>
       </>);
 }
