@@ -1,73 +1,17 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAnyRole, corsHeaders } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("No authorization header provided");
-      return new Response(
-        JSON.stringify({ error: "Authorization header required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const authResult = await requireAnyRole(req, ["imobiliaria_admin", "super_admin"]);
+    if (authResult instanceof Response) return authResult;
 
-    // Create Supabase clients
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // Verify the current user is authenticated using token directly
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: currentUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !currentUser) {
-      console.error("Auth error:", authError);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("Current user ID:", currentUser.id);
-
-    // Check if the current user is an imobiliaria_admin or super_admin
-    const { data: roleData, error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .select("role, imobiliaria_id")
-      .eq("user_id", currentUser.id)
-      .in("role", ["imobiliaria_admin", "super_admin"])
-      .maybeSingle();
-
-    if (roleError) {
-      console.error("Role check error:", roleError);
-      return new Response(
-        JSON.stringify({ error: "Error checking user role" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!roleData) {
-      console.error("User is not an admin");
-      return new Response(
-        JSON.stringify({ error: "Acesso negado. Apenas administradores podem ver emails dos corretores." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    const { supabaseAdmin, role, roleData } = authResult;
+    const isSuperAdmin = role === "super_admin";
     const imobiliariaId = roleData.imobiliaria_id;
-    const isSuperAdmin = roleData.role === "super_admin";
 
     // Parse request body to get user_ids
     const body = await req.json();
@@ -83,6 +27,7 @@ Deno.serve(async (req) => {
     console.log("Fetching emails for users:", userIds.length);
 
     // If not super_admin, verify all users belong to the same imobiliaria
+    let filteredUserIds = userIds;
     if (!isSuperAdmin && imobiliariaId) {
       const { data: rolesCheck, error: rolesCheckError } = await supabaseAdmin
         .from("user_roles")
@@ -98,9 +43,8 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Filter to only allowed user_ids
       const allowedUserIds = new Set(rolesCheck?.map(r => r.user_id) || []);
-      const filteredUserIds = userIds.filter(id => allowedUserIds.has(id));
+      filteredUserIds = userIds.filter(id => allowedUserIds.has(id));
 
       if (filteredUserIds.length === 0) {
         return new Response(
@@ -110,11 +54,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch emails from profiles table (no 1000 user limit)
+    // Fetch emails from profiles table
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from("profiles")
       .select("user_id, email")
-      .in("user_id", userIds);
+      .in("user_id", filteredUserIds);
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);

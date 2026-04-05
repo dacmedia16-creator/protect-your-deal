@@ -54,4 +54,18 @@ Todas as demais funções exigem JWT válido no gateway. Inclui:
 
 ---
 
-*Última atualização: 2026-04-04*
+## Helper padronizado: `_shared/auth.ts`
+
+Funções admin migradas para usar o helper centralizado:
+
+| Função | Helper usado | Lote |
+|--------|-------------|------|
+| `admin-reset-password` | `requireRole("super_admin")` | Lote 2 |
+| `admin-delete-user` | `requireRole("super_admin")` | Lote 2 |
+| `admin-get-corretores-emails` | `requireAnyRole(["imobiliaria_admin", "super_admin"])` | Lote 3 |
+| `admin-reset-corretor-password` | `requireAnyRole(["super_admin", "imobiliaria_admin", "construtora_admin"])` | Lote 3 |
+| `admin-update-corretor` | `requireAnyRole(["super_admin", "imobiliaria_admin", "construtora_admin"])` + fallback líder via `requireAuth` | Lote 3 |
+
+---
+
+*Última atualização: 2026-04-05*
