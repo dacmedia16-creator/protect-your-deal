@@ -1,58 +1,69 @@
 
 
-# Avaliação Estratégica Pós-Lote 4
+# Diagnóstico: RLS bloqueando descarte de parceria em `fichas_visita`
 
-## 1. Status da arquitetura de auth
+## 1. Causa raiz
 
-Todas as funções administrativas de alto risco (CRUD de usuários, promoção de roles, reset de senha, exclusão) estão padronizadas via `_shared/auth.ts`; as 5 funções restantes com `createClient` local são operacionais ou de baixa superfície de ataque.
+A policy de UPDATE para corretor parceiro usa `corretor_parceiro_id = auth.uid()` como `USING`. Como **não há `WITH CHECK` explícito**, o PostgreSQL reutiliza a expressão `USING` para validar a linha **após** o update. O descarte seta `corretor_parceiro_id = null`, então `null = auth.uid()` retorna `false` e a policy rejeita a nova linha.
 
-## 2. O que observar nas próximas 24–48h
+## 2. USING vs WITH CHECK neste caso
 
-- Erros 500 em `admin-create-user`, `admin-promote-corretor`, `admin-create-corretor`
-- Erros 403 inesperados em criação de corretor por admin de construtora (novo caminho exercitado pelo helper)
-- Operação normal de promoção/demoção de roles por admins organizacionais
-- Nenhum relato de falha ao criar usuários via painel super admin
+- **USING** (OLD row): `corretor_parceiro_id = auth.uid()` → passa, porque o parceiro ainda está vinculado
+- **WITH CHECK** (NEW row, implícito = cópia do USING): `null = auth.uid()` → falha, porque o campo foi anulado
 
-## 3. Critério de encerramento do Lote 4
+## 3. Policy a corrigir
 
-O lote pode ser encerrado quando completar 24h com:
-- Zero erros 500 nas 3 funções migradas
-- Zero relatos de falha em criação, promoção ou vinculação de usuários
-- Grep confirmado (já feito): zero `createClient` nas 3 funções
+```
+Policy: "Corretor parceiro pode atualizar fichas"
+Command: UPDATE
+USING: (corretor_parceiro_id = auth.uid()) AND is_user_active(auth.uid())
+WITH CHECK: (implícito = mesmo que USING) ← problema aqui
+```
 
-## 4. Necessidade real de novo lote de hardening
+Nenhuma outra policy de UPDATE cobre este caso — as demais exigem `user_id = auth.uid()` ou `is_super_admin`.
 
-**Não há necessidade de um lote obrigatório.** As funções admin restantes com `createClient` local são:
+## 4. Campos que mudam e quebram a policy
 
-| Função | Risco | Justificativa |
-|--------|-------|---------------|
-| `admin-update-user` | Baixo | Já restrita a super_admin, auth manual funcional |
-| `admin-vincular-usuario` | Baixo | Já restrita a super_admin, operação rara |
-| `admin-criar-acesso-afiliado` | Baixo | Já restrita a super_admin, operação rara |
-| `admin-fix-inconsistencies` | Muito baixo | Manutenção interna, super_admin only |
-| `empresa-delete-corretor` | Médio | Auth local funcional, mas função longa com cleanup |
+| Campo | Valor antes | Valor depois | Efeito na policy |
+|-------|------------|-------------|-----------------|
+| `corretor_parceiro_id` | `auth.uid()` | `null` | WITH CHECK falha |
+| `parte_preenchida_parceiro` | texto | `null` | Sem efeito direto |
 
-Nenhuma dessas representa vetor de escalação de privilégio não coberto. A auth local nelas é funcional — apenas não padronizada.
+## 5. Correção de menor risco
 
-## 5. Próximo lote: opcional
+Recriar a policy adicionando um `WITH CHECK` explícito que permita ao parceiro anular seu próprio vínculo:
 
-Um eventual **Lote 5** seria de **padronização cosmética**, não de hardening crítico. Recomendação:
+```sql
+DROP POLICY "Corretor parceiro pode atualizar fichas" ON public.fichas_visita;
 
-- **Opcional e de baixa prioridade** — pode ser feito quando houver janela livre, sem urgência
-- Foco: migrar `admin-update-user`, `admin-vincular-usuario` e `empresa-delete-corretor` para o helper
-- `admin-criar-acesso-afiliado` e `admin-fix-inconsistencies` podem ficar como estão indefinidamente
+CREATE POLICY "Corretor parceiro pode atualizar fichas"
+ON public.fichas_visita
+FOR UPDATE
+TO authenticated
+USING (
+  (corretor_parceiro_id = auth.uid()) AND is_user_active(auth.uid())
+)
+WITH CHECK (
+  (corretor_parceiro_id IS NULL OR corretor_parceiro_id = auth.uid())
+  AND is_user_active(auth.uid())
+);
+```
 
-## 6. O que é governança contínua (não refatoração)
+Isso permite que a nova linha tenha `corretor_parceiro_id = null` (descarte) ou mantenha o mesmo valor (edições normais do parceiro), sem abrir escopo para o parceiro vincular outro user_id.
 
-Estes itens não justificam um lote de hardening — são práticas operacionais permanentes:
+## 6. Checklist de validação
 
-- Monitorar logs de Edge Functions para erros 403/500 anômalos
-- Manter `docs/edge-functions-security.md` atualizado quando novas funções forem criadas
-- Usar `_shared/auth.ts` como padrão para qualquer nova Edge Function
-- Revisar RLS quando novas tabelas forem adicionadas
-- Auditar `verify_jwt = false` sempre que uma nova função pública for criada
+- [ ] Corretor parceiro consegue descartar parceria sem erro RLS
+- [ ] Corretor parceiro consegue editar campos normalmente (ex: parte do comprador)
+- [ ] Corretor parceiro NÃO consegue alterar `corretor_parceiro_id` para outro UUID
+- [ ] Corretor proprietário (`user_id`) não é afetado
+- [ ] Super admin continua podendo atualizar fichas
+- [ ] Líder de equipe continua podendo atualizar fichas da equipe
 
----
+## Detalhes técnicos
 
-**Conclusão**: A fase crítica de hardening de auth pode ser considerada **concluída** após a janela de observação do Lote 4. Todas as funções de alto risco estão padronizadas. O que resta é padronização incremental e governança contínua.
+- **Escopo**: 1 migration SQL (drop + create policy)
+- **Risco**: Baixo — apenas adiciona `WITH CHECK` explícito, sem alterar `USING`
+- **Frontend**: Zero mudanças necessárias — o código do `DescartarFichaDialog` já está correto
+- **Rollback**: Recriar a policy original sem `WITH CHECK`
 
