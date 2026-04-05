@@ -232,7 +232,7 @@ export default function Dashboard() {
       const [fichasResult, clientes, surveysResult] = await Promise.all([
         supabase
           .from('fichas_visita')
-          .select('status, corretor_parceiro_id, user_id')
+          .select('id, status, corretor_parceiro_id, user_id')
           .or(`user_id.eq.${user.id},corretor_parceiro_id.eq.${user.id}`),
         supabase
           .from('clientes')
