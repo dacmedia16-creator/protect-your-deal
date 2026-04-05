@@ -246,7 +246,7 @@ export default function EmpresaPesquisas() {
 
   const hasRespondedSurveys = surveys?.some(s => s.status === 'responded') || false;
 
-  return (<div className="space-y-6">
+  return (<><div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <Link to="/empresa">
