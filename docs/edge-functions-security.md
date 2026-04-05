@@ -24,7 +24,7 @@ Funções com `verify_jwt = false` não validam o JWT automaticamente no gateway
 | `registro-imobiliaria` | Registro público de conta | Cria conta (sem acesso a dados existentes) |
 | `registro-corretor-autonomo` | Registro público de conta | Cria conta (sem acesso a dados existentes) |
 | `registro-construtora` | Registro público de conta | Cria conta |
-| `master-login` | Login administrativo de suporte | Rate-limit por IP (5 req/min) + secret server-side |
+| `master-login` | Login administrativo de suporte | Rate-limit por IP (5 req/min) + timing-safe comparison de secret server-side |
 | `app-version` | Leitura pública de versão do app | Apenas versão, sem dados sensíveis |
 | `otp-reminder` | Lembrete automático de OTP pendente | Chamado por cron, sem entrada do usuário |
 | `process-otp-queue` | Processamento da fila de OTP | Chamado por cron |

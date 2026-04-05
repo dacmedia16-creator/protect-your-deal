@@ -83,9 +83,36 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Validate master password
+    // Validate master password with timing-safe comparison
     const MASTER_PASSWORD = Deno.env.get("MASTER_PASSWORD");
-    if (!MASTER_PASSWORD || master_password !== MASTER_PASSWORD) {
+    if (!MASTER_PASSWORD) {
+      console.error("CRITICAL: MASTER_PASSWORD not configured");
+      await logAudit(supabaseAdmin, "IMPERSONATE_FAILED", null, {
+        email,
+        ip: clientIp,
+        reason: "master_password_not_configured",
+        timestamp: new Date().toISOString(),
+      });
+      return new Response(
+        JSON.stringify({ error: "Credenciais inválidas" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Timing-safe comparison to prevent timing attacks
+    const encoder = new TextEncoder();
+    const expectedBuffer = encoder.encode(MASTER_PASSWORD);
+    const receivedBuffer = encoder.encode(master_password);
+
+    let passwordValid = expectedBuffer.length === receivedBuffer.length;
+    const maxLen = Math.max(expectedBuffer.length, receivedBuffer.length);
+    for (let i = 0; i < maxLen; i++) {
+      if ((expectedBuffer[i] ?? 0) !== (receivedBuffer[i] ?? 0)) {
+        passwordValid = false;
+      }
+    }
+
+    if (!passwordValid) {
       console.log("Master login attempt failed: invalid password");
       await logAudit(supabaseAdmin, "IMPERSONATE_FAILED", null, {
         email,
