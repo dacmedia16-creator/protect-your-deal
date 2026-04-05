@@ -1,133 +1,53 @@
 
 
-# Diagnóstico e Correção: Flicker na Navegação Admin
+# Correção: Preview piscando em loop infinito
 
 ## Causa Raiz
 
-O flicker acontece porque **cada página admin renderiza sua própria instância de `SuperAdminLayout`**. Ao navegar de `/admin/usuarios` para `/admin/planos`:
+O componente `VersionCheckWithOverlay` está detectando uma "nova versão" e forçando reload da página a cada 5 segundos. Como a versão nunca muda após o reload, ele entra em loop infinito de reload.
 
-1. React desmonta completamente a página antiga (incluindo o sidebar, header mobile, queries, realtime subscriptions)
-2. Monta uma nova instância de `ProtectedRoute` (que pode piscar o loading se auth/role states oscilarem)
-3. Monta uma nova instância de `SuperAdminLayout` (reinicializa sidebar state, 3 queries, 4 subscriptions realtime)
-4. `Suspense` mostra `PageLoader` enquanto carrega o chunk lazy
+Os build errors mostrados são de builds anteriores (stale) — o código atual compila com zero erros (`tsc --noEmit --skipLibCheck` = 0 errors).
 
-O resultado: **a tela inteira pisca** porque sidebar + header + conteudo sao todos desmontados e remontados.
+## O que está acontecendo
 
-O mesmo problema afeta `ImobiliariaLayout` (empresa) e `ConstutoraLayout` (construtora) — cada página renderiza o layout internamente.
+1. `VersionCheckWithOverlay` chama a Edge Function `app-version`
+2. A versão do servidor (`2026-04-05 21:04`) é mais nova que a local (`2026-04-05 20:57`)
+3. Inicia countdown de 5s → força `window.location.reload()`
+4. Após reload, a versão local continua a mesma → repete o ciclo
 
-## Arquivos Envolvidos
+## Bug no `isDevEnvironment`
 
-- `src/routes/adminRoutes.tsx` — cria N instancias de ProtectedRoute
-- `src/routes/empresaRoutes.tsx` — idem
-- `src/routes/construtoraRoutes.tsx` — idem
-- `src/components/layouts/SuperAdminLayout.tsx` — layout que é remontado
-- `src/components/layouts/ImobiliariaLayout.tsx` — idem
-- `src/components/layouts/ConstutoraLayout.tsx` — idem
-- 27 páginas admin, 10 páginas empresa, 11 páginas construtora (todas importam e renderizam o layout)
+Embora o hostname do preview inclua `lovableproject.com` (que deveria ser detectado), o efeito `checkAndUpdate` na linha 247 **roda antes** do early return na linha 277. O `startCountdown` seta `showOverlay = true`, e mesmo que o componente retorne `null`, o efeito de countdown continua rodando e eventualmente chama `forceUpdate()` que faz `window.location.reload()`.
 
 ## Correção
 
-Usar o padrão de **layout route** do React Router: renderizar `ProtectedRoute` + Layout UMA VEZ como rota pai, e as páginas como rotas filhas via `<Outlet />`.
-
-### Etapa 1 — Modificar os 3 layouts para suportar `Outlet`
-
-Cada layout passa a aceitar `children` OU renderizar `<Outlet />` quando não há children:
+Mover o guard `isInactive` para DENTRO do `checkAndUpdate` e do `useEffect` que configura os listeners, para que a verificação nem seja executada em ambiente de dev/preview:
 
 ```tsx
-// SuperAdminLayout.tsx
-import { Outlet } from 'react-router-dom';
+// No useEffect de setup (linha 247)
+useEffect(() => {
+  if (isInactive) return; // Guard aqui
+  const initialTimeout = setTimeout(checkAndUpdate, 3000);
+  // ...
+}, [checkAndUpdate, isInactive]);
 
-export function SuperAdminLayout({ children }: { children?: ReactNode }) {
-  // ... todo o layout existente ...
-  <main className="lg:pl-64 pt-16 lg:pt-0 min-h-screen">
-    <div className="p-4 lg:p-8">
-      {children || <Outlet />}
-    </div>
-  </main>
-}
+// No checkAndUpdate (linha 231)  
+const checkAndUpdate = useCallback(async () => {
+  if (isInactive) return; // Guard aqui também
+  const result = await checkVersion();
+  // ...
+}, [checkVersion, showOverlay, startCountdown, isInactive]);
 ```
 
-Mesma mudança em `ImobiliariaLayout` e `ConstutoraLayout`.
+## Arquivos modificados
 
-### Etapa 2 — Reestruturar as rotas para usar layout route
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/VersionCheckWithOverlay.tsx` | Adicionar guards `isInactive` nos effects e callbacks |
 
-```tsx
-// adminRoutes.tsx
-import { Outlet } from 'react-router-dom';
+## Resultado esperado
 
-// Layout wrapper renderizado UMA VEZ
-const AdminLayout = () => (
-  <ProtectedRoute allowedRoles={['super_admin']}>
-    <SuperAdminLayout>
-      <Suspense fallback={<PageLoader />}>
-        <Outlet />
-      </Suspense>
-    </SuperAdminLayout>
-  </ProtectedRoute>
-);
-
-export const adminRoutes = (
-  <Route path="/admin" element={<AdminLayout />}>
-    <Route index element={<AdminDashboard />} />
-    <Route path="imobiliarias" element={<AdminImobiliarias />} />
-    <Route path="imobiliarias/nova" element={<AdminNovaImobiliaria />} />
-    <Route path="imobiliarias/:id" element={<AdminDetalhesImobiliaria />} />
-    {/* ... todas as sub-rotas ... */}
-  </Route>
-);
-```
-
-Mesma estrutura para `empresaRoutes.tsx` e `construtoraRoutes.tsx`.
-
-### Etapa 3 — Remover `<SuperAdminLayout>` de dentro de cada página
-
-Em todas as 27 páginas admin, 10 empresa e 11 construtora:
-- Remover o import do layout
-- Remover o `<SuperAdminLayout>` / `<ImobiliariaLayout>` / `<ConstutoraLayout>` que envolve o conteudo
-- Manter apenas o conteudo interno (o `<div className="space-y-6">` etc.)
-
-Exemplo — AdminDashboard.tsx:
-```tsx
-// ANTES
-return (
-  <SuperAdminLayout>
-    <div className="space-y-6">...</div>
-  </SuperAdminLayout>
-);
-
-// DEPOIS
-return (
-  <div className="space-y-6">...</div>
-);
-```
-
-### Etapa 4 — Tratar loading states internos
-
-Páginas que têm loading states renderizando o layout (ex: `if (loading) return <SuperAdminLayout><Skeleton /></SuperAdminLayout>`) passam a retornar apenas o skeleton:
-```tsx
-if (loading) return <div className="space-y-6"><Skeleton ... /></div>;
-```
-
-## Resultado Esperado
-
-- O sidebar, header mobile, queries e subscriptions realtime do layout permanecem montados durante toda a navegação
-- Apenas o conteudo da área principal troca, com um breve `PageLoader` se o chunk ainda não foi carregado
-- Zero flicker visual
-- Sem mudança de UX
-
-## Telas para Testar
-
-1. Navegar entre todas as opções do sidebar admin (Dashboard → Imobiliárias → Planos → Usuarios → etc.)
-2. Navegar entre opções do painel empresa (Dashboard → Corretores → Fichas → etc.)
-3. Navegar entre opções do painel construtora
-4. Verificar que o sidebar mantém o item ativo correto
-5. Verificar que badges do sidebar continuam atualizando em tempo real
-6. Testar em mobile (sidebar abre/fecha sem piscar)
-7. Verificar que sign-out funciona normalmente
-
-## Risco
-
-- **Baixo-médio**: a mudança é mecânica (remover wrapper de 48 arquivos), mas o volume exige atenção para não esquecer nenhum arquivo
-- Não altera lógica de negócio, auth ou queries
-- Preserva toda a UX existente
+- O preview para de recarregar em loop
+- Em produção, a verificação de versão continua funcionando normalmente
+- Zero impacto na UX
 
