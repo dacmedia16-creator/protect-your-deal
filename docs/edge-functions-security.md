@@ -65,6 +65,9 @@ Funções admin migradas para usar o helper centralizado:
 | `admin-get-corretores-emails` | `requireAnyRole(["imobiliaria_admin", "super_admin"])` | Lote 3 |
 | `admin-reset-corretor-password` | `requireAnyRole(["super_admin", "imobiliaria_admin", "construtora_admin"])` | Lote 3 |
 | `admin-update-corretor` | `requireAnyRole(["super_admin", "imobiliaria_admin", "construtora_admin"])` + fallback líder via `requireAuth` | Lote 3 |
+| `admin-create-user` | `requireRole("super_admin")` | Lote 4 |
+| `admin-promote-corretor` | `requireAnyRole(["super_admin", "imobiliaria_admin", "construtora_admin"])` | Lote 4 |
+| `admin-create-corretor` | `requireAnyRole(["imobiliaria_admin", "super_admin", "construtora_admin"])` | Lote 4 |
 
 ---
 
