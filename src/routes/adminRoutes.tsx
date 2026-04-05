@@ -1,6 +1,7 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PageLoader } from "@/components/PageLoader";
 
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const AdminImobiliarias = lazy(() => import("@/pages/admin/AdminImobiliarias"));
@@ -34,7 +35,9 @@ const HistoricoEmails = lazy(() => import("@/pages/HistoricoEmails"));
 
 const R = ['super_admin'] as const;
 const P = (C: React.ComponentType) => (
-  <ProtectedRoute allowedRoles={[...R]}><C /></ProtectedRoute>
+  <ProtectedRoute allowedRoles={[...R]}>
+    <Suspense fallback={<PageLoader />}><C /></Suspense>
+  </ProtectedRoute>
 );
 
 export const adminRoutes = (

@@ -1,6 +1,7 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PageLoader } from "@/components/PageLoader";
 
 const EmpresaDashboard = lazy(() => import("@/pages/empresa/EmpresaDashboard"));
 const EmpresaCorretores = lazy(() => import("@/pages/empresa/EmpresaCorretores"));
@@ -15,7 +16,9 @@ const EmpresaParceriasConstrutoras = lazy(() => import("@/pages/empresa/EmpresaP
 
 const R = ['imobiliaria_admin'] as const;
 const P = (C: React.ComponentType) => (
-  <ProtectedRoute allowedRoles={[...R]}><C /></ProtectedRoute>
+  <ProtectedRoute allowedRoles={[...R]}>
+    <Suspense fallback={<PageLoader />}><C /></Suspense>
+  </ProtectedRoute>
 );
 
 export const empresaRoutes = (
