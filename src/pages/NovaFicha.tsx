@@ -251,6 +251,13 @@ export default function NovaFicha() {
     }
   }, [user, authLoading, navigate]);
 
+  // Redirect if user tries ?modo=construtora without the flag enabled
+  useEffect(() => {
+    if (!roleLoading && !empreendimentoFlagLoading && !isConstrutora && !!imobiliariaId && searchParams.get('modo') === 'construtora' && !empreendimentoEnabled) {
+      navigate('/fichas/nova', { replace: true });
+    }
+  }, [roleLoading, empreendimentoFlagLoading, isConstrutora, imobiliariaId, searchParams, empreendimentoEnabled, navigate]);
+
   // Forçar modo comprador para corretores de construtora ou modo construtora parceira
   useEffect(() => {
     if (isConstrutora || modoConstrutoraParceira) {
