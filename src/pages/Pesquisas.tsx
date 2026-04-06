@@ -177,8 +177,22 @@ export default function Pesquisas() {
         new Date(b.sent_at || 0).getTime() - new Date(a.sent_at || 0).getTime()
       );
 
+      // Fetch corretor names from profiles
+      const userIds = [...new Set(uniqueSurveys.map(s => s.fichas_visita?.user_id).filter(Boolean))] as string[];
+      let profilesMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+        if (profiles) {
+          profilesMap = Object.fromEntries(profiles.map(p => [p.user_id, p.nome]));
+        }
+      }
+
       return uniqueSurveys.map(survey => ({
         ...survey,
+        corretor_nome: survey.fichas_visita?.user_id ? profilesMap[survey.fichas_visita.user_id] || null : null,
         survey_responses: Array.isArray(survey.survey_responses) 
           ? survey.survey_responses 
           : survey.survey_responses ? [survey.survey_responses] : []

@@ -117,7 +117,8 @@ export default function EmpresaPesquisas() {
             imovel_tipo,
             data_visita,
             comprador_nome,
-            protocolo
+            protocolo,
+            user_id
           ),
           survey_responses (
             id,
