@@ -69,6 +69,11 @@ export default defineConfig(({ mode }) => ({
             handler: 'NetworkOnly',
           },
           {
+            // Version check - always bypass cache
+            urlPattern: /^https:\/\/.*supabase\.co\/functions\/v1\/app-version.*/i,
+            handler: 'NetworkOnly',
+          },
+          {
             // Edge functions - network first with short cache
             urlPattern: /^https:\/\/.*supabase\.co\/functions\/v1\/.*/i,
             handler: 'NetworkFirst',
