@@ -76,9 +76,12 @@ interface Survey {
   client_name: string | null;
   client_phone: string | null;
   ficha_id: string;
+  corretor_nome?: string | null;
   fichas_visita: {
     id: string;
     imovel_endereco: string;
+    imovel_tipo: string;
+    data_visita: string;
     comprador_nome: string | null;
     protocolo: string;
   } | null;
@@ -111,6 +114,8 @@ export default function EmpresaPesquisas() {
           fichas_visita (
             id,
             imovel_endereco,
+            imovel_tipo,
+            data_visita,
             comprador_nome,
             protocolo
           ),

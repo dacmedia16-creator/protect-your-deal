@@ -63,9 +63,12 @@ interface Survey {
   client_name: string | null;
   client_phone: string | null;
   ficha_id: string;
+  corretor_nome?: string | null;
   fichas_visita: {
     id: string;
     imovel_endereco: string;
+    imovel_tipo: string;
+    data_visita: string;
     comprador_nome: string | null;
     protocolo: string;
     user_id: string;
@@ -88,6 +91,8 @@ const SURVEY_SELECT = `
   fichas_visita!inner (
     id,
     imovel_endereco,
+    imovel_tipo,
+    data_visita,
     comprador_nome,
     protocolo,
     user_id,
