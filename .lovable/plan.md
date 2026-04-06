@@ -1,24 +1,13 @@
 
 
-# Trocar ASAAS_API_KEY para Sandbox
+# Recriar Secret ASAAS_SANDBOX
 
-## Objetivo
-Substituir o valor atual da `ASAAS_API_KEY` pela chave de API do ambiente sandbox do Asaas, permitindo testes de pagamento sem afetar produção.
+## Problema
+O `check-config` retornou `sandbox_mode: false`, indicando que o valor atual do secret `ASAAS_SANDBOX` não é exatamente a string `true` (pode conter aspas, espaços ou casing diferente).
 
 ## Ação
-Usar a ferramenta `add_secret` para solicitar que você insira a nova chave sandbox. Isso sobrescreverá o valor atual.
+Usar a ferramenta `add_secret` para sobrescrever o secret `ASAAS_SANDBOX` com o valor exato `true` (4 caracteres, minúsculas, sem aspas, sem espaços).
 
-## Onde obter a chave
-1. Acesse https://sandbox.asaas.com
-2. Faça login (ou crie conta sandbox)
-3. Vá em **Configurações → Integrações → API**
-4. Copie a API Key gerada
-
-## Impacto
-- Todas as Edge Functions de pagamento passarão a autenticar no sandbox
-- Combinado com `ASAAS_SANDBOX=true` (já configurado), o fluxo completo estará em modo teste
-- **Atenção**: enquanto a chave sandbox estiver ativa, cobranças reais não serão processadas
-
-## Reversão
-Para voltar à produção: troque `ASAAS_API_KEY` de volta para a chave de produção e remova/altere `ASAAS_SANDBOX` para `false`.
+## Validação pós-correção
+Após a atualização, executar novamente o `check-config` via `asaas-webhook-test` para confirmar que `sandbox_mode` retorna `true`.
 
