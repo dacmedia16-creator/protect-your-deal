@@ -969,7 +969,7 @@ export default function AdminDetalhesImobiliaria() {
                           if (!id) return;
                           setSavingFeatures(true);
                           try {
-                            const { error } = await supabase
+                            const { error: err1 } = await supabase
                               .from('imobiliaria_feature_flags')
                               .upsert({
                                 imobiliaria_id: id,
@@ -980,7 +980,20 @@ export default function AdminDetalhesImobiliaria() {
                                 onConflict: 'imobiliaria_id,feature_key',
                               });
 
-                            if (error) throw error;
+                            if (err1) throw err1;
+
+                            const { error: err2 } = await supabase
+                              .from('imobiliaria_feature_flags')
+                              .upsert({
+                                imobiliaria_id: id,
+                                feature_key: 'empreendimento_visita',
+                                enabled: empreendimentoFeatureEnabled,
+                                updated_at: new Date().toISOString(),
+                              }, {
+                                onConflict: 'imobiliaria_id,feature_key',
+                              });
+
+                            if (err2) throw err2;
                             toast.success('Features atualizadas com sucesso!');
                           } catch (error: any) {
                             console.error('Error saving features:', error);
