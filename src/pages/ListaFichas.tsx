@@ -194,14 +194,14 @@ export default function ListaFichas() {
         </div>
 
         {/* Search */}
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por protocolo, endereço..."
+              placeholder="Protocolo, endereço ou nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10 md:max-w-md"
+              className="pl-10 h-9 md:h-10 md:max-w-md"
             />
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function ListaFichas() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredFichas && filteredFichas.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2 md:space-y-3">
             {filteredFichas.map((ficha) => {
               const status = statusConfig[ficha.status] || statusConfig.pendente;
               const StatusIcon = status.icon;
@@ -225,28 +225,23 @@ export default function ListaFichas() {
                   className="cursor-pointer hover:shadow-medium active:bg-muted/30 transition-all"
                   onClick={() => navigate(`/fichas/${ficha.id}`)}
                 >
-                  <CardContent className="p-3 md:p-4">
+                  <CardContent className="p-2.5 md:p-4">
                     {/* Mobile Layout */}
-                    <div className="md:hidden space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                    <div className="md:hidden space-y-1.5">
+                      {/* Header: Protocolo + atributo + status + delete */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
                           <span className="font-mono text-xs font-medium text-primary">
                             #{ficha.protocolo}
                           </span>
                           {isParceiro && (
-                            <Badge variant="outline" className="gap-1 text-[10px] bg-blue-500/10 text-blue-600 border-blue-500/30">
-                              <Users className="h-2.5 w-2.5" />
-                              Parceiro
-                            </Badge>
+                            <span className="text-[10px] font-medium text-blue-600">(parceiro)</span>
                           )}
                           {temParceiro && (
-                            <Badge variant="outline" className="gap-1 text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30">
-                              <Users className="h-2.5 w-2.5" />
-                              C/ Parceiro
-                            </Badge>
+                            <span className="text-[10px] font-medium text-purple-600">(c/ parceiro)</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           {/* Backup indicator - mobile - apenas para super_admin */}
                           {role === 'super_admin' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
                             <TooltipProvider>
@@ -270,38 +265,37 @@ export default function ListaFichas() {
                             <StatusIcon className="h-3 w-3" />
                             {status.label}
                           </Badge>
+                          <div onClick={(e) => e.stopPropagation()} className="opacity-40 hover:opacity-100 transition-opacity">
+                            {isParceiro ? (
+                              <DescartarFichaDialog
+                                fichaId={ficha.id}
+                                protocolo={ficha.protocolo}
+                                onDiscarded={handleFichaDeleted}
+                              />
+                            ) : (
+                              <DeleteFichaDialog 
+                                fichaId={ficha.id} 
+                                protocolo={ficha.protocolo}
+                                onDeleted={handleFichaDeleted}
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
                       
+                      {/* Endereço */}
                       <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
                         <p className="text-sm font-medium leading-tight line-clamp-2">{ficha.imovel_endereco}</p>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Building2 className="h-3.5 w-3.5" />
+                      {/* Tipo + Data */}
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Building2 className="h-3 w-3" />
                         <span>{ficha.imovel_tipo}</span>
                         <span className="text-border">•</span>
-                        <Calendar className="h-3.5 w-3.5" />
+                        <Calendar className="h-3 w-3" />
                         <span>{format(new Date(ficha.data_visita), "dd/MM 'às' HH:mm")}</span>
-                      </div>
-                      
-                      <div className="flex gap-3 text-xs text-muted-foreground pt-1 border-t">
-                        <span className="truncate flex-1">Prop: {ficha.proprietario_nome || 'A preencher'}</span>
-                        <span className="truncate flex-1">Comp: {ficha.comprador_nome || 'A preencher'}</span>
-                        {isParceiro ? (
-                          <DescartarFichaDialog
-                            fichaId={ficha.id}
-                            protocolo={ficha.protocolo}
-                            onDiscarded={handleFichaDeleted}
-                          />
-                        ) : (
-                          <DeleteFichaDialog 
-                            fichaId={ficha.id} 
-                            protocolo={ficha.protocolo}
-                            onDeleted={handleFichaDeleted}
-                          />
-                        )}
                       </div>
                     </div>
 
