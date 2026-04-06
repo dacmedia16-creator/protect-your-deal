@@ -431,201 +431,158 @@ export default function Dashboard() {
         {/* Upgrade Banner for free plan users - hide for linked brokers */}
         {!isCorretorVinculado && <UpgradeBanner className="mb-4" />}
 
-        {/* Convites Pendentes Alert */}
-        {convitesPendentes > 0 && (
-          <Card 
-            className="mb-4 border-warning/30 bg-warning/5 cursor-pointer hover:shadow-medium transition-shadow animate-fade-in"
-            onClick={() => navigate('/convites-recebidos')}
-          >
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-warning/20 flex items-center justify-center shrink-0">
-                <Handshake className="h-6 w-6 text-warning" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-warning">
-                  {convitesPendentes} {convitesPendentes === 1 ? 'convite de parceria pendente' : 'convites de parceria pendentes'}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Clique para ver e aceitar os convites recebidos
-                </p>
-              </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* ═══ MOBILE LAYOUT ═══ */}
+        <div className="sm:hidden space-y-4">
+          {/* Saudação compacta + CTA Principal */}
+          <div data-tour="welcome">
+            <h1 
+              className="font-display text-xl font-bold mb-3 cursor-default"
+              onClick={() => {
+                const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
+                sessionStorage.setItem('debug-clicks', String(clicks));
+                if (clicks >= 5) {
+                  setShowDebug(true);
+                  sessionStorage.setItem('debug-clicks', '0');
+                }
+                setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
+              }}
+            >
+              Olá, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{profile?.nome?.split(' ')[0] || 'Usuário'}</span>
+            </h1>
 
-      {/* Card de Resumo da Equipe para Líderes */}
-      {isLider && teamSummary && (
-        <Card 
-          className="mb-4 border-cyan-500/30 bg-cyan-500/5 dark:border-cyan-400/30 dark:bg-cyan-400/5 cursor-pointer hover:shadow-medium transition-all animate-fade-in"
-          onClick={() => navigate('/minha-equipe')}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div 
-                className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${teamSummary.corEquipe}20` }}
+            <Button
+              data-tour="novo-registro"
+              size="lg"
+              className="w-full gradient-primary text-primary-foreground font-semibold text-base h-12 shadow-md"
+              onClick={() => navigate('/fichas/nova')}
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Registrar Nova Visita
+            </Button>
+
+            {parceriasConstrutoras.length > 0 && (
+              <Button
+                variant="outline"
+                className="w-full mt-2 border-orange-500/30 text-orange-600 dark:text-orange-400"
+                onClick={() => navigate('/fichas/nova?modo=construtora')}
               >
-                <UsersRound className="h-6 w-6" style={{ color: teamSummary.corEquipe }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-cyan-700 dark:text-cyan-300">
-                  {teamSummary.nomeEquipe}
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3.5 w-3.5" />
-                    {teamSummary.fichasMes} registros este mês
-                  </span>
-                </div>
-              </div>
-              <Badge variant="outline" className="text-cyan-600 dark:text-cyan-400 border-cyan-500/30 shrink-0 hidden sm:flex">
-                Líder
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                <Building2 className="h-4 w-4 mr-2" />
+                Registro Construtoras
+              </Button>
+            )}
+          </div>
 
-        {/* Welcome Section */}
-        <div data-tour="welcome" className="mb-4 md:mb-8">
-          <h1 
-            className="font-display text-2xl md:text-3xl font-bold mb-1 md:mb-2 cursor-default"
-            onClick={() => {
-              const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
-              sessionStorage.setItem('debug-clicks', String(clicks));
-              if (clicks >= 5) {
-                setShowDebug(true);
-                sessionStorage.setItem('debug-clicks', '0');
-              }
-              setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
-            }}
-          >
-            Bem-vindo, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{profile?.nome?.split(' ')[0] || 'Usuário'}</span>!
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Gerencie seus registros de visita e clientes
-          </p>
-        </div>
-
-        {/* Stats Grid - 3 cols on desktop */}
-        <div data-tour="stats" className="rounded-2xl bg-muted/30 p-3 mb-6 md:mb-8">
-          <div className="grid grid-cols-3 gap-3 md:gap-6">
+          {/* Stats compactos — sem container bg */}
+          <div data-tour="stats" className="grid grid-cols-3 gap-2">
             <Card 
-              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group"
+              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft active:bg-muted/50 transition-all"
               onClick={() => navigate('/fichas')}
             >
-              <CardContent className="p-3 md:p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="bg-primary/10 rounded-full p-1.5">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                </div>
-                <div className="text-2xl md:text-3xl font-bold text-primary">{stats?.totalFichas || 0}</div>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Total Registros</p>
+              <CardContent className="p-3 text-center">
+                <div className="text-xl font-bold text-primary">{stats?.totalFichas || 0}</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Total</p>
               </CardContent>
             </Card>
 
             <Card 
-              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group" 
+              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft active:bg-muted/50 transition-all"
               style={{ animationDelay: '0.1s' }}
               onClick={() => navigate('/fichas?status=completo')}
             >
-              <CardContent className="p-3 md:p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="bg-success/10 rounded-full p-1.5">
-                    <CheckCircle className="h-4 w-4 text-success" />
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-success transition-colors" />
-                </div>
-                <div className="text-2xl md:text-3xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Confirmadas</p>
+              <CardContent className="p-3 text-center">
+                <div className="text-xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Confirmados</p>
               </CardContent>
             </Card>
 
             <Card 
-              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group" 
+              className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft active:bg-muted/50 transition-all"
               style={{ animationDelay: '0.2s' }}
               onClick={() => navigate('/fichas?status=pendente')}
             >
-              <CardContent className="p-3 md:p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="bg-warning/10 rounded-full p-1.5">
-                    <Clock className="h-4 w-4 text-warning" />
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-warning transition-colors" />
-                </div>
-                <div className="text-2xl md:text-3xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">Pendentes</p>
+              <CardContent className="p-3 text-center">
+                <div className="text-xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Pendentes</p>
               </CardContent>
             </Card>
           </div>
-        </div>
 
-        {/* Mobile Quick Actions - Compact list */}
-        <div className="sm:hidden space-y-2 mb-4">
-          <h2 className="font-display text-lg font-semibold mb-3">Ações Rápidas</h2>
-          
-          <Card 
-            data-tour="novo-registro"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas/nova')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center shrink-0">
-                <Plus className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Novo Registro de Visita</p>
-                <p className="text-xs text-muted-foreground truncate">Criar e enviar para confirmação</p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* ── Seção "Precisa da sua atenção" ── */}
+          {(() => {
+            const attentionItems: { label: string; count: number; path: string; icon: typeof Clock; color: string }[] = [];
+            
+            if ((stats?.fichasPendentes || 0) > 0) {
+              attentionItems.push({ label: 'fichas pendentes de confirmação', count: stats!.fichasPendentes, path: '/fichas?status=pendente', icon: Clock, color: 'text-warning' });
+            }
+            if (convitesPendentes > 0) {
+              attentionItems.push({ label: 'convites de parceria pendentes', count: convitesPendentes, path: '/convites-recebidos', icon: Handshake, color: 'text-warning' });
+            }
+            if (fichasParceiro && fichasParceiro.pendentes > 0) {
+              attentionItems.push({ label: 'fichas parceiro pendentes', count: fichasParceiro.pendentes, path: '/fichas-parceiro', icon: Handshake, color: 'text-orange-500' });
+            }
+            if (surveyEnabled && stats?.surveys && stats.surveys.pendentes > 0) {
+              attentionItems.push({ label: 'pesquisas aguardando resposta', count: stats.surveys.pendentes, path: '/pesquisas', icon: FileText, color: 'text-purple-500' });
+            }
 
-          {parceriasConstrutoras.length > 0 && (
-            <Card 
-              className="cursor-pointer active:bg-muted/50 transition-colors border-orange-500/20"
-              onClick={() => navigate('/fichas/nova?modo=construtora')}
+            if (attentionItems.length === 0) return null;
+
+            return (
+              <div className="animate-fade-in">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Precisa da sua atenção</h2>
+                <Card className="border-0 bg-card rounded-xl shadow-soft overflow-hidden">
+                  {attentionItems.map((item, idx) => (
+                    <button
+                      key={idx}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left active:bg-muted/50 transition-colors ${idx > 0 ? 'border-t border-border/50' : ''}`}
+                      onClick={() => navigate(item.path)}
+                    >
+                      <item.icon className={`h-4 w-4 shrink-0 ${item.color}`} />
+                      <span className="flex-1 text-sm">
+                        <span className="font-semibold">{item.count}</span>{' '}
+                        {item.label}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                    </button>
+                  ))}
+                </Card>
+              </div>
+            );
+          })()}
+
+          {/* Equipe (líder) — compacto */}
+          {isLider && teamSummary && (
+            <button 
+              className="w-full text-left animate-fade-in"
+              onClick={() => navigate('/minha-equipe')}
             >
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
-                  <Building2 className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">Registro Construtoras</p>
-                  <p className="text-xs text-muted-foreground truncate">Fichas para empreendimentos parceiros</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="border-0 bg-card rounded-xl shadow-soft">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div 
+                    className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${teamSummary.corEquipe}15` }}
+                  >
+                    <UsersRound className="h-4 w-4" style={{ color: teamSummary.corEquipe }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{teamSummary.nomeEquipe}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos · {teamSummary.fichasMes} registros/mês
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                </CardContent>
+              </Card>
+            </button>
           )}
 
+          {/* Ações secundárias */}
           <Card 
-            data-tour="ver-registros"
-            className="cursor-pointer active:bg-muted/50 transition-colors"
-            onClick={() => navigate('/fichas')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                <FileText className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ver Registros</p>
-                <p className="text-xs text-muted-foreground truncate">Visualizar e gerenciar registros</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="cursor-pointer active:bg-muted/50 transition-colors"
+            className="cursor-pointer active:bg-muted/50 transition-colors border-0 bg-card rounded-xl shadow-soft"
             onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
           >
             <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                <Scale className="h-5 w-5 text-amber-600" />
+              <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                <Scale className="h-4 w-4 text-amber-600" />
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-sm">Ajuda Jurídica</p>
@@ -633,98 +590,257 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Card de Fichas como Parceiro */}
-        {fichasParceiro && fichasParceiro.total > 0 && (
-          <Card 
-            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-4"
-            style={{ animationDelay: '0.4s' }}
-            onClick={() => navigate('/fichas-parceiro')}
-          >
-            <CardContent className="px-3 py-2 flex items-center gap-3">
-              <Handshake className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {fichasParceiro.total} {fichasParceiro.total === 1 ? 'registro como parceiro' : 'registros como parceiro'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fichasParceiro.pendentes > 0 
-                    ? `${fichasParceiro.pendentes} pendente${fichasParceiro.pendentes > 1 ? 's' : ''} de confirmação`
-                    : 'Todas confirmadas'}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          {/* Plan Usage - hide for linked brokers */}
+          {!isCorretorVinculado && <PlanUsageCard compact className="animate-fade-in" />}
 
-        {/* Card de Pesquisas Pós-Visita */}
-        {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
+          {/* Indicações — sem pulse */}
           <Card 
-            className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6"
-            style={{ animationDelay: '0.5s' }}
-            onClick={() => navigate('/pesquisas')}
+            data-tour="indicacoes"
+            className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft active:bg-muted/50 transition-all"
+            onClick={() => navigate('/minhas-indicacoes')}
           >
             <CardContent className="p-3 flex items-center gap-3">
-              <div className="shrink-0">
-                <PieChart width={44} height={44}>
-                  <Pie
-                    data={[
-                      { value: stats.surveys.respondidas },
-                      { value: stats.surveys.pendentes },
-                    ]}
-                    cx={22}
-                    cy={22}
-                    innerRadius={13}
-                    outerRadius={20}
-                    dataKey="value"
-                    strokeWidth={0}
-                    startAngle={90}
-                    endAngle={-270}
-                  >
-                    <Cell fill="hsl(270, 70%, 55%)" />
-                    <Cell fill="hsl(var(--muted))" />
-                  </Pie>
-                </PieChart>
+              <div className="h-9 w-9 rounded-lg bg-teal-500/15 flex items-center justify-center shrink-0">
+                <Share2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                  {stats.surveys.respondidas} de {stats.surveys.total} pesquisas respondidas
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {stats.surveys.pendentes > 0 
-                    ? `${stats.surveys.pendentes} aguardando resposta`
-                    : 'Todas respondidas'}
-                </p>
+                <p className="font-medium text-sm text-teal-700 dark:text-teal-300">Programa de Indicação</p>
+                <p className="text-xs text-muted-foreground">Ganhe comissão indicando colegas</p>
               </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
             </CardContent>
           </Card>
-        )}
+        </div>
 
-        {/* Plan Usage Card - Compact version for Dashboard - hide for linked brokers */}
-        {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
+        {/* ═══ DESKTOP LAYOUT ═══ */}
+        <div className="hidden sm:block">
+          {/* Convites Pendentes Alert */}
+          {convitesPendentes > 0 && (
+            <Card 
+              className="mb-4 border-warning/30 bg-warning/5 cursor-pointer hover:shadow-medium transition-shadow animate-fade-in"
+              onClick={() => navigate('/convites-recebidos')}
+            >
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-warning/20 flex items-center justify-center shrink-0">
+                  <Handshake className="h-6 w-6 text-warning" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-warning">
+                    {convitesPendentes} {convitesPendentes === 1 ? 'convite de parceria pendente' : 'convites de parceria pendentes'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Clique para ver e aceitar os convites recebidos
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Card de Indicações */}
-        <Card 
-          data-tour="indicacoes"
-          className={`animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
-          onClick={() => navigate('/minhas-indicacoes')}
-        >
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
-              <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+          {/* Card de Resumo da Equipe para Líderes */}
+          {isLider && teamSummary && (
+            <Card 
+              className="mb-4 border-cyan-500/30 bg-cyan-500/5 dark:border-cyan-400/30 dark:bg-cyan-400/5 cursor-pointer hover:shadow-medium transition-all animate-fade-in"
+              onClick={() => navigate('/minha-equipe')}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${teamSummary.corEquipe}20` }}
+                  >
+                    <UsersRound className="h-6 w-6" style={{ color: teamSummary.corEquipe }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-cyan-700 dark:text-cyan-300">
+                      {teamSummary.nomeEquipe}
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5" />
+                        {teamSummary.membrosAtivos}/{teamSummary.totalMembros} ativos
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        {teamSummary.fichasMes} registros este mês
+                      </span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-cyan-600 dark:text-cyan-400 border-cyan-500/30 shrink-0">
+                    Líder
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Welcome Section */}
+          <div data-tour="welcome" className="mb-8">
+            <h1 
+              className="font-display text-3xl font-bold mb-2 cursor-default"
+              onClick={() => {
+                const clicks = parseInt(sessionStorage.getItem('debug-clicks') || '0') + 1;
+                sessionStorage.setItem('debug-clicks', String(clicks));
+                if (clicks >= 5) {
+                  setShowDebug(true);
+                  sessionStorage.setItem('debug-clicks', '0');
+                }
+                setTimeout(() => sessionStorage.setItem('debug-clicks', '0'), 2000);
+              }}
+            >
+              Bem-vindo, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{profile?.nome?.split(' ')[0] || 'Usuário'}</span>!
+            </h1>
+            <p className="text-base text-muted-foreground">
+              Gerencie seus registros de visita e clientes
+            </p>
+          </div>
+
+          {/* Stats Grid */}
+          <div data-tour="stats" className="rounded-2xl bg-muted/30 p-3 mb-8">
+            <div className="grid grid-cols-3 gap-6">
+              <Card 
+                className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group"
+                onClick={() => navigate('/fichas')}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="bg-primary/10 rounded-full p-1.5">
+                      <FileText className="h-4 w-4 text-primary" />
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="text-3xl font-bold text-primary">{stats?.totalFichas || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Total Registros</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group" 
+                style={{ animationDelay: '0.1s' }}
+                onClick={() => navigate('/fichas?status=completo')}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="bg-success/10 rounded-full p-1.5">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-success transition-colors" />
+                  </div>
+                  <div className="text-3xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Confirmadas</p>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft hover:shadow-medium hover:scale-[1.02] transition-all group" 
+                style={{ animationDelay: '0.2s' }}
+                onClick={() => navigate('/fichas?status=pendente')}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="bg-warning/10 rounded-full p-1.5">
+                      <Clock className="h-4 w-4 text-warning" />
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-warning transition-colors" />
+                  </div>
+                  <div className="text-3xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pendentes</p>
+                </CardContent>
+              </Card>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-teal-700 dark:text-teal-300">
-                Indique e Ganhe
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Indique corretores e imobiliárias e ganhe comissão
-              </p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-          </CardContent>
-        </Card>
+          </div>
+
+          {/* Card de Fichas como Parceiro */}
+          {fichasParceiro && fichasParceiro.total > 0 && (
+            <Card 
+              className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-4"
+              style={{ animationDelay: '0.4s' }}
+              onClick={() => navigate('/fichas-parceiro')}
+            >
+              <CardContent className="px-3 py-2 flex items-center gap-3">
+                <Handshake className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    {fichasParceiro.total} {fichasParceiro.total === 1 ? 'registro como parceiro' : 'registros como parceiro'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {fichasParceiro.pendentes > 0 
+                      ? `${fichasParceiro.pendentes} pendente${fichasParceiro.pendentes > 1 ? 's' : ''} de confirmação`
+                      : 'Todas confirmadas'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Card de Pesquisas Pós-Visita */}
+          {surveyEnabled && stats?.surveys && stats.surveys.total > 0 && (
+            <Card 
+              className="animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6"
+              style={{ animationDelay: '0.5s' }}
+              onClick={() => navigate('/pesquisas')}
+            >
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="shrink-0">
+                  <PieChart width={44} height={44}>
+                    <Pie
+                      data={[
+                        { value: stats.surveys.respondidas },
+                        { value: stats.surveys.pendentes },
+                      ]}
+                      cx={22}
+                      cy={22}
+                      innerRadius={13}
+                      outerRadius={20}
+                      dataKey="value"
+                      strokeWidth={0}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      <Cell fill="hsl(270, 70%, 55%)" />
+                      <Cell fill="hsl(var(--muted))" />
+                    </Pie>
+                  </PieChart>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                    {stats.surveys.respondidas} de {stats.surveys.total} pesquisas respondidas
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.surveys.pendentes > 0 
+                      ? `${stats.surveys.pendentes} aguardando resposta`
+                      : 'Todas respondidas'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Plan Usage Card - hide for linked brokers */}
+          {!isCorretorVinculado && <PlanUsageCard compact className="mb-6 animate-fade-in" />}
+
+          {/* Card de Indicações */}
+          <Card 
+            data-tour="indicacoes"
+            className={`animate-fade-in cursor-pointer border-0 bg-card/80 backdrop-blur-sm shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all mb-6 ${showIndicaPulse ? 'animate-attention-pulse' : ''}`}
+            onClick={() => navigate('/minhas-indicacoes')}
+          >
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl bg-teal-500/20 dark:bg-teal-400/20 flex items-center justify-center shrink-0">
+                <Share2 className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-teal-700 dark:text-teal-300">
+                  Indique e Ganhe
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Indique corretores e imobiliárias e ganhe comissão
+                </p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
