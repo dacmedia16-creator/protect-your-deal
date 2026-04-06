@@ -1,99 +1,65 @@
 
 
-# Refatoracao da Home Mobile — Plano de Nova Hierarquia
+# Refinamento UX da Home Mobile
 
-## Estrutura atual vs. proposta
+## O que já está bom
+- CTA "Registrar Nova Visita" em destaque no topo — correto
+- Seção "Precisa da sua atenção" condicional — bom padrão
+- Stats em 3 colunas compactas — funcional
+- Navegação inferior renomeada — mais claro
 
-```text
-ATUAL                              PROPOSTA
-─────────────────────              ─────────────────────
-Header (logo + avatar)             Header (logo + avatar) [sem mudanca]
-PWA Banner                         PWA Banner [sem mudanca]
-Upgrade Banner                     Upgrade Banner [sem mudanca]
-Convites Pendentes                 
-Equipe (lider)                     ── ZONA PRIMARIA ──
-Welcome "Bem-vindo, X!"           Saudacao compacta (1 linha)
-                                   CTA Principal: "Registrar Visita"
-Stats 3 cols (Total/Conf/Pend)       (botao grande, gradient, full-width)
-                                   
-Acoes Rapidas (4 cards)            Stats compactos (3 cols inline,
-                                     sem container bg, numeros menores)
-Fichas Parceiro                    
-Pesquisas pie chart                ── ATENCAO ──
-PlanUsage                         "Precisa da sua atencao" (condicional)
-Indicacoes                          - Fichas pendentes (se > 0)
-                                     - Convites pendentes (se > 0)
-                                     - Fichas parceiro pendentes (se > 0)
-                                     - Pesquisas pendentes (se > 0)
-                                   
-                                   ── ZONA SECUNDARIA ──
-                                   Acoes rapidas (cards menores,
-                                     sem "Ver Registros" duplicado)
-                                   Equipe (lider, compacto)
-                                   PlanUsage
-                                   Indicacoes (menor, sem pulse)
-```
+## Refinamentos propostos
 
-## Mudancas por bloco
+### 1. Subtítulo contextual no topo (linha 449-451)
+Substituir o "Olá, {nome}" isolado por uma saudação com subtítulo operacional dinâmico:
+- Se há pendências: "Você tem X pendências hoje"
+- Se tudo ok: "Tudo em dia ✓"
+- Se não há fichas: "Comece registrando sua primeira visita"
 
-### 1. Saudacao + CTA Principal
-- Reduzir welcome de 2 linhas para 1: "Ola, {nome}" (sem subtitle generico)
-- Logo abaixo: botao full-width "Registrar Nova Visita" com gradiente primario, icone Plus, tamanho lg
-- Se houver parcerias construtora, segundo botao outline abaixo
-- **Resultado**: acao principal em destaque absoluto, acima de tudo
+Isso transforma o header de decorativo em informativo.
 
-### 2. Stats compactos
-- Remover container `bg-muted/30 rounded-2xl p-3` — stats ficam mais leves
-- Manter 3 colunas mas reduzir padding, numeros de `text-2xl` para `text-xl`
-- Remover `ChevronRight` dos cards de stats mobile (ja sao clicaveis)
-- Labels mais diretos: "Total" / "Confirmados" / "Pendentes"
+### 2. "Registro Construtoras" com menos peso (linhas 463-472)
+O botão outline de construtoras compete visualmente com o CTA principal. Mudança:
+- Reduzir de `Button` para uma linha compacta dentro da seção "atenção" ou um link discreto
+- Usar tamanho `sm`, sem borda colorida, texto `text-muted-foreground` com ícone sutil
+- Só aparece se há parcerias ativas — manter essa lógica
 
-### 3. Secao "Precisa da sua atencao"
-- Nova secao condicional que agrupa alertas existentes (convites pendentes, fichas pendentes, pesquisas pendentes, fichas parceiro pendentes)
-- So aparece se ha itens pendentes
-- Cada item e uma linha compacta clicavel com badge de contagem
-- Substitui os cards avulsos de convites, fichas parceiro, pesquisas que hoje estao espalhados
+### 3. Métricas com microcopy de status (linhas 476-508)
+Adicionar uma linha de contexto abaixo de cada número nos stats cards:
+- Total: sem subtítulo extra (já é claro)
+- Confirmados: se todos confirmados → "tudo em dia" em verde; senão manter "Confirmados"
+- Pendentes: se 0 → "nenhuma pendência" em verde; se > 0 → manter com cor warning
 
-### 4. Acoes rapidas simplificadas
-- Remover "Ver Registros" (ja esta na tab bar como "Registros")
-- Manter: "Ajuda Juridica" e "Registro Construtoras" (se aplicavel)
-- Reduzir altura dos cards
+Isso dá leitura instantânea de status sem ocupar mais espaço.
 
-### 5. Conteudo secundario
-- Equipe (lider): mover para depois das acoes, manter compacto
-- PlanUsage: manter compact, sem mudanca
-- Indicacoes: remover `animate-attention-pulse`, diminuir padding, mover para o final
+### 4. Seção "Precisa da sua atenção" — estado vazio positivo (linhas 511-550)
+Quando não há itens pendentes, em vez de esconder a seção, mostrar uma mensagem compacta de reforço positivo:
+- "Tudo em dia — nenhuma pendência" com ícone CheckCircle verde
+- Isso evita que a home pareça "vazia" quando tudo está ok
 
-### 6. Menu inferior (MobileNav)
-- "Inicio" → "Home" (mais universal)
-- "Registros" → manter (ja e claro)
-- "Convites" → "Parcerias" (mais descritivo do que faz)
-- "Pesquisas" → manter
-- "Sofia" → "Ajuda" (mais autoexplicativo para quem nao conhece a Sofia)
+### 5. Ajuste de espaçamento e peso visual
+- Reduzir `space-y-4` para `space-y-3` no container mobile para tela mais compacta
+- Card "Ajuda Jurídica" (linhas 579-592): reduzir padding de `p-3` para `p-2.5`, manter discreto como está
+- Card "Indicações" (linhas 598-613): manter no final, sem alterações — já está equilibrado
 
-## Microcopy melhorado
+### 6. Nenhuma mudança em
+- Desktop layout (intocado)
+- Queries de dados
+- Navegação inferior (já refinada)
+- Identidade visual, cores, fontes, shadows
 
-| Atual | Proposto |
-|-------|----------|
-| "Bem-vindo, X!" | "Ola, {nome}" |
-| "Gerencie seus registros de visita e clientes" | (removido — redundante) |
-| "Total Registros" | "Total" |
-| "Criar e enviar para confirmacao" | "Registrar visita e enviar para confirmar" |
-| "Indique e Ganhe" | "Programa de Indicacao" |
-| "Indique corretores e imobiliarias e ganhe comissao" | "Ganhe comissao indicando colegas" |
+## Arquivo alterado
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/Dashboard.tsx` | Subtítulo contextual, construtoras discreto, microcopy nos stats, estado positivo na seção atenção, ajuste de espaçamento |
 
-## Regras de implementacao
+## Microcopy final
 
-- Apenas `src/pages/Dashboard.tsx` e `src/components/MobileNav.tsx` serao editados
-- Mudancas sao mobile-only (classes `sm:hidden` / `hidden sm:...`), desktop intocado
-- Nenhum fluxo de negocio alterado, nenhuma query nova
-- Nenhum componente novo criado, apenas reorganizacao do existente
-- Identidade visual preservada (cores, fontes, border-radius, shadows do design system)
-
-## Arquivos alterados
-
-| Arquivo | O que muda |
-|---------|-----------|
-| `src/pages/Dashboard.tsx` | Reordenar blocos mobile, CTA principal, secao "atencao", stats compactos |
-| `src/components/MobileNav.tsx` | Renomear labels: Home, Parcerias, Ajuda |
+| Bloco | Atual | Proposto |
+|-------|-------|----------|
+| Saudação sub | (nenhum) | "Tudo em dia ✓" / "X pendências hoje" |
+| Pendentes = 0 | (oculto) | "nenhuma pendência" (verde) |
+| Confirmados = total | "Confirmados" | "tudo em dia" (verde) |
+| Atenção vazia | (seção oculta) | "Tudo em dia — nenhuma pendência ✓" |
+| Construtoras | Botão outline com borda laranja | Botão `ghost` tamanho `sm`, texto muted |
 
