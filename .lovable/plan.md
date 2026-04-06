@@ -1,52 +1,31 @@
 
 
-# Diagnóstico: Segurança do Supabase Realtime
+# Fix: Restrict backup bucket INSERT to service_role only
 
-## Descoberta Crítica
+## Problem
+The storage policy `Service role pode inserir backups` applies to `{public}` role (includes anonymous users) with only a `bucket_id` check. Any unauthenticated caller can upload files to the private `comprovantes-backup` bucket via the REST API.
 
-**O risco identificado pelo scanner de segurança é um falso positivo para este projeto.**
+## Impact
+All actual uploads come from edge functions using `service_role` key (`verify-otp/index.ts` and `regenerate-backup/index.ts`). No frontend code uploads to this bucket. Restricting to `service_role` has zero functional impact.
 
-O Supabase Realtime tem dois mecanismos separados:
+## Fix
+One SQL migration:
 
-1. **Postgres Changes** (o que este projeto usa) — filtra eventos automaticamente pelas **políticas RLS existentes da tabela fonte**. Cada cliente só recebe eventos de linhas que suas RLS policies permitem ver via SELECT.
+```sql
+-- Drop the permissive policy
+DROP POLICY "Service role pode inserir backups" ON storage.objects;
 
-2. **Broadcast & Presence** (o que `realtime.messages` RLS controla) — este projeto **não usa** Broadcast nem Presence.
+-- Recreate restricted to service_role only
+CREATE POLICY "Service role pode inserir backups"
+  ON storage.objects FOR INSERT
+  TO service_role
+  WITH CHECK (bucket_id = 'comprovantes-backup');
+```
 
-### Como funciona o filtro atual
+## Files changed
+| File | Change |
+|------|--------|
+| New migration | 1 DROP + 1 CREATE POLICY |
 
-Quando um cliente se inscreve em `postgres_changes` na tabela `fichas_visita`:
-- O servidor Realtime captura o evento do WAL
-- Para cada cliente inscrito, executa internamente uma query SELECT com o JWT do cliente
-- Se a RLS policy do cliente permite ver aquela linha, o evento é entregue
-- Se não permite, o evento é descartado silenciosamente
-
-### Prova no código
-
-Todos os 5 pontos de uso de Realtime no projeto usam exclusivamente `postgres_changes`:
-
-| Hook/Componente | Canal | Tabela | Filtro adicional |
-|---|---|---|---|
-| `useFichaNotification` | `fichas-confirmadas-notification` | `fichas_visita` | `imobiliaria_id=eq.X` ou `user_id=eq.X` |
-| `useAssinaturaNotification` | `assinatura-status-changes` | `assinaturas` | `imobiliaria_id=eq.X` / `construtora_id=eq.X` / `user_id=eq.X` |
-| `useConvitesPendentes` | `convites-realtime-{userId}` | `convites_parceiro` | `corretor_parceiro_id=eq.X` |
-| `DetalhesFicha` | `ficha-otp-{id}` | `fichas_visita` | `id=eq.X` |
-| `SuperAdminLayout` | `admin-notifications` | `assinaturas`, `user_roles`, `convites` | nenhum (super_admin tem RLS `is_super_admin()`) |
-
-### Análise de segurança por tabela
-
-- **`fichas_visita`**: RLS tem 6 policies de SELECT (owner, parceiro, admin imobiliária, construtora, líder equipe, super_admin). Um corretor nunca recebe eventos de fichas de outro tenant.
-- **`assinaturas`**: RLS tem 4 policies de SELECT (imobiliária, construtora, user, super_admin). Isolamento por tenant garantido.
-- **`convites_parceiro`**: RLS tem 3 policies de SELECT (origem, parceiro por ID, parceiro por telefone, super_admin). Isolamento por usuário garantido.
-
-## Conclusão
-
-**Nenhuma mudança é necessária.** Criar RLS em `realtime.messages` e migrar para canais `private: true` não teria efeito nenhum porque o projeto não usa Broadcast nem Presence. As RLS policies existentes nas tabelas fonte JÁ protegem os eventos de `postgres_changes`.
-
-### Única recomendação menor (opcional)
-
-O canal `admin-notifications` no `SuperAdminLayout` escuta `assinaturas` e `user_roles` sem filtro de coluna. Isso é seguro porque a RLS de `assinaturas` e `user_roles` para super_admin exige `is_super_admin(auth.uid())` — um corretor comum nunca receberia esses eventos. Não é necessário alterar.
-
-## Ação sugerida
-
-Marcar o finding `MISSING_REALTIME_CHANNEL_AUTHORIZATION` como **ignorado/falso positivo** no painel de segurança, documentando que o projeto usa exclusivamente `postgres_changes` (protegido por RLS das tabelas fonte) e não usa Broadcast/Presence.
+No frontend or edge function changes needed.
 
