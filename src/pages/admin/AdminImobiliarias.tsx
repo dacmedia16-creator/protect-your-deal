@@ -333,6 +333,38 @@ export default function AdminImobiliarias() {
     }
   }
 
+  async function toggleEmpreendimentoFeature(imob: Imobiliaria) {
+    setIsTogglingFeature(imob.id + '-emp');
+    try {
+      const newValue = !imob.empreendimento_visita_enabled;
+
+      const { error } = await supabase
+        .from('imobiliaria_feature_flags')
+        .upsert({
+          imobiliaria_id: imob.id,
+          feature_key: 'empreendimento_visita',
+          enabled: newValue,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'imobiliaria_id,feature_key',
+        });
+
+      if (error) throw error;
+
+      toast.success(
+        newValue
+          ? 'Visita de Empreendimento habilitada!'
+          : 'Visita de Empreendimento desabilitada!'
+      );
+      fetchImobiliarias();
+    } catch (error) {
+      console.error('Error toggling empreendimento feature:', error);
+      toast.error('Erro ao alterar feature');
+    } finally {
+      setIsTogglingFeature(null);
+    }
+  }
+
   function openImpersonateDialog(imob: Imobiliaria, e?: React.MouseEvent) {
     e?.stopPropagation();
     setImobiliariaToImpersonate(imob);
