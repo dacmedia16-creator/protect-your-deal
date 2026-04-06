@@ -7,6 +7,7 @@ const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
 const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
 const DEFER_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const COUNTDOWN_SECONDS = 5;
+const SAFETY_TIMEOUT_MS = 10 * 1000; // 10 seconds max overlay
 
 interface VersionCheckResult {
   needsUpdate: boolean;
@@ -191,12 +192,9 @@ export function VersionCheckWithOverlay() {
     setShowOverlay(true);
   }, []);
 
-  // Separate effect to manage the countdown interval
-  // This prevents the interval from being cleared when other state changes
+  // Countdown interval
   useEffect(() => {
-    if (!showOverlay) {
-      return;
-    }
+    if (!showOverlay) return;
 
     console.log('⏱️ Iniciando intervalo de countdown...');
     
@@ -213,6 +211,21 @@ export function VersionCheckWithOverlay() {
       console.log('⏱️ Limpando intervalo de countdown');
       clearInterval(intervalId);
     };
+  }, [showOverlay]);
+
+  // Safety timeout: auto-close overlay after 10 seconds max
+  useEffect(() => {
+    if (!showOverlay) return;
+
+    const safetyTimer = setTimeout(() => {
+      console.log('⏰ Safety timeout: fechando overlay após 10s');
+      setShowOverlay(false);
+      setCountdown(COUNTDOWN_SECONDS);
+      // Defer briefly so it doesn't reappear immediately
+      deferredUntilRef.current = Date.now() + 60_000;
+    }, SAFETY_TIMEOUT_MS);
+
+    return () => clearTimeout(safetyTimer);
   }, [showOverlay]);
 
   /**
