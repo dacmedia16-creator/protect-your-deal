@@ -78,7 +78,7 @@ function getRatingBarBg(value: number): string {
 }
 
 function formatImovelTipo(tipo: string | undefined): string {
-  if (!tipo) return '—';
+  if (!tipo) return '';
   const map: Record<string, string> = {
     apartamento: 'Apartamento',
     casa: 'Casa',
@@ -99,6 +99,11 @@ function formatImovelTipo(tipo: string | undefined): string {
   return map[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
 }
 
+function emptyValue(val: string): string {
+  if (!val || val === '—' || val === '-') return `<span style="color: ${COLORS.textLight}; font-style: italic; font-weight: 400;">Não informado</span>`;
+  return val;
+}
+
 function calcAvg(response: SurveyResponse): number {
   return (
     response.rating_location +
@@ -111,6 +116,31 @@ function calcAvg(response: SurveyResponse): number {
   ) / 7;
 }
 
+function getConclusion(avg: number, wouldBuy: boolean, response: SurveyResponse): string {
+  const ratings: { label: string; value: number }[] = Object.entries(ratingLabels).map(([key, label]) => ({
+    label,
+    value: response[key as keyof SurveyResponse] as number,
+  }));
+  const best = ratings.reduce((a, b) => (b.value > a.value ? b : a));
+  const worst = ratings.reduce((a, b) => (b.value < a.value ? b : a));
+
+  let text = '';
+  if (avg >= 4 && wouldBuy) {
+    text = 'Avaliação altamente positiva. Cliente demonstrou interesse real de compra.';
+  } else if (avg >= 3 && wouldBuy) {
+    text = 'Avaliação satisfatória com interesse de compra declarado.';
+  } else if (avg >= 3 && !wouldBuy) {
+    text = 'Avaliação satisfatória, porém sem intenção de compra neste momento.';
+  } else {
+    text = 'Avaliação abaixo da média. Recomenda-se atenção aos pontos negativos indicados.';
+  }
+
+  text += ` Destaque positivo: <strong>${best.label}</strong> (${best.value}/5).`;
+  text += ` Ponto de atenção: <strong>${worst.label}</strong> (${worst.value}/5).`;
+
+  return text;
+}
+
 // Shared CSS styles for professional PDF
 function getBaseStyles(): string {
   return `
@@ -120,22 +150,30 @@ function getBaseStyles(): string {
     .header {
       background: ${COLORS.primary};
       color: white;
-      padding: 28px 32px;
+      padding: 28px 32px 24px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
-    .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 2px; }
-    .header-left .subtitle { font-size: 12px; opacity: 0.7; font-weight: 400; }
-    .header-right { text-align: right; font-size: 11px; opacity: 0.8; line-height: 1.6; }
-    .header-right .protocol { font-size: 13px; font-weight: 600; opacity: 1; letter-spacing: 0.5px; }
+    .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+    .header-left .subtitle { font-size: 12px; opacity: 0.65; font-weight: 400; }
+    .header-right { text-align: right; }
+    .header-right .protocol { 
+      font-size: 15px; font-weight: 700; letter-spacing: 0.8px; 
+      font-family: 'Courier New', Courier, monospace; 
+      margin-bottom: 8px; 
+      padding-bottom: 8px; 
+      border-bottom: 1px solid rgba(255,255,255,0.2); 
+    }
+    .header-right .header-meta { font-size: 11px; opacity: 0.75; line-height: 1.7; }
+    .header-right .header-meta strong { opacity: 1; font-weight: 600; }
     
-    .content { padding: 24px 32px; }
+    .content { padding: 28px 32px; }
     
     .summary-cards {
       display: flex;
       gap: 14px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .summary-card {
       flex: 1;
@@ -164,7 +202,7 @@ function getBaseStyles(): string {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .info-box {
       background: ${COLORS.cardBg};
@@ -181,30 +219,29 @@ function getBaseStyles(): string {
       margin-bottom: 10px;
     }
     .info-row { display: flex; margin-bottom: 6px; }
-    .info-row .info-label { font-size: 11px; color: ${COLORS.textMuted}; width: 80px; flex-shrink: 0; }
-    .info-row .info-value { font-size: 12px; font-weight: 500; color: #1e293b; }
+    .info-row .info-label { font-size: 11px; color: ${COLORS.textMuted}; width: 85px; flex-shrink: 0; }
+    .info-row .info-value { font-size: 12px; font-weight: 500; color: #1e293b; word-break: break-word; line-height: 1.5; }
     
-    .ratings-section { margin-bottom: 24px; }
+    .ratings-section { margin-bottom: 28px; }
     .rating-bar-row {
       display: flex;
       align-items: center;
-      padding: 10px 0;
+      padding: 11px 0;
       border-bottom: 1px solid #f1f5f9;
     }
     .rating-bar-row:last-child { border-bottom: none; }
     .rating-bar-label { font-size: 12px; color: #475569; width: 110px; flex-shrink: 0; font-weight: 500; }
     .rating-bar-container {
       flex: 1;
-      height: 10px;
-      background: #f1f5f9;
-      border-radius: 5px;
+      height: 12px;
+      background: #e9edf2;
+      border-radius: 6px;
       margin: 0 14px;
       overflow: hidden;
     }
     .rating-bar-fill {
       height: 100%;
-      border-radius: 5px;
-      transition: width 0.3s;
+      border-radius: 6px;
     }
     .rating-bar-value {
       font-size: 13px;
@@ -213,7 +250,7 @@ function getBaseStyles(): string {
       text-align: right;
     }
     
-    .feedback-section { margin-bottom: 24px; }
+    .feedback-section { margin-bottom: 28px; }
     .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .feedback-card {
       border-radius: 8px;
@@ -228,18 +265,34 @@ function getBaseStyles(): string {
     .feedback-card.negative .fb-title { color: ${COLORS.red}; }
     .feedback-card .fb-text { font-size: 12px; line-height: 1.5; color: #334155; font-style: italic; }
     .feedback-single { grid-column: 1 / -1; }
+
+    .conclusion-section { margin-bottom: 12px; }
+    .conclusion-card {
+      background: ${COLORS.cardBg};
+      border: 1px solid ${COLORS.border};
+      border-left: 4px solid ${COLORS.accent};
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+    }
+    .conclusion-card .conclusion-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: #334155;
+    }
     
     .footer {
-      margin-top: 20px;
-      padding: 14px 32px;
+      margin-top: 16px;
+      padding: 16px 32px;
       border-top: 2px solid ${COLORS.primary};
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 9px;
+      font-size: 10px;
       color: ${COLORS.textLight};
     }
     .footer-brand { font-weight: 700; color: ${COLORS.textMuted}; letter-spacing: 0.5px; }
+    .footer-center { text-align: center; }
+    .footer-right { text-align: right; }
   `;
 }
 
@@ -261,7 +314,7 @@ export function useSurveyExport() {
         survey.client_name || survey.fichas_visita?.comprador_nome || '-',
         survey.client_phone || '-',
         survey.fichas_visita?.imovel_endereco || '-',
-        formatImovelTipo(survey.fichas_visita?.imovel_tipo),
+        formatImovelTipo(survey.fichas_visita?.imovel_tipo) || '-',
         survey.fichas_visita?.protocolo || '-',
         survey.fichas_visita?.data_visita ? format(new Date(survey.fichas_visita.data_visita), 'dd/MM/yyyy', { locale: ptBR }) : '-',
         response.created_at ? format(new Date(response.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-',
@@ -368,8 +421,8 @@ export function useSurveyExport() {
             <div class="subtitle">Pesquisas Pós-Visita</div>
           </div>
           <div class="header-right">
-            <div style="font-weight: 600; opacity: 1;">${imobiliariaName}</div>
-            <div>${format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
+            <div class="protocol">${imobiliariaName}</div>
+            <div class="header-meta">${format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
           </div>
         </div>
 
@@ -448,7 +501,8 @@ export function useSurveyExport() {
 
         <div class="footer">
           <span class="footer-brand">VisitaProva</span>
-          <span>${imobiliariaName} • Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+          <span class="footer-center">${imobiliariaName}</span>
+          <span class="footer-right">Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
         </div>
       </body>
       </html>
@@ -477,17 +531,19 @@ export function useSurveyExport() {
     const response = survey.survey_responses[0];
     const avg = calcAvg(response);
     const clientName = survey.client_name || survey.fichas_visita?.comprador_nome || 'Cliente';
-    const propertyAddress = survey.fichas_visita?.imovel_endereco || '—';
-    const protocol = survey.fichas_visita?.protocolo || '—';
+    const propertyAddress = survey.fichas_visita?.imovel_endereco || '';
+    const protocol = survey.fichas_visita?.protocolo || '';
     const imovelTipo = formatImovelTipo(survey.fichas_visita?.imovel_tipo);
     const dataVisita = survey.fichas_visita?.data_visita
       ? format(new Date(survey.fichas_visita.data_visita), 'dd/MM/yyyy', { locale: ptBR })
-      : '—';
+      : '';
     const dataResposta = format(new Date(response.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-    const corretorNome = survey.corretor_nome || '—';
+    const corretorNome = survey.corretor_nome || '';
 
     const hasFeedback = response.liked_most || response.liked_least;
     const hasBothFeedback = response.liked_most && response.liked_least;
+
+    const conclusionText = getConclusion(avg, response.would_buy, response);
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -500,12 +556,14 @@ export function useSurveyExport() {
         <div class="header">
           <div class="header-left">
             <h1>Relatório Pós-Visita</h1>
-            <div class="subtitle">Pesquisa de Satisfação do Imóvel</div>
+            <div class="subtitle">Pesquisa de Satisfação • ${dataVisita || 'Data não informada'}</div>
           </div>
           <div class="header-right">
-            <div class="protocol">${protocol}</div>
-            <div>${imobiliariaName}</div>
-            <div>Visita: ${dataVisita}</div>
+            <div class="protocol">${protocol || 'S/N'}</div>
+            <div class="header-meta">
+              <strong>${imobiliariaName}</strong><br/>
+              ${corretorNome ? `Corretor: ${corretorNome}` : ''}
+            </div>
           </div>
         </div>
 
@@ -543,24 +601,20 @@ export function useSurveyExport() {
                   <span class="info-value">${survey.client_phone}</span>
                 </div>
               ` : ''}
-              <div class="info-row">
-                <span class="info-label">Corretor</span>
-                <span class="info-value">${corretorNome}</span>
-              </div>
             </div>
             <div class="info-box">
               <div class="box-title">Imóvel Visitado</div>
               <div class="info-row">
                 <span class="info-label">Endereço</span>
-                <span class="info-value">${propertyAddress}</span>
+                <span class="info-value">${emptyValue(propertyAddress)}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Tipo</span>
-                <span class="info-value">${imovelTipo}</span>
+                <span class="info-value">${emptyValue(imovelTipo)}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Protocolo</span>
-                <span class="info-value">${protocol}</span>
+                <span class="info-value" style="font-family: 'Courier New', monospace; letter-spacing: 0.3px;">${emptyValue(protocol)}</span>
               </div>
             </div>
           </div>
@@ -604,11 +658,20 @@ export function useSurveyExport() {
               </div>
             </div>
           ` : ''}
+
+          <!-- Conclusion -->
+          <div class="conclusion-section">
+            <div class="section-title">Parecer Resumido</div>
+            <div class="conclusion-card">
+              <div class="conclusion-text">${conclusionText}</div>
+            </div>
+          </div>
         </div>
 
         <div class="footer">
           <span class="footer-brand">VisitaProva</span>
-          <span>Protocolo ${protocol} • Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
+          <span class="footer-center">Protocolo ${protocol || 'S/N'}</span>
+          <span class="footer-right">Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
         </div>
       </body>
       </html>
