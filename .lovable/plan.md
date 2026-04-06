@@ -1,62 +1,64 @@
 
 
-# Polimento Final da Home Mobile
+# Refinamento da Lista de Registros Mobile
 
 ## Avaliação rápida
 
-A tela atual está bem estruturada. Os ajustes são cirúrgicos:
+A tela está funcional e bem estruturada. Os pontos de melhoria são cirúrgicos:
+- Cards ocupam muita altura vertical (4 seções internas com border-t)
+- Badges de "Parceiro" e status competem visualmente no mesmo nível
+- Ação de excluir (lixeira) fica na mesma linha que nomes, criando ruído
+- Busca e filtros são blocos separados sem integração visual
+- Linha "Prop: / Comp:" ocupa espaço mas raramente é útil na listagem
 
-## Refinamentos
+## Refinamentos por bloco
 
-### 1. Topo — subtítulo mais contextual
-**Atual**: "Você tem X pendências hoje" / "Tudo em dia ✓" / "Comece registrando..."
-**Proposto**: Adicionar contexto temporal e operacional:
-- 0 fichas: "Comece registrando sua primeira visita"
-- Pendências > 0: "Você tem **X pendências** para resolver" (sem "hoje" — pendências não são necessariamente de hoje)
-- Tudo ok, com fichas: "Nenhuma pendência · **{totalFichas}** registros" — dá contexto de volume
-- Adicionar `mb-1` entre subtítulo e CTA para melhor respiração
+### 1. Cards mais compactos (linhas 230-306)
+- **Remover a linha "Prop: / Comp:"** do mobile — essa info já está na página de detalhes e raramente ajuda na listagem
+- **Mover a lixeira** para o canto superior direito do card (ao lado do status), com `opacity-50` para não competir
+- **Reduzir `space-y-2` → `space-y-1.5`** e `p-3` → `p-2.5` para ganhar ~20% de densidade
+- **Resultado**: card passa de 4 seções para 3 (protocolo+status, endereço, tipo+data)
 
-### 2. "Registro via Construtora" — mais autoexplicativo
-**Atual**: `Registro via Construtora` (ghost button, pouco contexto)
-**Proposto**: 
-- Texto: "Registrar visita de empreendimento" — descreve a ação, não o mecanismo
-- Adicionar `text-xs` com `opacity-70` para manter hierarquia abaixo do CTA
-- Manter `variant="ghost"` e `size="sm"`
+### 2. Filtros mais claros (linhas 168-194)
+- **Labels**: "Pend." → "Pendentes" (cabe se removermos o ícone Users da tab Parceiro no mobile e usarmos texto curto)
+- Na verdade, manter as abreviações mas adicionar `title` para acessibilidade
+- **TabsList**: adicionar `w-full` no mobile para distribuir tabs uniformemente em vez de `min-w-full`
 
-### 3. Métricas — mais funcionais
-**Atual**: Cards com número + label estática ("Total", "Confirmados/tudo em dia", "Pendentes/nenhuma")
-**Proposto**:
-- Adicionar label de porcentagem no card "Confirmados" quando total > 0: ex. "8 de 10" como subtítulo em `text-[9px]`
-- Card "Pendentes" com pendências > 0: subtítulo "aguardando" em warning para reforçar urgência
-- Reduzir `text-xl` → `text-lg` nos números para proporção mais equilibrada com labels
+### 3. Busca integrada (linhas 196-207)
+- **Reduzir `mb-4` → `mb-3`** entre busca e lista para menos espaço desperdiçado
+- **Placeholder mais específico**: "Buscar por protocolo, endereço..." → "Protocolo, endereço ou nome..."
+- **Reduzir altura**: `h-10` → `h-9` no mobile para proporção melhor com os cards compactos
 
-### 4. Blocos secundários — reordenar
-**Atual**: Equipe → Ajuda Jurídica → PlanUsage → Indicações
-**Proposto**: 
-- PlanUsage sobe (mais relevante no dia a dia do que Ajuda Jurídica)
-- Ordem: Equipe → PlanUsage → Indicações → Ajuda Jurídica (último, é ação excepcional)
-- Ajuda Jurídica: reduzir para `p-2.5`, `text-xs` na descrição
+### 4. Hierarquia status vs atributo (linhas 231-273)
+- **Status** (Pendente, Confirmado): manter como `Badge` com ícone — é a info principal
+- **Parceiro/C/ Parceiro**: trocar de `Badge` para um indicador mais discreto — um pequeno dot ou texto `text-[10px]` sem borda, posicionado junto ao protocolo
+- Isso cria separação clara: badges = estado do registro, texto sutil = atributo
 
-### 5. Estado positivo "Tudo em dia"
-**Atual**: Linha solta com ícone
-**Proposto**: Envolver em card leve (`bg-success/5 border-0 rounded-xl`) para dar consistência visual com os outros blocos
+### 5. Ação de excluir menos intrusiva
+- Mover o botão de delete/descartar para dentro da linha do protocolo (canto direito), com `opacity-40 hover:opacity-100`
+- Remover a seção `border-t` que existia só para abrigar nomes + delete
+- Usar `onClick stopPropagation` já existente
 
-### 6. Espaçamento
-- `mb-2` entre subtítulo de status e CTA (mais respiração)
-- Gap entre seção atenção e stats: manter `space-y-3` (já bom)
+### 6. Espaçamento da lista
+- `space-y-3` → `space-y-2` entre cards para lista mais densa
+- Manter `hover:shadow-medium` para feedback de toque
 
-## Arquivo alterado
-`src/pages/Dashboard.tsx` — apenas o bloco `sm:hidden` (mobile layout)
-
-## Microcopy final
+## Microcopy
 
 | Bloco | Atual | Novo |
 |-------|-------|------|
-| Sub sem fichas | "Comece registrando sua primeira visita" | (manter) |
-| Sub com pendências | "Você tem X pendências hoje" | "Você tem X pendências para resolver" |
-| Sub tudo ok | "Tudo em dia ✓" | "Nenhuma pendência · {total} registros" |
-| Construtora | "Registro via Construtora" | "Registrar visita de empreendimento" |
-| Confirmados sub | "tudo em dia" / "Confirmados" | "{n} de {total}" / "Confirmados" |
-| Pendentes sub | "nenhuma" / "Pendentes" | "nenhuma" / "aguardando" |
-| Estado positivo | Linha solta | Card leve bg-success/5 |
+| Busca placeholder | "Buscar por protocolo, endereço..." | "Protocolo, endereço ou nome..." |
+| Parceiro badge | Badge azul "Parceiro" | Texto discreto "(parceiro)" em azul |
+| C/ Parceiro badge | Badge roxa "C/ Parceiro" | Texto discreto "(c/ parceiro)" em roxo |
+
+## Arquivo alterado
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/ListaFichas.tsx` | Cards compactos, hierarquia status/atributo, delete discreto, busca refinada, espaçamento |
+
+## Sem mudança em
+- Desktop layout (intocado)
+- Queries de dados, filtros, navegação
+- Identidade visual, cores, fontes
 
