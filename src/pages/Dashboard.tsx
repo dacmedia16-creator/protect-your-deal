@@ -87,6 +87,16 @@ const ONBOARDING_STEPS = [
     description: 'Indique corretores ou imobiliárias e ganhe comissão recorrente por cada assinatura ativa.',
   },
   {
+    target: 'parcerias',
+    title: 'Parcerias e convites',
+    description: 'Envie e receba convites de parceria com outros corretores. Vocês compartilham fichas de visita de forma segura.',
+  },
+  {
+    target: 'sofia-ajuda',
+    title: 'Sofia, sua assistente',
+    description: 'Precisa de ajuda? Toque aqui para conversar com a Sofia. Ela explica funcionalidades e tira dúvidas em tempo real.',
+  },
+  {
     target: 'nav-menu',
     title: 'Menu de navegação',
     description: 'Use a barra inferior para acessar Início, Registros, Convites e Perfil a qualquer momento.',
