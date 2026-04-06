@@ -147,9 +147,23 @@ export default function EmpresaPesquisas() {
 
       const { data, error } = await query;
       if (error) throw error;
+
+      // Fetch corretor names from profiles
+      const userIds = [...new Set((data || []).map(s => (s.fichas_visita as any)?.user_id).filter(Boolean))] as string[];
+      let profilesMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, nome')
+          .in('user_id', userIds);
+        if (profiles) {
+          profilesMap = Object.fromEntries(profiles.map(p => [p.user_id, p.nome]));
+        }
+      }
       
       return (data || []).map(survey => ({
         ...survey,
+        corretor_nome: (survey.fichas_visita as any)?.user_id ? profilesMap[(survey.fichas_visita as any).user_id] || null : null,
         survey_responses: Array.isArray(survey.survey_responses) 
           ? survey.survey_responses 
           : survey.survey_responses ? [survey.survey_responses] : []
