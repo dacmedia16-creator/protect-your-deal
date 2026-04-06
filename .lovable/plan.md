@@ -1,40 +1,67 @@
 
 
-# Feature Flag para "Registrar Visita de Empreendimento"
+# Refatoração do Sistema de Atualização
 
 ## Resumo
-Adicionar uma feature flag `empreendimento_visita` (similar a `post_visit_survey`) que o Super Admin pode ativar/desativar por imobiliária. Quando desativada, o botão "Registrar visita de empreendimento" fica oculto no Dashboard e o modo `?modo=construtora` não funciona no NovaFicha.
+Unificar 3 sistemas independentes em 1 único componente (`VersionCheckWithOverlay`), eliminando duplicidade de requests, conflitos de UI e código morto.
 
-Para construtoras nativas (role `construtora_admin`), o comportamento não muda -- a seleção de empreendimento continua sempre ativa.
+## Mudanças
 
-## Alterações
+### 1. Deletar `src/hooks/useVersionCheck.ts`
+Código morto — não é importado em lugar nenhum.
 
-### 1. Admin: toggle na lista de imobiliárias (`AdminImobiliarias.tsx`)
-- Buscar flag `empreendimento_visita` da tabela `imobiliaria_feature_flags` (mesmo padrão de `post_visit_survey`)
-- Adicionar coluna/ação "Empreendimentos" no dropdown com switch para ativar/desativar
-- Upsert na tabela `imobiliaria_feature_flags` com `feature_key: 'empreendimento_visita'`
+### 2. Deletar `src/components/PWAUpdatePrompt.tsx`
+Sua lógica de detecção de novo Service Worker será absorvida pelo `VersionCheckWithOverlay`.
 
-### 2. Admin: toggle nos detalhes da imobiliária (`AdminDetalhesImobiliaria.tsx`)
-- Na aba "Features", adicionar switch para `empreendimento_visita` ao lado do já existente `post_visit_survey`
+### 3. Refatorar `src/main.tsx`
+- Remover o `registerSW` do main.tsx (a responsabilidade passa para o `VersionCheckWithOverlay`)
+- Manter apenas o guard de iframe/preview para desregistrar SWs existentes
 
-### 3. Dashboard: condicionar botão à flag (`Dashboard.tsx`)
-- Importar `useImobiliariaFeatureFlag('empreendimento_visita')`
-- Mudar condição de `parceriasConstrutoras.length > 0` para `parceriasConstrutoras.length > 0 && empreendimentoEnabled`
-- Aplicar nos dois locais (mobile e desktop)
+### 4. Refatorar `src/components/VersionCheckWithOverlay.tsx`
+Mudanças:
+- **Integrar `registerSW`**: chamar `registerSW({ onNeedRefresh })` dentro do componente. Quando `onNeedRefresh` disparar, setar uma flag `swUpdateAvailable` e mostrar o overlay (mesma UI).
+- **Fonte única de verdade**: um ref `updateAvailableRef` que é `true` se qualquer das duas fontes (Edge Function ou SW) detectar atualização.
+- **Remover listeners redundantes**: manter apenas `visibilitychange` (não precisa de `focus` separado, pois `visibilitychange` já cobre o cenário).
+- **Safety timeout**: aumentar de 10s para 15s. Adicionar guard: se `countdown <= 0` (update já disparado), o safety timeout não cancela o overlay.
+- **Guardar `updateSW` ref**: quando o overlay dispara `forceUpdate`, chamar `updateSW(true)` primeiro (se disponível) para ativar o novo SW, depois limpar caches e recarregar.
 
-### 4. NovaFicha: bloquear modo construtora parceira sem flag (`NovaFicha.tsx`)
-- Importar `useImobiliariaFeatureFlag('empreendimento_visita')`
-- Alterar `modoConstrutoraParceira` para incluir checagem da flag: `!isConstrutora && !!imobiliariaId && searchParams.get('modo') === 'construtora' && empreendimentoEnabled`
-- Se o usuário acessar `?modo=construtora` sem a flag, redirecionar para `/fichas/nova` normal
+Fluxo unificado:
+```text
+┌─────────────────────────────────────────┐
+│         VersionCheckWithOverlay         │
+│                                         │
+│  Fonte 1: Edge Function (polling 2min)  │
+│  Fonte 2: registerSW onNeedRefresh      │
+│           │                             │
+│           ▼                             │
+│   updateAvailable = true                │
+│           │                             │
+│           ▼                             │
+│   Overlay com countdown 5s              │
+│   (standalone: sem botão adiar)         │
+│           │                             │
+│           ▼                             │
+│   forceUpdate():                        │
+│     1. updateSW(true) se disponível     │
+│     2. unregister SWs                   │
+│     3. limpar caches                    │
+│     4. window.location.reload()         │
+└─────────────────────────────────────────┘
+```
 
-### Arquivos alterados
+### 5. Limpar `src/App.tsx`
+- Remover import e `<PWAUpdatePrompt />`
+- Manter apenas `<VersionCheckWithOverlay />`
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/admin/AdminImobiliarias.tsx` | Buscar + toggle flag `empreendimento_visita` |
-| `src/pages/admin/AdminDetalhesImobiliaria.tsx` | Switch na aba Features |
-| `src/pages/Dashboard.tsx` | Condicionar botões à flag |
-| `src/pages/NovaFicha.tsx` | Bloquear modo parceira sem flag |
+## Arquivos
 
-Nenhuma migração de banco necessária -- reutiliza a tabela `imobiliaria_feature_flags` existente.
+| Arquivo | Ação |
+|---------|------|
+| `src/hooks/useVersionCheck.ts` | Deletar |
+| `src/components/PWAUpdatePrompt.tsx` | Deletar |
+| `src/components/VersionCheckWithOverlay.tsx` | Refatorar (integrar SW + fix timeout) |
+| `src/main.tsx` | Simplificar (remover registerSW) |
+| `src/App.tsx` | Remover import/montagem de PWAUpdatePrompt |
+
+Nenhuma migração de banco necessária. Nenhuma mudança em Edge Functions.
 
