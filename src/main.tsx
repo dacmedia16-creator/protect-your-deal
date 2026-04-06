@@ -1,13 +1,14 @@
 import { createRoot } from "react-dom/client";
-import { registerSW } from 'virtual:pwa-register';
 import App from "./App.tsx";
 import "./index.css";
 
-// Register service worker for PWA — skip in iframes and Lovable preview
+// Guard: desregistrar SWs em iframes e previews do Lovable
 const isIframe = window.self !== window.top;
 const isPreview = location.search.includes('forceHideBadge');
-if ('serviceWorker' in navigator && !isIframe && !isPreview) {
-  registerSW({ immediate: true });
+if (isIframe || isPreview) {
+  navigator.serviceWorker?.getRegistrations().then(regs =>
+    regs.forEach(r => r.unregister())
+  );
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

@@ -7,7 +7,6 @@ import { BrowserRouter, Routes } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
 import { UserRoleProvider } from "@/hooks/useUserRole";
-import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { PWAInstallModal } from "@/components/PWAInstallModal";
 import { VersionCheckWithOverlay } from "@/components/VersionCheckWithOverlay";
 

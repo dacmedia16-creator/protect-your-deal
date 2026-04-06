@@ -1,294 +1,210 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { registerSW } from 'virtual:pwa-register';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { UpdateCountdownOverlay } from './UpdateCountdownOverlay';
 
 const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
-const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
-const DEFER_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const CHECK_INTERVAL_MS = 2 * 60 * 1000;
+const DEFER_DURATION_MS = 30 * 60 * 1000;
 const COUNTDOWN_SECONDS = 5;
-const SAFETY_TIMEOUT_MS = 10 * 1000; // 10 seconds max overlay
+const SAFETY_TIMEOUT_MS = 15 * 1000;
 
-interface VersionCheckResult {
-  needsUpdate: boolean;
-  serverVersion: string | null;
-  localVersion: string;
-}
-
-/**
- * Compara duas versões no formato "YYYY-MM-DD HH:mm" e retorna true se server > local.
- */
 function isServerVersionNewer(serverVersion: string, localVersion: string): boolean {
   try {
     const serverDate = new Date(serverVersion.replace(' ', 'T'));
     const localDate = new Date(localVersion.replace(' ', 'T'));
     return serverDate.getTime() > localDate.getTime();
-  } catch (err) {
-    console.warn('Erro ao comparar versões:', err);
+  } catch {
     return false;
   }
 }
 
-/**
- * Componente que verifica atualizações e exibe overlay com countdown.
- */
 export function VersionCheckWithOverlay() {
   const { user } = useAuth();
 
-  // Não verificar versão em ambiente de desenvolvimento/preview
-  const isDevEnvironment = import.meta.env.DEV || 
+  const isDevEnvironment = import.meta.env.DEV ||
     window.location.hostname.includes('lovableproject.com') ||
-    window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview') ||
+    (window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview')) ||
     window.location.hostname.includes('localhost');
 
-  // Deve estar inativo se em dev ou não logado
   const isInactive = isDevEnvironment || !user;
 
   const [showOverlay, setShowOverlay] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [isStandalone, setIsStandalone] = useState(false);
-  
+
   const hasRegisteredRef = useRef(false);
   const checkingRef = useRef(false);
   const deferredUntilRef = useRef<number | null>(null);
-  const forceUpdateRef = useRef<() => void>();
+  const updateSwRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
+  const updatingRef = useRef(false); // true once forceUpdate starts
 
-  // Detect if running as installed PWA
+  // Detect standalone mode
   useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
-                      (window.navigator as any).standalone === true;
-    setIsStandalone(standalone);
+    setIsStandalone(
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+    );
   }, []);
 
-  /**
-   * Força a atualização do app.
-   */
+  // ── Register Service Worker (single source) ──
+  useEffect(() => {
+    if (isDevEnvironment) return;
+    const isIframe = window.self !== window.top;
+    if (isIframe) return;
+
+    const swUpdate = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        console.log('🔄 SW: nova versão detectada');
+        startCountdown();
+      },
+    });
+
+    updateSwRef.current = swUpdate;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDevEnvironment]);
+
+  // ── Force update ──
   const forceUpdate = useCallback(async () => {
+    if (updatingRef.current) return;
+    updatingRef.current = true;
     console.log('🔄 Forçando atualização do app...');
 
     try {
-      // Unregister service workers
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(r => r.unregister()));
-        console.log('✅ Service workers removidos');
+      // 1. Activate new SW if available
+      if (updateSwRef.current) {
+        await updateSwRef.current(true);
       }
-
-      // Clear caches
+      // 2. Unregister all SWs
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      // 3. Clear caches
       if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(n => caches.delete(n)));
-        console.log('✅ Caches limpos');
+        const names = await caches.keys();
+        await Promise.all(names.map(n => caches.delete(n)));
       }
     } catch (err) {
       console.warn('Erro ao limpar caches:', err);
     }
 
-    // Always reload, even if cache clearing failed
-    console.log('🔄 Recarregando página...');
     window.location.reload();
   }, []);
 
-  // Keep forceUpdateRef always updated
-  useEffect(() => {
-    forceUpdateRef.current = forceUpdate;
-  }, [forceUpdate]);
-
-  // Watch countdown and trigger update when it reaches 0
-  useEffect(() => {
-    if (showOverlay && countdown === 0) {
-      console.log('⏰ Countdown chegou a 0, executando atualização...');
-      forceUpdateRef.current?.();
-    }
-  }, [countdown, showOverlay]);
-
-  /**
-   * Registra a versão atual no banco de dados.
-   */
+  // ── Register version ──
   const registerVersion = useCallback(async () => {
-    if (hasRegisteredRef.current) return;
-    if (LOCAL_VERSION === 'unknown') return;
-
+    if (hasRegisteredRef.current || LOCAL_VERSION === 'unknown') return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
     hasRegisteredRef.current = true;
-
     try {
       const { error } = await supabase.functions.invoke('register-version', {
-        body: { version: LOCAL_VERSION }
+        body: { version: LOCAL_VERSION },
       });
-
-      if (error) {
-        console.warn('Erro ao registrar versão:', error);
-        hasRegisteredRef.current = false;
-        return;
-      }
-
-      console.log('✅ Versão registrada:', LOCAL_VERSION);
-    } catch (err) {
-      console.warn('Falha ao registrar versão:', err);
-      hasRegisteredRef.current = false;
-    }
+      if (error) { hasRegisteredRef.current = false; }
+    } catch { hasRegisteredRef.current = false; }
   }, []);
 
-  /**
-   * Verifica se há uma nova versão disponível.
-   */
-  const checkVersion = useCallback(async (): Promise<VersionCheckResult> => {
-    // Check if deferred
-    if (deferredUntilRef.current && Date.now() < deferredUntilRef.current) {
-      return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
-    }
-
-    if (checkingRef.current) {
-      return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
-    }
-
+  // ── Check version via Edge Function ──
+  const checkVersion = useCallback(async () => {
+    if (deferredUntilRef.current && Date.now() < deferredUntilRef.current) return;
+    if (checkingRef.current) return;
     checkingRef.current = true;
 
     try {
       const { data, error } = await supabase.functions.invoke('app-version');
-
-      if (error) {
-        console.warn('Erro ao verificar versão:', error);
-        return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
-      }
+      if (error) return;
 
       const serverVersion = data?.version;
+      if (!serverVersion) { await registerVersion(); return; }
 
-      // If no version in DB, try to register current version
-      if (!serverVersion) {
-        await registerVersion();
-        return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
-      }
-
-      // Só precisa atualizar se a versão do servidor for MAIS NOVA que a local
-      const needsUpdate = serverVersion !== LOCAL_VERSION 
+      const needsUpdate = serverVersion !== LOCAL_VERSION
         && LOCAL_VERSION !== 'unknown'
         && isServerVersionNewer(serverVersion, LOCAL_VERSION);
 
-      // Se a versão local for mais nova ou igual, registra no banco
-      if (!needsUpdate && LOCAL_VERSION !== 'unknown') {
-        console.log(`📝 Versão local (${LOCAL_VERSION}) >= servidor (${serverVersion}), registrando...`);
+      if (needsUpdate) {
+        console.log(`🆕 Versão servidor ${serverVersion} > local ${LOCAL_VERSION}`);
+        startCountdown();
+      } else if (LOCAL_VERSION !== 'unknown') {
         registerVersion();
       }
-
-      return { needsUpdate, serverVersion, localVersion: LOCAL_VERSION };
-    } catch (err) {
-      console.warn('Falha ao verificar versão:', err);
-      return { needsUpdate: false, serverVersion: null, localVersion: LOCAL_VERSION };
-    } finally {
+    } catch { /* silent */ } finally {
       checkingRef.current = false;
     }
   }, [registerVersion]);
 
-  /**
-   * Inicia o countdown e exibe o overlay.
-   */
+  // ── Start countdown (idempotent) ──
   const startCountdown = useCallback(() => {
-    console.log('🕐 Iniciando countdown de atualização...');
-    setCountdown(COUNTDOWN_SECONDS);
-    setShowOverlay(true);
+    setShowOverlay(prev => {
+      if (prev) return prev; // already showing
+      setCountdown(COUNTDOWN_SECONDS);
+      return true;
+    });
   }, []);
 
-  // Countdown interval
+  // ── Countdown interval ──
   useEffect(() => {
     if (!showOverlay) return;
-
-    console.log('⏱️ Iniciando intervalo de countdown...');
-    
-    const intervalId = setInterval(() => {
+    const id = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 0) return 0;
-        const next = prev - 1;
-        console.log(`⏱️ Countdown: ${next}`);
-        return next;
+        return prev - 1;
       });
     }, 1000);
-
-    return () => {
-      console.log('⏱️ Limpando intervalo de countdown');
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(id);
   }, [showOverlay]);
 
-  // Safety timeout: auto-close overlay after 10 seconds max
+  // ── Trigger update when countdown reaches 0 ──
+  useEffect(() => {
+    if (showOverlay && countdown === 0) {
+      forceUpdate();
+    }
+  }, [countdown, showOverlay, forceUpdate]);
+
+  // ── Safety timeout (don't cancel if already updating) ──
   useEffect(() => {
     if (!showOverlay) return;
-
-    const safetyTimer = setTimeout(() => {
-      console.log('⏰ Safety timeout: fechando overlay após 10s');
+    const id = setTimeout(() => {
+      if (updatingRef.current) return; // don't interrupt active update
       setShowOverlay(false);
       setCountdown(COUNTDOWN_SECONDS);
-      // Defer briefly so it doesn't reappear immediately
       deferredUntilRef.current = Date.now() + 60_000;
     }, SAFETY_TIMEOUT_MS);
-
-    return () => clearTimeout(safetyTimer);
+    return () => clearTimeout(id);
   }, [showOverlay]);
 
-  /**
-   * Adia a atualização por 30 minutos.
-   */
+  // ── Defer ──
   const deferUpdate = useCallback(() => {
     deferredUntilRef.current = Date.now() + DEFER_DURATION_MS;
     setShowOverlay(false);
-    setCountdown(COUNTDOWN_SECONDS); // Reset for next time
-    console.log('⏰ Atualização adiada por 30 minutos');
+    setCountdown(COUNTDOWN_SECONDS);
   }, []);
 
-  /**
-   * Verifica e inicia countdown se necessário.
-   */
-  const checkAndUpdate = useCallback(async () => {
-    if (isInactive) return;
-    const result = await checkVersion();
-    
-    if (result.needsUpdate && !showOverlay) {
-      console.log(`🆕 Nova versão detectada: ${result.serverVersion} (atual: ${result.localVersion})`);
-      startCountdown();
-    }
-  }, [checkVersion, showOverlay, startCountdown, isInactive]);
-
-  // Handler for "Update Now" button - calls forceUpdate directly
-  const handleUpdateNow = useCallback(() => {
-    console.log('👆 Botão Atualizar agora clicado');
-    forceUpdate();
-  }, [forceUpdate]);
-
-  // Setup checks on mount and visibility changes
+  // ── Periodic + visibility checks ──
   useEffect(() => {
     if (isInactive) return;
 
-    // Initial check after a short delay
-    const initialTimeout = setTimeout(checkAndUpdate, 3000);
+    const initialTimeout = setTimeout(checkVersion, 3000);
 
-    // Check on visibility change (tab focus)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAndUpdate();
-      }
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') checkVersion();
     };
+    document.addEventListener('visibilitychange', handleVisibility);
 
-    // Check on window focus
-    const handleFocus = () => {
-      checkAndUpdate();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    // Periodic check
-    const intervalId = setInterval(checkAndUpdate, CHECK_INTERVAL_MS);
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') checkVersion();
+    }, CHECK_INTERVAL_MS);
 
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [checkAndUpdate, isInactive]);
+  }, [checkVersion, isInactive]);
 
   if (isInactive) return null;
 
@@ -296,7 +212,7 @@ export function VersionCheckWithOverlay() {
     <UpdateCountdownOverlay
       isOpen={showOverlay}
       countdown={countdown}
-      onUpdateNow={handleUpdateNow}
+      onUpdateNow={forceUpdate}
       onDefer={deferUpdate}
       showDefer={!isStandalone}
     />
