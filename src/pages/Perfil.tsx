@@ -622,6 +622,22 @@ export default function Perfil() {
               </div>
             )}
 
+            {/* Repetir tutorial */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Repetir tutorial</p>
+                  <p className="text-sm text-muted-foreground">
+                    Reveja o passo a passo do sistema
+                  </p>
+                </div>
+              </div>
+              <Button onClick={handleReplayTour} size="sm" variant="outline" className="gap-2">
+                Iniciar
+              </Button>
+            </div>
+
             {/* Botão de forçar atualização */}
             <div className="pt-2 border-t">
               <Button 
