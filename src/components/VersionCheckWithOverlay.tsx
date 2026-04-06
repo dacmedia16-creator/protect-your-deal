@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { UpdateCountdownOverlay } from './UpdateCountdownOverlay';
 
 const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
-const CHECK_INTERVAL_MS = 2 * 60 * 1000;
+const CHECK_INTERVAL_MS = 1 * 60 * 1000;
 const DEFER_DURATION_MS = 30 * 60 * 1000;
 const COUNTDOWN_SECONDS = 5;
 const SAFETY_TIMEOUT_MS = 15 * 1000;
@@ -188,7 +188,7 @@ export function VersionCheckWithOverlay() {
   useEffect(() => {
     if (isInactive) return;
 
-    const initialTimeout = setTimeout(checkVersion, 3000);
+    const initialTimeout = setTimeout(checkVersion, 1500);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') checkVersion();
