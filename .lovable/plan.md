@@ -1,61 +1,64 @@
 
 
-# Polimento Final — Lista de Registros Mobile
+# Refinamento da Lista de Registros Mobile
 
-## Avaliação
+## Avaliação rápida
 
-A tela está bem compacta e funcional. Os ajustes são cosméticos:
-- Filtro "Parceiro" depende de ícone `Users` sem texto no mobile — pouco claro
-- "(parceiro)" e "(c/ parceiro)" como texto solto junto ao protocolo parece improvisado
-- Lixeira no header do card ainda compete visualmente com status badge
-- Contadores nos filtros são úteis mas poderiam ter mais contraste
+A tela está funcional e bem estruturada. Os pontos de melhoria são cirúrgicos:
+- Cards ocupam muita altura vertical (4 seções internas com border-t)
+- Badges de "Parceiro" e status competem visualmente no mesmo nível
+- Ação de excluir (lixeira) fica na mesma linha que nomes, criando ruído
+- Busca e filtros são blocos separados sem integração visual
+- Linha "Prop: / Comp:" ocupa espaço mas raramente é útil na listagem
 
-## Refinamentos
+## Refinamentos por bloco
 
-### 1. Filtros — labels mais claros (linhas 185-191)
-- Tab Parceiro no mobile: adicionar texto "Parc." ao lado do ícone (como as outras tabs têm texto)
-- Contadores: trocar `opacity-70` por `opacity-50` e `bg-muted-foreground/10 rounded-full px-1.5` para parecerem "pills" discretas — mais legíveis que número solto
+### 1. Cards mais compactos (linhas 230-306)
+- **Remover a linha "Prop: / Comp:"** do mobile — essa info já está na página de detalhes e raramente ajuda na listagem
+- **Mover a lixeira** para o canto superior direito do card (ao lado do status), com `opacity-50` para não competir
+- **Reduzir `space-y-2` → `space-y-1.5`** e `p-3` → `p-2.5` para ganhar ~20% de densidade
+- **Resultado**: card passa de 4 seções para 3 (protocolo+status, endereço, tipo+data)
 
-### 2. Atributo parceiro — visual consistente (linhas 237-242)
-- Trocar texto "(parceiro)" / "(c/ parceiro)" por micro-badges com dot colorido:
-  - `parceiro`: dot azul + "parceiro" em `text-[10px]` com `bg-blue-500/10 px-1.5 py-0.5 rounded-full`
-  - `c/ parceiro`: dot roxo + "c/ parceiro" com `bg-purple-500/10 px-1.5 py-0.5 rounded-full`
-- Mover da linha do protocolo para a linha de metadados (tipo + data), onde atributos fazem mais sentido semanticamente
+### 2. Filtros mais claros (linhas 168-194)
+- **Labels**: "Pend." → "Pendentes" (cabe se removermos o ícone Users da tab Parceiro no mobile e usarmos texto curto)
+- Na verdade, manter as abreviações mas adicionar `title` para acessibilidade
+- **TabsList**: adicionar `w-full` no mobile para distribuir tabs uniformemente em vez de `min-w-full`
 
-### 3. Lixeira menos intrusiva (linhas 268-282)
-- Mover a ação de delete/descartar para a linha de metadados (tipo + data), no canto direito
-- Reduzir de `opacity-40` para `opacity-30` e manter `hover:opacity-100`
-- Separar fisicamente da badge de status para não competir
+### 3. Busca integrada (linhas 196-207)
+- **Reduzir `mb-4` → `mb-3`** entre busca e lista para menos espaço desperdiçado
+- **Placeholder mais específico**: "Buscar por protocolo, endereço..." → "Protocolo, endereço ou nome..."
+- **Reduzir altura**: `h-10` → `h-9` no mobile para proporção melhor com os cards compactos
 
-### 4. Header do card — mais limpo (linhas 232-284)
-- Linha 1: protocolo (esquerda) + status badge (direita) — só esses dois, sem delete
-- Linha 2: endereço (como está)
-- Linha 3: tipo + data + atributo parceiro + delete (tudo junto, metadados)
+### 4. Hierarquia status vs atributo (linhas 231-273)
+- **Status** (Pendente, Confirmado): manter como `Badge` com ícone — é a info principal
+- **Parceiro/C/ Parceiro**: trocar de `Badge` para um indicador mais discreto — um pequeno dot ou texto `text-[10px]` sem borda, posicionado junto ao protocolo
+- Isso cria separação clara: badges = estado do registro, texto sutil = atributo
 
-### 5. Contador contextual no subtítulo
-- Atual: `{fichas.length} de {totalCount} registros`
-- Quando filtro ativo: mostrar `{filteredFichas.length} de {totalCount}` para refletir o filtro
+### 5. Ação de excluir menos intrusiva
+- Mover o botão de delete/descartar para dentro da linha do protocolo (canto direito), com `opacity-40 hover:opacity-100`
+- Remover a seção `border-t` que existia só para abrigar nomes + delete
+- Usar `onClick stopPropagation` já existente
 
-### 6. Espaçamento fino
-- Reduzir gap entre busca e lista: `mb-3` → `mb-2`
-- Manter `space-y-2` entre cards
+### 6. Espaçamento da lista
+- `space-y-3` → `space-y-2` entre cards para lista mais densa
+- Manter `hover:shadow-medium` para feedback de toque
 
 ## Microcopy
 
 | Bloco | Atual | Novo |
 |-------|-------|------|
-| Tab parceiro mobile | (só ícone) | Ícone + "Parc." |
-| Atributo parceiro | "(parceiro)" texto | Micro-badge com dot |
-| Subtítulo com filtro | "{n} de {total} registros" | "{filtered} de {total}" quando filtrado |
+| Busca placeholder | "Buscar por protocolo, endereço..." | "Protocolo, endereço ou nome..." |
+| Parceiro badge | Badge azul "Parceiro" | Texto discreto "(parceiro)" em azul |
+| C/ Parceiro badge | Badge roxa "C/ Parceiro" | Texto discreto "(c/ parceiro)" em roxo |
 
 ## Arquivo alterado
 
 | Arquivo | Mudança |
 |---------|---------|
-| `src/pages/ListaFichas.tsx` | Reorganizar linhas do card mobile, micro-badges parceiro, lixeira rebaixada, filtro parceiro com texto, contadores pill |
+| `src/pages/ListaFichas.tsx` | Cards compactos, hierarquia status/atributo, delete discreto, busca refinada, espaçamento |
 
-## Sem mudança
-- Desktop layout
-- Queries, filtros, navegação
-- Cores, fontes, identidade visual
+## Sem mudança em
+- Desktop layout (intocado)
+- Queries de dados, filtros, navegação
+- Identidade visual, cores, fontes
 
