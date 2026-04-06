@@ -46,6 +46,7 @@ export function MobileNav() {
           return (
             <button
               key={item.path}
+              data-tour={item.path === '/convites' ? 'parcerias' : undefined}
               onClick={() => navigate(item.path)}
               className={cn(
                 "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative",
@@ -69,6 +70,7 @@ export function MobileNav() {
         })}
         {/* Sofia button */}
         <button
+          data-tour="sofia-ajuda"
           onClick={handleSofiaClick}
           className={cn(
             "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors relative",
