@@ -36,7 +36,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck, LogIn, Loader2, FileText } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Building2, Users, Eye, Ban, Trash2, Power, CreditCard, ClipboardCheck, LogIn, Loader2, FileText, Home } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -61,6 +61,7 @@ interface Imobiliaria {
   assinatura_plano_id?: string;
   assinatura_plano_nome?: string;
   survey_enabled?: boolean;
+  empreendimento_visita_enabled?: boolean;
   fichas_count?: number;
 }
 
@@ -139,10 +140,9 @@ export default function AdminImobiliarias() {
           // Get survey feature flag
           const { data: featureData } = await supabase
             .from('imobiliaria_feature_flags')
-            .select('enabled')
+            .select('feature_key, enabled')
             .eq('imobiliaria_id', imob.id)
-            .eq('feature_key', 'post_visit_survey')
-            .maybeSingle();
+            .in('feature_key', ['post_visit_survey', 'empreendimento_visita']);
 
           // Count fichas
           const { count: fichasCount } = await supabase
@@ -152,6 +152,9 @@ export default function AdminImobiliarias() {
 
           const planoData = assData?.plano as { nome: string } | null;
 
+          const surveyFlag = (featureData || []).find((f: any) => f.feature_key === 'post_visit_survey');
+          const empreendimentoFlag = (featureData || []).find((f: any) => f.feature_key === 'empreendimento_visita');
+
           return {
             ...imob,
             corretores_count: count || 0,
@@ -160,7 +163,8 @@ export default function AdminImobiliarias() {
             assinatura_id: assData?.id,
             assinatura_plano_id: assData?.plano_id,
             assinatura_plano_nome: planoData?.nome,
-            survey_enabled: featureData?.enabled ?? false,
+            survey_enabled: surveyFlag?.enabled ?? false,
+            empreendimento_visita_enabled: empreendimentoFlag?.enabled ?? false,
           };
         })
       );
@@ -323,6 +327,38 @@ export default function AdminImobiliarias() {
       fetchImobiliarias();
     } catch (error) {
       console.error('Error toggling survey feature:', error);
+      toast.error('Erro ao alterar feature');
+    } finally {
+      setIsTogglingFeature(null);
+    }
+  }
+
+  async function toggleEmpreendimentoFeature(imob: Imobiliaria) {
+    setIsTogglingFeature(imob.id + '-emp');
+    try {
+      const newValue = !imob.empreendimento_visita_enabled;
+
+      const { error } = await supabase
+        .from('imobiliaria_feature_flags')
+        .upsert({
+          imobiliaria_id: imob.id,
+          feature_key: 'empreendimento_visita',
+          enabled: newValue,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'imobiliaria_id,feature_key',
+        });
+
+      if (error) throw error;
+
+      toast.success(
+        newValue
+          ? 'Visita de Empreendimento habilitada!'
+          : 'Visita de Empreendimento desabilitada!'
+      );
+      fetchImobiliarias();
+    } catch (error) {
+      console.error('Error toggling empreendimento feature:', error);
       toast.error('Erro ao alterar feature');
     } finally {
       setIsTogglingFeature(null);
@@ -705,6 +741,13 @@ export default function AdminImobiliarias() {
                                 >
                                   <ClipboardCheck className="h-4 w-4 mr-2" />
                                   {imob.survey_enabled ? 'Desabilitar Pesquisa' : 'Habilitar Pesquisa'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => toggleEmpreendimentoFeature(imob)}
+                                  disabled={isTogglingFeature === imob.id + '-emp'}
+                                >
+                                  <Home className="h-4 w-4 mr-2" />
+                                  {imob.empreendimento_visita_enabled ? 'Desabilitar Empreendimentos' : 'Habilitar Empreendimentos'}
                                 </DropdownMenuItem>
                                 {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
                                   <DropdownMenuItem

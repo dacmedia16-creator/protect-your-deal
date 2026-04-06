@@ -174,6 +174,9 @@ export default function Dashboard() {
   // Verificar se pesquisa pós-visita está habilitada
   const { enabled: surveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   
+  // Verificar se visita de empreendimento está habilitada
+  const { enabled: empreendimentoEnabled } = useImobiliariaFeatureFlag('empreendimento_visita');
+  
   // Hook para verificar se é líder de equipe
   const { isLider, equipesLideradas, loading: liderLoading } = useEquipeLider();
 
@@ -476,7 +479,7 @@ export default function Dashboard() {
               Registrar Nova Visita
             </Button>
 
-            {parceriasConstrutoras.length > 0 && (
+            {parceriasConstrutoras.length > 0 && empreendimentoEnabled && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -892,7 +895,7 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
 
-          {parceriasConstrutoras.length > 0 && (
+          {parceriasConstrutoras.length > 0 && empreendimentoEnabled && (
             <Card 
               className="cursor-pointer hover:shadow-medium transition-shadow group border-orange-500/20"
               onClick={() => navigate('/fichas/nova?modo=construtora')}
