@@ -840,6 +840,7 @@ export default function Dashboard() {
               <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
             </CardContent>
           </Card>
+        </div>
 
         {/* Quick Actions - vertical on mobile, grid on desktop */}
         <div className="hidden sm:grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
