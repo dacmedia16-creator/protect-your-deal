@@ -432,7 +432,7 @@ export default function Dashboard() {
         {!isCorretorVinculado && <UpgradeBanner className="mb-4" />}
 
         {/* ═══ MOBILE LAYOUT ═══ */}
-        <div className="sm:hidden space-y-4">
+        <div className="sm:hidden space-y-3">
           {/* Saudação compacta + CTA Principal */}
           <div data-tour="welcome">
             <h1 
