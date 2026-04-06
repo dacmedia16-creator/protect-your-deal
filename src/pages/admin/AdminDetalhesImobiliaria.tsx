@@ -165,6 +165,7 @@ export default function AdminDetalhesImobiliaria() {
 
   // Feature flags state
   const [surveyFeatureEnabled, setSurveyFeatureEnabled] = useState(false);
+  const [empreendimentoFeatureEnabled, setEmpreendimentoFeatureEnabled] = useState(false);
   const [loadingFeatures, setLoadingFeatures] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const form = useForm<FormData>({
@@ -307,6 +308,8 @@ export default function AdminDetalhesImobiliaria() {
         if (featureFlagsData) {
           const surveyFlag = featureFlagsData.find(f => f.feature_key === 'post_visit_survey');
           setSurveyFeatureEnabled(surveyFlag?.enabled ?? false);
+          const empFlag = featureFlagsData.find(f => f.feature_key === 'empreendimento_visita');
+          setEmpreendimentoFeatureEnabled(empFlag?.enabled ?? false);
         }
       } catch (error: any) {
         console.error('Error fetching data:', error);
@@ -939,6 +942,24 @@ export default function AdminDetalhesImobiliaria() {
                       <Switch
                         checked={surveyFeatureEnabled}
                         onCheckedChange={setSurveyFeatureEnabled}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                          <Home className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Visita de Empreendimento</p>
+                          <p className="text-sm text-muted-foreground">
+                            Permite que corretores registrem visitas em empreendimentos de construtoras parceiras
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={empreendimentoFeatureEnabled}
+                        onCheckedChange={setEmpreendimentoFeatureEnabled}
                       />
                     </div>
 
