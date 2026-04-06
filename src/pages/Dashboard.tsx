@@ -451,9 +451,9 @@ export default function Dashboard() {
             </h1>
             {(() => {
               const totalPendencias = (stats?.fichasPendentes || 0) + convitesPendentes + (fichasParceiro?.pendentes || 0) + (surveyEnabled && stats?.surveys?.pendentes ? stats.surveys.pendentes : 0);
-              if ((stats?.totalFichas || 0) === 0) return <p className="text-xs text-muted-foreground -mt-1">Comece registrando sua primeira visita</p>;
-              if (totalPendencias > 0) return <p className="text-xs text-warning -mt-1">Você tem {totalPendencias} pendência{totalPendencias !== 1 ? 's' : ''} hoje</p>;
-              return <p className="text-xs text-success -mt-1">Tudo em dia ✓</p>;
+              if ((stats?.totalFichas || 0) === 0) return <p className="text-xs text-muted-foreground -mt-1 mb-2">Comece registrando sua primeira visita</p>;
+              if (totalPendencias > 0) return <p className="text-xs text-warning -mt-1 mb-2">Você tem {totalPendencias} pendência{totalPendencias !== 1 ? 's' : ''} para resolver</p>;
+              return <p className="text-xs text-success -mt-1 mb-2">Nenhuma pendência · {stats?.totalFichas} registros</p>;
             })()}
 
             <Button
@@ -474,7 +474,7 @@ export default function Dashboard() {
                 onClick={() => navigate('/fichas/nova?modo=construtora')}
               >
                 <Building2 className="h-3.5 w-3.5 mr-1.5" />
-                Registro via Construtora
+                Registrar visita de empreendimento
               </Button>
             )}
           </div>
@@ -486,7 +486,7 @@ export default function Dashboard() {
               onClick={() => navigate('/fichas')}
             >
               <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-primary">{stats?.totalFichas || 0}</div>
+                <div className="text-lg font-bold text-primary">{stats?.totalFichas || 0}</div>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Total</p>
               </CardContent>
             </Card>
@@ -497,10 +497,10 @@ export default function Dashboard() {
               onClick={() => navigate('/fichas?status=completo')}
             >
               <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
+                <div className="text-lg font-bold text-success">{stats?.fichasCompletas || 0}</div>
                 <p className="text-[10px] mt-0.5">
-                  {(stats?.totalFichas || 0) > 0 && (stats?.fichasCompletas || 0) === (stats?.totalFichas || 0)
-                    ? <span className="text-success">tudo em dia</span>
+                  {(stats?.totalFichas || 0) > 0
+                    ? <span className="text-muted-foreground">{stats?.fichasCompletas || 0} de {stats?.totalFichas || 0}</span>
                     : <span className="text-muted-foreground">Confirmados</span>}
                 </p>
               </CardContent>
@@ -512,11 +512,11 @@ export default function Dashboard() {
               onClick={() => navigate('/fichas?status=pendente')}
             >
               <CardContent className="p-3 text-center">
-                <div className={`text-xl font-bold ${(stats?.fichasPendentes || 0) > 0 ? 'text-warning' : 'text-success'}`}>{stats?.fichasPendentes || 0}</div>
+                <div className={`text-lg font-bold ${(stats?.fichasPendentes || 0) > 0 ? 'text-warning' : 'text-success'}`}>{stats?.fichasPendentes || 0}</div>
                 <p className="text-[10px] mt-0.5">
                   {(stats?.fichasPendentes || 0) === 0
                     ? <span className="text-success">nenhuma</span>
-                    : <span className="text-muted-foreground">Pendentes</span>}
+                    : <span className="text-warning">aguardando</span>}
                 </p>
               </CardContent>
             </Card>
@@ -540,10 +540,12 @@ export default function Dashboard() {
             }
 
             if (attentionItems.length === 0) return (
-              <div className="animate-fade-in flex items-center gap-2 px-1 py-1">
-                <CheckCircle className="h-4 w-4 text-success shrink-0" />
-                <p className="text-xs text-success">Tudo em dia — nenhuma pendência</p>
-              </div>
+              <Card className="animate-fade-in border-0 bg-success/5 rounded-xl">
+                <CardContent className="p-3 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-success shrink-0" />
+                  <p className="text-xs text-success">Tudo em dia — nenhuma pendência ✓</p>
+                </CardContent>
+              </Card>
             );
 
             return (
@@ -595,26 +597,10 @@ export default function Dashboard() {
             </button>
           )}
 
-          {/* Ações secundárias */}
-          <Card 
-            className="cursor-pointer active:bg-muted/50 transition-colors border-0 bg-card rounded-xl shadow-soft"
-            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
-          >
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-                <Scale className="h-4 w-4 text-amber-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm">Ajuda Jurídica</p>
-                <p className="text-xs text-muted-foreground truncate">Consulte um advogado especializado</p>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Plan Usage - hide for linked brokers */}
           {!isCorretorVinculado && <PlanUsageCard compact className="animate-fade-in" />}
 
-          {/* Indicações — sem pulse */}
+          {/* Indicações */}
           <Card 
             data-tour="indicacoes"
             className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft active:bg-muted/50 transition-all"
@@ -629,6 +615,22 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">Ganhe comissão indicando colegas</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+            </CardContent>
+          </Card>
+
+          {/* Ajuda Jurídica — ação excepcional, último */}
+          <Card 
+            className="cursor-pointer active:bg-muted/50 transition-colors border-0 bg-card rounded-xl shadow-soft"
+            onClick={() => window.open('https://wa.me/5515981788214?text=Olá, preciso de ajuda jurídica sobre intermediação imobiliária', '_blank')}
+          >
+            <CardContent className="p-2.5 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                <Scale className="h-4 w-4 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Ajuda Jurídica</p>
+                <p className="text-[11px] text-muted-foreground truncate">Consulte um advogado especializado</p>
+              </div>
             </CardContent>
           </Card>
         </div>
