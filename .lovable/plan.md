@@ -1,15 +1,24 @@
 
 
-# Adicionar Secret ASAAS_SANDBOX
+# Trocar ASAAS_API_KEY para Sandbox
 
 ## Objetivo
-Ativar o ambiente sandbox do Asaas adicionando o secret `ASAAS_SANDBOX` com valor `true`. Isso fará com que todas as Edge Functions (`asaas-payment-link`, `asaas-create-customer`, `asaas-create-subscription`, `asaas-cancel-subscription`) apontem para `https://sandbox.asaas.com/api/v3` em vez da API de produção.
+Substituir o valor atual da `ASAAS_API_KEY` pela chave de API do ambiente sandbox do Asaas, permitindo testes de pagamento sem afetar produção.
 
 ## Ação
-Usar a ferramenta `add_secret` para criar o secret `ASAAS_SANDBOX` com valor `true`.
+Usar a ferramenta `add_secret` para solicitar que você insira a nova chave sandbox. Isso sobrescreverá o valor atual.
+
+## Onde obter a chave
+1. Acesse https://sandbox.asaas.com
+2. Faça login (ou crie conta sandbox)
+3. Vá em **Configurações → Integrações → API**
+4. Copie a API Key gerada
 
 ## Impacto
-- Nenhuma mudança de código necessária — o toggle já existe em todas as funções
-- Todas as cobranças/assinaturas criadas passarão a usar o sandbox
-- **Importante**: Você também precisará trocar a `ASAAS_API_KEY` para uma chave de sandbox, caso a atual seja de produção
+- Todas as Edge Functions de pagamento passarão a autenticar no sandbox
+- Combinado com `ASAAS_SANDBOX=true` (já configurado), o fluxo completo estará em modo teste
+- **Atenção**: enquanto a chave sandbox estiver ativa, cobranças reais não serão processadas
+
+## Reversão
+Para voltar à produção: troque `ASAAS_API_KEY` de volta para a chave de produção e remova/altere `ASAAS_SANDBOX` para `false`.
 
