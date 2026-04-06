@@ -168,31 +168,25 @@ export default function ListaFichas() {
         <div className="mb-4 md:mb-6 -mx-4 px-4 overflow-x-auto scrollbar-hide">
           <Tabs value={currentTab} onValueChange={handleTabChange}>
             <TabsList className="bg-muted inline-flex w-auto min-w-full md:min-w-0">
-              <TabsTrigger value="todas" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
+              <TabsTrigger value="todas" className="gap-1 text-xs md:text-sm px-2 md:px-4">
                 Todas
-                <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
-                  {totalCount}
-                </Badge>
+                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{totalCount}</span>
               </TabsTrigger>
-              <TabsTrigger value="pendente" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
-                Pendentes
-                <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
-                  {pendingCount}
-                </Badge>
+              <TabsTrigger value="pendente" className="gap-1 text-xs md:text-sm px-2 md:px-4">
+                <span className="sm:hidden">Pend.</span>
+                <span className="hidden sm:inline">Pendentes</span>
+                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{pendingCount}</span>
               </TabsTrigger>
-              <TabsTrigger value="completo" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
-                Confirmadas
-                <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
-                  {confirmedCount}
-                </Badge>
+              <TabsTrigger value="completo" className="gap-1 text-xs md:text-sm px-2 md:px-4">
+                <span className="sm:hidden">Conf.</span>
+                <span className="hidden sm:inline">Confirmadas</span>
+                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{confirmedCount}</span>
               </TabsTrigger>
               {parceiroCount > 0 && (
-                <TabsTrigger value="parceiro" className="gap-1.5 text-xs md:text-sm px-3 md:px-4">
+                <TabsTrigger value="parceiro" className="gap-1 text-xs md:text-sm px-2 md:px-4">
                   <Users className="h-3.5 w-3.5" />
-                  Parceiro
-                  <Badge variant="secondary" className="ml-1 text-[10px] md:text-xs px-1.5 py-0">
-                    {parceiroCount}
-                  </Badge>
+                  <span className="hidden sm:inline">Parceiro</span>
+                  <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{parceiroCount}</span>
                 </TabsTrigger>
               )}
             </TabsList>
