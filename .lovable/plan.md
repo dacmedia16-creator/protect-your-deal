@@ -1,64 +1,36 @@
 
 
-# Refinamento da Lista de Registros Mobile
+# Correção do Tour de Onboarding
 
-## Avaliação rápida
+## Problema
+O passo 4 (`ver-registros`) não encontra nenhum elemento no HTML porque nenhum componente tem `data-tour="ver-registros"`. O tour pula esse passo ou exibe o tooltip sem posição.
 
-A tela está funcional e bem estruturada. Os pontos de melhoria são cirúrgicos:
-- Cards ocupam muita altura vertical (4 seções internas com border-t)
-- Badges de "Parceiro" e status competem visualmente no mesmo nível
-- Ação de excluir (lixeira) fica na mesma linha que nomes, criando ruído
-- Busca e filtros são blocos separados sem integração visual
-- Linha "Prop: / Comp:" ocupa espaço mas raramente é útil na listagem
+## Correções
 
-## Refinamentos por bloco
+### 1. Adicionar `data-tour="ver-registros"` (linha 484)
+Adicionar o atributo ao card "Total" na grid de stats mobile, que já navega para `/fichas`. Este é o elemento mais lógico para esse passo.
 
-### 1. Cards mais compactos (linhas 230-306)
-- **Remover a linha "Prop: / Comp:"** do mobile — essa info já está na página de detalhes e raramente ajuda na listagem
-- **Mover a lixeira** para o canto superior direito do card (ao lado do status), com `opacity-50` para não competir
-- **Reduzir `space-y-2` → `space-y-1.5`** e `p-3` → `p-2.5` para ganhar ~20% de densidade
-- **Resultado**: card passa de 4 seções para 3 (protocolo+status, endereço, tipo+data)
+```tsx
+<Card 
+  data-tour="ver-registros"
+  className="animate-fade-in cursor-pointer ..."
+  onClick={() => navigate('/fichas')}
+>
+```
 
-### 2. Filtros mais claros (linhas 168-194)
-- **Labels**: "Pend." → "Pendentes" (cabe se removermos o ícone Users da tab Parceiro no mobile e usarmos texto curto)
-- Na verdade, manter as abreviações mas adicionar `title` para acessibilidade
-- **TabsList**: adicionar `w-full` no mobile para distribuir tabs uniformemente em vez de `min-w-full`
+### 2. Revisar textos dos 6 passos
 
-### 3. Busca integrada (linhas 196-207)
-- **Reduzir `mb-4` → `mb-3`** entre busca e lista para menos espaço desperdiçado
-- **Placeholder mais específico**: "Buscar por protocolo, endereço..." → "Protocolo, endereço ou nome..."
-- **Reduzir altura**: `h-10` → `h-9` no mobile para proporção melhor com os cards compactos
+| # | target | Título atual | Título novo | Descrição nova |
+|---|--------|-------------|-------------|----------------|
+| 1 | `welcome` | "Bem-vindo ao VisitaProva! 🎉" | "Bem-vindo ao VisitaProva! 👋" | "Este é seu painel. Daqui você cria registros, acompanha pendências e gerencia tudo." |
+| 2 | `stats` | "Seus Números" | "Resumo rápido" | "Veja de relance quantos registros você tem, quantos já foram confirmados e quantos aguardam confirmação." |
+| 3 | `novo-registro` | "Novo Registro de Visita" | "Criar registro de visita" | "Toque aqui para registrar uma visita. O proprietário confirma via WhatsApp em segundos." |
+| 4 | `ver-registros` | "Seus Registros" | "Acessar seus registros" | "Toque no total para ver a lista completa. Você pode filtrar por status, buscar por endereço e gerenciar cada ficha." |
+| 5 | `indicacoes` | "Indique e Ganhe 💰" | "Programa de indicações" | "Indique corretores ou imobiliárias e ganhe comissão recorrente por cada assinatura ativa." |
+| 6 | `nav-menu` | "Navegação" | "Menu de navegação" | "Use a barra inferior para acessar Início, Registros, Convites e Perfil a qualquer momento." |
 
-### 4. Hierarquia status vs atributo (linhas 231-273)
-- **Status** (Pendente, Confirmado): manter como `Badge` com ícone — é a info principal
-- **Parceiro/C/ Parceiro**: trocar de `Badge` para um indicador mais discreto — um pequeno dot ou texto `text-[10px]` sem borda, posicionado junto ao protocolo
-- Isso cria separação clara: badges = estado do registro, texto sutil = atributo
+**Mudanças de copy**: textos mais diretos, orientados à ação e sem redundância. Emojis reduzidos (só 👋 no welcome).
 
-### 5. Ação de excluir menos intrusiva
-- Mover o botão de delete/descartar para dentro da linha do protocolo (canto direito), com `opacity-40 hover:opacity-100`
-- Remover a seção `border-t` que existia só para abrigar nomes + delete
-- Usar `onClick stopPropagation` já existente
-
-### 6. Espaçamento da lista
-- `space-y-3` → `space-y-2` entre cards para lista mais densa
-- Manter `hover:shadow-medium` para feedback de toque
-
-## Microcopy
-
-| Bloco | Atual | Novo |
-|-------|-------|------|
-| Busca placeholder | "Buscar por protocolo, endereço..." | "Protocolo, endereço ou nome..." |
-| Parceiro badge | Badge azul "Parceiro" | Texto discreto "(parceiro)" em azul |
-| C/ Parceiro badge | Badge roxa "C/ Parceiro" | Texto discreto "(c/ parceiro)" em roxo |
-
-## Arquivo alterado
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/ListaFichas.tsx` | Cards compactos, hierarquia status/atributo, delete discreto, busca refinada, espaçamento |
-
-## Sem mudança em
-- Desktop layout (intocado)
-- Queries de dados, filtros, navegação
-- Identidade visual, cores, fontes
+### Arquivo alterado
+`src/pages/Dashboard.tsx` — linhas 63-94 (steps) e linha 484 (data-tour)
 
