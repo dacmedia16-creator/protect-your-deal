@@ -69,6 +69,13 @@ export default function Perfil() {
     await forceAppRefresh();
   };
 
+  const handleReplayTour = () => {
+    localStorage.removeItem('visitaprova-onboarding-done');
+    localStorage.removeItem('visitaprova-novaficha-tour-done');
+    toast.success('Tour reiniciado!');
+    navigate('/dashboard');
+  };
+
   const handleChangePassword = async () => {
     if (!user?.email) {
       toast.error('Erro ao identificar usuário');
