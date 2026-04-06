@@ -154,7 +154,7 @@ export default function ListaFichas() {
       {/* Mobile Header */}
       <MobileHeader
         title="Registros de Visita"
-        subtitle={`${fichas.length} de ${totalCount} registros`}
+        subtitle={statusFilter ? `${filteredFichas.length} de ${totalCount} registros` : `${fichas.length} de ${totalCount} registros`}
         showAdd
         onAdd={() => navigate('/fichas/nova')}
         addLabel="Novo Registro"
@@ -167,26 +167,27 @@ export default function ListaFichas() {
         {/* Filter Tabs - horizontal scroll on mobile */}
         <div className="mb-4 md:mb-6 -mx-4 px-4 overflow-x-auto scrollbar-hide">
           <Tabs value={currentTab} onValueChange={handleTabChange}>
-            <TabsList className="bg-muted inline-flex w-auto min-w-full md:min-w-0">
-              <TabsTrigger value="todas" className="gap-1 text-xs md:text-sm px-2 md:px-4">
+            <TabsList className="bg-muted inline-flex w-full md:w-auto md:min-w-0">
+              <TabsTrigger value="todas" className="gap-1 text-xs md:text-sm px-2 md:px-4 flex-1 md:flex-none">
                 Todas
-                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{totalCount}</span>
+                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs bg-muted-foreground/10 rounded-full px-1.5 opacity-60">{totalCount}</span>
               </TabsTrigger>
-              <TabsTrigger value="pendente" className="gap-1 text-xs md:text-sm px-2 md:px-4">
+              <TabsTrigger value="pendente" className="gap-1 text-xs md:text-sm px-2 md:px-4 flex-1 md:flex-none">
                 <span className="sm:hidden">Pend.</span>
                 <span className="hidden sm:inline">Pendentes</span>
-                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{pendingCount}</span>
+                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs bg-muted-foreground/10 rounded-full px-1.5 opacity-60">{pendingCount}</span>
               </TabsTrigger>
-              <TabsTrigger value="completo" className="gap-1 text-xs md:text-sm px-2 md:px-4">
+              <TabsTrigger value="completo" className="gap-1 text-xs md:text-sm px-2 md:px-4 flex-1 md:flex-none">
                 <span className="sm:hidden">Conf.</span>
                 <span className="hidden sm:inline">Confirmadas</span>
-                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{confirmedCount}</span>
+                <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs bg-muted-foreground/10 rounded-full px-1.5 opacity-60">{confirmedCount}</span>
               </TabsTrigger>
               {parceiroCount > 0 && (
-                <TabsTrigger value="parceiro" className="gap-1 text-xs md:text-sm px-2 md:px-4">
+                <TabsTrigger value="parceiro" className="gap-1 text-xs md:text-sm px-2 md:px-4 flex-1 md:flex-none">
                   <Users className="h-3.5 w-3.5" />
+                  <span className="sm:hidden">Parc.</span>
                   <span className="hidden sm:inline">Parceiro</span>
-                  <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs opacity-70">{parceiroCount}</span>
+                  <span className="ml-0.5 md:ml-1 text-[10px] md:text-xs bg-muted-foreground/10 rounded-full px-1.5 opacity-60">{parceiroCount}</span>
                 </TabsTrigger>
               )}
             </TabsList>
@@ -194,7 +195,7 @@ export default function ListaFichas() {
         </div>
 
         {/* Search */}
-        <div className="mb-3 md:mb-6">
+        <div className="mb-2 md:mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -228,21 +229,12 @@ export default function ListaFichas() {
                   <CardContent className="p-2.5 md:p-4">
                     {/* Mobile Layout */}
                     <div className="md:hidden space-y-1.5">
-                      {/* Header: Protocolo + atributo + status + delete */}
+                      {/* Row 1: Protocolo + Status */}
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-xs font-medium text-primary">
-                            #{ficha.protocolo}
-                          </span>
-                          {isParceiro && (
-                            <span className="text-[10px] font-medium text-blue-600">(parceiro)</span>
-                          )}
-                          {temParceiro && (
-                            <span className="text-[10px] font-medium text-purple-600">(c/ parceiro)</span>
-                          )}
-                        </div>
+                        <span className="font-mono text-xs font-medium text-primary">
+                          #{ficha.protocolo}
+                        </span>
                         <div className="flex items-center gap-1">
-                          {/* Backup indicator - mobile - apenas para super_admin */}
                           {role === 'super_admin' && (ficha.status === 'completo' || ficha.status === 'finalizado_parcial') && (
                             <TooltipProvider>
                               <Tooltip>
@@ -265,7 +257,36 @@ export default function ListaFichas() {
                             <StatusIcon className="h-3 w-3" />
                             {status.label}
                           </Badge>
-                          <div onClick={(e) => e.stopPropagation()} className="opacity-40 hover:opacity-100 transition-opacity">
+                        </div>
+                      </div>
+                      
+                      {/* Row 2: Endereço */}
+                      <div className="flex items-start gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                        <p className="text-sm font-medium leading-tight line-clamp-2">{ficha.imovel_endereco}</p>
+                      </div>
+                      
+                      {/* Row 3: Metadados + atributo parceiro + delete */}
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Building2 className="h-3 w-3" />
+                        <span>{ficha.imovel_tipo}</span>
+                        <span className="text-border">•</span>
+                        <Calendar className="h-3 w-3" />
+                        <span>{format(new Date(ficha.data_visita), "dd/MM 'às' HH:mm")}</span>
+                        {isParceiro && (
+                          <span className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-600 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                            parceiro
+                          </span>
+                        )}
+                        {temParceiro && (
+                          <span className="inline-flex items-center gap-1 bg-purple-500/10 text-purple-600 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                            <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                            c/ parceiro
+                          </span>
+                        )}
+                        <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
+                          <div className="opacity-30 hover:opacity-100 transition-opacity">
                             {isParceiro ? (
                               <DescartarFichaDialog
                                 fichaId={ficha.id}
@@ -281,21 +302,6 @@ export default function ListaFichas() {
                             )}
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Endereço */}
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                        <p className="text-sm font-medium leading-tight line-clamp-2">{ficha.imovel_endereco}</p>
-                      </div>
-                      
-                      {/* Tipo + Data */}
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Building2 className="h-3 w-3" />
-                        <span>{ficha.imovel_tipo}</span>
-                        <span className="text-border">•</span>
-                        <Calendar className="h-3 w-3" />
-                        <span>{format(new Date(ficha.data_visita), "dd/MM 'às' HH:mm")}</span>
                       </div>
                     </div>
 
