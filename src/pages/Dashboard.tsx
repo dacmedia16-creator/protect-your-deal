@@ -432,7 +432,7 @@ export default function Dashboard() {
         {!isCorretorVinculado && <UpgradeBanner className="mb-4" />}
 
         {/* ═══ MOBILE LAYOUT ═══ */}
-        <div className="sm:hidden space-y-4">
+        <div className="sm:hidden space-y-3">
           {/* Saudação compacta + CTA Principal */}
           <div data-tour="welcome">
             <h1 
@@ -449,6 +449,12 @@ export default function Dashboard() {
             >
               Olá, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{profile?.nome?.split(' ')[0] || 'Usuário'}</span>
             </h1>
+            {(() => {
+              const totalPendencias = (stats?.fichasPendentes || 0) + convitesPendentes + (fichasParceiro?.pendentes || 0) + (surveyEnabled && stats?.surveys?.pendentes ? stats.surveys.pendentes : 0);
+              if ((stats?.totalFichas || 0) === 0) return <p className="text-xs text-muted-foreground -mt-1">Comece registrando sua primeira visita</p>;
+              if (totalPendencias > 0) return <p className="text-xs text-warning -mt-1">Você tem {totalPendencias} pendência{totalPendencias !== 1 ? 's' : ''} hoje</p>;
+              return <p className="text-xs text-success -mt-1">Tudo em dia ✓</p>;
+            })()}
 
             <Button
               data-tour="novo-registro"
@@ -462,12 +468,13 @@ export default function Dashboard() {
 
             {parceriasConstrutoras.length > 0 && (
               <Button
-                variant="outline"
-                className="w-full mt-2 border-orange-500/30 text-orange-600 dark:text-orange-400"
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 text-muted-foreground hover:text-foreground"
                 onClick={() => navigate('/fichas/nova?modo=construtora')}
               >
-                <Building2 className="h-4 w-4 mr-2" />
-                Registro Construtoras
+                <Building2 className="h-3.5 w-3.5 mr-1.5" />
+                Registro via Construtora
               </Button>
             )}
           </div>
@@ -491,7 +498,11 @@ export default function Dashboard() {
             >
               <CardContent className="p-3 text-center">
                 <div className="text-xl font-bold text-success">{stats?.fichasCompletas || 0}</div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Confirmados</p>
+                <p className="text-[10px] mt-0.5">
+                  {(stats?.totalFichas || 0) > 0 && (stats?.fichasCompletas || 0) === (stats?.totalFichas || 0)
+                    ? <span className="text-success">tudo em dia</span>
+                    : <span className="text-muted-foreground">Confirmados</span>}
+                </p>
               </CardContent>
             </Card>
 
@@ -501,8 +512,12 @@ export default function Dashboard() {
               onClick={() => navigate('/fichas?status=pendente')}
             >
               <CardContent className="p-3 text-center">
-                <div className="text-xl font-bold text-warning">{stats?.fichasPendentes || 0}</div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Pendentes</p>
+                <div className={`text-xl font-bold ${(stats?.fichasPendentes || 0) > 0 ? 'text-warning' : 'text-success'}`}>{stats?.fichasPendentes || 0}</div>
+                <p className="text-[10px] mt-0.5">
+                  {(stats?.fichasPendentes || 0) === 0
+                    ? <span className="text-success">nenhuma</span>
+                    : <span className="text-muted-foreground">Pendentes</span>}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -524,7 +539,12 @@ export default function Dashboard() {
               attentionItems.push({ label: 'pesquisas aguardando resposta', count: stats.surveys.pendentes, path: '/pesquisas', icon: FileText, color: 'text-purple-500' });
             }
 
-            if (attentionItems.length === 0) return null;
+            if (attentionItems.length === 0) return (
+              <div className="animate-fade-in flex items-center gap-2 px-1 py-1">
+                <CheckCircle className="h-4 w-4 text-success shrink-0" />
+                <p className="text-xs text-success">Tudo em dia — nenhuma pendência</p>
+              </div>
+            );
 
             return (
               <div className="animate-fade-in">
