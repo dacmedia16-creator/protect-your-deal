@@ -147,9 +147,9 @@ const Afiliados = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
-              { nome: "Profissional", valor: "R$79,90", desc: "Corretor autônomo", cor: "border-[#60A5FA]/30" },
-              { nome: "Pequena", valor: "R$297,90", desc: "Até 5 corretores", cor: "border-green-400/30" },
-              { nome: "Média", valor: "R$497,90", desc: "Até 10 corretores", cor: "border-purple-500/30" },
+              { nome: "Profissional", valor: "R$89,90", desc: "Corretor autônomo", cor: "border-[#60A5FA]/30" },
+              { nome: "Pro", valor: "R$349,90", desc: "Até 5 corretores", cor: "border-green-400/30" },
+              { nome: "Pro Max", valor: "R$599,90", desc: "Até 10 corretores", cor: "border-purple-500/30" },
             ].map((plano) => (
               <div key={plano.nome} className={`bg-white/5 backdrop-blur border ${plano.cor} rounded-2xl p-6 text-center`}>
                 <p className="text-white/50 text-sm mb-1">{plano.desc}</p>
