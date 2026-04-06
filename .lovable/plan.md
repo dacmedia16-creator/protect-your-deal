@@ -1,53 +1,30 @@
 
-
-# Compactar PDF Individual para 1 Página A4
+# Corretor Nome no PDF — Fix
 
 ## Problema
-O PDF do relatório individual (`exportSingleToPDF`) está ocupando 2 páginas A4 devido a espaçamentos generosos, paddings altos e fontes grandes.
+O campo `corretor_nome` existe na interface `Survey` mas nunca é preenchido. O select do Supabase busca `user_id` de `fichas_visita` mas não faz join com `profiles` para obter o nome.
 
-## Refinamentos para caber em 1 página
+## Solução
 
-### 1. Cabeçalho — reduzir padding
-- `padding: 28px 32px 24px` → `padding: 18px 28px 14px`
-- Título h1: `20px` → `16px`
+### `src/pages/Pesquisas.tsx`
+Após buscar os surveys, fazer uma query separada em `profiles` usando os `user_id`s das fichas, e mapear `corretor_nome` em cada survey antes de retornar.
 
-### 2. Content — reduzir padding e margins
-- `.content padding: 28px 32px` → `padding: 16px 28px`
-- `.summary-cards margin-bottom: 28px` → `16px`, gap `14px` → `10px`
-- `.summary-card padding: 16px` → `10px 12px`
-- Card value: `28px` → `22px`
+Lógica:
+1. Coletar todos os `user_id` únicos dos surveys
+2. Query `profiles` com `.in('id', userIds)` para buscar `nome_completo`
+3. No `.map()` final, adicionar `corretor_nome: profilesMap[survey.fichas_visita.user_id]`
 
-### 3. Info grid — compactar
-- `.info-grid margin-bottom: 28px` → `14px`, gap `16px` → `10px`
-- `.info-box padding: 16px` → `10px 12px`
-- `.info-row margin-bottom: 6px` → `4px`
+### `src/pages/empresa/EmpresaPesquisas.tsx`
+Mesmo padrão: após buscar surveys, buscar profiles pelos `user_id`s e popular `corretor_nome`.
 
-### 4. Ratings — compactar
-- `.ratings-section margin-bottom: 28px` → `14px`
-- `.rating-bar-row padding: 11px 0` → `7px 0`
-- Barra height: `12px` → `10px`
+Precisa adicionar `user_id` ao select de `fichas_visita` (atualmente não inclui).
 
-### 5. Feedback — compactar
-- `.feedback-section margin-bottom: 28px` → `14px`
-- `.feedback-card padding: 14px 16px` → `8px 12px`
-- Texto feedback: `12px` → `11px`
+### `src/pages/construtora/ConstutoraPesquisas.tsx`
+Já recebe `corretor_nome` via RPC — não precisa de mudança.
 
-### 6. Conclusão — compactar
-- `.conclusion-card padding: 16px 20px` → `10px 14px`
-- `.conclusion-section margin-bottom: 12px` → `8px`
-
-### 7. Rodapé — compactar
-- `.footer padding: 16px 32px` → `10px 28px`
-- `.footer margin-top: 16px` → `8px`
-
-### 8. Section titles — compactar
-- `margin-bottom: 12px` → `8px`, `padding-bottom: 6px` → `4px`
-
-## Arquivo alterado
+## Arquivos alterados
 
 | Arquivo | Mudança |
-|---------|---------|
-| `src/hooks/useSurveyExport.ts` | Reduzir paddings, margins e font-sizes no CSS para caber em 1 página |
-
-Apenas ajustes de espaçamento — sem mudança estrutural.
-
+|---------|------|
+| `src/pages/Pesquisas.tsx` | Buscar profiles e popular `corretor_nome` |
+| `src/pages/empresa/EmpresaPesquisas.tsx` | Adicionar `user_id` ao select + buscar profiles e popular `corretor_nome` |
