@@ -150,50 +150,50 @@ function getBaseStyles(): string {
     .header {
       background: ${COLORS.primary};
       color: white;
-      padding: 28px 32px 24px;
+      padding: 18px 28px 14px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
     }
-    .header-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
-    .header-left .subtitle { font-size: 12px; opacity: 0.65; font-weight: 400; }
+    .header-left h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 3px; }
+    .header-left .subtitle { font-size: 11px; opacity: 0.65; font-weight: 400; }
     .header-right { text-align: right; }
     .header-right .protocol { 
-      font-size: 15px; font-weight: 700; letter-spacing: 0.8px; 
+      font-size: 14px; font-weight: 700; letter-spacing: 0.8px; 
       font-family: 'Courier New', Courier, monospace; 
-      margin-bottom: 8px; 
-      padding-bottom: 8px; 
+      margin-bottom: 6px; 
+      padding-bottom: 6px; 
       border-bottom: 1px solid rgba(255,255,255,0.2); 
     }
-    .header-right .header-meta { font-size: 11px; opacity: 0.75; line-height: 1.7; }
+    .header-right .header-meta { font-size: 10px; opacity: 0.75; line-height: 1.6; }
     .header-right .header-meta strong { opacity: 1; font-weight: 600; }
     
-    .content { padding: 28px 32px; }
+    .content { padding: 16px 28px; }
     
     .summary-cards {
       display: flex;
-      gap: 14px;
-      margin-bottom: 28px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .summary-card {
       flex: 1;
       border: 1px solid ${COLORS.border};
       border-radius: 10px;
-      padding: 16px;
+      padding: 10px 12px;
       text-align: center;
     }
-    .summary-card .card-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
-    .summary-card .card-label { font-size: 10px; color: ${COLORS.textMuted}; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; font-weight: 600; }
-    .summary-card .card-sub { font-size: 10px; color: ${COLORS.textLight}; margin-top: 4px; }
+    .summary-card .card-value { font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+    .summary-card .card-label { font-size: 9px; color: ${COLORS.textMuted}; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 1px; font-weight: 600; }
+    .summary-card .card-sub { font-size: 9px; color: ${COLORS.textLight}; margin-top: 2px; }
     
     .section-title {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: ${COLORS.textMuted};
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 12px;
-      padding-bottom: 6px;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
       border-bottom: 2px solid ${COLORS.primary};
       display: inline-block;
     }
@@ -201,42 +201,42 @@ function getBaseStyles(): string {
     .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 28px;
+      gap: 10px;
+      margin-bottom: 14px;
     }
     .info-box {
       background: ${COLORS.cardBg};
       border-radius: 8px;
-      padding: 16px;
+      padding: 10px 12px;
       border: 1px solid ${COLORS.border};
     }
     .info-box .box-title {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       color: ${COLORS.textMuted};
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
-    .info-row { display: flex; margin-bottom: 6px; }
-    .info-row .info-label { font-size: 11px; color: ${COLORS.textMuted}; width: 85px; flex-shrink: 0; }
-    .info-row .info-value { font-size: 12px; font-weight: 500; color: #1e293b; word-break: break-word; line-height: 1.5; }
+    .info-row { display: flex; margin-bottom: 4px; }
+    .info-row .info-label { font-size: 10px; color: ${COLORS.textMuted}; width: 85px; flex-shrink: 0; }
+    .info-row .info-value { font-size: 11px; font-weight: 500; color: #1e293b; word-break: break-word; line-height: 1.4; }
     
-    .ratings-section { margin-bottom: 28px; }
+    .ratings-section { margin-bottom: 14px; }
     .rating-bar-row {
       display: flex;
       align-items: center;
-      padding: 11px 0;
+      padding: 7px 0;
       border-bottom: 1px solid #f1f5f9;
     }
     .rating-bar-row:last-child { border-bottom: none; }
-    .rating-bar-label { font-size: 12px; color: #475569; width: 110px; flex-shrink: 0; font-weight: 500; }
+    .rating-bar-label { font-size: 11px; color: #475569; width: 110px; flex-shrink: 0; font-weight: 500; }
     .rating-bar-container {
       flex: 1;
-      height: 12px;
+      height: 10px;
       background: #e9edf2;
       border-radius: 6px;
-      margin: 0 14px;
+      margin: 0 12px;
       overflow: hidden;
     }
     .rating-bar-fill {
@@ -244,50 +244,50 @@ function getBaseStyles(): string {
       border-radius: 6px;
     }
     .rating-bar-value {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
       width: 36px;
       text-align: right;
     }
     
-    .feedback-section { margin-bottom: 28px; }
-    .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .feedback-section { margin-bottom: 14px; }
+    .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .feedback-card {
       border-radius: 8px;
-      padding: 14px 16px;
+      padding: 8px 12px;
       border: 1px solid;
     }
     .feedback-card.positive { background: ${COLORS.greenBg}; border-color: ${COLORS.greenBorder}; }
     .feedback-card.negative { background: ${COLORS.redBg}; border-color: ${COLORS.redBorder}; }
-    .feedback-card .fb-icon { font-size: 14px; margin-bottom: 4px; }
-    .feedback-card .fb-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .feedback-card .fb-icon { font-size: 13px; margin-bottom: 2px; }
+    .feedback-card .fb-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .feedback-card.positive .fb-title { color: ${COLORS.green}; }
     .feedback-card.negative .fb-title { color: ${COLORS.red}; }
-    .feedback-card .fb-text { font-size: 12px; line-height: 1.5; color: #334155; font-style: italic; }
+    .feedback-card .fb-text { font-size: 11px; line-height: 1.4; color: #334155; font-style: italic; }
     .feedback-single { grid-column: 1 / -1; }
 
-    .conclusion-section { margin-bottom: 12px; }
+    .conclusion-section { margin-bottom: 8px; }
     .conclusion-card {
       background: ${COLORS.cardBg};
       border: 1px solid ${COLORS.border};
       border-left: 4px solid ${COLORS.accent};
       border-radius: 0 8px 8px 0;
-      padding: 16px 20px;
+      padding: 10px 14px;
     }
     .conclusion-card .conclusion-text {
-      font-size: 12px;
-      line-height: 1.6;
+      font-size: 11px;
+      line-height: 1.5;
       color: #334155;
     }
     
     .footer {
-      margin-top: 16px;
-      padding: 16px 32px;
+      margin-top: 8px;
+      padding: 10px 28px;
       border-top: 2px solid ${COLORS.primary};
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 10px;
+      font-size: 9px;
       color: ${COLORS.textLight};
     }
     .footer-brand { font-weight: 700; color: ${COLORS.textMuted}; letter-spacing: 0.5px; }
