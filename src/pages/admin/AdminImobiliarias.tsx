@@ -742,6 +742,13 @@ export default function AdminImobiliarias() {
                                   <ClipboardCheck className="h-4 w-4 mr-2" />
                                   {imob.survey_enabled ? 'Desabilitar Pesquisa' : 'Habilitar Pesquisa'}
                                 </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => toggleEmpreendimentoFeature(imob)}
+                                  disabled={isTogglingFeature === imob.id + '-emp'}
+                                >
+                                  <Home className="h-4 w-4 mr-2" />
+                                  {imob.empreendimento_visita_enabled ? 'Desabilitar Empreendimentos' : 'Habilitar Empreendimentos'}
+                                </DropdownMenuItem>
                                 {imob.assinatura_status && imob.assinatura_status !== 'sem_assinatura' && (
                                   <DropdownMenuItem
                                     onClick={() => toggleAssinatura(imob)}
