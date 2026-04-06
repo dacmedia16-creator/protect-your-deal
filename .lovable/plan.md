@@ -1,65 +1,33 @@
 
 
-# Refinamento UX da Home Mobile
+# Fix: Botão "Parceiro" visível no mobile
 
-## O que já está bom
-- CTA "Registrar Nova Visita" em destaque no topo — correto
-- Seção "Precisa da sua atenção" condicional — bom padrão
-- Stats em 3 colunas compactas — funcional
-- Navegação inferior renomeada — mais claro
+## Problema
+A aba "Parceiro" na lista de registros fica escondida fora da tela no mobile porque as 4 tabs (Todas, Pendentes, Confirmadas, Parceiro) não cabem na largura de 390px. O scroll horizontal está habilitado mas é invisível (`scrollbar-hide`), então o usuário não percebe que pode rolar.
 
-## Refinamentos propostos
+## Solução
+Tornar as tabs mais compactas no mobile para que todas caibam sem scroll:
 
-### 1. Subtítulo contextual no topo (linha 449-451)
-Substituir o "Olá, {nome}" isolado por uma saudação com subtítulo operacional dinâmico:
-- Se há pendências: "Você tem X pendências hoje"
-- Se tudo ok: "Tudo em dia ✓"
-- Se não há fichas: "Comece registrando sua primeira visita"
+### Arquivo: `src/pages/ListaFichas.tsx`
 
-Isso transforma o header de decorativo em informativo.
+1. **Encurtar labels mobile** — trocar os textos por versões mais curtas em telas pequenas:
+   - "Todas" → manter
+   - "Pendentes" → "Pend."
+   - "Confirmadas" → "Conf."
+   - "Parceiro" → manter (com ícone)
 
-### 2. "Registro Construtoras" com menos peso (linhas 463-472)
-O botão outline de construtoras compete visualmente com o CTA principal. Mudança:
-- Reduzir de `Button` para uma linha compacta dentro da seção "atenção" ou um link discreto
-- Usar tamanho `sm`, sem borda colorida, texto `text-muted-foreground` com ícone sutil
-- Só aparece se há parcerias ativas — manter essa lógica
+2. **Reduzir padding das tabs** — diminuir `px-3` para `px-2` no mobile, manter `md:px-4` no desktop
 
-### 3. Métricas com microcopy de status (linhas 476-508)
-Adicionar uma linha de contexto abaixo de cada número nos stats cards:
-- Total: sem subtítulo extra (já é claro)
-- Confirmados: se todos confirmados → "tudo em dia" em verde; senão manter "Confirmados"
-- Pendentes: se 0 → "nenhuma pendência" em verde; se > 0 → manter com cor warning
+3. **Remover badges inline no mobile** — os números já são informativos, mas ocupam espaço. Manter apenas o número sem o componente `Badge` no mobile (usar `<span className="text-[10px]">`)
 
-Isso dá leitura instantânea de status sem ocupar mais espaço.
+4. **Alternativa mais simples**: apenas reduzir o `min-w-full` do `TabsList` para `min-w-0` no mobile para que as tabs se comprimam naturalmente, e adicionar `flex-nowrap whitespace-nowrap` para garantir que não quebrem linha
 
-### 4. Seção "Precisa da sua atenção" — estado vazio positivo (linhas 511-550)
-Quando não há itens pendentes, em vez de esconder a seção, mostrar uma mensagem compacta de reforço positivo:
-- "Tudo em dia — nenhuma pendência" com ícone CheckCircle verde
-- Isso evita que a home pareça "vazia" quando tudo está ok
+### Abordagem escolhida
+A mais limpa: **reduzir o padding das tabs e usar labels curtos no mobile** para que as 4 tabs caibam em 390px sem precisar de scroll horizontal.
 
-### 5. Ajuste de espaçamento e peso visual
-- Reduzir `space-y-4` para `space-y-3` no container mobile para tela mais compacta
-- Card "Ajuda Jurídica" (linhas 579-592): reduzir padding de `p-3` para `p-2.5`, manter discreto como está
-- Card "Indicações" (linhas 598-613): manter no final, sem alterações — já está equilibrado
-
-### 6. Nenhuma mudança em
-- Desktop layout (intocado)
-- Queries de dados
-- Navegação inferior (já refinada)
-- Identidade visual, cores, fontes, shadows
-
-## Arquivo alterado
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Dashboard.tsx` | Subtítulo contextual, construtoras discreto, microcopy nos stats, estado positivo na seção atenção, ajuste de espaçamento |
-
-## Microcopy final
-
-| Bloco | Atual | Proposto |
-|-------|-------|----------|
-| Saudação sub | (nenhum) | "Tudo em dia ✓" / "X pendências hoje" |
-| Pendentes = 0 | (oculto) | "nenhuma pendência" (verde) |
-| Confirmados = total | "Confirmados" | "tudo em dia" (verde) |
-| Atenção vazia | (seção oculta) | "Tudo em dia — nenhuma pendência ✓" |
-| Construtoras | Botão outline com borda laranja | Botão `ghost` tamanho `sm`, texto muted |
+Mudanças específicas:
+- Tabs: `px-2 md:px-4` (menos padding mobile)
+- Labels: usar `<span className="hidden sm:inline">` para label completo e `<span className="sm:hidden">` para label curto
+- Badge: reduzir `ml-1` para `ml-0.5` no mobile
+- Manter o scroll como fallback caso um dia haja mais tabs
 
