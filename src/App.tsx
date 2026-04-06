@@ -36,7 +36,7 @@ const App = () => (
             <BrowserRouter>
               <Toaster />
               <Sonner />
-              <PWAUpdatePrompt />
+              
               <VersionCheckWithOverlay />
               <PWAInstallModal />
               <Suspense fallback={null}>
