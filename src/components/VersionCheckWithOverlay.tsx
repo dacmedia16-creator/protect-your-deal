@@ -7,6 +7,7 @@ const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
 const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
 const DEFER_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const COUNTDOWN_SECONDS = 5;
+const SAFETY_TIMEOUT_MS = 10 * 1000; // 10 seconds max overlay
 
 interface VersionCheckResult {
   needsUpdate: boolean;
