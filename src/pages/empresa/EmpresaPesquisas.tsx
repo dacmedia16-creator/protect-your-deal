@@ -84,6 +84,7 @@ interface Survey {
     data_visita: string;
     comprador_nome: string | null;
     protocolo: string;
+    user_id: string;
   } | null;
   survey_responses: SurveyResponse[];
 }
