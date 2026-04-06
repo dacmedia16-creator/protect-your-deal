@@ -63,33 +63,33 @@ import { OnboardingTour } from '@/components/OnboardingTour';
 const ONBOARDING_STEPS = [
   {
     target: 'welcome',
-    title: 'Bem-vindo ao VisitaProva! 🎉',
-    description: 'Este é seu painel principal. Aqui você acompanha tudo sobre seus registros de visita e clientes.',
+    title: 'Bem-vindo ao VisitaProva! 👋',
+    description: 'Este é seu painel. Daqui você cria registros, acompanha pendências e gerencia tudo.',
   },
   {
     target: 'stats',
-    title: 'Seus Números',
-    description: 'Acompanhe o total de registros, quantos foram confirmados e quantos estão pendentes de confirmação.',
+    title: 'Resumo rápido',
+    description: 'Veja de relance quantos registros você tem, quantos já foram confirmados e quantos aguardam confirmação.',
   },
   {
     target: 'novo-registro',
-    title: 'Novo Registro de Visita',
-    description: 'Crie fichas de visita com confirmação via WhatsApp. É rápido e seguro!',
+    title: 'Criar registro de visita',
+    description: 'Toque aqui para registrar uma visita. O proprietário confirma via WhatsApp em segundos.',
   },
   {
     target: 'ver-registros',
-    title: 'Seus Registros',
-    description: 'Consulte, filtre e gerencie todas as suas fichas de visita em um só lugar.',
+    title: 'Acessar seus registros',
+    description: 'Toque no total para ver a lista completa. Você pode filtrar por status, buscar por endereço e gerenciar cada ficha.',
   },
   {
     target: 'indicacoes',
-    title: 'Indique e Ganhe 💰',
-    description: 'Indique corretores e imobiliárias para o VisitaProva e ganhe comissão por cada indicação!',
+    title: 'Programa de indicações',
+    description: 'Indique corretores ou imobiliárias e ganhe comissão recorrente por cada assinatura ativa.',
   },
   {
     target: 'nav-menu',
-    title: 'Navegação',
-    description: 'Use o menu inferior para navegar entre as seções: Início, Registros, Convites e Perfil.',
+    title: 'Menu de navegação',
+    description: 'Use a barra inferior para acessar Início, Registros, Convites e Perfil a qualquer momento.',
   },
 ];
 
@@ -482,6 +482,7 @@ export default function Dashboard() {
           {/* Stats compactos — sem container bg */}
           <div data-tour="stats" className="grid grid-cols-3 gap-2">
             <Card 
+              data-tour="ver-registros"
               className="animate-fade-in cursor-pointer border-0 bg-card rounded-xl shadow-soft active:bg-muted/50 transition-all"
               onClick={() => navigate('/fichas')}
             >
