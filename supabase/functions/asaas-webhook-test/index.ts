@@ -49,7 +49,8 @@ serve(async (req) => {
     // Ação 1: Verificar configuração
     if (action === 'check-config') {
       const hasApiKey = !!Deno.env.get('ASAAS_API_KEY');
-      const isSandbox = Deno.env.get('ASAAS_SANDBOX') === 'true';
+      const rawSandboxValue = Deno.env.get('ASAAS_SANDBOX');
+      const isSandbox = rawSandboxValue === 'true';
       const apiKeyPrefix = hasApiKey ? Deno.env.get('ASAAS_API_KEY')?.substring(0, 10) + '...' : null;
       
       return new Response(JSON.stringify({
@@ -58,6 +59,9 @@ serve(async (req) => {
           asaas_api_key_configured: hasApiKey,
           asaas_api_key_prefix: apiKeyPrefix,
           sandbox_mode: isSandbox,
+          sandbox_raw_value: rawSandboxValue ?? '(undefined)',
+          sandbox_raw_type: typeof rawSandboxValue,
+          sandbox_raw_length: rawSandboxValue?.length ?? 0,
           webhook_url: `${supabaseUrl}/functions/v1/asaas-webhook`
         }
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
