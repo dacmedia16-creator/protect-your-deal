@@ -21,9 +21,9 @@ export function MobileNav() {
   const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
 
   const navItems = [
-    { path: '/dashboard', label: 'Início', icon: Home },
+    { path: '/dashboard', label: 'Home', icon: Home },
     { path: '/fichas', label: 'Registros', icon: FileText },
-    ...(isLider ? [{ path: '/minha-equipe', label: 'Equipe', icon: UsersRound }] : [{ path: '/convites', label: 'Convites', icon: Handshake }]),
+    ...(isLider ? [{ path: '/minha-equipe', label: 'Equipe', icon: UsersRound }] : [{ path: '/convites', label: 'Parcerias', icon: Handshake }]),
     ...(surveyEnabled ? [{ path: '/pesquisas', label: 'Pesquisas', icon: FileText }] : []),
   ];
 
@@ -77,7 +77,7 @@ export function MobileNav() {
           )}
         >
           <MessageCircle className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Sofia</span>
+          <span className="text-[10px] font-medium">Ajuda</span>
         </button>
       </div>
     </nav>
