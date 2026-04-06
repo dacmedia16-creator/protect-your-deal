@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
@@ -167,7 +168,8 @@ export default function NovaFicha() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConstrutora = !!construtoraId;
-  const modoConstrutoraParceira = !isConstrutora && !!imobiliariaId && searchParams.get('modo') === 'construtora';
+  const { enabled: empreendimentoEnabled, loading: empreendimentoFlagLoading } = useImobiliariaFeatureFlag('empreendimento_visita');
+  const modoConstrutoraParceira = !isConstrutora && !!imobiliariaId && searchParams.get('modo') === 'construtora' && empreendimentoEnabled;
   const [modoCriacao, setModoCriacao] = useState<ModoCriacao>('completo');
   const [empreendimentoId, setEmpreendimentoId] = useState<string>('');
   const [selectedConstrutoraId, setSelectedConstrutoraId] = useState<string>('');

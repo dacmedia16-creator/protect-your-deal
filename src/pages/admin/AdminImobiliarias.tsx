@@ -61,6 +61,7 @@ interface Imobiliaria {
   assinatura_plano_id?: string;
   assinatura_plano_nome?: string;
   survey_enabled?: boolean;
+  empreendimento_visita_enabled?: boolean;
   fichas_count?: number;
 }
 
