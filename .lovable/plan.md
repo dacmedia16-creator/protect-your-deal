@@ -1,46 +1,27 @@
 
-Diagnóstico revisado da ficha VS266F1823
 
-O problema real não é a regra de “finalização parcial”.
-Essa ficha pode, sim, ser finalizada com apenas 1 assinatura — e de fato ela já tem 1 confirmação válida.
+# Corrigir rastreabilidade do fluxo OTP
 
-O que confirmei:
-- A ficha VS266F1823 está com status atual `aguardando_proprietario`
-- O comprador já confirmou
-- O proprietário ainda não confirmou
-- O sistema chegou a gerar o PDF parcial com sucesso
-- Depois disso, a tentativa de gerar o backup falhou porque o registro continuou com status antigo no banco
+## Problema identificado
+O `process-otp-queue` marca itens como "enviado" mesmo quando o WhatsApp não foi efetivamente entregue (simulação). Não há log de WhatsApp para rastrear o que aconteceu. O OTP do proprietário da ficha VS266F1823 foi criado mas desapareceu, provavelmente deletado por um reenvio subsequente.
 
-Motivo exato da falha:
-- Quem tentou finalizar foi o usuário Edson Dias, com perfil `imobiliaria_admin`
-- A ficha pertence ao corretor Juliano Moraes
-- Hoje, a permissão de atualização dessa tabela permite alterar a ficha apenas para:
-  - corretor dono da ficha
-  - corretor parceiro
-  - líder da equipe do corretor
-  - super admin
-- Não existe permissão de atualização para `imobiliaria_admin` nas fichas da própria imobiliária
+## Correções
 
-Por isso o comportamento ficou “enganoso”:
-1. a tela permitiu clicar em “Finalizar Parcialmente” porque há 1 assinatura
-2. a aplicação tentou atualizar o status para `finalizado_parcial`
-3. essa atualização não foi aplicada por permissão
-4. como o front não valida se a linha foi realmente alterada, ele continuou
-5. o PDF parcial foi gerado
-6. o backup falhou com erro porque o backend ainda enxergou a ficha como `aguardando_proprietario`
+### 1. Corrigir `process-otp-queue/index.ts` — distinguir simulação de envio real
+- Quando `sent = false` após todas as tentativas de envio, marcar o item como `simulado` em vez de `enviado`
+- Adicionar log de WhatsApp na tabela `whatsapp_logs` dentro do `processQueueItem` para rastreabilidade (como já é feito em `send-whatsapp`)
 
-Evidências que batem com isso:
-- A ficha continua com status `aguardando_proprietario`
-- O campo de documento gerado foi atualizado, mostrando que o PDF saiu
-- O backup retornou erro de “registro não está finalizado”
-- Não encontrei vínculo de liderança ativo entre o usuário que tentou finalizar e o corretor dono da ficha
+### 2. Corrigir `process-otp-queue/index.ts` — proteção contra perda de OTP
+- Não deletar o OTP existente se o novo envio falhar: mover a exclusão do OTP anterior para **depois** da confirmação de que o novo OTP foi inserido com sucesso
 
-Conclusão objetiva:
-- Você está certo: essa ficha já atende a condição funcional para finalização parcial
-- O bloqueio não é de negócio; é de permissão de atualização
-- Nesta ficha específica, o usuário que tentou finalizar pode visualizar, mas não pode mudar o status dela
+### 3. Corrigir `send-otp/index.ts` — mesma proteção
+- Aplicar a mesma lógica: só deletar OTP antigo depois de confirmar que o novo foi criado
 
-Correção mínima e segura a implementar depois:
-1. decidir se administrador da imobiliária deve poder finalizar fichas da própria imobiliária
-2. alinhar a permissão do backend com essa regra
-3. fazer a tela confirmar que o status realmente mudou antes de seguir para PDF e backup, para não mascarar esse erro
+## Arquivos a modificar
+- `supabase/functions/process-otp-queue/index.ts`
+- `supabase/functions/send-otp/index.ts`
+
+## Impacto
+- Sem mudança de schema
+- Sem mudança de frontend
+- Melhora rastreabilidade e evita perda silenciosa de OTPs
