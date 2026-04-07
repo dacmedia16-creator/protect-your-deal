@@ -38,7 +38,8 @@ export function VersionCheckWithOverlay() {
   const checkingRef = useRef(false);
   const deferredUntilRef = useRef<number | null>(null);
   const updateSwRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
-  const updatingRef = useRef(false); // true once forceUpdate starts
+  const updatingRef = useRef(false);
+  const updatingStartedAtRef = useRef<number>(0);
 
   // Detect standalone mode
   useEffect(() => {
