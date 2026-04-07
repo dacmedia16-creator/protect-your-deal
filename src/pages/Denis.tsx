@@ -520,7 +520,7 @@ const Denis = () => {
             <AnimatedSection>
               <div className="mb-8">
                 <img
-                  src={denisCeo}
+                  src={denisPremios}
                   alt="Denis Souza"
                   className="w-24 h-24 rounded-full object-cover mx-auto border-2 border-primary/10 shadow-lg mb-6"
                 />
