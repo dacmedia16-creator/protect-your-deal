@@ -71,12 +71,16 @@ export function VersionCheckWithOverlay() {
   const forceUpdate = useCallback(async () => {
     if (updatingRef.current) return;
     updatingRef.current = true;
+    updatingStartedAtRef.current = Date.now();
     console.log('🔄 Forçando atualização do app...');
 
     try {
-      // 1. Activate new SW if available
+      // 1. Activate new SW WITHOUT internal reload (false) + 5s timeout
       if (updateSwRef.current) {
-        await updateSwRef.current(true);
+        await Promise.race([
+          updateSwRef.current(false),
+          new Promise(resolve => setTimeout(resolve, 5000)),
+        ]);
       }
       // 2. Unregister all SWs
       if ('serviceWorker' in navigator) {
