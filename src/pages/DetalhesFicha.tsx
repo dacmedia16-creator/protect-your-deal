@@ -696,12 +696,19 @@ export default function DetalhesFicha() {
     setFinalizingPartial(true);
     try {
       // Update status to finalizado_parcial
-      const { error } = await supabase
+      const { data: updateData, error } = await supabase
         .from('fichas_visita')
         .update({ status: 'finalizado_parcial' })
-        .eq('id', ficha.id);
+        .eq('id', ficha.id)
+        .select('status')
+        .maybeSingle();
 
       if (error) throw error;
+
+      // Verify the update was actually applied (RLS may silently block it)
+      if (!updateData || updateData.status !== 'finalizado_parcial') {
+        throw new Error('Não foi possível atualizar o status. Verifique suas permissões.');
+      }
 
       // Generate and download PDF
       await downloadPdf(true);
