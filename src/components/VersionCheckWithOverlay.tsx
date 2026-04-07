@@ -38,7 +38,8 @@ export function VersionCheckWithOverlay() {
   const checkingRef = useRef(false);
   const deferredUntilRef = useRef<number | null>(null);
   const updateSwRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
-  const updatingRef = useRef(false); // true once forceUpdate starts
+  const updatingRef = useRef(false);
+  const updatingStartedAtRef = useRef<number>(0);
 
   // Detect standalone mode
   useEffect(() => {
@@ -70,12 +71,16 @@ export function VersionCheckWithOverlay() {
   const forceUpdate = useCallback(async () => {
     if (updatingRef.current) return;
     updatingRef.current = true;
+    updatingStartedAtRef.current = Date.now();
     console.log('🔄 Forçando atualização do app...');
 
     try {
-      // 1. Activate new SW if available
+      // 1. Activate new SW WITHOUT internal reload (false) + 5s timeout
       if (updateSwRef.current) {
-        await updateSwRef.current(true);
+        await Promise.race([
+          updateSwRef.current(false),
+          new Promise(resolve => setTimeout(resolve, 5000)),
+        ]);
       }
       // 2. Unregister all SWs
       if ('serviceWorker' in navigator) {
@@ -169,7 +174,15 @@ export function VersionCheckWithOverlay() {
   useEffect(() => {
     if (!showOverlay) return;
     const id = setTimeout(() => {
-      if (updatingRef.current) return; // don't interrupt active update
+      // If update is stuck for >10s, force reload anyway
+      if (updatingRef.current && updatingStartedAtRef.current > 0) {
+        const elapsed = Date.now() - updatingStartedAtRef.current;
+        if (elapsed > 10_000) {
+          console.warn('🔄 Update travado, forçando reload...');
+          window.location.reload();
+          return;
+        }
+      }
       setShowOverlay(false);
       setCountdown(COUNTDOWN_SECONDS);
       deferredUntilRef.current = Date.now() + 60_000;
