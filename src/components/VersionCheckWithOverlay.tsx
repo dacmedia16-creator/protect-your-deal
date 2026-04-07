@@ -174,7 +174,15 @@ export function VersionCheckWithOverlay() {
   useEffect(() => {
     if (!showOverlay) return;
     const id = setTimeout(() => {
-      if (updatingRef.current) return; // don't interrupt active update
+      // If update is stuck for >10s, force reload anyway
+      if (updatingRef.current && updatingStartedAtRef.current > 0) {
+        const elapsed = Date.now() - updatingStartedAtRef.current;
+        if (elapsed > 10_000) {
+          console.warn('🔄 Update travado, forçando reload...');
+          window.location.reload();
+          return;
+        }
+      }
       setShowOverlay(false);
       setCountdown(COUNTDOWN_SECONDS);
       deferredUntilRef.current = Date.now() + 60_000;
