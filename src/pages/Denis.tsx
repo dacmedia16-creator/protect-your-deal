@@ -5,7 +5,7 @@ import AnimatedSection from "@/components/AnimatedSection";
 import { LogoIcon } from "@/components/LogoIcon";
 import { Button } from "@/components/ui/button";
 import denisHero from "@/assets/DenisfotoBanner.png";
-import denisCeo from "@/assets/ceo-photo.png";
+import denisPremios from "@/assets/denis-premios-remax.jpeg";
 import {
   ArrowLeft,
   ArrowRight,
@@ -256,9 +256,9 @@ const Denis = () => {
             <AnimatedSection delay={600} className="mt-14">
               <div className="flex flex-col sm:flex-row items-center gap-6 bg-card border rounded-2xl p-6 md:p-8">
                 <img
-                  src={denisCeo}
-                  alt="Denis Souza"
-                  className="w-28 h-28 rounded-xl object-cover border border-primary/10"
+                   src={denisPremios}
+                   alt="Denis Souza com troféus e certificados REMAX"
+                   className="w-28 h-28 rounded-xl object-cover border border-primary/10"
                 />
                 <div>
                   <p className="text-muted-foreground leading-relaxed">
@@ -520,7 +520,7 @@ const Denis = () => {
             <AnimatedSection>
               <div className="mb-8">
                 <img
-                  src={denisCeo}
+                  src={denisPremios}
                   alt="Denis Souza"
                   className="w-24 h-24 rounded-full object-cover mx-auto border-2 border-primary/10 shadow-lg mb-6"
                 />
