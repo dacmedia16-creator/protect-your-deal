@@ -41,33 +41,33 @@ import {
 
 const timeline = [
   {
-    year: "2016",
+    year: "2019",
     title: "Início no Mercado Imobiliário",
-    text: "Primeiros passos como corretor de imóveis, mergulhando no mercado com intensidade e dedicação total.",
+    text: "Primeiros passos fazendo treinamentos para treinar franquiados e corretores REMAX .",
     icon: Briefcase,
   },
   {
-    year: "2017",
+    year: "2019",
     title: "Expansão REMAX",
     text: "Atuou na expansão de vendas da franquia REMAX, sendo parte do crescimento da marca no Brasil.",
     icon: TrendingUp,
   },
   {
-    year: "2018",
-    title: "Franqueado & Team Leader",
-    text: "Tornou-se franqueado REMAX e Team Leader, liderando equipes e formando novos corretores.",
+    year: "2020",
+    title: "Franqueado ",
+    text: "Tornou-se franqueado REMAX , liderando equipes e formando novos corretores.",
     icon: Building2,
   },
   {
-    year: "2019–2020",
+    year: "2021–2022",
     title: "Campeão de Vendas 2× consecutivas",
-    text: "Reconhecido como campeão de vendas por dois anos seguidos, alcançando quase R$ 2 milhões em comissões.",
+    text: "Como Corretor Reconhecido como campeão de vendas por dois anos seguidos, alcançando quase R$ 2 milhões em comissões.",
     icon: Trophy,
   },
   {
-    year: "2021+",
+    year: "2023+",
     title: "Fundação da VIP7 Imóveis",
-    text: "Fundou a VIP7 Imóveis, construindo sua própria operação e acumulando cerca de R$ 60 milhões em VGV.",
+    text: "Fundou a VIP7 Imóveis, construindo sua própria operation e acumulando cerca de R$ 60 milhões em VGV.",
     icon: Star,
   },
 ];
