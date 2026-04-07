@@ -38,6 +38,7 @@ const AceitarTermos = lazy(() => import("@/pages/AceitarTermos"));
 const PoliticaPrivacidade = lazy(() => import("@/pages/PoliticaPrivacidade"));
 const SurveyPublic = lazy(() => import("@/pages/SurveyPublic"));
 const RegistroConstrutora = lazy(() => import("@/pages/auth/RegistroConstrutora"));
+const Denis = lazy(() => import("@/pages/Denis"));
 
 export const publicRoutes = (
   <>
