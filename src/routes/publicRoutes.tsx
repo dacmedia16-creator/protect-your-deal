@@ -82,6 +82,7 @@ export const publicRoutes = (
         <AceitarTermos />
       </ProtectedRoute>
     } />
+    <Route path="/denis" element={<Denis />} />
     <Route path="*" element={<NotFound />} />
   </>
 );
