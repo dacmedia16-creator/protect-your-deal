@@ -291,22 +291,14 @@ serve(async (req) => {
     // Check if there's already a pending OTP for this ficha/tipo
     const { data: existingOtp } = await supabase
       .from('confirmacoes_otp')
-      .select('*')
+      .select('id')
       .eq('ficha_id', ficha_id)
       .eq('tipo', tipo)
       .eq('confirmado', false)
       .gte('expira_em', new Date().toISOString())
       .maybeSingle();
 
-    if (existingOtp) {
-      // Delete existing pending OTP
-      await supabase
-        .from('confirmacoes_otp')
-        .delete()
-        .eq('id', existingOtp.id);
-    }
-
-    // Insert new OTP
+    // Insert new OTP FIRST, only then delete old one
     const { error: insertError } = await supabase
       .from('confirmacoes_otp')
       .insert({
@@ -324,6 +316,15 @@ serve(async (req) => {
         JSON.stringify({ error: 'Erro ao criar OTP' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Now safe to delete old OTP since new one exists
+    if (existingOtp) {
+      await supabase
+        .from('confirmacoes_otp')
+        .delete()
+        .eq('id', existingOtp.id);
+      console.log(`[send-otp] Deleted old pending OTP ${existingOtp.id}`);
     }
 
     // Build verification URL - use app_url from request or fallback to env/default
