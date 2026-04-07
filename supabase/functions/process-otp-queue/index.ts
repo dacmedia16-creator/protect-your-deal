@@ -284,22 +284,14 @@ async function processQueueItem(
     // Check if there's already a pending OTP for this ficha/tipo
     const { data: existingOtp } = await supabase
       .from('confirmacoes_otp')
-      .select('*')
+      .select('id')
       .eq('ficha_id', item.ficha_id)
       .eq('tipo', item.tipo)
       .eq('confirmado', false)
       .gte('expira_em', new Date().toISOString())
       .maybeSingle();
 
-    if (existingOtp) {
-      // Delete existing pending OTP
-      await supabase
-        .from('confirmacoes_otp')
-        .delete()
-        .eq('id', existingOtp.id);
-    }
-
-    // Insert new OTP
+    // Insert new OTP FIRST, only then delete old one
     const { error: insertError } = await supabase
       .from('confirmacoes_otp')
       .insert({
@@ -314,6 +306,15 @@ async function processQueueItem(
     if (insertError) {
       console.error('[process-otp-queue] Error inserting OTP:', insertError);
       return { success: false, error: 'Erro ao criar OTP' };
+    }
+
+    // Now safe to delete old OTP since new one exists
+    if (existingOtp) {
+      await supabase
+        .from('confirmacoes_otp')
+        .delete()
+        .eq('id', existingOtp.id);
+      console.log(`[process-otp-queue] Deleted old pending OTP ${existingOtp.id}`);
     }
 
     // Build verification URL
@@ -415,8 +416,22 @@ async function processQueueItem(
       .update({ status: newStatus })
       .eq('id', item.ficha_id);
 
+    // Log to whatsapp_logs for traceability
+    try {
+      await supabase.from('whatsapp_logs').insert({
+        telefone,
+        canal: channel,
+        tipo: 'otp',
+        status: sent ? 'sent' : 'simulated',
+        metadata: { ficha_id: item.ficha_id, otp_tipo: item.tipo, queue_item_id: item.id, protocolo: ficha.protocolo },
+      });
+    } catch (logErr) {
+      console.error('[process-otp-queue] Failed to write whatsapp_log (non-blocking):', logErr);
+    }
+
     if (!sent) {
       console.log(`[process-otp-queue] OTP generated in simulation mode for item ${item.id}`);
+      return { success: true, simulated: true };
     }
 
     return { success: true };
@@ -482,17 +497,18 @@ serve(async (req) => {
       const result = await processQueueItem(supabase, item);
 
       if (result.success) {
-        // Mark as sent
+        // Distinguish real send from simulation
+        const queueStatus = (result as any).simulated ? 'simulado' : 'enviado';
         await supabase
           .from('otp_queue')
           .update({ 
-            status: 'enviado', 
+            status: queueStatus, 
             processed_at: new Date().toISOString() 
           })
           .eq('id', item.id);
         
         successCount++;
-        console.log(`[process-otp-queue] Item ${item.id} processed successfully`);
+        console.log(`[process-otp-queue] Item ${item.id} processed successfully (${queueStatus})`);
       } else {
         const newTentativas = (item.tentativas || 0) + 1;
         const newStatus = newTentativas >= MAX_RETRIES ? 'falhou' : 'pendente';
