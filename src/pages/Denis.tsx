@@ -67,7 +67,7 @@ const timeline = [
   {
     year: "2023+",
     title: "Fundação da VIP7 Imóveis",
-    text: "Fundou a VIP7 Imóveis, construindo sua própria operation e acumulando cerca de R$ 60 milhões em VGV.",
+    text: "Fundou a VIP7 Imóveis, construindo sua própria operação e acumulando cerca de R$ 60 milhões em VGV.",
     icon: Star,
   },
 ];
