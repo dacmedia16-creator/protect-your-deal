@@ -18,6 +18,8 @@ interface SendMessageRequest {
   language?: string;
   channel?: 'default' | 'meta' | 'meta2';
   buttonUrlDynamicParams?: string[];
+  mediaBase64?: string;
+  mediaFilename?: string;
 }
 
 function formatPhoneNumber(phone: string): string {
@@ -151,7 +153,7 @@ serve(async (req) => {
     }
     // === End auth gate ===
 
-    const { action, phone, message, templateName, templateParams, headerParams, language, channel: requestedChannel, buttonUrlDynamicParams }: SendMessageRequest = await req.json();
+    const { action, phone, message, templateName, templateParams, headerParams, language, channel: requestedChannel, buttonUrlDynamicParams, mediaBase64, mediaFilename }: SendMessageRequest = await req.json();
     
     // Use requested channel, or fall back to DB config
     const channel = requestedChannel ?? await getDefaultChannel();
@@ -232,8 +234,25 @@ serve(async (req) => {
         console.log(`Sending text message to ${formattedPhone} via ${textChannelLabel}`);
 
         const formData = new FormData();
-        formData.append('msg', message);
+        formData.append('msg', message || ' ');
         formData.append('mobile_phone', formattedPhone);
+
+        // Attach media file if provided
+        if (mediaBase64) {
+          const binaryStr = atob(mediaBase64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const fname = mediaFilename || 'attachment';
+          const ext = fname.split('.').pop()?.toLowerCase() || '';
+          const mimeMap: Record<string, string> = {
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4',
+          };
+          const blob = new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' });
+          formData.append('file', blob, fname);
+          console.log(`Media attached: ${fname} (${bytes.length} bytes)`);
+        }
 
         const response = await fetch(url, {
           method: 'POST',
@@ -250,9 +269,10 @@ serve(async (req) => {
         await logWhatsApp({
           telefone: formattedPhone,
           canal: textChannel || 'default',
-          tipo: 'texto',
+          tipo: mediaBase64 ? 'texto_com_midia' : 'texto',
           status: success ? 'success' : 'failed',
           error_message: success ? undefined : responseText?.substring(0, 500),
+          metadata: mediaBase64 ? { mediaFilename: mediaFilename || 'attachment' } : undefined,
         });
         
         return new Response(

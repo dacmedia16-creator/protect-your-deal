@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { MessageCircle, Send, Search, Users, CheckCircle2, XCircle, Loader2, Pause, Play } from 'lucide-react';
+import { MessageCircle, Send, Search, Users, CheckCircle2, XCircle, Loader2, Pause, Play, Paperclip, X, Image, Video } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { whatsappEngine, type EngineState, type SendResult } from '@/lib/whatsappSendEngine';
 
@@ -25,6 +25,24 @@ interface UserWithRole {
   imobiliaria_nome: string | null;
 }
 
+const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp,video/mp4';
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 16 * 1024 * 1024; // 16MB
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove data URL prefix to get pure base64
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AdminWhatsApp() {
   useDocumentTitle('WhatsApp - Admin');
 
@@ -33,12 +51,15 @@ export default function AdminWhatsApp() {
   const [imobiliariaFilter, setImobiliariaFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState('');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaBase64, setMediaBase64] = useState<string | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Engine state synced from global singleton
   const [engineState, setEngineState] = useState<EngineState>(whatsappEngine.getState());
 
   useEffect(() => {
-    // Sync immediately on mount (engine may already be running)
     setEngineState(whatsappEngine.getState());
     return whatsappEngine.subscribe(setEngineState);
   }, []);
@@ -56,7 +77,6 @@ export default function AdminWhatsApp() {
   }, [engineState.isRunning]);
 
   // Show toast when engine finishes
-  const prevRunning = useState(engineState.isRunning)[0];
   useEffect(() => {
     if (!engineState.isRunning && engineState.results.length > 0 && engineState.progress.sent === engineState.progress.total) {
       const s = engineState.progress.success;
@@ -65,6 +85,13 @@ export default function AdminWhatsApp() {
       else toast.warning(`${s} enviada(s), ${f} falha(s)`);
     }
   }, [engineState.isRunning]);
+
+  // Cleanup preview URL
+  useEffect(() => {
+    return () => {
+      if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+    };
+  }, [mediaPreviewUrl]);
 
   // Fetch users with phone numbers
   const { data: users = [], isLoading } = useQuery({
@@ -166,9 +193,46 @@ export default function AdminWhatsApp() {
     return labels[role] || role;
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isVideo = file.type === 'video/mp4';
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+
+    if (file.size > maxSize) {
+      toast.error(`Arquivo muito grande. Máximo: ${isVideo ? '16MB' : '10MB'}`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    try {
+      const base64 = await fileToBase64(file);
+      setMediaFile(file);
+      setMediaBase64(base64);
+
+      if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+      if (file.type.startsWith('image/')) {
+        setMediaPreviewUrl(URL.createObjectURL(file));
+      } else {
+        setMediaPreviewUrl(null);
+      }
+    } catch {
+      toast.error('Erro ao processar arquivo');
+    }
+  };
+
+  const removeMedia = () => {
+    setMediaFile(null);
+    setMediaBase64(null);
+    if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+    setMediaPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSend = async () => {
-    if (!message.trim()) {
-      toast.error('Digite uma mensagem');
+    if (!message.trim() && !mediaBase64) {
+      toast.error('Digite uma mensagem ou anexe uma mídia');
       return;
     }
     if (selectedIds.size === 0) {
@@ -186,11 +250,19 @@ export default function AdminWhatsApp() {
       return;
     }
 
-    whatsappEngine.start(selectedUsers, message, token);
+    whatsappEngine.start(
+      selectedUsers,
+      message,
+      token,
+      mediaBase64 || undefined,
+      mediaFile?.name || undefined,
+    );
   };
 
   const { isRunning, isPaused, progress: sendProgress, results: sendResults, countdown } = engineState;
   const allFilteredSelected = filteredUsers.length > 0 && selectedIds.size === filteredUsers.length;
+  const isImage = mediaFile?.type.startsWith('image/');
+  const isVideo = mediaFile?.type === 'video/mp4';
 
   return (<div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -214,13 +286,68 @@ export default function AdminWhatsApp() {
               rows={4}
               disabled={isRunning}
             />
+
+            {/* Media attachment */}
+            <div className="flex items-start gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_TYPES}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isRunning}
+                className="shrink-0"
+              >
+                <Paperclip className="h-4 w-4 mr-1.5" />
+                Anexar mídia
+              </Button>
+
+              {mediaFile && (
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-sm">
+                  {isImage && mediaPreviewUrl ? (
+                    <img
+                      src={mediaPreviewUrl}
+                      alt="Preview"
+                      className="h-12 w-12 rounded object-cover"
+                    />
+                  ) : isVideo ? (
+                    <Video className="h-5 w-5 text-muted-foreground shrink-0" />
+                  ) : (
+                    <Image className="h-5 w-5 text-muted-foreground shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{mediaFile.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(mediaFile.size / 1024 / 1024).toFixed(1)} MB
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeMedia}
+                    disabled={isRunning}
+                    className="h-7 w-7 p-0 shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
                 Variáveis: <code className="bg-muted px-1 rounded">{'{nome}'}</code> = nome do usuário
               </p>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{selectedIds.size} selecionado(s)</Badge>
-                <Button onClick={handleSend} disabled={isRunning || selectedIds.size === 0 || !message.trim()}>
+                <Button onClick={handleSend} disabled={isRunning || selectedIds.size === 0 || (!message.trim() && !mediaBase64)}>
                   {isRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
                   Enviar
                 </Button>
