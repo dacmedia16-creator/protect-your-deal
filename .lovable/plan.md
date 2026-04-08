@@ -1,32 +1,42 @@
 
 
-# Trocar `buttonUrlDynamicParams` de índice `[0]` para `[1]`
+# Corrigir envio de pesquisa pós-visita — mensagem não chega no WhatsApp
 
-## Contexto
-O ZionTalk espera o token da pesquisa no `buttonUrlDynamicParams[1]` (segundo botão ou segundo parâmetro), mas atualmente o código envia no `[0]`.
+## Causa raiz
+A mudança para `buttonUrlDynamicParams: ['', surveyToken]` envia um parâmetro vazio no índice `[0]`. O ZionTalk aceita (201), mas o Meta rejeita silenciosamente a mensagem porque botões CTA não aceitam parâmetros dinâmicos vazios.
 
-## Mudanças
+## Correção
 
-### 1. `supabase/functions/verify-otp/index.ts` (linha 352)
-Adicionar string vazia no índice 0 para que o token fique no índice 1:
+### Abordagem: enviar apenas o índice `[1]` diretamente, sem incluir `[0]`
+
+### 1. `supabase/functions/send-whatsapp/index.ts` (linhas 299-304)
+Modificar o loop para **pular parâmetros vazios**:
 
 ```typescript
 // De:
-buttonUrlDynamicParams: [surveyToken],
+if (buttonUrlDynamicParams && buttonUrlDynamicParams.length > 0) {
+  buttonUrlDynamicParams.forEach((param, index) => {
+    formData.append(`buttonUrlDynamicParams[${index}]`, param);
+  });
+}
 
 // Para:
-buttonUrlDynamicParams: ['', surveyToken],
+if (buttonUrlDynamicParams && buttonUrlDynamicParams.length > 0) {
+  buttonUrlDynamicParams.forEach((param, index) => {
+    if (param !== '' && param != null) {
+      formData.append(`buttonUrlDynamicParams[${index}]`, param);
+    }
+  });
+}
 ```
 
-### 2. `supabase/functions/send-whatsapp/index.ts` (linhas 300-303)
-Sem alteração necessária — o `forEach` com `index` já mapeia corretamente os índices do array para `buttonUrlDynamicParams[0]` e `buttonUrlDynamicParams[1]`.
+Isso garante que apenas `buttonUrlDynamicParams[1]=<token>` seja enviado ao ZionTalk, sem o `[0]=''` que causa a rejeição silenciosa do Meta.
 
-## Resultado
-O `formData` enviado ao ZionTalk terá:
-- `buttonUrlDynamicParams[0]` = `''` (vazio)
-- `buttonUrlDynamicParams[1]` = token da pesquisa
+### Sem alteração em `verify-otp/index.ts`
+O payload `['', surveyToken]` continua correto — o array posiciona o token no índice 1, e o `send-whatsapp` agora pula o índice vazio.
 
 ## Escopo
-- 1 arquivo, 1 linha alterada
-- Redeploy da edge function `verify-otp`
+- 1 arquivo alterado (`send-whatsapp/index.ts`)
+- 1 redeploy automático
+- Afeta todos os templates que usam `buttonUrlDynamicParams` (melhoria global)
 
