@@ -274,6 +274,13 @@ serve(async (req) => {
         const responseText = await response.text();
         console.log(`Send message response: ${responseText.substring(0, 500)}`);
 
+        // Diagnostic: log response headers for media endpoint debugging
+        if (mediaBase64) {
+          const respHeaders: Record<string, string> = {};
+          response.headers.forEach((value, key) => { respHeaders[key] = value; });
+          console.log(`[send-whatsapp] Media response headers:`, JSON.stringify(respHeaders));
+        }
+
         const success = response.status === 201;
 
         await logWhatsApp({
