@@ -1,31 +1,32 @@
 
 
-# Enviar pesquisa pós-visita assim que o comprador assinar
+# Trocar `buttonUrlDynamicParams` de índice `[0]` para `[1]`
 
-## Problema atual
-A pesquisa só é disparada quando o status final da ficha é `completo` ou `finalizado_parcial`. Quando o comprador confirma primeiro, o status fica `aguardando_proprietario` — e a pesquisa nunca é enviada.
+## Contexto
+O ZionTalk espera o token da pesquisa no `buttonUrlDynamicParams[1]` (segundo botão ou segundo parâmetro), mas atualmente o código envia no `[0]`.
 
-## Correção
+## Mudanças
 
-### Arquivo: `supabase/functions/verify-otp/index.ts`
-
-Alterar a condição de disparo (linha ~699) de:
-
-```typescript
-if (otp.tipo === 'comprador' && (newStatus === 'completo' || newStatus === 'finalizado_parcial'))
-```
-
-Para:
+### 1. `supabase/functions/verify-otp/index.ts` (linha 352)
+Adicionar string vazia no índice 0 para que o token fique no índice 1:
 
 ```typescript
-if (otp.tipo === 'comprador')
+// De:
+buttonUrlDynamicParams: [surveyToken],
+
+// Para:
+buttonUrlDynamicParams: ['', surveyToken],
 ```
 
-Isso garante que a pesquisa seja enviada sempre que o comprador confirmar a visita via OTP, independente do status resultante da ficha (`aguardando_proprietario`, `completo`, `finalizado_parcial`, etc.).
+### 2. `supabase/functions/send-whatsapp/index.ts` (linhas 300-303)
+Sem alteração necessária — o `forEach` com `index` já mapeia corretamente os índices do array para `buttonUrlDynamicParams[0]` e `buttonUrlDynamicParams[1]`.
 
-A função `sendSurveyWhatsApp` já tem proteção contra duplicatas (verifica se já existe survey para a ficha) e está isolada em `try/catch`, então não há risco de envio duplicado ou de bloquear o fluxo.
+## Resultado
+O `formData` enviado ao ZionTalk terá:
+- `buttonUrlDynamicParams[0]` = `''` (vazio)
+- `buttonUrlDynamicParams[1]` = token da pesquisa
 
 ## Escopo
 - 1 arquivo, 1 linha alterada
-- Sem mudança de schema
+- Redeploy da edge function `verify-otp`
 
