@@ -236,12 +236,14 @@ export default function NossaHistoria() {
             <AnimatedSection direction="right" className="order-first md:order-last">
               <div className="flex flex-col items-center">
                 <div className="rounded-2xl overflow-hidden shadow-lg border border-border/30">
-                  <img
-                    src={denisPhoto}
-                    alt="Denis — Fundador do Visita Prova"
-                    className="w-full h-auto object-cover"
-                    loading="lazy"
-                  />
+                  <Link to="/denis">
+                    <img
+                      src={denisPhoto}
+                      alt="Denis — Fundador do Visita Prova"
+                      className="w-full h-auto object-cover hover:opacity-90 transition-opacity cursor-pointer"
+                      loading="lazy"
+                    />
+                  </Link>
                 </div>
                 <div className="mt-4 text-center">
                   <p className="font-display font-bold text-foreground">Denis Souza</p>
