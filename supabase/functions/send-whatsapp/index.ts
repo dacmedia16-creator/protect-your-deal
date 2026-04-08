@@ -250,8 +250,8 @@ serve(async (req) => {
             jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4',
           };
           const blob = new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' });
-          formData.append('file', blob, fname);
-          console.log(`Media attached: ${fname} (${bytes.length} bytes)`);
+          formData.append('media_file', blob, fname);
+          console.log(`Media attached: ${fname} (${bytes.length} bytes, mime: ${mimeMap[ext] || 'application/octet-stream'})`);
         }
 
         const response = await fetch(url, {
