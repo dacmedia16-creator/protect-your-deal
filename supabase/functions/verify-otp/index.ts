@@ -695,6 +695,15 @@ serve(async (req) => {
       }
     }
 
+    // Enviar pesquisa pós-visita via WhatsApp para o comprador
+    if (otp.tipo === 'comprador' && (newStatus === 'completo' || newStatus === 'finalizado_parcial')) {
+      try {
+        await sendSurveyWhatsApp(supabase, updatedFicha);
+      } catch (err) {
+        console.error('[verify-otp] ❌ Erro ao enviar pesquisa pós-visita:', err);
+      }
+    }
+
     // Cadastrar cliente automaticamente após confirmação
     try {
       const clienteNome = aceite_nome.trim();
