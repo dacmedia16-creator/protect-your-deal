@@ -230,9 +230,7 @@ serve(async (req) => {
         }
 
         const formattedPhone = formatPhoneNumber(phone);
-        const url = mediaBase64
-          ? `${ZIONTALK_API_URL}/send_file_message/`
-          : `${ZIONTALK_API_URL}/send_message/`;
+        const url = `${ZIONTALK_API_URL}/send_message/`;
         console.log(`Sending text message to ${formattedPhone} via ${textChannelLabel}`);
 
         const formData = new FormData();
@@ -252,7 +250,7 @@ serve(async (req) => {
             jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4',
           };
           const blob = new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' });
-          formData.append('file', blob, fname);
+          formData.append('attachments', blob, fname);
           console.log(`Media attached: ${fname} (${bytes.length} bytes, mime: ${mimeMap[ext] || 'application/octet-stream'})`);
         }
 
@@ -274,12 +272,10 @@ serve(async (req) => {
         const responseText = await response.text();
         console.log(`Send message response: ${responseText.substring(0, 500)}`);
 
-        // Diagnostic: log response headers for media endpoint debugging
-        if (mediaBase64) {
-          const respHeaders: Record<string, string> = {};
-          response.headers.forEach((value, key) => { respHeaders[key] = value; });
-          console.log(`[send-whatsapp] Media response headers:`, JSON.stringify(respHeaders));
-        }
+        // Diagnostic: log response headers for every send-text request
+        const respHeaders: Record<string, string> = {};
+        response.headers.forEach((value, key) => { respHeaders[key] = value; });
+        console.log(`[send-whatsapp] Response headers:`, JSON.stringify(respHeaders));
 
         const success = response.status === 201;
 
