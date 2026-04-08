@@ -297,10 +297,12 @@ serve(async (req) => {
         }
 
         // Button URL dynamic params (for Meta CTA buttons)
+        const sentButtonIndexes: number[] = [];
         if (buttonUrlDynamicParams && buttonUrlDynamicParams.length > 0) {
           buttonUrlDynamicParams.forEach((param, index) => {
             if (param !== '' && param != null) {
               formData.append(`buttonUrlDynamicParams[${index}]`, param);
+              sentButtonIndexes.push(index);
             }
           });
         }
@@ -332,7 +334,7 @@ serve(async (req) => {
           tipo: 'template',
           status: success ? 'success' : 'failed',
           error_message: success ? undefined : responseText?.substring(0, 500),
-          metadata: { templateName, language: language || 'pt_BR' },
+          metadata: { templateName, language: language || 'pt_BR', buttonIndexes: sentButtonIndexes },
         });
         
         return new Response(
