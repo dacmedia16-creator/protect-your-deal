@@ -299,7 +299,9 @@ serve(async (req) => {
         // Button URL dynamic params (for Meta CTA buttons)
         if (buttonUrlDynamicParams && buttonUrlDynamicParams.length > 0) {
           buttonUrlDynamicParams.forEach((param, index) => {
-            formData.append(`buttonUrlDynamicParams[${index}]`, param);
+            if (param !== '' && param != null) {
+              formData.append(`buttonUrlDynamicParams[${index}]`, param);
+            }
           });
         }
 
