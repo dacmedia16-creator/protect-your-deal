@@ -239,19 +239,35 @@ serve(async (req) => {
 
         // Attach media file if provided
         if (mediaBase64) {
-          const binaryStr = atob(mediaBase64);
+          const fname = mediaFilename || 'attachment';
+          const ext = fname.split('.').pop()?.toLowerCase() || '';
+          const mimeMap: Record<string, string> = {
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+            gif: 'image/gif', mp4: 'video/mp4', pdf: 'application/pdf',
+          };
+
+          // Detect and strip Data URL prefix defensively
+          const dataUrlMatch = mediaBase64.match(/^data:([^;]+);base64,/);
+          const hasDataUrlPrefix = !!dataUrlMatch;
+          const mimeFromPrefix = dataUrlMatch ? dataUrlMatch[1] : null;
+          const base64Data = hasDataUrlPrefix ? mediaBase64.substring(dataUrlMatch![0].length) : mediaBase64;
+
+          // MIME priority: Data URL prefix > extension > fallback
+          const mimeSource = mimeFromPrefix ? 'dataurl' : (mimeMap[ext] ? 'extension' : 'fallback');
+          const resolvedMime = mimeFromPrefix || mimeMap[ext] || 'application/octet-stream';
+
+          console.log(`[send-whatsapp] mediaBase64 received: ${mediaBase64.length} chars, hasDataUrlPrefix: ${hasDataUrlPrefix}`);
+          console.log(`[send-whatsapp] MIME resolved: ${resolvedMime} (source: ${mimeSource})`);
+
+          const binaryStr = atob(base64Data);
           const bytes = new Uint8Array(binaryStr.length);
           for (let i = 0; i < binaryStr.length; i++) {
             bytes[i] = binaryStr.charCodeAt(i);
           }
-          const fname = mediaFilename || 'attachment';
-          const ext = fname.split('.').pop()?.toLowerCase() || '';
-          const mimeMap: Record<string, string> = {
-            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4',
-          };
-          const blob = new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' });
+
+          const blob = new Blob([bytes], { type: resolvedMime });
           formData.append('attachments', blob, fname);
-          console.log(`Media attached: ${fname} (${bytes.length} bytes, mime: ${mimeMap[ext] || 'application/octet-stream'})`);
+          console.log(`[send-whatsapp] Blob created: ${bytes.length} bytes, filename: ${fname}`);
         }
 
         // Log FormData fields for diagnostics
