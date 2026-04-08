@@ -254,6 +254,14 @@ serve(async (req) => {
           console.log(`Media attached: ${fname} (${bytes.length} bytes, mime: ${mimeMap[ext] || 'application/octet-stream'})`);
         }
 
+        // Log FormData fields for diagnostics
+        const fdFields: string[] = [];
+        formData.forEach((_val, key) => {
+          const val = _val instanceof Blob ? `Blob(${_val.size}b, ${_val.type})` : String(_val).substring(0, 80);
+          fdFields.push(`${key}=${val}`);
+        });
+        console.log(`[send-whatsapp] FormData fields: ${fdFields.join(' | ')}`);
+
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Authorization': `Basic ${textAuthHeader}` },
