@@ -1,34 +1,40 @@
 
 
-# Corrigir campo de anexo na Edge Function `send-whatsapp`
+# Diagnóstico de anexo: tratar Data URL e melhorar logs
 
-## Causa raiz
+## Análise da causa raiz
 
-A action `send-text` tem dois problemas:
+Verifiquei o código do frontend (`fileToBase64` em AdminWhatsApp.tsx, linha 38): ele já faz `result.split(',')[1]` para remover o prefixo Data URL. Portanto, o `mediaBase64` que chega na edge function **já é base64 puro** na maioria dos casos.
 
-1. **Endpoint errado**: usa `/send_file_message/` quando há mídia, mas a documentação do ZionTalk diz que tudo vai por `/send_message/`
-2. **Campo errado**: usa `file` (anteriormente `media_file`) em vez de `attachments`, que é o campo documentado pelo ZionTalk
+Mesmo assim, adicionar a detecção de Data URL na edge function é uma boa prática defensiva (caso outro caller envie com prefixo). E os logs aprimorados vão ajudar a identificar se o problema está no tamanho, no MIME, ou na montagem do Blob.
 
-Resultado: a API aceita a requisição (201) mas ignora o anexo silenciosamente.
+**Hipótese mais provável**: dado que os logs mostram 201 com `attachments=Blob(3990118b, video/mp4)` e o texto chega mas o anexo não, o problema pode ser um **limite de tamanho do nginx/ZionTalk** para multipart (o vídeo tem ~4MB). O diagnóstico melhorado confirmará isso.
 
 ## Alterações (1 arquivo)
 
-### `supabase/functions/send-whatsapp/index.ts` — action `send-text` (linhas 233-282)
+### `supabase/functions/send-whatsapp/index.ts` — linhas 240-255
 
-1. **Endpoint**: remover a lógica condicional e usar sempre `${ZIONTALK_API_URL}/send_message/` (linha 233-235)
-2. **Campo do arquivo**: trocar `formData.append('file', blob, fname)` para `formData.append('attachments', blob, fname)` (linha 255)
-3. **Logs de diagnóstico**: mover o log de response headers para fora do `if (mediaBase64)` — logar sempre status, headers e body para toda requisição send-text (linhas 273-282)
+Substituir o bloco `if (mediaBase64)` por:
+
+1. **Detectar prefixo Data URL** com regex `/^data:([^;]+);base64,/`
+2. Se detectar, extrair o MIME do prefixo e remover antes do `atob`
+3. Se não, usar base64 direto e inferir MIME pela extensão
+4. **Prioridade do MIME**: prefixo Data URL > extensão > `application/octet-stream`
+5. **Logs de diagnóstico**:
+   - `[send-whatsapp] mediaBase64 received: <length> chars, hasDataUrlPrefix: true/false`
+   - `[send-whatsapp] MIME resolved: <mime> (source: dataurl|extension|fallback)`
+   - `[send-whatsapp] Blob created: <size> bytes, filename: <name>`
+6. **Em caso de falha** (status != 201), incluir no JSON de retorno: `mimeDetected`, `blobSize`, `filename`
 
 ### O que NÃO muda
-- Autenticação, CORS, auth gate
-- Actions `test-connection` e `send-template`
-- Conversão base64→Blob, mimeMap, logWhatsApp
-- Arquitetura geral
+- Endpoint (`/send_message/`), campo (`attachments`), auth, CORS, outras actions, logWhatsApp
 
-## Como validar
+## Como validar nos logs
 
-Nos logs da edge function `send-whatsapp`, após um envio com anexo, verificar:
-1. `FormData fields:` deve mostrar `attachments=Blob(...)` em vez de `file=Blob(...)`
-2. `Send message response status: 201`
-3. O destinatário recebe a mídia no WhatsApp
+Após envio com anexo, verificar:
+1. `hasDataUrlPrefix: false` (confirma que frontend já limpa)
+2. `Blob created: X bytes` — se X for muito diferente do tamanho esperado, o base64 está corrompido
+3. `MIME resolved: video/mp4 (source: extension)` — confirma detecção correta
+4. Status 201 + destinatário recebe mídia = resolvido
+5. Status 201 + sem mídia = problema é do lado do ZionTalk (limite de tamanho ou formato não suportado)
 
