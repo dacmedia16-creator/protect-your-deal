@@ -230,7 +230,9 @@ serve(async (req) => {
         }
 
         const formattedPhone = formatPhoneNumber(phone);
-        const url = `${ZIONTALK_API_URL}/send_message/`;
+        const url = mediaBase64
+          ? `${ZIONTALK_API_URL}/send_file_message/`
+          : `${ZIONTALK_API_URL}/send_message/`;
         console.log(`Sending text message to ${formattedPhone} via ${textChannelLabel}`);
 
         const formData = new FormData();
