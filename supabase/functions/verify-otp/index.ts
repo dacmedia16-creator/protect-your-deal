@@ -349,8 +349,8 @@ async function sendSurveyWhatsApp(supabase: any, ficha: any): Promise<void> {
       'imovel': ficha.imovel_endereco || 'imóvel visitado',
       'lembrete': 'Sua opinião nos ajuda a melhorar!',
     },
-    // IMPORTANTE: o template pesquisa_pos_visita usa buttonUrlDynamicParams[1] para o CTA
-    buttonUrlDynamicParams: ['', surveyToken],
+    // IMPORTANTE: o template pesquisa_pos_visita usa {{1}} no botão CTA = buttonUrlDynamicParams[0]
+    buttonUrlDynamicParams: [surveyToken],
     language: 'pt_BR',
     channel,
   };
