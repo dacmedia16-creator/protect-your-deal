@@ -91,11 +91,12 @@ export default function ConfirmarVisita() {
 
       // SEMPRE salvar os dados quando disponíveis (mesmo se expirado/inválido)
       if (data?.ficha) setFicha(data.ficha);
-      if (data?.otp) setOtpInfo(data.otp);
-      
-      // Set initial remaining attempts
-      if (data?.otp?.tentativas !== undefined && data?.otp?.max_tentativas !== undefined) {
-        setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
+      if (data?.otp) {
+        setOtpInfo(data.otp);
+        // Auto-fill OTP code when returned by backend (valid token)
+        if (data.otp.codigo) {
+          setCodigo(data.otp.codigo);
+        }
       }
 
       // Servidor respondeu com erro de validação (token inválido)
