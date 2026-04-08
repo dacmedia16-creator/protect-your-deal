@@ -1,43 +1,43 @@
 
 
-# Diagnóstico: Vídeo não chegou como anexo no WhatsApp
+# Diagnóstico: ZionTalk ignora anexo no `/send_message/`
 
-## O que aconteceu
+## Problema
 
-Os logs confirmam que a edge function processou corretamente:
-- Status 201 (aceito pelo ZionTalk)
-- "Media attached: Atualização.mp4 (3990118 bytes)"
-- Resposta vazia do ZionTalk (normal para 201)
+Tanto `file` quanto `media_file` resultaram em status 201 com resposta vazia — a API aceita silenciosamente mas **não entrega a mídia**. Isso indica que o endpoint `/send_message/` do ZionTalk **não suporta upload de arquivo**. APIs similares (como a do ChatWoot/WPPConnect) usam um endpoint separado para mídia.
 
-O problema é que o ZionTalk aceitou a requisição mas **ignorou o arquivo anexado**. Isso pode acontecer por:
+## Solução proposta
 
-1. O nome do campo FormData (`file`) pode estar incorreto — a API pode esperar outro nome
-2. A API não-oficial (canal default) pode não suportar vídeo via `/send_message/`
-
-## Correção proposta
-
-Adicionar **log de diagnóstico completo** dos campos FormData enviados e testar nomes de campo alternativos que APIs de WhatsApp costumam usar:
+Usar um endpoint separado para enviar mídia. O padrão mais comum em APIs similares ao ZionTalk é `/send_file_message/`. A lógica será:
 
 ### `supabase/functions/send-whatsapp/index.ts`
 
-1. Trocar o nome do campo de `file` para `media_file` (nome mais comum em APIs de WhatsApp não-oficiais)
-2. Adicionar log listando todos os campos do FormData antes do envio para diagnóstico
-3. Relaxar a validação de `message` para permitir envio de mídia sem texto (usar espaço como fallback, que já existe no `msg`)
+No case `send-text`, quando houver `mediaBase64`:
 
-### Mudança principal (1 linha)
+1. **Usar endpoint diferente**: `${ZIONTALK_API_URL}/send_file_message/` em vez de `/send_message/`
+2. **Manter o campo como `file`** (nome padrão para FormData em APIs de upload)
+3. **Enviar a legenda no campo `msg`** (mensagem de texto acompanha a mídia)
+4. **Adicionar log do response headers** para diagnóstico caso ainda falhe — isso mostrará se o endpoint existe ou retorna 404
+5. **Fallback**: se o endpoint retornar 404/405, tentar envio em duas etapas (mídia separada + texto separado)
+
+### Mudança principal
 
 ```typescript
-// De:
-formData.append('file', blob, fname);
+// Escolher endpoint baseado em presença de mídia
+const url = mediaBase64 
+  ? `${ZIONTALK_API_URL}/send_file_message/`
+  : `${ZIONTALK_API_URL}/send_message/`;
 
-// Para:
-formData.append('media_file', blob, fname);
+// Campo volta a ser 'file' (padrão de upload)
+formData.append('file', blob, fname);
 ```
 
-Se `media_file` também não funcionar, o log detalhado ajudará a identificar o campo correto testando manualmente pela documentação do ZionTalk.
+### Diagnóstico extra
+
+Logar response headers e status para que, se o endpoint também não funcionar, possamos identificar o correto rapidamente.
 
 ## Escopo
 - 1 arquivo alterado (edge function)
 - Redeploy automático
-- Sem risco — apenas muda o nome do campo e adiciona logs
+- Se `/send_file_message/` não funcionar, os logs revelarão o status correto para tentarmos outro endpoint
 
