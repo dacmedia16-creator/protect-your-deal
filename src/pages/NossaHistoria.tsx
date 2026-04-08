@@ -212,7 +212,7 @@ export default function NossaHistoria() {
                     />
                   </Link>
                   <div className="text-left">
-                    <p className="font-display font-bold text-foreground text-sm">Denis Souza</p>
+                    <Link to="/denis" className="font-display font-bold text-foreground text-sm hover:text-primary transition-colors">Denis Souza</Link>
                     <p className="text-xs text-muted-foreground">Fundador do Visita Prova | Corretor de imóveis</p>
                     <p className="text-xs text-muted-foreground/80 italic mt-1">"Eu criei o Visita Prova porque vivi na pele o que muitos corretores têm medo de viver."</p>
                   </div>
