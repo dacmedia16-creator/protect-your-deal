@@ -1,20 +1,44 @@
 
 
-# Corrigir overlay de atualização travado no "0"
+# Verificação automática do OTP — Como funcionaria
+
+## Fluxo atual
+1. Comprador recebe WhatsApp com **código de 6 dígitos** + **link com token**
+2. Clica no link → abre página `ConfirmarVisita`
+3. Precisa **digitar manualmente** o código de 6 dígitos
+4. Preenche dados legais (nome, CPF, aceite) → confirma
 
 ## Problema
-O overlay mostra countdown=0 e "Atualizando agora..." mas nunca recarrega a página. O `forceUpdate` chama `await updateSwRef.current(true)` que pode travar indefinidamente (SW não responde, ou tenta reload internamente e falha dentro do PWA). Como `updatingRef.current = true`, o safety timeout também não consegue fechar o overlay — fica preso.
+O token na URL já identifica unicamente o OTP. Pedir para o usuário digitar o código novamente é redundante — ele já clicou no link correto.
 
-## Causa raiz
-- `registerSW()` retorna uma função que, com `reloadPage=true`, tenta fazer reload internamente — mas dentro de um standalone PWA isso pode falhar ou bloquear
-- O `await` não tem timeout, então se a promise do SW nunca resolve, `window.location.reload()` na linha 94 nunca executa
-- O safety timeout (15s) verifica `updatingRef.current` e retorna sem fazer nada
+## Proposta: Auto-preenchimento do código via token
 
-## Correção em `src/components/VersionCheckWithOverlay.tsx`
+Quando o comprador clica no botão do template Meta, o link já contém o token. A página `ConfirmarVisita` pode:
 
-1. **Não passar `reloadPage=true`** ao `updateSwRef.current()` — chamar com `false` para apenas ativar o novo SW sem tentar reload interno (o reload é feito manualmente depois)
-2. **Adicionar timeout de 5s** em volta da chamada ao SW update para garantir que, se travar, o fluxo continua
-3. **No safety timeout**, se `updatingRef.current` estiver true há mais de 10s, forçar `window.location.reload()` diretamente — nunca ficar preso
+1. **Buscar o OTP pelo token** (já faz isso via `get-otp-info`)
+2. **Auto-preencher o campo de código** com o código correto obtido do backend
+3. O usuário ainda precisa preencher **nome, CPF e aceite legal** (obrigatório juridicamente)
+4. Ao clicar "Confirmar", o código já está preenchido — fluxo mais rápido
 
-Mudança em 1 arquivo, sem impacto em schema ou frontend visual.
+### Alternativa mais agressiva: confirmar sem código
+- O `verify-otp` aceitaria um parâmetro `auto_verify: true` quando o token é válido
+- Eliminaria completamente o campo de código
+- **Risco**: qualquer pessoa com o link poderia confirmar (menor segurança)
+
+## Abordagem recomendada
+**Auto-preencher o código** mas manter o campo visível (readonly). O usuário ainda precisa:
+- Preencher nome e CPF (dados legais obrigatórios)
+- Marcar o aceite dos termos
+- Clicar "Confirmar"
+
+Isso reduz fricção sem comprometer a segurança jurídica.
+
+## Arquivos a modificar
+- `supabase/functions/get-otp-info/index.ts` — retornar o código OTP quando acessado via token válido (não expirado, não confirmado)
+- `src/pages/ConfirmarVisita.tsx` — auto-preencher o campo de código com o valor recebido do backend
+
+## Impacto
+- Sem mudança de schema
+- 1 edge function + 1 página frontend
+- Experiência do comprador: abre o link e só precisa preencher nome/CPF e confirmar
 
