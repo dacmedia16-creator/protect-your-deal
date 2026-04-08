@@ -154,11 +154,13 @@ const SobreNos = () => {
         <AnimatedSection delay={175} className="mb-16">
           <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 items-center">
             <div className="flex justify-center md:justify-start">
-              <img
-                src={ceoPhoto}
-                alt="Foto do CEO do VisitaProva"
-                className="w-64 h-64 md:w-[280px] md:h-[280px] rounded-2xl object-cover shadow-lg border-2 border-primary/10"
-              />
+              <Link to="/denis">
+                <img
+                  src={ceoPhoto}
+                  alt="Foto do CEO do VisitaProva"
+                  className="w-64 h-64 md:w-[280px] md:h-[280px] rounded-2xl object-cover shadow-lg border-2 border-primary/10 hover:border-primary/40 transition-colors cursor-pointer"
+                />
+              </Link>
             </div>
             <div>
               <div className="border-l-4 border-primary pl-6">
