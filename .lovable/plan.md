@@ -1,32 +1,55 @@
 
 
-# Corrigir índice do botão CTA no template `pesquisa_pos_visita`
+# Adicionar anexo de imagem e vídeo no envio de WhatsApp
 
-## Problema
+## Contexto
 
-A imagem mostra que o template tem **um único parâmetro dinâmico `{{1}}`** no botão "Responder Pesquisa". No ZionTalk, `{{1}}` corresponde a `buttonUrlDynamicParams[0]`.
+A página AdminWhatsApp envia apenas texto livre hoje. O usuário quer poder anexar uma imagem ou vídeo que será enviado junto com a mensagem para todos os destinatários selecionados.
 
-Hoje o código envia `buttonUrlDynamicParams: ['', surveyToken]`. A string vazia no índice `[0]` é filtrada pelo `send-whatsapp` (que ignora valores vazios), e o token vai para o índice `[1]`. O template espera no `[0]`, então o botão fica sem o token e a Meta rejeita silenciosamente.
+## Abordagem
 
-## Correção
+A API ZionTalk aceita um campo `file` no FormData do endpoint `/send_message/` para enviar mídia. O fluxo será:
 
-### `supabase/functions/verify-otp/index.ts` (linhas 352-353)
+1. O admin seleciona um arquivo (imagem ou vídeo) no frontend
+2. O arquivo é enviado como base64 para a edge function `send-whatsapp`
+3. A edge function converte o base64 em `Blob` e anexa como campo `file` no FormData enviado ao ZionTalk
 
-**De:**
-```typescript
-buttonUrlDynamicParams: ['', surveyToken],
-```
+Isso evita a necessidade de storage intermediário e mantém o fluxo simples.
 
-**Para:**
-```typescript
-buttonUrlDynamicParams: [surveyToken],
-```
+## Alterações
 
-## Resultado
-- `buttonUrlDynamicParams[0]` = token da pesquisa → preenche `{{1}}` do template
-- O botão "Responder Pesquisa" abrirá `https://visitaseguras.com.br/survey/{token}`
+### 1. `supabase/functions/send-whatsapp/index.ts`
+
+- Atualizar a interface `SendMessageRequest` para incluir campos opcionais `mediaBase64` (string base64) e `mediaFilename` (nome do arquivo)
+- No case `send-text`: se `mediaBase64` estiver presente, converter para `Blob` e fazer `formData.append('file', blob, mediaFilename)` junto com `msg`
+- Logar o tipo como `'texto_com_midia'` quando houver anexo
+
+### 2. `src/lib/whatsappSendEngine.ts`
+
+- Adicionar `mediaBase64?: string` e `mediaFilename?: string` aos parâmetros de `start()`
+- Passar esses campos no body da chamada `send-whatsapp` dentro do `processQueue`
+
+### 3. `src/pages/admin/AdminWhatsApp.tsx`
+
+- Adicionar estado para o arquivo selecionado (`mediaFile: File | null`)
+- Adicionar um botão de anexo (ícone de clipe/imagem) abaixo do textarea com preview
+- Ao selecionar arquivo, converter para base64 e armazenar no estado
+- Limitar tipos aceitos: `image/jpeg, image/png, image/webp, video/mp4`
+- Limitar tamanho: 10MB para imagens, 16MB para vídeos
+- Mostrar preview da mídia selecionada (thumbnail para imagem, nome do arquivo para vídeo)
+- Botão para remover o anexo
+- Passar `mediaBase64` e `mediaFilename` no `handleSend` para o engine
+
+## Detalhes técnicos
+
+- O base64 é enviado no body JSON para a edge function (limite de ~50MB no body)
+- Na edge function, o base64 é decodificado para `Uint8Array`, convertido em `Blob`, e anexado ao FormData como `file`
+- A mensagem de texto continua sendo enviada no campo `msg` junto com o arquivo
+- Se o admin não digitar texto mas anexar mídia, enviar com `msg` vazio ou um espaço
 
 ## Escopo
-- 1 arquivo, 1 linha alterada
-- Redeploy automático
+
+- 3 arquivos alterados
+- Sem migração de banco
+- Redeploy automático da edge function
 
