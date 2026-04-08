@@ -250,9 +250,17 @@ serve(async (req) => {
             jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4',
           };
           const blob = new Blob([bytes], { type: mimeMap[ext] || 'application/octet-stream' });
-          formData.append('file', blob, fname);
-          console.log(`Media attached: ${fname} (${bytes.length} bytes)`);
+          formData.append('media_file', blob, fname);
+          console.log(`Media attached: ${fname} (${bytes.length} bytes, mime: ${mimeMap[ext] || 'application/octet-stream'})`);
         }
+
+        // Log FormData fields for diagnostics
+        const fdFields: string[] = [];
+        formData.forEach((_val, key) => {
+          const val = _val instanceof Blob ? `Blob(${_val.size}b, ${_val.type})` : String(_val).substring(0, 80);
+          fdFields.push(`${key}=${val}`);
+        });
+        console.log(`[send-whatsapp] FormData fields: ${fdFields.join(' | ')}`);
 
         const response = await fetch(url, {
           method: 'POST',
