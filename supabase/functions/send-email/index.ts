@@ -170,6 +170,8 @@ serve(async (req) => {
     }
     // --- END AUTH GATE ---
 
+    const body: SendEmailRequest = await req.json();
+
     const { action, to, subject, html, text, template_tipo, variables, ficha_id, from_email } = body;
 
     // Initialize Supabase client for logging
