@@ -304,12 +304,25 @@ serve(async (req) => {
           metadata: mediaBase64 ? { mediaFilename: mediaFilename || 'attachment' } : undefined,
         });
         
+        const responseBody: Record<string, unknown> = {
+          success,
+          phone: formattedPhone,
+          error: success ? null : responseText || 'Erro ao enviar mensagem',
+        };
+        if (!success && mediaBase64) {
+          const fname = mediaFilename || 'attachment';
+          const ext = fname.split('.').pop()?.toLowerCase() || '';
+          const mimeMap2: Record<string, string> = {
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+            gif: 'image/gif', mp4: 'video/mp4', pdf: 'application/pdf',
+          };
+          const dataUrlMatch2 = mediaBase64.match(/^data:([^;]+);base64,/);
+          responseBody.mimeDetected = dataUrlMatch2?.[1] || mimeMap2[ext] || 'application/octet-stream';
+          responseBody.filename = fname;
+          responseBody.blobSize = Math.floor(mediaBase64.length * 3 / 4);
+        }
         return new Response(
-          JSON.stringify({
-            success,
-            phone: formattedPhone,
-            error: success ? null : responseText || 'Erro ao enviar mensagem'
-          }),
+          JSON.stringify(responseBody),
           { status: success ? 200 : response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
