@@ -1,55 +1,43 @@
 
 
-# Adicionar anexo de imagem e vídeo no envio de WhatsApp
+# Diagnóstico: Vídeo não chegou como anexo no WhatsApp
 
-## Contexto
+## O que aconteceu
 
-A página AdminWhatsApp envia apenas texto livre hoje. O usuário quer poder anexar uma imagem ou vídeo que será enviado junto com a mensagem para todos os destinatários selecionados.
+Os logs confirmam que a edge function processou corretamente:
+- Status 201 (aceito pelo ZionTalk)
+- "Media attached: Atualização.mp4 (3990118 bytes)"
+- Resposta vazia do ZionTalk (normal para 201)
 
-## Abordagem
+O problema é que o ZionTalk aceitou a requisição mas **ignorou o arquivo anexado**. Isso pode acontecer por:
 
-A API ZionTalk aceita um campo `file` no FormData do endpoint `/send_message/` para enviar mídia. O fluxo será:
+1. O nome do campo FormData (`file`) pode estar incorreto — a API pode esperar outro nome
+2. A API não-oficial (canal default) pode não suportar vídeo via `/send_message/`
 
-1. O admin seleciona um arquivo (imagem ou vídeo) no frontend
-2. O arquivo é enviado como base64 para a edge function `send-whatsapp`
-3. A edge function converte o base64 em `Blob` e anexa como campo `file` no FormData enviado ao ZionTalk
+## Correção proposta
 
-Isso evita a necessidade de storage intermediário e mantém o fluxo simples.
+Adicionar **log de diagnóstico completo** dos campos FormData enviados e testar nomes de campo alternativos que APIs de WhatsApp costumam usar:
 
-## Alterações
+### `supabase/functions/send-whatsapp/index.ts`
 
-### 1. `supabase/functions/send-whatsapp/index.ts`
+1. Trocar o nome do campo de `file` para `media_file` (nome mais comum em APIs de WhatsApp não-oficiais)
+2. Adicionar log listando todos os campos do FormData antes do envio para diagnóstico
+3. Relaxar a validação de `message` para permitir envio de mídia sem texto (usar espaço como fallback, que já existe no `msg`)
 
-- Atualizar a interface `SendMessageRequest` para incluir campos opcionais `mediaBase64` (string base64) e `mediaFilename` (nome do arquivo)
-- No case `send-text`: se `mediaBase64` estiver presente, converter para `Blob` e fazer `formData.append('file', blob, mediaFilename)` junto com `msg`
-- Logar o tipo como `'texto_com_midia'` quando houver anexo
+### Mudança principal (1 linha)
 
-### 2. `src/lib/whatsappSendEngine.ts`
+```typescript
+// De:
+formData.append('file', blob, fname);
 
-- Adicionar `mediaBase64?: string` e `mediaFilename?: string` aos parâmetros de `start()`
-- Passar esses campos no body da chamada `send-whatsapp` dentro do `processQueue`
+// Para:
+formData.append('media_file', blob, fname);
+```
 
-### 3. `src/pages/admin/AdminWhatsApp.tsx`
-
-- Adicionar estado para o arquivo selecionado (`mediaFile: File | null`)
-- Adicionar um botão de anexo (ícone de clipe/imagem) abaixo do textarea com preview
-- Ao selecionar arquivo, converter para base64 e armazenar no estado
-- Limitar tipos aceitos: `image/jpeg, image/png, image/webp, video/mp4`
-- Limitar tamanho: 10MB para imagens, 16MB para vídeos
-- Mostrar preview da mídia selecionada (thumbnail para imagem, nome do arquivo para vídeo)
-- Botão para remover o anexo
-- Passar `mediaBase64` e `mediaFilename` no `handleSend` para o engine
-
-## Detalhes técnicos
-
-- O base64 é enviado no body JSON para a edge function (limite de ~50MB no body)
-- Na edge function, o base64 é decodificado para `Uint8Array`, convertido em `Blob`, e anexado ao FormData como `file`
-- A mensagem de texto continua sendo enviada no campo `msg` junto com o arquivo
-- Se o admin não digitar texto mas anexar mídia, enviar com `msg` vazio ou um espaço
+Se `media_file` também não funcionar, o log detalhado ajudará a identificar o campo correto testando manualmente pela documentação do ZionTalk.
 
 ## Escopo
-
-- 3 arquivos alterados
-- Sem migração de banco
-- Redeploy automático da edge function
+- 1 arquivo alterado (edge function)
+- Redeploy automático
+- Sem risco — apenas muda o nome do campo e adiciona logs
 
