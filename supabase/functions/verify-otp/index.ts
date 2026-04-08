@@ -345,9 +345,9 @@ async function sendSurveyWhatsApp(supabase: any, ficha: any): Promise<void> {
     phone,
     templateName: 'pesquisa_pos_visita',
     templateParams: {
-      '1': ficha.comprador_nome || 'Cliente',
-      '2': ficha.imovel_endereco || 'imóvel visitado',
-      '3': 'Sua opinião nos ajuda a melhorar!',
+      'nome': ficha.comprador_nome || 'Cliente',
+      'imovel': ficha.imovel_endereco || 'imóvel visitado',
+      'lembrete': 'Sua opinião nos ajuda a melhorar!',
     },
     // IMPORTANTE: o template pesquisa_pos_visita usa buttonUrlDynamicParams[1] para o CTA
     buttonUrlDynamicParams: ['', surveyToken],
