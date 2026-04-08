@@ -101,9 +101,12 @@ serve(async (req) => {
     // Check if max attempts exceeded
     const maxAttemptsExceeded = (otp.tentativas || 0) >= 5;
 
+    // Return the OTP code when token is valid (not expired, not max attempts)
+    const isValid = !expired && !maxAttemptsExceeded;
+
     return new Response(
       JSON.stringify({ 
-        valid: !expired && !maxAttemptsExceeded,
+        valid: isValid,
         expired,
         max_attempts_exceeded: maxAttemptsExceeded,
         otp: {
@@ -113,6 +116,7 @@ serve(async (req) => {
           ficha_id: otp.ficha_id,
           tentativas: otp.tentativas || 0,
           max_tentativas: 5,
+          ...(isValid ? { codigo: otp.codigo } : {}),
         },
       ficha: ficha ? {
         protocolo: ficha.protocolo,

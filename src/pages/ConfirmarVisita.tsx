@@ -35,6 +35,7 @@ interface OtpInfo {
   ficha_id?: string;
   tentativas?: number;
   max_tentativas?: number;
+  codigo?: string;
 }
 
 export default function ConfirmarVisita() {
@@ -90,11 +91,17 @@ export default function ConfirmarVisita() {
 
       // SEMPRE salvar os dados quando disponíveis (mesmo se expirado/inválido)
       if (data?.ficha) setFicha(data.ficha);
-      if (data?.otp) setOtpInfo(data.otp);
+      if (data?.otp) {
+        setOtpInfo(data.otp);
+        // Auto-fill OTP code when returned by backend (valid token)
+        if (data.otp.codigo) {
+          setCodigo(data.otp.codigo);
+      }
       
       // Set initial remaining attempts
       if (data?.otp?.tentativas !== undefined && data?.otp?.max_tentativas !== undefined) {
         setTentativasRestantes(data.otp.max_tentativas - data.otp.tentativas);
+      }
       }
 
       // Servidor respondeu com erro de validação (token inválido)
@@ -527,8 +534,10 @@ export default function ConfirmarVisita() {
                 {/* OTP Code */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Digite o código de 6 dígitos</label>
-                    {tentativasRestantes < 5 && (
+                    <label className="text-sm font-medium">
+                      {otpInfo?.codigo ? 'Código verificado automaticamente' : 'Digite o código de 6 dígitos'}
+                    </label>
+                    {tentativasRestantes < 5 && !otpInfo?.codigo && (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         tentativasRestantes <= 1 
                           ? 'bg-destructive/10 text-destructive' 
@@ -547,14 +556,17 @@ export default function ConfirmarVisita() {
                     maxLength={6}
                     placeholder="000000"
                     value={codigo}
-                    onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => !otpInfo?.codigo && setCodigo(e.target.value.replace(/\D/g, ''))}
+                    readOnly={!!otpInfo?.codigo}
                     className={`text-center text-2xl tracking-widest font-mono ${
-                      tentativasRestantes <= 1 ? 'border-destructive focus-visible:ring-destructive' : ''
-                    }`}
-                    autoFocus
+                      otpInfo?.codigo ? 'bg-success/5 border-success/30 text-success' : ''
+                    } ${tentativasRestantes <= 1 && !otpInfo?.codigo ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                    autoFocus={!otpInfo?.codigo}
                   />
                   <p className="text-xs text-muted-foreground text-center">
-                    O código foi enviado para seu WhatsApp
+                    {otpInfo?.codigo 
+                      ? '✅ Código preenchido automaticamente via link seguro'
+                      : 'O código foi enviado para seu WhatsApp'}
                   </p>
                 </div>
 
