@@ -91,7 +91,13 @@ class WhatsAppSendEngine {
     return this.queue.length;
   }
 
-  async start(users: WhatsAppUser[], message: string, token: string) {
+  async start(
+    users: WhatsAppUser[],
+    message: string,
+    token: string,
+    mediaBase64?: string,
+    mediaFilename?: string,
+  ) {
     if (this.isRunning) return;
 
     this.queue = [...users];
@@ -102,7 +108,7 @@ class WhatsAppSendEngine {
     this.progress = { total: users.length, sent: 0, success: 0, failed: 0 };
     this.notify();
 
-    await this.processQueue(message, token);
+    await this.processQueue(message, token, mediaBase64, mediaFilename);
   }
 
   private async waitWhilePaused() {
@@ -111,7 +117,12 @@ class WhatsAppSendEngine {
     }
   }
 
-  private async processQueue(message: string, token: string) {
+  private async processQueue(
+    message: string,
+    token: string,
+    mediaBase64?: string,
+    mediaFilename?: string,
+  ) {
     while (this.queue.length > 0) {
       await this.waitWhilePaused();
 
@@ -119,13 +130,20 @@ class WhatsAppSendEngine {
       const personalizedMessage = message.replace(/\{nome\}/g, user.nome);
 
       try {
+        const body: Record<string, unknown> = {
+          action: 'send-text',
+          phone: user.telefone,
+          message: personalizedMessage,
+          channel: 'default',
+        };
+
+        if (mediaBase64) {
+          body.mediaBase64 = mediaBase64;
+          body.mediaFilename = mediaFilename;
+        }
+
         const response = await supabase.functions.invoke('send-whatsapp', {
-          body: {
-            action: 'send-text',
-            phone: user.telefone,
-            message: personalizedMessage,
-            channel: 'default',
-          },
+          body,
           headers: { Authorization: `Bearer ${token}` },
         });
 
