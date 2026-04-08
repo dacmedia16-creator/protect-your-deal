@@ -244,6 +244,136 @@ async function sendCompletionEmails(
   }
 }
 
+// Função para enviar pesquisa pós-visita via WhatsApp automaticamente
+async function sendSurveyWhatsApp(supabase: any, ficha: any): Promise<void> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+  console.log('[verify-otp] Verificando envio de pesquisa pós-visita para ficha:', ficha.id);
+
+  // 1. Verificar feature flag
+  let featureEnabled = false;
+  if (ficha.imobiliaria_id) {
+    const { data: flag } = await supabase
+      .from('imobiliaria_feature_flags')
+      .select('enabled')
+      .eq('imobiliaria_id', ficha.imobiliaria_id)
+      .eq('feature_key', 'post_visit_survey')
+      .maybeSingle();
+    featureEnabled = flag?.enabled === true;
+  } else if (ficha.user_id) {
+    const { data: flag } = await supabase
+      .from('user_feature_flags')
+      .select('enabled')
+      .eq('user_id', ficha.user_id)
+      .eq('feature_key', 'post_visit_survey')
+      .maybeSingle();
+    featureEnabled = flag?.enabled === true;
+  }
+
+  if (!featureEnabled) {
+    console.log('[verify-otp] Feature post_visit_survey não habilitada, pulando envio');
+    return;
+  }
+
+  // 2. Verificar se já existe survey para esta ficha
+  const { data: existingSurvey } = await supabase
+    .from('surveys')
+    .select('id, token')
+    .eq('ficha_id', ficha.id)
+    .maybeSingle();
+
+  let surveyToken: string;
+
+  if (existingSurvey) {
+    console.log('[verify-otp] Survey já existe para esta ficha:', existingSurvey.id);
+    surveyToken = existingSurvey.token;
+  } else {
+    // 3. Criar survey — determinar corretor_id correto
+    const corretorId = ficha.parte_preenchida_parceiro === 'comprador'
+      ? ficha.corretor_parceiro_id
+      : ficha.user_id;
+
+    const { data: newSurvey, error: insertError } = await supabase
+      .from('surveys')
+      .insert({
+        ficha_id: ficha.id,
+        corretor_id: corretorId,
+        imobiliaria_id: ficha.imobiliaria_id || null,
+        construtora_id: ficha.construtora_id || null,
+        client_name: ficha.comprador_nome,
+        client_phone: ficha.comprador_telefone,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+      })
+      .select('id, token')
+      .single();
+
+    if (insertError || !newSurvey) {
+      console.error('[verify-otp] Erro ao criar survey:', insertError);
+      return;
+    }
+
+    console.log('[verify-otp] Survey criada:', newSurvey.id);
+    surveyToken = newSurvey.token;
+  }
+
+  // 4. Obter canal WhatsApp padrão
+  let channel: string = 'meta';
+  try {
+    const { data: configData } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', 'whatsapp_channel_padrao')
+      .single();
+    const val = configData?.valor;
+    if (val === 'meta2' || val === '"meta2"') channel = 'meta2';
+    else if (val === 'meta' || val === '"meta"') channel = 'meta';
+  } catch {
+    console.log('[verify-otp] Usando canal padrão meta para pesquisa');
+  }
+
+  // 5. Enviar template via send-whatsapp
+  const phone = ficha.comprador_telefone;
+  if (!phone) {
+    console.log('[verify-otp] Comprador sem telefone, não é possível enviar pesquisa');
+    return;
+  }
+
+  const payload = {
+    action: 'send-template',
+    phone,
+    templateName: 'pesquisa_pos_visita',
+    templateParams: {
+      '1': ficha.comprador_nome || 'Cliente',
+      '2': ficha.imovel_endereco || 'imóvel visitado',
+      '3': 'Sua opinião nos ajuda a melhorar!',
+    },
+    buttonUrlDynamicParams: [surveyToken],
+    language: 'pt_BR',
+    channel,
+  };
+
+  console.log('[verify-otp] Enviando pesquisa pós-visita via WhatsApp:', { phone, channel, surveyToken });
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    console.log('[verify-otp] ✅ Pesquisa pós-visita enviada com sucesso via WhatsApp');
+  } else {
+    console.error('[verify-otp] ❌ Erro ao enviar pesquisa pós-visita:', result.error);
+  }
+}
+
 // Função para obter geolocalização por IP
 async function getLocationByIP(ip: string): Promise<{ latitude: number; longitude: number } | null> {
   try {
