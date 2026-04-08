@@ -696,7 +696,7 @@ serve(async (req) => {
     }
 
     // Enviar pesquisa pós-visita via WhatsApp para o comprador
-    if (otp.tipo === 'comprador' && (newStatus === 'completo' || newStatus === 'finalizado_parcial')) {
+    if (otp.tipo === 'comprador') {
       try {
         await sendSurveyWhatsApp(supabase, updatedFicha);
       } catch (err) {
