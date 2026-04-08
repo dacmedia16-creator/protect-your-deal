@@ -349,7 +349,7 @@ async function sendSurveyWhatsApp(supabase: any, ficha: any): Promise<void> {
       '2': ficha.imovel_endereco || 'imóvel visitado',
       '3': 'Sua opinião nos ajuda a melhorar!',
     },
-    buttonUrlDynamicParams: [surveyToken],
+    buttonUrlDynamicParams: ['', surveyToken],
     language: 'pt_BR',
     channel,
   };
