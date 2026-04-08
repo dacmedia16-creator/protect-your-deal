@@ -35,6 +35,7 @@ interface OtpInfo {
   ficha_id?: string;
   tentativas?: number;
   max_tentativas?: number;
+  codigo?: string;
 }
 
 export default function ConfirmarVisita() {
