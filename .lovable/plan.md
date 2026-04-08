@@ -1,32 +1,54 @@
 
 
-# Correção: `body is not defined` no send-email
+# Envio automático da pesquisa pós-visita via WhatsApp
 
-## Problema
-A edge function `send-email` tem um bug crítico: a variável `body` (que contém os dados da requisição como destinatário, template, anexos) é usada mas nunca declarada. A linha `const body = await req.json()` foi removida acidentalmente em alguma edição recente.
+## Resumo
+Quando o comprador confirma a visita (OTP verificado), o sistema criará automaticamente uma survey e enviará via WhatsApp usando o template Meta `pesquisa_pos_visita` (conforme imagem de referência).
 
-**Impacto**: Todos os emails do sistema (ficha_completa, boas_vindas, etc.) estão falhando desde ~30/03/2026. Afeta tanto chamadas internas (verify-otp, regenerate-backup) quanto externas.
+## Template Meta (a configurar no ZionTalk)
 
-## Correção
+Baseado na imagem enviada:
+- **Nome**: `pesquisa_pos_visita`
+- **Header**: "Pesquisa Pós-Visita"
+- **Body**: `Olá {{1}}!\n\nAgradecemos sua visita ao imóvel:\n{{2}}\n\nGostaríamos de saber sua opinião sobre a experiência. Leva menos de 1 minuto!\n\n{{3}}`
+- **Footer**: "Visita Confirmada!"
+- **Botão CTA**: "Responder Pesquisa" → URL dinâmica com sufixo `{{1}}`
+- **Parâmetros**: `body[1]`=nome, `body[2]`=endereço, `body[3]`=lembrete, `buttonUrlDynamicParams[0]`=token
 
-### Arquivo: `supabase/functions/send-email/index.ts`
+## Implementação
 
-Adicionar `const body = await req.json()` logo antes da linha 173, após o bloco de autenticação:
+### Arquivo: `supabase/functions/verify-otp/index.ts`
 
+Adicionar função `sendSurveyWhatsApp(supabase, ficha)` e chamá-la após a linha 565 (após PDF + emails), apenas quando `otp.tipo === 'comprador'` e status final é `completo` ou `finalizado_parcial`.
+
+**Lógica da função:**
+1. Verificar feature flag (`post_visit_survey`) na tabela `imobiliaria_feature_flags` ou `user_feature_flags`
+2. Verificar se já existe survey para esta ficha (evitar duplicata)
+3. Criar survey no banco via INSERT direto (sem depender de auth de usuário) — reutilizar lógica do `create-survey` para determinar `corretor_id` correto
+4. Obter canal WhatsApp padrão via `configuracoes_sistema`
+5. Chamar `send-whatsapp` internamente (via fetch com SERVICE_ROLE_KEY) com:
+   - `action: 'send-template'`
+   - `templateName: 'pesquisa_pos_visita'`
+   - `phone: ficha.comprador_telefone`
+   - `templateParams: { "1": nome, "2": endereço, "3": "Sua opinião nos ajuda a melhorar!" }`
+   - `buttonUrlDynamicParams: [surveyToken]`
+   - `channel`: canal padrão do sistema (meta ou meta2)
+6. Tudo em `try/catch` isolado — falha no envio não bloqueia confirmação
+
+**Chamada no fluxo** (após linha 565):
 ```typescript
-// Linha 171: } --- END AUTH GATE ---
-
-const body: SendEmailRequest = await req.json();  // ← ADICIONAR
-
-const { action, to, subject, html, text, template_tipo, variables, ficha_id, from_email } = body;
+if (otp.tipo === 'comprador' && (newStatus === 'completo' || newStatus === 'finalizado_parcial')) {
+  try {
+    await sendSurveyWhatsApp(supabase, updatedFicha, otp);
+  } catch (err) {
+    console.error('[verify-otp] Erro ao enviar pesquisa pós-visita:', err);
+  }
+}
 ```
 
-### Pós-correção
-- Fazer redeploy da edge function `send-email`
-- Reenviar o email do Denis usando `regenerate-backup` com `send_email: true` para a ficha `307f73b7-cc4f-46b1-b361-42f9cfae49cf`
-
 ## Escopo
-- 1 arquivo modificado: `supabase/functions/send-email/index.ts`
-- 1 linha adicionada
-- Sem mudança de schema
+- 1 arquivo modificado: `supabase/functions/verify-otp/index.ts`
+- ~80 linhas adicionadas (função + chamada)
+- Sem mudança de schema (tabela `surveys` já existe com `token` auto-gerado)
+- Template Meta deve ser configurado no ZionTalk separadamente
 
