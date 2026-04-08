@@ -204,11 +204,13 @@ export default function NossaHistoria() {
               {/* Founder signature block */}
               <AnimatedSection delay={400}>
                 <div className="flex items-center gap-4">
-                  <img
-                    src={denisPhoto}
-                    alt="Denis Souza"
-                    className="h-14 w-14 rounded-full object-cover border-2 border-primary/20"
-                  />
+                  <Link to="/denis">
+                    <img
+                      src={denisPhoto}
+                      alt="Denis Souza"
+                      className="h-14 w-14 rounded-full object-cover border-2 border-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
+                    />
+                  </Link>
                   <div className="text-left">
                     <p className="font-display font-bold text-foreground text-sm">Denis Souza</p>
                     <p className="text-xs text-muted-foreground">Fundador do Visita Prova | Corretor de imóveis</p>
