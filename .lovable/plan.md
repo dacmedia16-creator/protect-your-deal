@@ -1,24 +1,45 @@
 
 
-# Fix: Pesquisa não aparece para corretor da construtora (frontend)
+# Fix: Pesquisas já respondidas não aparecem para corretor da construtora
 
 ## Problema
 
-O corretor Apolo pertence a uma construtora. Quando o comprador confirmou a visita, o backend enviou a pesquisa automaticamente (já corrigido anteriormente). Porém, no `DetalhesFicha.tsx`, a verificação da feature flag só consulta `imobiliaria_feature_flags`. Como a ficha não tem `imobiliaria_id`, retorna `enabled: false` e a seção de pesquisa fica oculta.
+O menu "Pesquisas" não aparece na navegação do corretor Apolo porque a lógica que decide se o link é exibido só verifica duas tabelas de feature flags:
+- `imobiliaria_feature_flags` (se tem `imobiliariaId`)
+- `user_feature_flags` (fallback para corretor autônomo)
+
+Como Apolo é corretor de **construtora** (sem `imobiliariaId`), o sistema cai no fallback `userSurveyEnabled` que consulta `user_feature_flags` — onde não existe flag. Resultado: `surveyEnabled = false`, link oculto, pesquisas invisíveis.
 
 ## Solução
 
-Arquivo: `src/pages/DetalhesFicha.tsx` (linhas 214-237)
+Adicionar verificação da flag `construtora_feature_flags` nos componentes de navegação e no hook auxiliar.
 
-Alterar a query `ficha-survey-feature` para verificar em cascata:
+### 1. Criar hook `useConstutoraFeatureFlag` (novo arquivo)
 
-1. Se `ficha.imobiliaria_id` existe → consultar `imobiliaria_feature_flags`
-2. Se não habilitado e `ficha.construtora_id` existe → consultar `construtora_feature_flags`
-3. Se nenhum dos dois → consultar `user_feature_flags` (corretor autônomo)
+Arquivo: `src/hooks/useConstutoraFeatureFlag.ts`
 
-A query fica habilitada quando existir qualquer um dos IDs, e faz as consultas em sequência até encontrar a flag habilitada.
+Segue o mesmo padrão de `useImobiliariaFeatureFlag` mas consulta `construtora_feature_flags` usando o `construtora_id` do `user_roles`.
 
-## Resultado
+### 2. Atualizar `DesktopNav.tsx`
 
-O corretor Apolo (e qualquer corretor de construtora com a flag ativa) verá a seção de Pesquisa Pós-Visita normalmente.
+Importar o novo hook e alterar a lógica:
+
+```
+const { enabled: constSurveyEnabled } = useConstutoraFeatureFlag('post_visit_survey');
+const surveyEnabled = imobiliariaId 
+  ? imobSurveyEnabled 
+  : (constutoraId ? constSurveyEnabled : userSurveyEnabled);
+```
+
+### 3. Atualizar `MobileNav.tsx`
+
+Mesma lógica cascata: imobiliária → construtora → usuário.
+
+### Arquivos alterados
+- `src/hooks/useConstutoraFeatureFlag.ts` (novo)
+- `src/components/DesktopNav.tsx`
+- `src/components/MobileNav.tsx`
+
+### Resultado
+Corretores de construtoras com a flag `post_visit_survey` habilitada verão o link "Pesquisas" no menu e poderão acessar todas as pesquisas já realizadas.
 
