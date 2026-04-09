@@ -614,30 +614,114 @@ export default function ConstutoraRelatorios() {
         </Card>
       </div>
 
-      {/* Per empreendimento & per imobiliária */}
+      {/* Ranking Corretores */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-amber-500" /> Ranking de Corretores
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {rankingCorretores.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Sem dados no período</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Corretor</TableHead>
+                    <TableHead className="text-center">Fichas</TableHead>
+                    <TableHead className="text-center">Confirmadas</TableHead>
+                    <TableHead className="text-center">Taxa Conf.</TableHead>
+                    <TableHead className="text-center">Vendas</TableHead>
+                    <TableHead className="text-center">Taxa Venda</TableHead>
+                    <TableHead className="text-right">Valor Vendido</TableHead>
+                    <TableHead className="text-right">Ticket Médio</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rankingCorretores.map((c, i) => (
+                    <TableRow key={c.nome + i}>
+                      <TableCell>
+                        {i === 0 ? <Medal className="h-4 w-4 text-amber-500" /> :
+                         i === 1 ? <Medal className="h-4 w-4 text-gray-400" /> :
+                         i === 2 ? <Medal className="h-4 w-4 text-amber-700" /> :
+                         <span className="text-sm text-muted-foreground">{i + 1}</span>}
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">{c.nome}</TableCell>
+                      <TableCell className="text-center text-sm">{c.total}</TableCell>
+                      <TableCell className="text-center text-sm">{c.confirmados}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={c.taxaConf >= 70 ? 'default' : c.taxaConf >= 40 ? 'secondary' : 'outline'} className="text-xs">
+                          {c.taxaConf}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-medium text-sm">{c.vendas}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={c.taxaVenda >= 20 ? 'default' : 'secondary'} className="text-xs">
+                          {c.taxaVenda}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {c.valor > 0 ? `R$ ${c.valor.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '-'}
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {c.ticketMedio > 0 ? `R$ ${c.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Ranking Imobiliárias Parceiras + Conversão por Empreendimento */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Conversão por Empreendimento</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building className="h-4 w-4" /> Ranking de Parceiros
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {perEmpreendimento.length === 0 ? (
+            {perImobiliaria.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Sem dados no período</p>
             ) : (
-              <div className="space-y-2">
-                {perEmpreendimento.map((item, i) => (
-                  <div key={item.nome} className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                    <span className="text-sm flex-1 truncate">{item.nome}</span>
-                    <div className="flex items-center gap-2 text-xs shrink-0">
-                      <span className="text-muted-foreground">{item.total} fichas</span>
-                      <span className="font-medium">{item.confirmados} conf.</span>
-                      <Badge variant={item.vendas > 0 ? 'default' : 'secondary'} className="text-xs">
-                        {item.vendas} venda{item.vendas !== 1 ? 's' : ''}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">#</TableHead>
+                      <TableHead>Imobiliária</TableHead>
+                      <TableHead className="text-center">Fichas</TableHead>
+                      <TableHead className="text-center">Conf.</TableHead>
+                      <TableHead className="text-center">Vendas</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {perImobiliaria.map((item, i) => (
+                      <TableRow key={item.nome + i}>
+                        <TableCell>
+                          {i < 3 ? <Medal className={`h-4 w-4 ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-gray-400' : 'text-amber-700'}`} /> :
+                           <span className="text-sm text-muted-foreground">{i + 1}</span>}
+                        </TableCell>
+                        <TableCell className="font-medium text-sm truncate max-w-[150px]">{item.nome}</TableCell>
+                        <TableCell className="text-center text-sm">{item.total}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="text-xs">{item.taxaConf}%</Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-sm">{item.vendas}</TableCell>
+                        <TableCell className="text-right text-sm">
+                          {item.valor > 0 ? `R$ ${item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
@@ -645,26 +729,47 @@ export default function ConstutoraRelatorios() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Conversão por Imobiliária</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" /> Conversão por Empreendimento
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {perImobiliaria.length === 0 ? (
+            {perEmpreendimento.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Sem dados no período</p>
             ) : (
-              <div className="space-y-2">
-                {perImobiliaria.map((item, i) => (
-                  <div key={item.nome} className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                    <span className="text-sm flex-1 truncate">{item.nome}</span>
-                    <div className="flex items-center gap-2 text-xs shrink-0">
-                      <span className="text-muted-foreground">{item.total} fichas</span>
-                      <span className="font-medium">{item.confirmados} conf.</span>
-                      <Badge variant={item.vendas > 0 ? 'default' : 'secondary'} className="text-xs">
-                        {item.vendas} venda{item.vendas !== 1 ? 's' : ''}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Empreendimento</TableHead>
+                      <TableHead className="text-center">Fichas</TableHead>
+                      <TableHead className="text-center">Conf.</TableHead>
+                      <TableHead className="text-center">Vendas</TableHead>
+                      <TableHead className="text-center">Conv.</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {perEmpreendimento.map((item, i) => (
+                      <TableRow key={item.nome + i}>
+                        <TableCell className="font-medium text-sm truncate max-w-[150px]">{item.nome}</TableCell>
+                        <TableCell className="text-center text-sm">{item.total}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary" className="text-xs">{item.taxaConf}%</Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-medium text-sm">{item.vendas}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={item.taxaVenda >= 20 ? 'default' : 'secondary'} className="text-xs">
+                            {item.taxaVenda}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {item.valor > 0 ? `R$ ${item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
