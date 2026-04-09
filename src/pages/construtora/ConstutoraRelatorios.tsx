@@ -1167,6 +1167,7 @@ export default function ConstutoraRelatorios() {
                       <TableCell className="text-sm">{empNomeMap[f.empreendimento_id || ''] || '-'}</TableCell>
                       <TableCell className="text-sm">{imobNomeMap[f.imobiliaria_id || ''] || '-'}</TableCell>
                       <TableCell className="text-sm">{corretorNomeMap[f.user_id || ''] || '-'}</TableCell>
+                      <TableCell className="text-sm">{getEquipeNomeForUser(f.user_id)}</TableCell>
                       <TableCell className="text-sm">{format(parseISO(f.created_at), 'dd/MM/yyyy')}</TableCell>
                       <TableCell>
                         <Badge variant={isFichaConfirmada(f.status) ? 'default' : 'secondary'}>
