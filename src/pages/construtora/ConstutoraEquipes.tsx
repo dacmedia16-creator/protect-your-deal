@@ -26,6 +26,8 @@ import {
   Crown, ChevronDown, ChevronRight, FolderPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { invokeWithRetry } from '@/lib/invokeWithRetry';
+import { PasswordInput } from '@/components/PasswordInput';
 
 interface Equipe {
   id: string;
