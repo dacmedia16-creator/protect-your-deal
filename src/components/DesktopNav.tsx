@@ -36,19 +36,23 @@ import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { useUserFeatureFlag } from '@/hooks/useUserFeatureFlag';
+import { useConstutoraFeatureFlag } from '@/hooks/useConstutoraFeatureFlag';
 
 export function DesktopNav() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { role, imobiliaria, imobiliariaId } = useUserRole();
+  const { role, imobiliaria, imobiliariaId, construtoraId } = useUserRole();
   const { isInstalled, isIOS, isInstallable, install } = usePWAInstall();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
+  const { enabled: constSurveyEnabled } = useConstutoraFeatureFlag('post_visit_survey');
   const { isLider } = useEquipeLider();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const isCorretorAutonomo = role === 'corretor' && !imobiliariaId;
-  const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
+  const surveyEnabled = imobiliariaId 
+    ? imobSurveyEnabled 
+    : (construtoraId ? constSurveyEnabled : userSurveyEnabled);
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
