@@ -819,14 +819,13 @@ export default function ConstutoraEquipes() {
               empreendimentos.map((emp) => {
                 const isLinked = (empVinculos[selectedEquipe?.id || ''] || []).includes(emp.id);
                 return (
-                  <label key={emp.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                  <div key={emp.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => !togglingEmp && selectedEquipe && toggleEmpVinculo(selectedEquipe.id, emp.id)}>
                     <Checkbox
                       checked={isLinked}
                       disabled={togglingEmp}
-                      onCheckedChange={() => selectedEquipe && toggleEmpVinculo(selectedEquipe.id, emp.id)}
                     />
                     <span className="text-sm font-medium">{emp.nome}</span>
-                  </label>
+                  </div>
                 );
               })
             )}
