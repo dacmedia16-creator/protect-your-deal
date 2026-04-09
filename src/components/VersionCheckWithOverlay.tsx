@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
-const CHECK_INTERVAL_MS = 1 * 60 * 1000;
+const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const DEFER_DURATION_MS = 30 * 60 * 1000;
+const RELOAD_COOLDOWN_MS = 5 * 60 * 1000;
 
 function isServerVersionNewer(serverVersion: string, localVersion: string): boolean {
   try {
