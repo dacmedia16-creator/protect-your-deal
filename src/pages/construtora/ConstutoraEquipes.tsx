@@ -21,9 +21,10 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Plus, Users, Edit, Trash2, UserPlus, UserMinus, Loader2, Search,
-  Crown, ChevronDown, ChevronRight, FolderPlus, GitBranch,
+  Crown, ChevronDown, ChevronRight, FolderPlus, GitBranch, Building,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invokeWithRetry } from '@/lib/invokeWithRetry';
