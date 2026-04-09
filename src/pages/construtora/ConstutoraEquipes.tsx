@@ -193,7 +193,54 @@ export default function ConstutoraEquipes() {
     } else {
       setCorretores([]);
     }
+
+    // Fetch empreendimentos da construtora
+    const { data: empData } = await supabase
+      .from('empreendimentos')
+      .select('id, nome')
+      .eq('construtora_id', construtoraId!)
+      .order('nome');
+    setEmpreendimentos(empData || []);
+
     setLoading(false);
+  }
+
+  async function openEmpDialog(equipe: Equipe) {
+    setSelectedEquipe(equipe);
+    setEmpDialogOpen(true);
+  }
+
+  async function toggleEmpVinculo(equipeId: string, empreendimentoId: string) {
+    setTogglingEmp(true);
+    const current = empVinculos[equipeId] || [];
+    const isLinked = current.includes(empreendimentoId);
+    try {
+      if (isLinked) {
+        const { error } = await supabase
+          .from('equipe_empreendimentos')
+          .delete()
+          .eq('equipe_id', equipeId)
+          .eq('empreendimento_id', empreendimentoId);
+        if (error) throw error;
+        setEmpVinculos(prev => ({
+          ...prev,
+          [equipeId]: prev[equipeId].filter(id => id !== empreendimentoId),
+        }));
+      } else {
+        const { error } = await supabase
+          .from('equipe_empreendimentos')
+          .insert({ equipe_id: equipeId, empreendimento_id: empreendimentoId });
+        if (error) throw error;
+        setEmpVinculos(prev => ({
+          ...prev,
+          [equipeId]: [...(prev[equipeId] || []), empreendimentoId],
+        }));
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao vincular empreendimento');
+    } finally {
+      setTogglingEmp(false);
+    }
   }
 
   async function handleSaveEquipe() {
