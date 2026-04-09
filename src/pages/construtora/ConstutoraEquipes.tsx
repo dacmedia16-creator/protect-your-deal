@@ -503,7 +503,6 @@ export default function ConstutoraEquipes() {
               <Button variant="outline" size="sm" onClick={() => openEditDialog(equipe)}>
                 <Edit className="h-4 w-4" />
               </Button>
-              </Button>
               <Button variant="outline" size="sm" onClick={() => { setSelectedEquipe(equipe); setDeleteDialogOpen(true); }}>
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
