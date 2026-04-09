@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 const LOCAL_VERSION = import.meta.env.VITE_BUILD_ID || 'unknown';
-const CHECK_INTERVAL_MS = 1 * 60 * 1000;
+const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 const DEFER_DURATION_MS = 30 * 60 * 1000;
+const RELOAD_COOLDOWN_MS = 5 * 60 * 1000;
 
 function isServerVersionNewer(serverVersion: string, localVersion: string): boolean {
   try {
@@ -54,6 +55,16 @@ export function VersionCheckWithOverlay() {
   // ── Force update (silent) ──
   const forceUpdate = useCallback(async () => {
     if (updatingRef.current) return;
+
+    // Cooldown: skip if we already reloaded recently
+    try {
+      const last = sessionStorage.getItem('lastSilentUpdate');
+      if (last && Date.now() - Number(last) < RELOAD_COOLDOWN_MS) {
+        console.log('🔄 Reload cooldown ativo, ignorando update');
+        return;
+      }
+    } catch { /* sessionStorage may be unavailable */ }
+
     updatingRef.current = true;
     console.log('🔄 Atualizando app silenciosamente...');
 
@@ -76,6 +87,7 @@ export function VersionCheckWithOverlay() {
       console.warn('Erro ao limpar caches:', err);
     }
 
+    try { sessionStorage.setItem('lastSilentUpdate', String(Date.now())); } catch {}
     window.location.reload();
   }, []);
 
@@ -132,7 +144,7 @@ export function VersionCheckWithOverlay() {
   useEffect(() => {
     if (isInactive) return;
 
-    const initialTimeout = setTimeout(checkVersion, 1500);
+    const initialTimeout = setTimeout(checkVersion, 10000);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') checkVersion();
