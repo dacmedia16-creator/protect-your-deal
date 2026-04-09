@@ -492,6 +492,9 @@ export default function ConstutoraEquipes() {
               <Button variant="outline" size="sm" className="flex-1" onClick={() => openMembrosDialog(equipe)}>
                 <UserPlus className="h-4 w-4 mr-1" /> Membros
               </Button>
+              <Button variant="outline" size="sm" onClick={() => openEmpDialog(equipe)} title="Empreendimentos">
+                <Building className="h-4 w-4" />
+              </Button>
               {!isSubequipe && (
                 <Button variant="outline" size="sm" onClick={() => openCreateDialog(equipe)} title="Sub-equipe">
                   <FolderPlus className="h-4 w-4" />
@@ -499,6 +502,7 @@ export default function ConstutoraEquipes() {
               )}
               <Button variant="outline" size="sm" onClick={() => openEditDialog(equipe)}>
                 <Edit className="h-4 w-4" />
+              </Button>
               </Button>
               <Button variant="outline" size="sm" onClick={() => { setSelectedEquipe(equipe); setDeleteDialogOpen(true); }}>
                 <Trash2 className="h-4 w-4 text-destructive" />
