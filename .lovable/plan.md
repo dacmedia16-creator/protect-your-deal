@@ -1,40 +1,48 @@
 
 
-# Plano de Correção — Auditoria de Regressão
+# Plano: Landing Page "Para Construtoras"
 
-## Arquivos alterados
+## Resumo
 
-| # | Arquivo | Mudança |
-|---|---------|---------|
-| 1 | `src/pages/construtora/ConstrutoraDashboard.tsx` | Adicionar `.limit(10000)` nas 3 queries de `fichas_visita` que retornam dados (não `head: true`) |
-| 2 | `src/pages/construtora/ConstutoraRelatorios.tsx` | Adicionar `.limit(10000)` nas 2 queries de fichas (atual e período anterior) |
-| 3 | `src/lib/statusColors.ts` | Adicionar `no_show` ao mapa `fichaStatusColors` |
-| 4 | `src/pages/construtora/ConstutoraEquipes.tsx` | Avaliar — sem `DialogTrigger` ou `forwardRef` encontrado no código, e sem warnings no console atual. **Não será alterado** pois o warning não foi reproduzido. |
+Criar a página `/para-construtoras` com 10 seções modulares, seguindo o padrão visual existente (dark gradient `#0F172A` to `#1E3A5F`, como `ParaImobiliarias.tsx`) mas elevado para SaaS B2B premium. Rota já existe em `publicRoutes.tsx`.
 
-## Detalhes por prioridade
+## Arquivos a criar
 
-### Prioridade 1 — Truncamento silencioso
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/pages/ParaConstrutoras.tsx` | Página principal, compõe as 10 seções |
+| `src/components/para-construtoras/HeroSection.tsx` | Hero com headline + mockup dashboard |
+| `src/components/para-construtoras/ProblemSection.tsx` | 6 cards de dor |
+| `src/components/para-construtoras/SolutionSection.tsx` | Central de inteligência + callouts |
+| `src/components/para-construtoras/BenefitsSection.tsx` | 6 blocos de benefício |
+| `src/components/para-construtoras/ReportsSection.tsx` | 6 categorias de relatórios (seção mais forte) |
+| `src/components/para-construtoras/ImpactSection.tsx` | 6 blocos de impacto executivo |
+| `src/components/para-construtoras/DashboardShowcaseSection.tsx` | Mockup grande do painel com balões |
+| `src/components/para-construtoras/ComparisonSection.tsx` | Tabela comparativa descentralizada vs VisitaProva |
+| `src/components/para-construtoras/FAQSection.tsx` | 6 perguntas com Accordion |
+| `src/components/para-construtoras/FinalCTASection.tsx` | CTA final premium |
+| `src/components/para-construtoras/DashboardMockup.tsx` | Mockup SVG/CSS do dashboard com KPIs, funil, gráficos, rankings |
 
-As queries diretas a `fichas_visita` nos arquivos de Dashboard e Relatórios não possuem `.limit()`, ficando sujeitas ao default de 1000 rows do Supabase. A correção é adicionar `.limit(10000)` em cada query que retorna dados reais (não as que usam `{ count: 'exact', head: true }`).
+## Arquivo a editar
 
-**Dashboard** (3 queries):
-- Fichas do mês atual (linha ~150-153)
-- Fichas do mês anterior (linha ~154-158)
-- Fichas do gráfico 6 meses (linha ~184-188)
+| Arquivo | Mudança |
+|---------|---------|
+| `src/routes/publicRoutes.tsx` | Adicionar rota `/para-construtoras` (já tem o lazy import de `ParaConstrutoras`) |
 
-**Relatórios** (2 queries):
-- Fichas do período selecionado (linha ~113-124)
-- Fichas do período anterior (linha ~139-144)
+## Direção técnica
 
-### Prioridade 2 — Status `no_show` sem cor
+- **Base visual**: Fundo dark gradient (`from-[#0F172A] to-[#1E3A5F]`), texto branco, accent `#60A5FA`/`#3B82F6`
+- **Dashboard mockup**: Construído 100% em CSS/Tailwind (não imagem), com KPI cards, mini funil, barras de gráfico, tabelas de ranking — tudo estilizado para parecer interface real
+- **Animações**: `AnimatedSection` existente com variações de `direction` e `delay`
+- **Componentes reutilizados**: `SEOHead`, `AnimatedSection`, `LogoIcon`, `Button`, `Badge`, `Accordion`
+- **Responsivo**: Grid 1col mobile → 2-3col desktop
+- **CTAs**: "Agendar demonstração" abre WhatsApp com mensagem pré-formatada; "Ver painel em funcionamento" linka para `/registro-construtora`
+- **Copy**: Exatamente conforme especificado, sem clichês, tom executivo
 
-Adicionar uma entrada ao objeto `fichaStatusColors`:
-```
-no_show: 'bg-destructive/20 text-destructive border border-destructive/30'
-```
-Cor vermelha/destrutiva pois no-show é um evento negativo.
+## Ordem de implementação
 
-### Prioridade 3 — Warning de ref
-
-O warning mencionado na auditoria não é reproduzível no estado atual (sem `DialogTrigger` nem `forwardRef` no arquivo, e console limpo). **Será ignorado** — nenhuma alteração necessária.
+1. Criar `DashboardMockup.tsx` (componente visual core)
+2. Criar as 10 seções como componentes independentes
+3. Criar `ParaConstrutoras.tsx` compondo todas as seções
+4. Adicionar rota em `publicRoutes.tsx`
 
