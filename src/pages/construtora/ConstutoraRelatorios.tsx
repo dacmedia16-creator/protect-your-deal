@@ -558,7 +558,7 @@ export default function ConstutoraRelatorios() {
     vendas: { label: 'Vendas', color: 'hsl(142 76% 36%)' },
   };
 
-  const hasActiveFilters = empFilter !== 'todos' || imobFilter !== 'todos' || corretorFilter !== 'todos' || statusFilter !== 'todos';
+  const hasActiveFilters = empFilter !== 'todos' || imobFilter !== 'todos' || corretorFilter !== 'todos' || statusFilter !== 'todos' || equipeFilter !== 'todos';
 
   return (
     <div className="space-y-6">
