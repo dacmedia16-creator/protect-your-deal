@@ -20,6 +20,7 @@ const TourAudio = lazy(() => import("@/pages/TourAudio"));
 const TourAudioLanding = lazy(() => import("@/pages/TourAudioLanding"));
 const Afiliados = lazy(() => import("@/pages/Afiliados"));
 const ParaImobiliarias = lazy(() => import("@/pages/ParaImobiliarias"));
+const ParaConstrutoras = lazy(() => import("@/pages/ParaConstrutoras"));
 const SobreNos = lazy(() => import("@/pages/SobreNos"));
 const NossaHistoria = lazy(() => import("@/pages/NossaHistoria"));
 const RegistroImobiliaria = lazy(() => import("@/pages/auth/RegistroImobiliaria"));
@@ -66,6 +67,7 @@ export const publicRoutes = (
     <Route path="/app" element={<AppLanding />} />
     <Route path="/afiliados" element={<Afiliados />} />
     <Route path="/para-imobiliarias" element={<ParaImobiliarias />} />
+    <Route path="/para-construtoras" element={<ParaConstrutoras />} />
     <Route path="/sobre" element={<SobreNos />} />
     <Route path="/nossa-historia" element={<NossaHistoria />} />
     <Route path="/tour" element={<TourAudioLanding />} />
