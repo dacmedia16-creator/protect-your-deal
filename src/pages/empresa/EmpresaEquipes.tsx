@@ -48,6 +48,7 @@ import {
   ChevronDown,
   ChevronRight,
   FolderPlus,
+  GitBranch,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -434,7 +435,7 @@ export default function EmpresaEquipes() {
     e.id !== editingEquipe?.id
   );
 
-  function renderEquipeCard(equipe: Equipe, isSubequipe = false) {
+  function renderEquipeCard(equipe: Equipe, isSubequipe = false, parentNome?: string) {
     const hasSubequipes = equipe.subequipes && equipe.subequipes.length > 0;
     const isExpanded = expandedEquipes.has(equipe.id);
 
@@ -463,7 +464,13 @@ export default function EmpresaEquipes() {
                 />
                 <div>
                   <CardTitle className="text-lg">{equipe.nome}</CardTitle>
-                  {isSubequipe && (
+                  {isSubequipe && parentNome && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <GitBranch className="h-3 w-3" />
+                      {parentNome} › {equipe.nome}
+                    </span>
+                  )}
+                  {isSubequipe && !parentNome && (
                     <span className="text-xs text-muted-foreground">Sub-equipe</span>
                   )}
                 </div>
@@ -551,7 +558,7 @@ export default function EmpresaEquipes() {
         {/* Sub-equipes */}
         {hasSubequipes && isExpanded && (
           <div className="space-y-2">
-            {equipe.subequipes?.map(sub => renderEquipeCard(sub, true))}
+            {equipe.subequipes?.map(sub => renderEquipeCard(sub, true, equipe.nome))}
           </div>
         )}
       </div>

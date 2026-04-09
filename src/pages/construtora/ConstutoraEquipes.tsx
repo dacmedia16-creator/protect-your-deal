@@ -23,7 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import {
   Plus, Users, Edit, Trash2, UserPlus, UserMinus, Loader2, Search,
-  Crown, ChevronDown, ChevronRight, FolderPlus,
+  Crown, ChevronDown, ChevronRight, FolderPlus, GitBranch,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invokeWithRetry } from '@/lib/invokeWithRetry';
@@ -347,7 +347,7 @@ export default function ConstutoraEquipes() {
   const availableCorretores = corretores.filter(c => !membrosIds.includes(c.id));
   const availableParentEquipes = allEquipes.filter(e => !e.parent_id && e.id !== editingEquipe?.id);
 
-  function renderEquipeCard(equipe: Equipe, isSubequipe = false) {
+  function renderEquipeCard(equipe: Equipe, isSubequipe = false, parentNome?: string) {
     const hasSubequipes = equipe.subequipes && equipe.subequipes.length > 0;
     const isExpanded = expandedEquipes.has(equipe.id);
 
@@ -366,7 +366,13 @@ export default function ConstutoraEquipes() {
                 <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: equipe.cor }} />
                 <div>
                   <CardTitle className="text-lg">{equipe.nome}</CardTitle>
-                  {isSubequipe && <span className="text-xs text-muted-foreground">Sub-equipe</span>}
+                  {isSubequipe && parentNome && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <GitBranch className="h-3 w-3" />
+                      {parentNome} › {equipe.nome}
+                    </span>
+                  )}
+                  {isSubequipe && !parentNome && <span className="text-xs text-muted-foreground">Sub-equipe</span>}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -414,7 +420,7 @@ export default function ConstutoraEquipes() {
 
         {hasSubequipes && isExpanded && (
           <div className="space-y-2">
-            {equipe.subequipes?.map(sub => renderEquipeCard(sub, true))}
+            {equipe.subequipes?.map(sub => renderEquipeCard(sub, true, equipe.nome))}
           </div>
         )}
       </div>
