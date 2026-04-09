@@ -802,5 +802,39 @@ export default function ConstutoraEquipes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Vincular Empreendimentos */}
+      <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Empreendimentos: {selectedEquipe?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {empreendimentos.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum empreendimento cadastrado</p>
+            ) : (
+              empreendimentos.map((emp) => {
+                const isLinked = (empVinculos[selectedEquipe?.id || ''] || []).includes(emp.id);
+                return (
+                  <label key={emp.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                    <Checkbox
+                      checked={isLinked}
+                      disabled={togglingEmp}
+                      onCheckedChange={() => selectedEquipe && toggleEmpVinculo(selectedEquipe.id, emp.id)}
+                    />
+                    <span className="text-sm font-medium">{emp.nome}</span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmpDialogOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </>);
 }
