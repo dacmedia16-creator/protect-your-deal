@@ -81,6 +81,16 @@ export default function ConstutoraEquipes() {
   const [loadingMembros, setLoadingMembros] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Create corretor dialog state
+  const [createCorretorOpen, setCreateCorretorOpen] = useState(false);
+  const [newCorretorNome, setNewCorretorNome] = useState('');
+  const [newCorretorEmail, setNewCorretorEmail] = useState('');
+  const [newCorretorSenha, setNewCorretorSenha] = useState('');
+  const [newCorretorTelefone, setNewCorretorTelefone] = useState('');
+  const [newCorretorCreci, setNewCorretorCreci] = useState('');
+  const [newCorretorCpf, setNewCorretorCpf] = useState('');
+  const [creatingCorretor, setCreatingCorretor] = useState(false);
+
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [cor, setCor] = useState(CORES[0]);
