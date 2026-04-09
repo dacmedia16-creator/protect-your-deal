@@ -98,6 +98,12 @@ export default function ConstutoraEquipes() {
   const [newCorretorCpf, setNewCorretorCpf] = useState('');
   const [creatingCorretor, setCreatingCorretor] = useState(false);
 
+  // Empreendimentos dialog state
+  const [empDialogOpen, setEmpDialogOpen] = useState(false);
+  const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
+  const [empVinculos, setEmpVinculos] = useState<Record<string, string[]>>({});
+  const [togglingEmp, setTogglingEmp] = useState(false);
+
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [cor, setCor] = useState(CORES[0]);
