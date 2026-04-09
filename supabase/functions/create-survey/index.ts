@@ -67,36 +67,45 @@ Deno.serve(async (req) => {
     }
 
     // Check if feature is enabled
+    let featureEnabled = false;
+
     if (ficha.imobiliaria_id) {
-      // Imobiliária: check imobiliaria_feature_flags
       const { data: featureFlag } = await supabaseAdmin
         .from('imobiliaria_feature_flags')
         .select('enabled')
         .eq('imobiliaria_id', ficha.imobiliaria_id)
         .eq('feature_key', 'post_visit_survey')
         .maybeSingle();
+      featureEnabled = featureFlag?.enabled === true;
+    }
 
-      if (!featureFlag?.enabled) {
-        return new Response(
-          JSON.stringify({ error: 'Esta funcionalidade não está habilitada para esta imobiliária' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } else {
-      // Corretor autônomo: check user_feature_flags
+    // Check construtora_feature_flags if not yet enabled
+    if (!featureEnabled && ficha.construtora_id) {
+      const { data: flag } = await supabaseAdmin
+        .from('construtora_feature_flags')
+        .select('enabled')
+        .eq('construtora_id', ficha.construtora_id)
+        .eq('feature_key', 'post_visit_survey')
+        .maybeSingle();
+      featureEnabled = flag?.enabled === true;
+    }
+
+    // Fallback: check user_feature_flags for autonomous brokers
+    if (!featureEnabled && !ficha.imobiliaria_id && !ficha.construtora_id) {
       const { data: userFlag } = await supabaseAdmin
         .from('user_feature_flags')
         .select('enabled')
         .eq('user_id', userId)
         .eq('feature_key', 'post_visit_survey')
         .maybeSingle();
+      featureEnabled = userFlag?.enabled === true;
+    }
 
-      if (!userFlag?.enabled) {
-        return new Response(
-          JSON.stringify({ error: 'Esta funcionalidade não está habilitada para este usuário' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+    if (!featureEnabled) {
+      return new Response(
+        JSON.stringify({ error: 'Esta funcionalidade não está habilitada' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Verify buyer has confirmed the visit

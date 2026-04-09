@@ -271,6 +271,20 @@ async function sendSurveyWhatsApp(supabase: any, ficha: any): Promise<void> {
     featureEnabled = flag?.enabled === true;
   }
 
+  // Also check construtora_feature_flags if not yet enabled
+  if (!featureEnabled && ficha.construtora_id) {
+    const { data: flag } = await supabase
+      .from('construtora_feature_flags')
+      .select('enabled')
+      .eq('construtora_id', ficha.construtora_id)
+      .eq('feature_key', 'post_visit_survey')
+      .maybeSingle();
+    featureEnabled = flag?.enabled === true;
+    if (featureEnabled) {
+      console.log('[verify-otp] Feature post_visit_survey habilitada via construtora_feature_flags');
+    }
+  }
+
   if (!featureEnabled) {
     console.log('[verify-otp] Feature post_visit_survey não habilitada, pulando envio');
     return;
