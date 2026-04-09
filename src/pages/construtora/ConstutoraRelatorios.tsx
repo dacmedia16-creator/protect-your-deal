@@ -88,6 +88,7 @@ export default function ConstutoraRelatorios() {
   const [empFilter, setEmpFilter] = useState('todos');
   const [imobFilter, setImobFilter] = useState('todos');
   const [corretorFilter, setCorretorFilter] = useState('todos');
+  const [equipeFilter, setEquipeFilter] = useState('todos');
 
   // Fetch construtora_id
   const { data: construtora } = useQuery({
