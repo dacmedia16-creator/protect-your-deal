@@ -660,5 +660,49 @@ export default function ConstutoraEquipes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog Criar Corretor */}
+      <Dialog open={createCorretorOpen} onOpenChange={setCreateCorretorOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Corretor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input value={newCorretorNome} onChange={(e) => setNewCorretorNome(e.target.value)} placeholder="Nome completo" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input type="email" value={newCorretorEmail} onChange={(e) => setNewCorretorEmail(e.target.value)} placeholder="email@exemplo.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Senha *</Label>
+              <PasswordInput value={newCorretorSenha} onChange={setNewCorretorSenha} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input value={newCorretorTelefone} onChange={(e) => setNewCorretorTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+              </div>
+              <div className="space-y-2">
+                <Label>CRECI</Label>
+                <Input value={newCorretorCreci} onChange={(e) => setNewCorretorCreci(e.target.value)} placeholder="CRECI" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>CPF</Label>
+              <Input value={newCorretorCpf} onChange={(e) => setNewCorretorCpf(e.target.value)} placeholder="000.000.000-00" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateCorretorOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateCorretor} disabled={creatingCorretor}>
+              {creatingCorretor && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar e Adicionar à Equipe
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </>);
 }
