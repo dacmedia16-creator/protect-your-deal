@@ -121,7 +121,7 @@ export default function ConstutoraRelatorios() {
         query = query.eq('status', statusFilter);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(10000);
       if (error) throw error;
       return (data || []) as FichaRel[];
     },
@@ -141,7 +141,8 @@ export default function ConstutoraRelatorios() {
         .select('status, convertido_venda, valor_venda')
         .eq('construtora_id', construtoraId!)
         .gte('created_at', prevStart.toISOString())
-        .lte('created_at', prevEnd.toISOString());
+        .lte('created_at', prevEnd.toISOString())
+        .limit(10000);
       return data || [];
     },
     enabled: !!construtoraId,
