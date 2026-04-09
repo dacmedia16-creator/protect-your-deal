@@ -13,11 +13,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   BarChart3, CalendarIcon, Download, FileText, CheckCircle,
   TrendingUp, TrendingDown, DollarSign, Filter, ArrowRight,
-  Trophy, Medal, Users, Building
+  Trophy, Medal, Users, Building, UserX, XCircle, Clock, Timer
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { format, subMonths, startOfMonth, endOfMonth, parseISO, differenceInDays } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, parseISO, differenceInDays, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
