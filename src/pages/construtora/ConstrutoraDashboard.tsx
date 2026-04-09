@@ -150,12 +150,14 @@ export default function ConstrutoraDashboard() {
           supabase.from('fichas_visita')
             .select('status, convertido_venda, valor_venda, created_at')
             .eq('construtora_id', construtoraId)
-            .gte('created_at', currentMonthStart.toISOString()),
+            .gte('created_at', currentMonthStart.toISOString())
+            .limit(10000),
           supabase.from('fichas_visita')
             .select('status, convertido_venda, valor_venda, created_at')
             .eq('construtora_id', construtoraId)
             .gte('created_at', lastMonthStart.toISOString())
-            .lte('created_at', lastMonthEnd.toISOString()),
+            .lte('created_at', lastMonthEnd.toISOString())
+            .limit(10000),
           supabase.from('fichas_visita')
             .select('id', { count: 'exact', head: true })
             .eq('construtora_id', construtoraId)
@@ -185,7 +187,8 @@ export default function ConstrutoraDashboard() {
           .from('fichas_visita')
           .select('status, convertido_venda, created_at')
           .eq('construtora_id', construtoraId)
-          .gte('created_at', sixMonthsAgo.toISOString());
+          .gte('created_at', sixMonthsAgo.toISOString())
+          .limit(10000);
 
         const chartRows = (fichasChart || []) as FichaRow[];
         const monthlyChartData: MonthlyData[] = Array.from({ length: 6 }, (_, i) => {

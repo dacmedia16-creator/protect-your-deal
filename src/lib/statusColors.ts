@@ -63,6 +63,7 @@ export const fichaStatusColors: Record<string, string> = {
   confirmado: 'bg-success/20 text-success border border-success/30',
   finalizado_parcial: 'bg-success/20 text-success border border-success/30',
   cancelado: 'bg-muted text-muted-foreground border border-border',
+  no_show: 'bg-destructive/20 text-destructive border border-destructive/30',
 };
 
 // ============================================
