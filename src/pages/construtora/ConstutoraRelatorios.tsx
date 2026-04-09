@@ -278,39 +278,81 @@ export default function ConstutoraRelatorios() {
     }));
   }, [fichas]);
 
-  // Per empreendimento
+  // Per empreendimento (with valor)
   const perEmpreendimento = useMemo(() => {
-    const data: Record<string, { total: number; confirmados: number; vendas: number }> = {};
+    const data: Record<string, { total: number; confirmados: number; vendas: number; valor: number }> = {};
     fichas.forEach(f => {
       if (f.empreendimento_id) {
-        if (!data[f.empreendimento_id]) data[f.empreendimento_id] = { total: 0, confirmados: 0, vendas: 0 };
+        if (!data[f.empreendimento_id]) data[f.empreendimento_id] = { total: 0, confirmados: 0, vendas: 0, valor: 0 };
         data[f.empreendimento_id].total++;
         if (isFichaConfirmada(f.status)) data[f.empreendimento_id].confirmados++;
-        if (f.convertido_venda) data[f.empreendimento_id].vendas++;
+        if (f.convertido_venda) {
+          data[f.empreendimento_id].vendas++;
+          data[f.empreendimento_id].valor += f.valor_venda || 0;
+        }
       }
     });
     return Object.entries(data)
-      .map(([id, v]) => ({ nome: empNomeMap[id] || 'Desconhecido', ...v }))
-      .sort((a, b) => b.total - a.total)
+      .map(([id, v]) => ({
+        nome: empNomeMap[id] || 'Desconhecido',
+        ...v,
+        taxaConf: v.total > 0 ? Math.round((v.confirmados / v.total) * 100) : 0,
+        taxaVenda: v.total > 0 ? Math.round((v.vendas / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.vendas - a.vendas || b.total - a.total)
       .slice(0, 10);
   }, [fichas, empNomeMap]);
 
-  // Per imobiliária
+  // Per imobiliária (with valor)
   const perImobiliaria = useMemo(() => {
-    const data: Record<string, { total: number; confirmados: number; vendas: number }> = {};
+    const data: Record<string, { total: number; confirmados: number; vendas: number; valor: number }> = {};
     fichas.forEach(f => {
       if (f.imobiliaria_id) {
-        if (!data[f.imobiliaria_id]) data[f.imobiliaria_id] = { total: 0, confirmados: 0, vendas: 0 };
+        if (!data[f.imobiliaria_id]) data[f.imobiliaria_id] = { total: 0, confirmados: 0, vendas: 0, valor: 0 };
         data[f.imobiliaria_id].total++;
         if (isFichaConfirmada(f.status)) data[f.imobiliaria_id].confirmados++;
-        if (f.convertido_venda) data[f.imobiliaria_id].vendas++;
+        if (f.convertido_venda) {
+          data[f.imobiliaria_id].vendas++;
+          data[f.imobiliaria_id].valor += f.valor_venda || 0;
+        }
       }
     });
     return Object.entries(data)
-      .map(([id, v]) => ({ nome: imobNomeMap[id] || 'Desconhecido', ...v }))
-      .sort((a, b) => b.total - a.total)
+      .map(([id, v]) => ({
+        nome: imobNomeMap[id] || 'Desconhecido',
+        ...v,
+        taxaConf: v.total > 0 ? Math.round((v.confirmados / v.total) * 100) : 0,
+        taxaVenda: v.total > 0 ? Math.round((v.vendas / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.vendas - a.vendas || b.total - a.total)
       .slice(0, 10);
   }, [fichas, imobNomeMap]);
+
+  // Ranking corretores
+  const rankingCorretores = useMemo(() => {
+    const data: Record<string, { total: number; confirmados: number; vendas: number; valor: number }> = {};
+    fichas.forEach(f => {
+      if (f.user_id) {
+        if (!data[f.user_id]) data[f.user_id] = { total: 0, confirmados: 0, vendas: 0, valor: 0 };
+        data[f.user_id].total++;
+        if (isFichaConfirmada(f.status)) data[f.user_id].confirmados++;
+        if (f.convertido_venda) {
+          data[f.user_id].vendas++;
+          data[f.user_id].valor += f.valor_venda || 0;
+        }
+      }
+    });
+    return Object.entries(data)
+      .map(([id, v]) => ({
+        nome: corretorNomeMap[id] || 'Desconhecido',
+        ...v,
+        taxaConf: v.total > 0 ? Math.round((v.confirmados / v.total) * 100) : 0,
+        taxaVenda: v.total > 0 ? Math.round((v.vendas / v.total) * 100) : 0,
+        ticketMedio: v.vendas > 0 ? v.valor / v.vendas : 0,
+      }))
+      .sort((a, b) => b.vendas - a.vendas || b.total - a.total)
+      .slice(0, 15);
+  }, [fichas, corretorNomeMap]);
 
   // CSV export
   const exportCSV = () => {
