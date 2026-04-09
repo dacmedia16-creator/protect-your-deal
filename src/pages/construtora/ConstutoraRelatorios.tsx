@@ -587,6 +587,7 @@ export default function ConstutoraRelatorios() {
                   setEmpFilter('todos');
                   setImobFilter('todos');
                   setCorretorFilter('todos');
+                  setEquipeFilter('todos');
                 }}
               >
                 Limpar filtros
