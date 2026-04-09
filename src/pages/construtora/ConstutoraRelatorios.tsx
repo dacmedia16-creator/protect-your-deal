@@ -1153,6 +1153,7 @@ export default function ConstutoraRelatorios() {
                     <TableHead>Empreendimento</TableHead>
                     <TableHead>Imobiliária</TableHead>
                     <TableHead>Corretor</TableHead>
+                    <TableHead>Equipe</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Venda</TableHead>
