@@ -26,6 +26,8 @@ import {
   Crown, ChevronDown, ChevronRight, FolderPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { invokeWithRetry } from '@/lib/invokeWithRetry';
+import { PasswordInput } from '@/components/PasswordInput';
 
 interface Equipe {
   id: string;
@@ -78,6 +80,16 @@ export default function ConstutoraEquipes() {
   const [membros, setMembros] = useState<Membro[]>([]);
   const [loadingMembros, setLoadingMembros] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Create corretor dialog state
+  const [createCorretorOpen, setCreateCorretorOpen] = useState(false);
+  const [newCorretorNome, setNewCorretorNome] = useState('');
+  const [newCorretorEmail, setNewCorretorEmail] = useState('');
+  const [newCorretorSenha, setNewCorretorSenha] = useState('');
+  const [newCorretorTelefone, setNewCorretorTelefone] = useState('');
+  const [newCorretorCreci, setNewCorretorCreci] = useState('');
+  const [newCorretorCpf, setNewCorretorCpf] = useState('');
+  const [creatingCorretor, setCreatingCorretor] = useState(false);
 
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -284,6 +296,47 @@ export default function ConstutoraEquipes() {
     setExpandedEquipes(n);
   }
 
+  function resetCreateCorretorForm() {
+    setNewCorretorNome(''); setNewCorretorEmail(''); setNewCorretorSenha('');
+    setNewCorretorTelefone(''); setNewCorretorCreci(''); setNewCorretorCpf('');
+  }
+
+  async function handleCreateCorretor() {
+    if (!newCorretorNome.trim() || !newCorretorEmail.trim() || !newCorretorSenha.trim()) {
+      toast.error('Nome, email e senha são obrigatórios');
+      return;
+    }
+    if (newCorretorSenha.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    setCreatingCorretor(true);
+    try {
+      const { data, error } = await invokeWithRetry<{ success: boolean; user_id: string; error?: string }>(
+        'admin-create-corretor',
+        { body: { nome: newCorretorNome.trim(), email: newCorretorEmail.trim(), senha: newCorretorSenha, telefone: newCorretorTelefone.trim() || undefined, creci: newCorretorCreci.trim() || undefined, cpf: newCorretorCpf.trim() || undefined, construtora: true } }
+      );
+      if (error || !data?.success) {
+        throw new Error((data as any)?.error || error?.message || 'Erro ao criar corretor');
+      }
+      // Auto-add to selected team
+      if (selectedEquipe && data.user_id) {
+        await supabase.from('equipes_membros').insert({
+          equipe_id: selectedEquipe.id, user_id: data.user_id, cargo: 'corretor',
+        });
+      }
+      toast.success('Corretor criado e adicionado à equipe!');
+      setCreateCorretorOpen(false);
+      resetCreateCorretorForm();
+      await fetchData();
+      if (selectedEquipe) await fetchMembros(selectedEquipe.id);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao criar corretor');
+    } finally {
+      setCreatingCorretor(false);
+    }
+  }
+
   const filteredEquipes = equipes.filter(e => {
     const matchesSearch = e.nome.toLowerCase().includes(search.toLowerCase());
     const subMatches = e.subequipes?.some(s => s.nome.toLowerCase().includes(search.toLowerCase()));
@@ -486,16 +539,23 @@ export default function ConstutoraEquipes() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Select onValueChange={addMembro}>
-              <SelectTrigger><SelectValue placeholder="Adicionar corretor..." /></SelectTrigger>
-              <SelectContent>
-                {availableCorretores.length === 0 ? (
-                  <SelectItem value="none" disabled>Todos já estão na equipe</SelectItem>
-                ) : (
-                  availableCorretores.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)
-                )}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select onValueChange={addMembro}>
+                  <SelectTrigger><SelectValue placeholder="Adicionar corretor..." /></SelectTrigger>
+                  <SelectContent>
+                    {availableCorretores.length === 0 ? (
+                      <SelectItem value="none" disabled>Todos já estão na equipe</SelectItem>
+                    ) : (
+                      availableCorretores.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="outline" onClick={() => { resetCreateCorretorForm(); setCreateCorretorOpen(true); }}>
+                <UserPlus className="h-4 w-4 mr-1" /> Criar Corretor
+              </Button>
+            </div>
 
             {loadingMembros ? (
               <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -596,6 +656,50 @@ export default function ConstutoraEquipes() {
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
             <Button variant="destructive" onClick={handleDeleteEquipe} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Criar Corretor */}
+      <Dialog open={createCorretorOpen} onOpenChange={setCreateCorretorOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Corretor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input value={newCorretorNome} onChange={(e) => setNewCorretorNome(e.target.value)} placeholder="Nome completo" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input type="email" value={newCorretorEmail} onChange={(e) => setNewCorretorEmail(e.target.value)} placeholder="email@exemplo.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Senha *</Label>
+              <PasswordInput value={newCorretorSenha} onChange={setNewCorretorSenha} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Telefone</Label>
+                <Input value={newCorretorTelefone} onChange={(e) => setNewCorretorTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+              </div>
+              <div className="space-y-2">
+                <Label>CRECI</Label>
+                <Input value={newCorretorCreci} onChange={(e) => setNewCorretorCreci(e.target.value)} placeholder="CRECI" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>CPF</Label>
+              <Input value={newCorretorCpf} onChange={(e) => setNewCorretorCpf(e.target.value)} placeholder="000.000.000-00" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateCorretorOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateCorretor} disabled={creatingCorretor}>
+              {creatingCorretor && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar e Adicionar à Equipe
             </Button>
           </DialogFooter>
         </DialogContent>
