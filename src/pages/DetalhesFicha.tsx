@@ -211,27 +211,46 @@ export default function DetalhesFicha() {
     }
   }, [ficha?.id, user?.id]);
 
-  // Buscar feature flag de pesquisa baseada na imobiliaria_id da FICHA (não do usuário logado)
+  // Buscar feature flag de pesquisa: imobiliária → construtora → corretor autônomo
   const { data: surveyFeatureData } = useQuery({
-    queryKey: ['ficha-survey-feature', ficha?.imobiliaria_id],
+    queryKey: ['ficha-survey-feature', ficha?.imobiliaria_id, ficha?.construtora_id, ficha?.user_id],
     queryFn: async () => {
-      if (!ficha?.imobiliaria_id) return { enabled: false };
-      
-      const { data, error } = await supabase
-        .from('imobiliaria_feature_flags')
-        .select('enabled')
-        .eq('imobiliaria_id', ficha.imobiliaria_id)
-        .eq('feature_key', 'post_visit_survey')
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Erro ao buscar feature flag da ficha:', error);
-        return { enabled: false };
+      // 1. Checar imobiliária
+      if (ficha?.imobiliaria_id) {
+        const { data } = await supabase
+          .from('imobiliaria_feature_flags')
+          .select('enabled')
+          .eq('imobiliaria_id', ficha.imobiliaria_id)
+          .eq('feature_key', 'post_visit_survey')
+          .maybeSingle();
+        if (data?.enabled) return { enabled: true };
       }
-      
-      return { enabled: data?.enabled ?? false };
+
+      // 2. Checar construtora
+      if (ficha?.construtora_id) {
+        const { data } = await supabase
+          .from('construtora_feature_flags')
+          .select('enabled')
+          .eq('construtora_id', ficha.construtora_id)
+          .eq('feature_key', 'post_visit_survey')
+          .maybeSingle();
+        if (data?.enabled) return { enabled: true };
+      }
+
+      // 3. Checar corretor autônomo
+      if (ficha?.user_id && !ficha?.imobiliaria_id && !ficha?.construtora_id) {
+        const { data } = await supabase
+          .from('user_feature_flags')
+          .select('enabled')
+          .eq('user_id', ficha.user_id)
+          .eq('feature_key', 'post_visit_survey')
+          .maybeSingle();
+        if (data?.enabled) return { enabled: true };
+      }
+
+      return { enabled: false };
     },
-    enabled: !!ficha?.imobiliaria_id,
+    enabled: !!(ficha?.imobiliaria_id || ficha?.construtora_id || ficha?.user_id),
   });
 
   const surveyFeatureEnabled = surveyFeatureData?.enabled ?? false;
