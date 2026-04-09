@@ -1228,6 +1228,7 @@ export type Database = {
           imobiliaria_id: string | null
           imovel_endereco: string
           imovel_tipo: string
+          motivo_perda: string | null
           observacoes: string | null
           parte_preenchida_parceiro: string | null
           proprietario_autopreenchimento: boolean | null
@@ -1262,6 +1263,7 @@ export type Database = {
           imobiliaria_id?: string | null
           imovel_endereco: string
           imovel_tipo: string
+          motivo_perda?: string | null
           observacoes?: string | null
           parte_preenchida_parceiro?: string | null
           proprietario_autopreenchimento?: boolean | null
@@ -1296,6 +1298,7 @@ export type Database = {
           imobiliaria_id?: string | null
           imovel_endereco?: string
           imovel_tipo?: string
+          motivo_perda?: string | null
           observacoes?: string | null
           parte_preenchida_parceiro?: string | null
           proprietario_autopreenchimento?: boolean | null

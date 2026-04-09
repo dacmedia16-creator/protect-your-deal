@@ -13,11 +13,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   BarChart3, CalendarIcon, Download, FileText, CheckCircle,
   TrendingUp, TrendingDown, DollarSign, Filter, ArrowRight,
-  Trophy, Medal, Users, Building
+  Trophy, Medal, Users, Building, UserX, XCircle, Clock, Timer
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { format, subMonths, startOfMonth, endOfMonth, parseISO, differenceInDays } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, parseISO, differenceInDays, differenceInHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
@@ -28,6 +28,8 @@ const STATUS_OPTIONS = [
   { value: 'pendente', label: 'Pendente' },
   { value: 'completo', label: 'Completo' },
   { value: 'finalizado_parcial', label: 'Finalizado Parcial' },
+  { value: 'no_show', label: 'No-show' },
+  { value: 'cancelado', label: 'Cancelado' },
 ];
 
 const CHART_COLORS = [
@@ -53,6 +55,9 @@ interface FichaRel {
   user_id: string | null;
   convertido_venda: boolean | null;
   valor_venda: number | null;
+  motivo_perda: string | null;
+  proprietario_confirmado_em: string | null;
+  comprador_confirmado_em: string | null;
 }
 
 function calcVar(current: number, previous: number): number | null {
@@ -107,7 +112,7 @@ export default function ConstutoraRelatorios() {
     queryFn: async () => {
       let query = supabase
         .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, status, created_at, data_visita, empreendimento_id, imobiliaria_id, user_id, convertido_venda, valor_venda')
+        .select('id, protocolo, imovel_endereco, status, created_at, data_visita, empreendimento_id, imobiliaria_id, user_id, convertido_venda, valor_venda, motivo_perda, proprietario_confirmado_em, comprador_confirmado_em')
         .eq('construtora_id', construtoraId!)
         .gte('created_at', dataInicio.toISOString())
         .lte('created_at', dataFim.toISOString());
@@ -249,11 +254,89 @@ export default function ConstutoraRelatorios() {
     const total = fichas.length;
     const confirmados = fichas.filter(f => isFichaConfirmada(f.status)).length;
     const vendas = fichas.filter(f => f.convertido_venda).length;
+    const noShows = fichas.filter(f => f.status === 'no_show').length;
     return [
       { etapa: 'Criadas', valor: total, fill: 'hsl(var(--muted-foreground))' },
       { etapa: 'Confirmadas', valor: confirmados, fill: 'hsl(var(--primary))' },
       { etapa: 'Vendas', valor: vendas, fill: 'hsl(142 76% 36%)' },
+      { etapa: 'No-show', valor: noShows, fill: 'hsl(0 84% 60%)' },
     ];
+  }, [fichas]);
+
+  // No-show stats
+  const noShowStats = useMemo(() => {
+    const noShows = fichas.filter(f => f.status === 'no_show');
+    const total = fichas.length;
+    const taxa = total > 0 ? Math.round((noShows.length / total) * 100) : 0;
+    // Per empreendimento
+    const perEmp: Record<string, number> = {};
+    noShows.forEach(f => {
+      if (f.empreendimento_id) {
+        perEmp[f.empreendimento_id] = (perEmp[f.empreendimento_id] || 0) + 1;
+      }
+    });
+    const topEmps = Object.entries(perEmp)
+      .map(([id, count]) => ({ nome: empNomeMap[id] || 'Desconhecido', count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    return { total: noShows.length, taxa, topEmps };
+  }, [fichas, empNomeMap]);
+
+  // Motivos de perda
+  const motivosPerda = useMemo(() => {
+    const fichasComMotivo = fichas.filter(f => f.motivo_perda && f.motivo_perda.trim());
+    const agrupado: Record<string, number> = {};
+    fichasComMotivo.forEach(f => {
+      const motivo = f.motivo_perda!.trim();
+      agrupado[motivo] = (agrupado[motivo] || 0) + 1;
+    });
+    return Object.entries(agrupado)
+      .map(([motivo, count]) => ({ motivo, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [fichas]);
+
+  // Tempo médio entre etapas
+  const tempoMedio = useMemo(() => {
+    const tempos: { criacaoConfProp: number[]; criacaoConfComp: number[]; criacaoConfTotal: number[] } = {
+      criacaoConfProp: [],
+      criacaoConfComp: [],
+      criacaoConfTotal: [],
+    };
+    fichas.forEach(f => {
+      const created = parseISO(f.created_at);
+      if (f.proprietario_confirmado_em) {
+        const diff = differenceInHours(parseISO(f.proprietario_confirmado_em), created);
+        if (diff >= 0) tempos.criacaoConfProp.push(diff);
+      }
+      if (f.comprador_confirmado_em) {
+        const diff = differenceInHours(parseISO(f.comprador_confirmado_em), created);
+        if (diff >= 0) tempos.criacaoConfComp.push(diff);
+      }
+      if (isFichaConfirmada(f.status)) {
+        const lastConf = [f.proprietario_confirmado_em, f.comprador_confirmado_em]
+          .filter(Boolean)
+          .map(d => parseISO(d!))
+          .sort((a, b) => b.getTime() - a.getTime())[0];
+        if (lastConf) {
+          const diff = differenceInHours(lastConf, created);
+          if (diff >= 0) tempos.criacaoConfTotal.push(diff);
+        }
+      }
+    });
+    const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length) : null;
+    const formatHours = (h: number | null) => {
+      if (h === null) return '—';
+      if (h < 24) return `${h}h`;
+      const days = Math.floor(h / 24);
+      const rem = h % 24;
+      return rem > 0 ? `${days}d ${rem}h` : `${days}d`;
+    };
+    return {
+      confProp: { avg: avg(tempos.criacaoConfProp), count: tempos.criacaoConfProp.length, label: formatHours(avg(tempos.criacaoConfProp)) },
+      confComp: { avg: avg(tempos.criacaoConfComp), count: tempos.criacaoConfComp.length, label: formatHours(avg(tempos.criacaoConfComp)) },
+      confTotal: { avg: avg(tempos.criacaoConfTotal), count: tempos.criacaoConfTotal.length, label: formatHours(avg(tempos.criacaoConfTotal)) },
+    };
   }, [fichas]);
 
   // Monthly chart data
@@ -772,6 +855,105 @@ export default function ConstutoraRelatorios() {
                 </Table>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Phase 4: No-show, Motivos de Perda, Tempo Médio */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* No-show */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserX className="h-4 w-4 text-destructive" /> No-show
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center mb-4">
+              <p className="text-3xl font-bold">{noShowStats.total}</p>
+              <p className="text-sm text-muted-foreground">
+                {noShowStats.taxa}% das fichas
+              </p>
+            </div>
+            {noShowStats.topEmps.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Por empreendimento:</p>
+                {noShowStats.topEmps.map((e, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="truncate mr-2">{e.nome}</span>
+                    <Badge variant="outline" className="text-xs">{e.count}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">Nenhum no-show registrado</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Motivos de Perda */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" /> Motivos de Perda
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {motivosPerda.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">Nenhum motivo registrado</p>
+                <p className="text-xs text-muted-foreground mt-1">Registre motivos de perda nas fichas para ver dados aqui</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {motivosPerda.map((m, i) => {
+                  const maxCount = motivosPerda[0].count;
+                  const pct = Math.round((m.count / maxCount) * 100);
+                  return (
+                    <div key={i}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="truncate mr-2">{m.motivo}</span>
+                        <span className="font-medium shrink-0">{m.count}</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-destructive/60 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tempo Médio entre Etapas */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Timer className="h-4 w-4" /> Tempo Médio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Criação → Confirmação total</p>
+                <p className="text-xl font-bold">{tempoMedio.confTotal.label}</p>
+                <p className="text-xs text-muted-foreground">{tempoMedio.confTotal.count} fichas</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Criação → Conf. Proprietário</p>
+                <p className="text-lg font-bold">{tempoMedio.confProp.label}</p>
+                <p className="text-xs text-muted-foreground">{tempoMedio.confProp.count} fichas</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Criação → Conf. Comprador</p>
+                <p className="text-lg font-bold">{tempoMedio.confComp.label}</p>
+                <p className="text-xs text-muted-foreground">{tempoMedio.confComp.count} fichas</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
