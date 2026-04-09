@@ -124,15 +124,38 @@ export default function ConstutoraEquipes() {
       .order('nome');
 
     if (equipesData) {
-      const equipesWithCount = await Promise.all(
-        equipesData.map(async (equipe) => {
+      const equipeIds = equipesData.map(e => e.id);
+
+      // Fetch member counts and empreendimento counts in parallel
+      const [membrosCountResults, empVinculosData] = await Promise.all([
+        Promise.all(equipesData.map(async (equipe) => {
           const { count } = await supabase
             .from('equipes_membros')
             .select('*', { count: 'exact', head: true })
             .eq('equipe_id', equipe.id);
-          return { ...equipe, membros_count: count || 0 };
-        })
-      );
+          return { id: equipe.id, count: count || 0 };
+        })),
+        supabase
+          .from('equipe_empreendimentos')
+          .select('equipe_id, empreendimento_id')
+          .in('equipe_id', equipeIds),
+      ]);
+
+      const membrosCountMap = new Map(membrosCountResults.map(r => [r.id, r.count]));
+
+      // Build vinculos map
+      const vinculosMap: Record<string, string[]> = {};
+      (empVinculosData.data || []).forEach((v: any) => {
+        if (!vinculosMap[v.equipe_id]) vinculosMap[v.equipe_id] = [];
+        vinculosMap[v.equipe_id].push(v.empreendimento_id);
+      });
+      setEmpVinculos(vinculosMap);
+
+      const equipesWithCount = equipesData.map(equipe => ({
+        ...equipe,
+        membros_count: membrosCountMap.get(equipe.id) || 0,
+        empreendimentos_count: (vinculosMap[equipe.id] || []).length,
+      }));
 
       setAllEquipes(equipesWithCount);
 
