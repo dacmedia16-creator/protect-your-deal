@@ -539,16 +539,23 @@ export default function ConstutoraEquipes() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Select onValueChange={addMembro}>
-              <SelectTrigger><SelectValue placeholder="Adicionar corretor..." /></SelectTrigger>
-              <SelectContent>
-                {availableCorretores.length === 0 ? (
-                  <SelectItem value="none" disabled>Todos já estão na equipe</SelectItem>
-                ) : (
-                  availableCorretores.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)
-                )}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select onValueChange={addMembro}>
+                  <SelectTrigger><SelectValue placeholder="Adicionar corretor..." /></SelectTrigger>
+                  <SelectContent>
+                    {availableCorretores.length === 0 ? (
+                      <SelectItem value="none" disabled>Todos já estão na equipe</SelectItem>
+                    ) : (
+                      availableCorretores.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="outline" onClick={() => { resetCreateCorretorForm(); setCreateCorretorOpen(true); }}>
+                <UserPlus className="h-4 w-4 mr-1" /> Criar Corretor
+              </Button>
+            </div>
 
             {loadingMembros ? (
               <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
