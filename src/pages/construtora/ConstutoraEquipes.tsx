@@ -21,9 +21,10 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Plus, Users, Edit, Trash2, UserPlus, UserMinus, Loader2, Search,
-  Crown, ChevronDown, ChevronRight, FolderPlus, GitBranch,
+  Crown, ChevronDown, ChevronRight, FolderPlus, GitBranch, Building,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { invokeWithRetry } from '@/lib/invokeWithRetry';
@@ -40,9 +41,15 @@ interface Equipe {
   lider?: { id: string; nome: string } | null;
   membros_count?: number;
   subequipes?: Equipe[];
+  empreendimentos_count?: number;
 }
 
 interface Corretor {
+  id: string;
+  nome: string;
+}
+
+interface Empreendimento {
   id: string;
   nome: string;
 }
@@ -91,6 +98,12 @@ export default function ConstutoraEquipes() {
   const [newCorretorCpf, setNewCorretorCpf] = useState('');
   const [creatingCorretor, setCreatingCorretor] = useState(false);
 
+  // Empreendimentos dialog state
+  const [empDialogOpen, setEmpDialogOpen] = useState(false);
+  const [empreendimentos, setEmpreendimentos] = useState<Empreendimento[]>([]);
+  const [empVinculos, setEmpVinculos] = useState<Record<string, string[]>>({});
+  const [togglingEmp, setTogglingEmp] = useState(false);
+
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [cor, setCor] = useState(CORES[0]);
@@ -111,15 +124,38 @@ export default function ConstutoraEquipes() {
       .order('nome');
 
     if (equipesData) {
-      const equipesWithCount = await Promise.all(
-        equipesData.map(async (equipe) => {
+      const equipeIds = equipesData.map(e => e.id);
+
+      // Fetch member counts and empreendimento counts in parallel
+      const [membrosCountResults, empVinculosData] = await Promise.all([
+        Promise.all(equipesData.map(async (equipe) => {
           const { count } = await supabase
             .from('equipes_membros')
             .select('*', { count: 'exact', head: true })
             .eq('equipe_id', equipe.id);
-          return { ...equipe, membros_count: count || 0 };
-        })
-      );
+          return { id: equipe.id, count: count || 0 };
+        })),
+        supabase
+          .from('equipe_empreendimentos')
+          .select('equipe_id, empreendimento_id')
+          .in('equipe_id', equipeIds),
+      ]);
+
+      const membrosCountMap = new Map(membrosCountResults.map(r => [r.id, r.count]));
+
+      // Build vinculos map
+      const vinculosMap: Record<string, string[]> = {};
+      (empVinculosData.data || []).forEach((v: any) => {
+        if (!vinculosMap[v.equipe_id]) vinculosMap[v.equipe_id] = [];
+        vinculosMap[v.equipe_id].push(v.empreendimento_id);
+      });
+      setEmpVinculos(vinculosMap);
+
+      const equipesWithCount = equipesData.map(equipe => ({
+        ...equipe,
+        membros_count: membrosCountMap.get(equipe.id) || 0,
+        empreendimentos_count: (vinculosMap[equipe.id] || []).length,
+      }));
 
       setAllEquipes(equipesWithCount);
 
@@ -157,7 +193,54 @@ export default function ConstutoraEquipes() {
     } else {
       setCorretores([]);
     }
+
+    // Fetch empreendimentos da construtora
+    const { data: empData } = await supabase
+      .from('empreendimentos')
+      .select('id, nome')
+      .eq('construtora_id', construtoraId!)
+      .order('nome');
+    setEmpreendimentos(empData || []);
+
     setLoading(false);
+  }
+
+  async function openEmpDialog(equipe: Equipe) {
+    setSelectedEquipe(equipe);
+    setEmpDialogOpen(true);
+  }
+
+  async function toggleEmpVinculo(equipeId: string, empreendimentoId: string) {
+    setTogglingEmp(true);
+    const current = empVinculos[equipeId] || [];
+    const isLinked = current.includes(empreendimentoId);
+    try {
+      if (isLinked) {
+        const { error } = await supabase
+          .from('equipe_empreendimentos')
+          .delete()
+          .eq('equipe_id', equipeId)
+          .eq('empreendimento_id', empreendimentoId);
+        if (error) throw error;
+        setEmpVinculos(prev => ({
+          ...prev,
+          [equipeId]: prev[equipeId].filter(id => id !== empreendimentoId),
+        }));
+      } else {
+        const { error } = await supabase
+          .from('equipe_empreendimentos')
+          .insert({ equipe_id: equipeId, empreendimento_id: empreendimentoId });
+        if (error) throw error;
+        setEmpVinculos(prev => ({
+          ...prev,
+          [equipeId]: [...(prev[equipeId] || []), empreendimentoId],
+        }));
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao vincular empreendimento');
+    } finally {
+      setTogglingEmp(false);
+    }
   }
 
   async function handleSaveEquipe() {
@@ -383,11 +466,17 @@ export default function ConstutoraEquipes() {
           </CardHeader>
           <CardContent className="space-y-4">
             {equipe.descricao && <p className="text-sm text-muted-foreground line-clamp-2">{equipe.descricao}</p>}
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap">
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span>{equipe.membros_count} membros</span>
               </div>
+              {(empVinculos[equipe.id]?.length || 0) > 0 && (
+                <div className="flex items-center gap-1">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span>{empVinculos[equipe.id].length} empreendimento{empVinculos[equipe.id].length !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               {equipe.lider && (
                 <div className="flex items-center gap-1">
                   <Crown className="h-4 w-4 text-warning" />
@@ -402,6 +491,9 @@ export default function ConstutoraEquipes() {
               </Button>
               <Button variant="outline" size="sm" className="flex-1" onClick={() => openMembrosDialog(equipe)}>
                 <UserPlus className="h-4 w-4 mr-1" /> Membros
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => openEmpDialog(equipe)} title="Empreendimentos">
+                <Building className="h-4 w-4" />
               </Button>
               {!isSubequipe && (
                 <Button variant="outline" size="sm" onClick={() => openCreateDialog(equipe)} title="Sub-equipe">
@@ -707,6 +799,40 @@ export default function ConstutoraEquipes() {
               {creatingCorretor && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Criar e Adicionar à Equipe
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Vincular Empreendimentos */}
+      <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" />
+              Empreendimentos: {selectedEquipe?.nome}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {empreendimentos.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum empreendimento cadastrado</p>
+            ) : (
+              empreendimentos.map((emp) => {
+                const isLinked = (empVinculos[selectedEquipe?.id || ''] || []).includes(emp.id);
+                return (
+                  <label key={emp.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+                    <Checkbox
+                      checked={isLinked}
+                      disabled={togglingEmp}
+                      onCheckedChange={() => selectedEquipe && toggleEmpVinculo(selectedEquipe.id, emp.id)}
+                    />
+                    <span className="text-sm font-medium">{emp.nome}</span>
+                  </label>
+                );
+              })
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmpDialogOpen(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

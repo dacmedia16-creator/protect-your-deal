@@ -1048,6 +1048,42 @@ export type Database = {
           },
         ]
       }
+      equipe_empreendimentos: {
+        Row: {
+          created_at: string
+          empreendimento_id: string
+          equipe_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          empreendimento_id: string
+          equipe_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          empreendimento_id?: string
+          equipe_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_empreendimentos_empreendimento_id_fkey"
+            columns: ["empreendimento_id"]
+            isOneToOne: false
+            referencedRelation: "empreendimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipe_empreendimentos_equipe_id_fkey"
+            columns: ["equipe_id"]
+            isOneToOne: false
+            referencedRelation: "equipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipes: {
         Row: {
           ativa: boolean | null
