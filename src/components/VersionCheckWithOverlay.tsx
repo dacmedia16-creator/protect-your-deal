@@ -144,7 +144,7 @@ export function VersionCheckWithOverlay() {
   useEffect(() => {
     if (isInactive) return;
 
-    const initialTimeout = setTimeout(checkVersion, 1500);
+    const initialTimeout = setTimeout(checkVersion, 10000);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') checkVersion();
