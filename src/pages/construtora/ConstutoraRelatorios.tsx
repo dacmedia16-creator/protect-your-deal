@@ -502,11 +502,46 @@ export default function ConstutoraRelatorios() {
       .slice(0, 15);
   }, [fichas, corretorNomeMap]);
 
+  // Ranking equipes
+  const rankingEquipes = useMemo(() => {
+    const data: Record<string, { total: number; confirmados: number; vendas: number; valor: number }> = {};
+    fichas.forEach(f => {
+      if (f.user_id) {
+        const eqs = userEquipeMap[f.user_id] || [];
+        eqs.forEach(eqId => {
+          if (!data[eqId]) data[eqId] = { total: 0, confirmados: 0, vendas: 0, valor: 0 };
+          data[eqId].total++;
+          if (isFichaConfirmada(f.status)) data[eqId].confirmados++;
+          if (f.convertido_venda) {
+            data[eqId].vendas++;
+            data[eqId].valor += f.valor_venda || 0;
+          }
+        });
+      }
+    });
+    return Object.entries(data)
+      .map(([id, v]) => ({
+        id,
+        nome: equipeNomeMap[id]?.nome || 'Desconhecida',
+        cor: equipeNomeMap[id]?.cor || '#3B82F6',
+        ...v,
+        taxaConf: v.total > 0 ? Math.round((v.confirmados / v.total) * 100) : 0,
+        taxaVenda: v.total > 0 ? Math.round((v.vendas / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [fichas, userEquipeMap, equipeNomeMap]);
+
   // CSV export
+  const getEquipeNomeForUser = (userId: string | null) => {
+    if (!userId) return '-';
+    const eqs = userEquipeMap[userId] || [];
+    return eqs.map(eqId => equipeNomeMap[eqId]?.nome || '').filter(Boolean).join(', ') || '-';
+  };
+
   const exportCSV = () => {
-    const header = 'Protocolo,Empreendimento,Imobiliária,Corretor,Data,Status,Venda,Valor\n';
+    const header = 'Protocolo,Empreendimento,Imobiliária,Corretor,Equipe,Data,Status,Venda,Valor\n';
     const rows = fichas.map(f =>
-      `${f.protocolo},${empNomeMap[f.empreendimento_id || ''] || '-'},${imobNomeMap[f.imobiliaria_id || ''] || '-'},${corretorNomeMap[f.user_id || ''] || '-'},${format(parseISO(f.created_at), 'dd/MM/yyyy')},${f.status},${f.convertido_venda ? 'Sim' : 'Não'},${f.valor_venda || ''}`
+      `${f.protocolo},${empNomeMap[f.empreendimento_id || ''] || '-'},${imobNomeMap[f.imobiliaria_id || ''] || '-'},${corretorNomeMap[f.user_id || ''] || '-'},${getEquipeNomeForUser(f.user_id)},${format(parseISO(f.created_at), 'dd/MM/yyyy')},${f.status},${f.convertido_venda ? 'Sim' : 'Não'},${f.valor_venda || ''}`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
