@@ -110,6 +110,7 @@ export default function ConstutoraFichas() {
     completo: 'Completo',
     finalizado_parcial: 'Finalizado',
     cancelado: 'Cancelado',
+    no_show: 'No-show',
   };
 
   if (loading) {
