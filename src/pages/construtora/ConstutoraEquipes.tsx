@@ -41,9 +41,15 @@ interface Equipe {
   lider?: { id: string; nome: string } | null;
   membros_count?: number;
   subequipes?: Equipe[];
+  empreendimentos_count?: number;
 }
 
 interface Corretor {
+  id: string;
+  nome: string;
+}
+
+interface Empreendimento {
   id: string;
   nome: string;
 }
