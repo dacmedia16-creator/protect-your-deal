@@ -22,6 +22,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Cell, Legend } from 'recharts';
+import { EquipeBadge } from '@/components/EquipeBadge';
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos' },
@@ -87,6 +88,7 @@ export default function ConstutoraRelatorios() {
   const [empFilter, setEmpFilter] = useState('todos');
   const [imobFilter, setImobFilter] = useState('todos');
   const [corretorFilter, setCorretorFilter] = useState('todos');
+  const [equipeFilter, setEquipeFilter] = useState('todos');
 
   // Fetch construtora_id
   const { data: construtora } = useQuery({
@@ -201,6 +203,63 @@ export default function ConstutoraRelatorios() {
     enabled: !!construtoraId,
   });
 
+  // Fetch equipes da construtora
+  const { data: equipes = [] } = useQuery({
+    queryKey: ['construtora-equipes-rel', construtoraId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('equipes')
+        .select('id, nome, cor')
+        .eq('construtora_id', construtoraId!)
+        .eq('ativa', true)
+        .order('nome');
+      return data || [];
+    },
+    enabled: !!construtoraId,
+  });
+
+  // Fetch membros de equipes
+  const { data: equipesMembros = [] } = useQuery({
+    queryKey: ['construtora-equipes-membros-rel', equipes.map(e => e.id).join(',')],
+    queryFn: async () => {
+      if (!equipes.length) return [];
+      const equipeIds = equipes.map(e => e.id);
+      const { data } = await supabase
+        .from('equipes_membros')
+        .select('user_id, equipe_id')
+        .in('equipe_id', equipeIds);
+      return data || [];
+    },
+    enabled: equipes.length > 0,
+  });
+
+  // Map user_id -> equipe_ids[]
+  const userEquipeMap = useMemo(() => {
+    const m: Record<string, string[]> = {};
+    equipesMembros.forEach(em => {
+      if (!m[em.user_id]) m[em.user_id] = [];
+      m[em.user_id].push(em.equipe_id);
+    });
+    return m;
+  }, [equipesMembros]);
+
+  // Map equipe_id -> Set<user_id>
+  const equipeUserMap = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    equipesMembros.forEach(em => {
+      if (!m[em.equipe_id]) m[em.equipe_id] = new Set();
+      m[em.equipe_id].add(em.user_id);
+    });
+    return m;
+  }, [equipesMembros]);
+
+  // Equipe info map
+  const equipeNomeMap = useMemo(() => {
+    const m: Record<string, { nome: string; cor: string }> = {};
+    equipes.forEach(e => { m[e.id] = { nome: e.nome, cor: e.cor || '#3B82F6' }; });
+    return m;
+  }, [equipes]);
+
   // Name maps
   const empNomeMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -220,15 +279,20 @@ export default function ConstutoraRelatorios() {
     return m;
   }, [corretores]);
 
-  // Apply local filters (empreendimento, imobiliária, corretor)
+  // Apply local filters (empreendimento, imobiliária, corretor, equipe)
   const fichas = useMemo(() => {
     return fichasRaw.filter(f => {
       if (empFilter !== 'todos' && f.empreendimento_id !== empFilter) return false;
       if (imobFilter !== 'todos' && f.imobiliaria_id !== imobFilter) return false;
       if (corretorFilter !== 'todos' && f.user_id !== corretorFilter) return false;
+      if (equipeFilter !== 'todos') {
+        if (!f.user_id) return false;
+        const userEquipes = userEquipeMap[f.user_id];
+        if (!userEquipes || !userEquipes.includes(equipeFilter)) return false;
+      }
       return true;
     });
-  }, [fichasRaw, empFilter, imobFilter, corretorFilter]);
+  }, [fichasRaw, empFilter, imobFilter, corretorFilter, equipeFilter, userEquipeMap]);
 
   // KPIs current
   const kpis = useMemo(() => {
@@ -438,11 +502,46 @@ export default function ConstutoraRelatorios() {
       .slice(0, 15);
   }, [fichas, corretorNomeMap]);
 
+  // Ranking equipes
+  const rankingEquipes = useMemo(() => {
+    const data: Record<string, { total: number; confirmados: number; vendas: number; valor: number }> = {};
+    fichas.forEach(f => {
+      if (f.user_id) {
+        const eqs = userEquipeMap[f.user_id] || [];
+        eqs.forEach(eqId => {
+          if (!data[eqId]) data[eqId] = { total: 0, confirmados: 0, vendas: 0, valor: 0 };
+          data[eqId].total++;
+          if (isFichaConfirmada(f.status)) data[eqId].confirmados++;
+          if (f.convertido_venda) {
+            data[eqId].vendas++;
+            data[eqId].valor += f.valor_venda || 0;
+          }
+        });
+      }
+    });
+    return Object.entries(data)
+      .map(([id, v]) => ({
+        id,
+        nome: equipeNomeMap[id]?.nome || 'Desconhecida',
+        cor: equipeNomeMap[id]?.cor || '#3B82F6',
+        ...v,
+        taxaConf: v.total > 0 ? Math.round((v.confirmados / v.total) * 100) : 0,
+        taxaVenda: v.total > 0 ? Math.round((v.vendas / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [fichas, userEquipeMap, equipeNomeMap]);
+
   // CSV export
+  const getEquipeNomeForUser = (userId: string | null) => {
+    if (!userId) return '-';
+    const eqs = userEquipeMap[userId] || [];
+    return eqs.map(eqId => equipeNomeMap[eqId]?.nome || '').filter(Boolean).join(', ') || '-';
+  };
+
   const exportCSV = () => {
-    const header = 'Protocolo,Empreendimento,Imobiliária,Corretor,Data,Status,Venda,Valor\n';
+    const header = 'Protocolo,Empreendimento,Imobiliária,Corretor,Equipe,Data,Status,Venda,Valor\n';
     const rows = fichas.map(f =>
-      `${f.protocolo},${empNomeMap[f.empreendimento_id || ''] || '-'},${imobNomeMap[f.imobiliaria_id || ''] || '-'},${corretorNomeMap[f.user_id || ''] || '-'},${format(parseISO(f.created_at), 'dd/MM/yyyy')},${f.status},${f.convertido_venda ? 'Sim' : 'Não'},${f.valor_venda || ''}`
+      `${f.protocolo},${empNomeMap[f.empreendimento_id || ''] || '-'},${imobNomeMap[f.imobiliaria_id || ''] || '-'},${corretorNomeMap[f.user_id || ''] || '-'},${getEquipeNomeForUser(f.user_id)},${format(parseISO(f.created_at), 'dd/MM/yyyy')},${f.status},${f.convertido_venda ? 'Sim' : 'Não'},${f.valor_venda || ''}`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -459,7 +558,7 @@ export default function ConstutoraRelatorios() {
     vendas: { label: 'Vendas', color: 'hsl(142 76% 36%)' },
   };
 
-  const hasActiveFilters = empFilter !== 'todos' || imobFilter !== 'todos' || corretorFilter !== 'todos' || statusFilter !== 'todos';
+  const hasActiveFilters = empFilter !== 'todos' || imobFilter !== 'todos' || corretorFilter !== 'todos' || statusFilter !== 'todos' || equipeFilter !== 'todos';
 
   return (
     <div className="space-y-6">
@@ -488,6 +587,7 @@ export default function ConstutoraRelatorios() {
                   setEmpFilter('todos');
                   setImobFilter('todos');
                   setCorretorFilter('todos');
+                  setEquipeFilter('todos');
                 }}
               >
                 Limpar filtros
@@ -496,7 +596,7 @@ export default function ConstutoraRelatorios() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Data início</label>
               <Popover>
@@ -568,6 +668,23 @@ export default function ConstutoraRelatorios() {
                   <SelectItem value="todos">Todos</SelectItem>
                   {corretores.map(c => (
                     <SelectItem key={c.user_id} value={c.user_id}>{c.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipe</label>
+              <Select value={equipeFilter} onValueChange={setEquipeFilter}>
+                <SelectTrigger className="text-xs sm:text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas</SelectItem>
+                  {equipes.map(e => (
+                    <SelectItem key={e.id} value={e.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: e.cor || '#3B82F6' }} />
+                        {e.nome}
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -761,6 +878,66 @@ export default function ConstutoraRelatorios() {
           )}
         </CardContent>
       </Card>
+
+      {/* Ranking Equipes */}
+      {rankingEquipes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" /> Ranking de Equipes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Equipe</TableHead>
+                    <TableHead className="text-center">Fichas</TableHead>
+                    <TableHead className="text-center">Confirmadas</TableHead>
+                    <TableHead className="text-center">Taxa Conf.</TableHead>
+                    <TableHead className="text-center">Vendas</TableHead>
+                    <TableHead className="text-center">Taxa Venda</TableHead>
+                    <TableHead className="text-right">Valor Vendido</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rankingEquipes.map((eq, i) => (
+                    <TableRow key={eq.id}>
+                      <TableCell>
+                        {i === 0 ? <Medal className="h-4 w-4 text-amber-500" /> :
+                         i === 1 ? <Medal className="h-4 w-4 text-gray-400" /> :
+                         i === 2 ? <Medal className="h-4 w-4 text-amber-700" /> :
+                         <span className="text-sm text-muted-foreground">{i + 1}</span>}
+                      </TableCell>
+                      <TableCell>
+                        <EquipeBadge nome={eq.nome} cor={eq.cor} />
+                      </TableCell>
+                      <TableCell className="text-center text-sm">{eq.total}</TableCell>
+                      <TableCell className="text-center text-sm">{eq.confirmados}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={eq.taxaConf >= 70 ? 'default' : eq.taxaConf >= 40 ? 'secondary' : 'outline'} className="text-xs">
+                          {eq.taxaConf}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-medium text-sm">{eq.vendas}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={eq.taxaVenda >= 20 ? 'default' : 'secondary'} className="text-xs">
+                          {eq.taxaVenda}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {eq.valor > 0 ? `R$ ${eq.valor.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Ranking Imobiliárias Parceiras + Conversão por Empreendimento */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -976,6 +1153,7 @@ export default function ConstutoraRelatorios() {
                     <TableHead>Empreendimento</TableHead>
                     <TableHead>Imobiliária</TableHead>
                     <TableHead>Corretor</TableHead>
+                    <TableHead>Equipe</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Venda</TableHead>
@@ -989,6 +1167,7 @@ export default function ConstutoraRelatorios() {
                       <TableCell className="text-sm">{empNomeMap[f.empreendimento_id || ''] || '-'}</TableCell>
                       <TableCell className="text-sm">{imobNomeMap[f.imobiliaria_id || ''] || '-'}</TableCell>
                       <TableCell className="text-sm">{corretorNomeMap[f.user_id || ''] || '-'}</TableCell>
+                      <TableCell className="text-sm">{getEquipeNomeForUser(f.user_id)}</TableCell>
                       <TableCell className="text-sm">{format(parseISO(f.created_at), 'dd/MM/yyyy')}</TableCell>
                       <TableCell>
                         <Badge variant={isFichaConfirmada(f.status) ? 'default' : 'secondary'}>
