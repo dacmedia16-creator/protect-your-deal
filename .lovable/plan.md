@@ -1,40 +1,99 @@
 
 
-# Diagnóstico de anexo: tratar Data URL e melhorar logs
+# Plano: Gestão Comercial de Visitas — Painel Construtora
 
-## Análise da causa raiz
+## 1. O que existe hoje
 
-Verifiquei o código do frontend (`fileToBase64` em AdminWhatsApp.tsx, linha 38): ele já faz `result.split(',')[1]` para remover o prefixo Data URL. Portanto, o `mediaBase64` que chega na edge function **já é base64 puro** na maioria dos casos.
+| Tela | O que faz |
+|------|-----------|
+| `ConstrutoraDashboard` | 4 KPI cards (corretores, fichas/mês, empreendimentos, código), gráfico 6 meses, ações rápidas, assinatura |
+| `ConstutoraRelatorios` | Filtros período + status, 4 KPIs (total, confirmados, taxa, vendas), evolução mensal, fichas por empreendimento, fichas por imobiliária, tabela detalhada, export CSV |
+| `ConstutoraFichas` | Lista de fichas com busca e filtro por imobiliária, status badges, delete |
+| `ConstutoraCorretores` | Lista com KPIs, CRUD, equipes |
 
-Mesmo assim, adicionar a detecção de Data URL na edge function é uma boa prática defensiva (caso outro caller envie com prefixo). E os logs aprimorados vão ajudar a identificar se o problema está no tamanho, no MIME, ou na montagem do Blob.
+## 2. O que pode ser melhorado sem mudar o fluxo do corretor
 
-**Hipótese mais provável**: dado que os logs mostram 201 com `attachments=Blob(3990118b, video/mp4)` e o texto chega mas o anexo não, o problema pode ser um **limite de tamanho do nginx/ZionTalk** para multipart (o vídeo tem ~4MB). O diagnóstico melhorado confirmará isso.
+### Dashboard (`ConstrutoraDashboard`)
+- Adicionar cards executivos: fichas pendentes, confirmadas, taxa de confirmação, vendas no mês, valor vendido
+- Comparativos visuais com período anterior (setas alta/queda com %)
+- Alertas gerenciais: fichas pendentes há mais de X dias, queda de performance MoM
+- Ações rápidas contextuais: link direto para fichas pendentes, fichas com venda
 
-## Alterações (1 arquivo)
+### Relatórios (`ConstutoraRelatorios`)
+- Adicionar filtros por empreendimento, imobiliária parceira e corretor
+- KPIs com comparativo período anterior
+- Ranking de corretores por volume e conversão
+- Ranking de imobiliárias parceiras
+- Conversão por empreendimento (fichas -> confirmadas -> vendas)
+- Valor vendido e ticket médio
 
-### `supabase/functions/send-whatsapp/index.ts` — linhas 240-255
+### Fichas (`ConstutoraFichas`)
+- Adicionar filtros por status, empreendimento, período
+- Contadores rápidos no topo (total, pendentes, confirmadas, vendas)
 
-Substituir o bloco `if (mediaBase64)` por:
+## 3. Relatórios implementáveis agora (com dados existentes)
 
-1. **Detectar prefixo Data URL** com regex `/^data:([^;]+);base64,/`
-2. Se detectar, extrair o MIME do prefixo e remover antes do `atob`
-3. Se não, usar base64 direto e inferir MIME pela extensão
-4. **Prioridade do MIME**: prefixo Data URL > extensão > `application/octet-stream`
-5. **Logs de diagnóstico**:
-   - `[send-whatsapp] mediaBase64 received: <length> chars, hasDataUrlPrefix: true/false`
-   - `[send-whatsapp] MIME resolved: <mime> (source: dataurl|extension|fallback)`
-   - `[send-whatsapp] Blob created: <size> bytes, filename: <name>`
-6. **Em caso de falha** (status != 201), incluir no JSON de retorno: `mimeDetected`, `blobSize`, `filename`
+| Relatório | Campos disponíveis |
+|-----------|-------------------|
+| Funil de visitas (criadas -> confirmadas -> vendas) | `status`, `convertido_venda` |
+| Conversão por corretor | `user_id` + join `profiles` (via RPC) |
+| Conversão por empreendimento | `empreendimento_id` |
+| Conversão por imobiliária/parceiro | `imobiliaria_id` |
+| Valor vendido e ticket médio | `valor_venda`, `convertido_venda` |
+| Ranking de parceiros | Agrupamento por `imobiliaria_id` |
+| Produtividade por corretor | Contagem fichas por `user_id` |
+| Tendências de performance | Série temporal por `created_at` |
 
-### O que NÃO muda
-- Endpoint (`/send_message/`), campo (`attachments`), auth, CORS, outras actions, logWhatsApp
+## 4. Relatórios que dependem de novos dados
 
-## Como validar nos logs
+| Relatório | Campo necessário | Tabela |
+|-----------|-----------------|--------|
+| No-show (visita agendada sem comparecimento) | `compareceu` (boolean) ou status `no_show` | `fichas_visita` |
+| Motivos de perda | `motivo_perda` (text) | `fichas_visita` |
+| Tempo médio entre etapas | Timestamps por etapa (`enviado_em`, `confirmado_em`, etc.) | `fichas_visita` — já possui `proprietario_confirmado_em`, `comprador_confirmado_em`, `created_at` |
+| Origem da visita | `origem` (enum/text) | `fichas_visita` |
 
-Após envio com anexo, verificar:
-1. `hasDataUrlPrefix: false` (confirma que frontend já limpa)
-2. `Blob created: X bytes` — se X for muito diferente do tamanho esperado, o base64 está corrompido
-3. `MIME resolved: video/mp4 (source: extension)` — confirma detecção correta
-4. Status 201 + destinatário recebe mídia = resolvido
-5. Status 201 + sem mídia = problema é do lado do ZionTalk (limite de tamanho ou formato não suportado)
+**Nota**: tempo médio entre criação e confirmação já é calculável com os campos existentes (`created_at`, `proprietario_confirmado_em`, `comprador_confirmado_em`).
+
+## 5. Plano de implementação por fases
+
+### Fase 1 — Dashboard Executivo (implementar agora)
+Melhorar `ConstrutoraDashboard` com:
+- 6 KPI cards: fichas criadas, confirmadas, pendentes, taxa de confirmação, vendas, valor vendido
+- Comparativo com mês anterior (setas + %)
+- Card de alertas gerenciais (fichas pendentes, queda de performance)
+- Gráfico mensal empilhado (total vs confirmados vs vendas)
+
+### Fase 2 — Filtros avançados no Relatórios
+- Filtros por empreendimento, imobiliária, corretor
+- KPIs com comparativo período anterior
+- Funil visual (criadas → confirmadas → vendas)
+
+### Fase 3 — Rankings e conversão
+- Ranking de corretores (volume, confirmação, vendas)
+- Ranking de imobiliárias parceiras
+- Conversão por empreendimento
+- Ticket médio e valor vendido
+
+### Fase 4 — Novos campos + relatórios avançados
+- Migração para adicionar `motivo_perda` e status `no_show`
+- Relatório de no-show
+- Relatório de motivos de perda
+- Tempo médio entre etapas
+
+## 6. Detalhes da Fase 1 (será implementada)
+
+### Arquivo: `src/pages/construtora/ConstrutoraDashboard.tsx`
+
+**Mudanças**:
+1. Expandir `DashboardStats` com: `fichasConfirmadas`, `fichasPendentes`, `vendasMes`, `valorVendidoMes`, `fichasMesAnteriorConfirmadas`, `vendasMesAnterior`, `valorVendidoMesAnterior`
+2. Buscar fichas do mês com `select('status, convertido_venda, valor_venda')` em vez de `head: true` para poder calcular os KPIs detalhados, e o mesmo para o mês anterior
+3. Renderizar 6 cards em grid 2x3 mobile / 3x2 desktop com indicadores de variação
+4. Card de alertas: fichas pendentes há mais de 48h (query com `status = 'pendente'` e `created_at < now - 48h`), queda MoM > 20%
+5. Gráfico mensal com barras empilhadas (total, confirmados, vendas)
+6. Manter estrutura existente de ações rápidas e assinatura
+
+**Não muda**: nenhuma rota, nenhum componente do corretor, nenhuma tabela do banco.
+
+Todas as queries usam dados já existentes em `fichas_visita`. Nenhuma migração necessária para a Fase 1.
 
