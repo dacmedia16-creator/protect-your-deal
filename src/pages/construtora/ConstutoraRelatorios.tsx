@@ -28,6 +28,8 @@ const STATUS_OPTIONS = [
   { value: 'pendente', label: 'Pendente' },
   { value: 'completo', label: 'Completo' },
   { value: 'finalizado_parcial', label: 'Finalizado Parcial' },
+  { value: 'no_show', label: 'No-show' },
+  { value: 'cancelado', label: 'Cancelado' },
 ];
 
 const CHART_COLORS = [
@@ -53,6 +55,9 @@ interface FichaRel {
   user_id: string | null;
   convertido_venda: boolean | null;
   valor_venda: number | null;
+  motivo_perda: string | null;
+  proprietario_confirmado_em: string | null;
+  comprador_confirmado_em: string | null;
 }
 
 function calcVar(current: number, previous: number): number | null {
