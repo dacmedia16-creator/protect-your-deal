@@ -879,6 +879,66 @@ export default function ConstutoraRelatorios() {
         </CardContent>
       </Card>
 
+      {/* Ranking Equipes */}
+      {rankingEquipes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" /> Ranking de Equipes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Equipe</TableHead>
+                    <TableHead className="text-center">Fichas</TableHead>
+                    <TableHead className="text-center">Confirmadas</TableHead>
+                    <TableHead className="text-center">Taxa Conf.</TableHead>
+                    <TableHead className="text-center">Vendas</TableHead>
+                    <TableHead className="text-center">Taxa Venda</TableHead>
+                    <TableHead className="text-right">Valor Vendido</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rankingEquipes.map((eq, i) => (
+                    <TableRow key={eq.id}>
+                      <TableCell>
+                        {i === 0 ? <Medal className="h-4 w-4 text-amber-500" /> :
+                         i === 1 ? <Medal className="h-4 w-4 text-gray-400" /> :
+                         i === 2 ? <Medal className="h-4 w-4 text-amber-700" /> :
+                         <span className="text-sm text-muted-foreground">{i + 1}</span>}
+                      </TableCell>
+                      <TableCell>
+                        <EquipeBadge nome={eq.nome} cor={eq.cor} />
+                      </TableCell>
+                      <TableCell className="text-center text-sm">{eq.total}</TableCell>
+                      <TableCell className="text-center text-sm">{eq.confirmados}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={eq.taxaConf >= 70 ? 'default' : eq.taxaConf >= 40 ? 'secondary' : 'outline'} className="text-xs">
+                          {eq.taxaConf}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-medium text-sm">{eq.vendas}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={eq.taxaVenda >= 20 ? 'default' : 'secondary'} className="text-xs">
+                          {eq.taxaVenda}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {eq.valor > 0 ? `R$ ${eq.valor.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Ranking Imobiliárias Parceiras + Conversão por Empreendimento */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
