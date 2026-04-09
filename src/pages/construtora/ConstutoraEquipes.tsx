@@ -296,6 +296,47 @@ export default function ConstutoraEquipes() {
     setExpandedEquipes(n);
   }
 
+  function resetCreateCorretorForm() {
+    setNewCorretorNome(''); setNewCorretorEmail(''); setNewCorretorSenha('');
+    setNewCorretorTelefone(''); setNewCorretorCreci(''); setNewCorretorCpf('');
+  }
+
+  async function handleCreateCorretor() {
+    if (!newCorretorNome.trim() || !newCorretorEmail.trim() || !newCorretorSenha.trim()) {
+      toast.error('Nome, email e senha são obrigatórios');
+      return;
+    }
+    if (newCorretorSenha.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+    setCreatingCorretor(true);
+    try {
+      const { data, error } = await invokeWithRetry<{ success: boolean; user_id: string; error?: string }>(
+        'admin-create-corretor',
+        { body: { nome: newCorretorNome.trim(), email: newCorretorEmail.trim(), senha: newCorretorSenha, telefone: newCorretorTelefone.trim() || undefined, creci: newCorretorCreci.trim() || undefined, cpf: newCorretorCpf.trim() || undefined, construtora: true } }
+      );
+      if (error || !data?.success) {
+        throw new Error((data as any)?.error || error?.message || 'Erro ao criar corretor');
+      }
+      // Auto-add to selected team
+      if (selectedEquipe && data.user_id) {
+        await supabase.from('equipes_membros').insert({
+          equipe_id: selectedEquipe.id, user_id: data.user_id, cargo: 'corretor',
+        });
+      }
+      toast.success('Corretor criado e adicionado à equipe!');
+      setCreateCorretorOpen(false);
+      resetCreateCorretorForm();
+      await fetchData();
+      if (selectedEquipe) await fetchMembros(selectedEquipe.id);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao criar corretor');
+    } finally {
+      setCreatingCorretor(false);
+    }
+  }
+
   const filteredEquipes = equipes.filter(e => {
     const matchesSearch = e.nome.toLowerCase().includes(search.toLowerCase());
     const subMatches = e.subequipes?.some(s => s.nome.toLowerCase().includes(search.toLowerCase()));
