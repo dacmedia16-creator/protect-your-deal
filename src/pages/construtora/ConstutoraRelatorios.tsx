@@ -672,6 +672,23 @@ export default function ConstutoraRelatorios() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipe</label>
+              <Select value={equipeFilter} onValueChange={setEquipeFilter}>
+                <SelectTrigger className="text-xs sm:text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas</SelectItem>
+                  {equipes.map(e => (
+                    <SelectItem key={e.id} value={e.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: e.cor || '#3B82F6' }} />
+                        {e.nome}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
