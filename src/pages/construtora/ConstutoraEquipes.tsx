@@ -466,11 +466,17 @@ export default function ConstutoraEquipes() {
           </CardHeader>
           <CardContent className="space-y-4">
             {equipe.descricao && <p className="text-sm text-muted-foreground line-clamp-2">{equipe.descricao}</p>}
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap">
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span>{equipe.membros_count} membros</span>
               </div>
+              {(empVinculos[equipe.id]?.length || 0) > 0 && (
+                <div className="flex items-center gap-1">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span>{empVinculos[equipe.id].length} empreendimento{empVinculos[equipe.id].length !== 1 ? 's' : ''}</span>
+                </div>
+              )}
               {equipe.lider && (
                 <div className="flex items-center gap-1">
                   <Crown className="h-4 w-4 text-warning" />
