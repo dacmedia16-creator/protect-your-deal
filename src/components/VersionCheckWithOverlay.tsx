@@ -55,6 +55,16 @@ export function VersionCheckWithOverlay() {
   // ── Force update (silent) ──
   const forceUpdate = useCallback(async () => {
     if (updatingRef.current) return;
+
+    // Cooldown: skip if we already reloaded recently
+    try {
+      const last = sessionStorage.getItem('lastSilentUpdate');
+      if (last && Date.now() - Number(last) < RELOAD_COOLDOWN_MS) {
+        console.log('🔄 Reload cooldown ativo, ignorando update');
+        return;
+      }
+    } catch { /* sessionStorage may be unavailable */ }
+
     updatingRef.current = true;
     console.log('🔄 Atualizando app silenciosamente...');
 
@@ -77,6 +87,7 @@ export function VersionCheckWithOverlay() {
       console.warn('Erro ao limpar caches:', err);
     }
 
+    try { sessionStorage.setItem('lastSilentUpdate', String(Date.now())); } catch {}
     window.location.reload();
   }, []);
 
