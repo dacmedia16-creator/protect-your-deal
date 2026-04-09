@@ -22,6 +22,7 @@ import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { isFichaConfirmada } from '@/lib/fichaStatus';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Cell, Legend } from 'recharts';
+import { EquipeBadge } from '@/components/EquipeBadge';
 
 const STATUS_OPTIONS = [
   { value: 'todos', label: 'Todos' },
