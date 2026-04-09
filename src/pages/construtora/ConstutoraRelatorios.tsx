@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   BarChart3, CalendarIcon, Download, FileText, CheckCircle,
-  TrendingUp, TrendingDown, DollarSign, Filter, ArrowRight
+  TrendingUp, TrendingDown, DollarSign, Filter, ArrowRight,
+  Trophy, Medal, Users, Building
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
