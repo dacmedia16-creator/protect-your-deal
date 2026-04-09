@@ -112,7 +112,7 @@ export default function ConstutoraRelatorios() {
     queryFn: async () => {
       let query = supabase
         .from('fichas_visita')
-        .select('id, protocolo, imovel_endereco, status, created_at, data_visita, empreendimento_id, imobiliaria_id, user_id, convertido_venda, valor_venda')
+        .select('id, protocolo, imovel_endereco, status, created_at, data_visita, empreendimento_id, imobiliaria_id, user_id, convertido_venda, valor_venda, motivo_perda, proprietario_confirmado_em, comprador_confirmado_em')
         .eq('construtora_id', construtoraId!)
         .gte('created_at', dataInicio.toISOString())
         .lte('created_at', dataFim.toISOString());
