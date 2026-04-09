@@ -859,6 +859,105 @@ export default function ConstutoraRelatorios() {
         </Card>
       </div>
 
+      {/* Phase 4: No-show, Motivos de Perda, Tempo Médio */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* No-show */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <UserX className="h-4 w-4 text-destructive" /> No-show
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center mb-4">
+              <p className="text-3xl font-bold">{noShowStats.total}</p>
+              <p className="text-sm text-muted-foreground">
+                {noShowStats.taxa}% das fichas
+              </p>
+            </div>
+            {noShowStats.topEmps.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Por empreendimento:</p>
+                {noShowStats.topEmps.map((e, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="truncate mr-2">{e.nome}</span>
+                    <Badge variant="outline" className="text-xs">{e.count}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">Nenhum no-show registrado</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Motivos de Perda */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" /> Motivos de Perda
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {motivosPerda.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-sm text-muted-foreground">Nenhum motivo registrado</p>
+                <p className="text-xs text-muted-foreground mt-1">Registre motivos de perda nas fichas para ver dados aqui</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {motivosPerda.map((m, i) => {
+                  const maxCount = motivosPerda[0].count;
+                  const pct = Math.round((m.count / maxCount) * 100);
+                  return (
+                    <div key={i}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="truncate mr-2">{m.motivo}</span>
+                        <span className="font-medium shrink-0">{m.count}</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-destructive/60 rounded-full transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tempo Médio entre Etapas */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Timer className="h-4 w-4" /> Tempo Médio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Criação → Confirmação total</p>
+                <p className="text-xl font-bold">{tempoMedio.confTotal.label}</p>
+                <p className="text-xs text-muted-foreground">{tempoMedio.confTotal.count} fichas</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Criação → Conf. Proprietário</p>
+                <p className="text-lg font-bold">{tempoMedio.confProp.label}</p>
+                <p className="text-xs text-muted-foreground">{tempoMedio.confProp.count} fichas</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs text-muted-foreground">Criação → Conf. Comprador</p>
+                <p className="text-lg font-bold">{tempoMedio.confComp.label}</p>
+                <p className="text-xs text-muted-foreground">{tempoMedio.confComp.count} fichas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Detailed table */}
       <Card>
         <CardHeader>
