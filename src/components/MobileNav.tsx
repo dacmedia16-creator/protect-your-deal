@@ -7,18 +7,22 @@ import { useConvitesPendentes } from '@/hooks/useConvitesPendentes';
 import { Badge } from '@/components/ui/badge';
 import { useImobiliariaFeatureFlag } from '@/hooks/useImobiliariaFeatureFlag';
 import { useUserFeatureFlag } from '@/hooks/useUserFeatureFlag';
+import { useConstutoraFeatureFlag } from '@/hooks/useConstutoraFeatureFlag';
 import { useEquipeLider } from '@/hooks/useEquipeLider';
 
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { imobiliariaId } = useUserRole();
+  const { imobiliariaId, construtoraId } = useUserRole();
   const { enabled: imobSurveyEnabled } = useImobiliariaFeatureFlag('post_visit_survey');
   const { enabled: userSurveyEnabled } = useUserFeatureFlag('post_visit_survey');
+  const { enabled: constSurveyEnabled } = useConstutoraFeatureFlag('post_visit_survey');
   const { isLider } = useEquipeLider();
   
-  const surveyEnabled = imobiliariaId ? imobSurveyEnabled : userSurveyEnabled;
+  const surveyEnabled = imobiliariaId 
+    ? imobSurveyEnabled 
+    : (construtoraId ? constSurveyEnabled : userSurveyEnabled);
 
   const navItems = [
     { path: '/dashboard', label: 'Home', icon: Home },
