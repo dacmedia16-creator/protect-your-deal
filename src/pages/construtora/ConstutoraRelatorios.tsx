@@ -203,6 +203,63 @@ export default function ConstutoraRelatorios() {
     enabled: !!construtoraId,
   });
 
+  // Fetch equipes da construtora
+  const { data: equipes = [] } = useQuery({
+    queryKey: ['construtora-equipes-rel', construtoraId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('equipes')
+        .select('id, nome, cor')
+        .eq('construtora_id', construtoraId!)
+        .eq('ativa', true)
+        .order('nome');
+      return data || [];
+    },
+    enabled: !!construtoraId,
+  });
+
+  // Fetch membros de equipes
+  const { data: equipesMembros = [] } = useQuery({
+    queryKey: ['construtora-equipes-membros-rel', equipes.map(e => e.id).join(',')],
+    queryFn: async () => {
+      if (!equipes.length) return [];
+      const equipeIds = equipes.map(e => e.id);
+      const { data } = await supabase
+        .from('equipes_membros')
+        .select('user_id, equipe_id')
+        .in('equipe_id', equipeIds);
+      return data || [];
+    },
+    enabled: equipes.length > 0,
+  });
+
+  // Map user_id -> equipe_ids[]
+  const userEquipeMap = useMemo(() => {
+    const m: Record<string, string[]> = {};
+    equipesMembros.forEach(em => {
+      if (!m[em.user_id]) m[em.user_id] = [];
+      m[em.user_id].push(em.equipe_id);
+    });
+    return m;
+  }, [equipesMembros]);
+
+  // Map equipe_id -> Set<user_id>
+  const equipeUserMap = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    equipesMembros.forEach(em => {
+      if (!m[em.equipe_id]) m[em.equipe_id] = new Set();
+      m[em.equipe_id].add(em.user_id);
+    });
+    return m;
+  }, [equipesMembros]);
+
+  // Equipe info map
+  const equipeNomeMap = useMemo(() => {
+    const m: Record<string, { nome: string; cor: string }> = {};
+    equipes.forEach(e => { m[e.id] = { nome: e.nome, cor: e.cor || '#3B82F6' }; });
+    return m;
+  }, [equipes]);
+
   // Name maps
   const empNomeMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -222,15 +279,20 @@ export default function ConstutoraRelatorios() {
     return m;
   }, [corretores]);
 
-  // Apply local filters (empreendimento, imobiliária, corretor)
+  // Apply local filters (empreendimento, imobiliária, corretor, equipe)
   const fichas = useMemo(() => {
     return fichasRaw.filter(f => {
       if (empFilter !== 'todos' && f.empreendimento_id !== empFilter) return false;
       if (imobFilter !== 'todos' && f.imobiliaria_id !== imobFilter) return false;
       if (corretorFilter !== 'todos' && f.user_id !== corretorFilter) return false;
+      if (equipeFilter !== 'todos') {
+        if (!f.user_id) return false;
+        const userEquipes = userEquipeMap[f.user_id];
+        if (!userEquipes || !userEquipes.includes(equipeFilter)) return false;
+      }
       return true;
     });
-  }, [fichasRaw, empFilter, imobFilter, corretorFilter]);
+  }, [fichasRaw, empFilter, imobFilter, corretorFilter, equipeFilter, userEquipeMap]);
 
   // KPIs current
   const kpis = useMemo(() => {
